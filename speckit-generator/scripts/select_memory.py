@@ -171,8 +171,8 @@ def find_memory_template_source() -> Path | None:
 
     Searches in order:
     1. Environment variable SPECKIT_MEMORY_SOURCE
-    2. Relative to this script: ../../_examples/memory/
-    3. ~/.claude/memory-templates/
+    2. Skill's own assets/memory/ directory (self-contained)
+    3. ~/.claude/memory-templates/ (user override)
     """
     # Check environment variable
     env_path = os.environ.get("SPECKIT_MEMORY_SOURCE")
@@ -181,13 +181,13 @@ def find_memory_template_source() -> Path | None:
         if path.is_dir():
             return path
 
-    # Check relative to script
+    # Check skill's own assets/memory directory (self-contained)
     script_dir = Path(__file__).parent
-    relative_path = script_dir / ".." / ".." / "_examples" / "memory"
-    if relative_path.is_dir():
-        return relative_path.resolve()
+    skill_memory_path = script_dir / ".." / "assets" / "memory"
+    if skill_memory_path.is_dir():
+        return skill_memory_path.resolve()
 
-    # Check home directory
+    # Check home directory (user override)
     home_path = Path.home() / ".claude" / "memory-templates"
     if home_path.is_dir():
         return home_path

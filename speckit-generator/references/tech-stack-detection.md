@@ -243,3 +243,12 @@ python select_memory.py --all /path/to/project
 # List selected files without copying
 python select_memory.py --list /path/to/project
 ```
+
+---
+
+## Memory File Locations
+
+Templates are loaded from (in order):
+1. `$SPECKIT_MEMORY_SOURCE` environment variable (if set)
+2. Skill's own `assets/memory/` directory (self-contained)
+3. `~/.claude/memory-templates/` (user override)
