@@ -9,9 +9,6 @@ __pycache__/
 dist/
 build/
 
-# Packaged skills
-*.skill
-
 # Virtual environments
 venv/
 .venv/
