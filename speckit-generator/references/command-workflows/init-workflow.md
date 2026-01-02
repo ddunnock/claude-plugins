@@ -1,0 +1,217 @@
+# Init Workflow Reference
+
+Detailed workflow for the `/speckit.init` command.
+
+## Purpose
+
+Establish the `.claude/` foundation for a project with:
+- Directory structure for commands, memory, resources, templates, scripts
+- Appropriate memory files based on detected tech stack
+- Project context documentation
+
+## Idempotency
+
+Init is safe to run on existing projects:
+- Existing directories are preserved
+- Memory files are updated only if templates changed
+- Project customizations can be preserved with `--no-update` flag
+- No files are ever deleted
+
+---
+
+## Workflow Steps
+
+### Step 1: Check Existing State
+
+```
+IF .claude/ directory exists:
+  - Scan existing structure
+  - Note which memory files already present
+  - Check for project-context.md
+  - Report state to user
+  - Ask: "Update existing setup or start fresh?"
+ELSE:
+  - Proceed with fresh initialization
+```
+
+### Step 2: Detect Tech Stack
+
+Run tech stack detection (see `tech-stack-detection.md`):
+
+```
+1. Execute detect_stack.py on project root
+2. Collect detected technologies with confidence levels
+3. Determine primary language
+4. Identify frameworks
+5. Map technologies to memory files
+```
+
+### Step 3: Present Detection Results
+
+Display to user:
+
+```
+Tech Stack Detection:
+  Primary language: [typescript/python/rust/etc.]
+  Frameworks: [nextjs, tailwind, etc.]
+
+Detected indicators:
+  - tsconfig.json (TypeScript: HIGH)
+  - next.config.js (Next.js: HIGH)
+  - tailwind.config.js (Tailwind: HIGH)
+
+Recommended memory files:
+  Universal:
+    + constitution.md
+    + documentation.md
+    + git-cicd.md
+    + security.md
+    + testing.md
+  Tech-specific:
+    + typescript.md
+    + react-nextjs.md
+    + tailwind-shadcn.md
+
+Options:
+1. Accept recommended selection
+2. Add additional memory files
+3. Remove memory files from selection
+4. Override detected stack manually
+```
+
+### Step 4: Create Directory Structure
+
+Create standard directories:
+
+```
+.claude/
+├── commands/      # Custom project commands
+├── memory/        # Memory files (populated by init)
+├── resources/     # Project resources (specs, designs)
+├── templates/     # Output templates
+└── scripts/       # Project scripts
+```
+
+### Step 5: Copy Memory Files
+
+Using select_memory.py with idempotent copy:
+
+```
+For each selected memory file:
+  IF file exists and unchanged: SKIP
+  IF file exists and changed: UPDATE (unless --no-update)
+  IF file missing: COPY
+
+Create MANIFEST.md documenting selections
+```
+
+### Step 6: Create Project Context
+
+Generate `.claude/project-context.md`:
+
+```markdown
+# Project Context
+
+## Project Information
+- Name: [from package.json/Cargo.toml/pyproject.toml or dirname]
+- Type: [detected type]
+- Primary Language: [detected]
+- Frameworks: [list]
+
+## Tech Stack
+[Summary of detection results]
+
+## Directory Structure
+[Auto-generated from actual structure]
+
+## Key Files
+[Important files for understanding the project]
+
+## Notes
+[Space for user additions]
+```
+
+### Step 7: Completion Summary
+
+Report actions taken:
+
+```
+Init Complete:
+
+Directories created: [list new directories]
+Memory files:
+  + [new files copied]
+  ~ [files updated]
+  = [files unchanged]
+
+Project context: .claude/project-context.md
+
+Next steps:
+1. Review .claude/memory/ files for project-specific adjustments
+2. Add spec files to .claude/resources/
+3. Run /speckit.plan to create implementation plans
+```
+
+---
+
+## Auto-Init Behavior
+
+Other speckit commands check for initialization state:
+
+```python
+def check_init_state(project_path):
+    claude_dir = project_path / ".claude"
+    memory_dir = claude_dir / "memory"
+    constitution = memory_dir / "constitution.md"
+
+    if not constitution.exists():
+        return "NOT_INITIALIZED"
+
+    if not all required memory files exist:
+        return "INCOMPLETE"
+
+    return "INITIALIZED"
+```
+
+When state is NOT_INITIALIZED or INCOMPLETE:
+
+```
+Project not fully initialized.
+
+Options:
+1. Run init now (recommended)
+2. Continue without init (some features limited)
+3. Cancel
+```
+
+---
+
+## Flags and Options
+
+| Flag | Effect |
+|------|--------|
+| `--force` | Overwrite all existing files |
+| `--no-update` | Don't update existing memory files |
+| `--dry-run` | Show what would happen without doing it |
+| `--techs LIST` | Override detected technologies |
+| `--all-memory` | Include all available memory files |
+| `--minimal` | Only universal memory files |
+
+---
+
+## Error Handling
+
+| Error | Response |
+|-------|----------|
+| Not in a project directory | "No project detected. Create package.json/Cargo.toml/pyproject.toml first or specify --force" |
+| Permission denied | "Cannot write to .claude/. Check permissions." |
+| Template source not found | "Memory templates not found. Set SPECKIT_MEMORY_SOURCE or reinstall." |
+
+---
+
+## Memory File Locations
+
+Templates are loaded from (in order):
+1. `$SPECKIT_MEMORY_SOURCE` environment variable
+2. `../../_examples/memory/` relative to script
+3. `~/.claude/memory-templates/`

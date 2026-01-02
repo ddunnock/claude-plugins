@@ -1,358 +1,518 @@
 ---
 name: speckit-generator
-description: Transform requirements documents into complete Claude Code automation packages with commands, scripts, and templates. Use when the user provides requirements (formal SRS, informal notes, or verbal description), wants to create automation infrastructure, needs Claude Code /commands for a project, or mentions SpecKit, project automation, or requirements-to-automation workflows. Includes competitor analysis, assumption tracking, and validation loops.
+description: >
+  Project-focused specification and task management system with 6 core commands.
+  Use when the user wants to initialize project infrastructure, create plans from specs,
+  generate tasks from plans, analyze project consistency, clarify ambiguities, or
+  execute implementation tasks. Triggers on: /speckit.init, /speckit.plan, /speckit.tasks,
+  /speckit.analyze, /speckit.clarify, /speckit.implement, or mentions of project setup,
+  spec-to-plan workflows, task generation, or spec-kit.
 ---
 
 # SpecKit Generator
 
-Transform requirements into complete Claude Code automation infrastructure using the INCOSE-aligned, 5-phase methodology.
+Project-focused specification management with 6 commands that work together to transform specifications into executed implementations.
+
+## Table of Contents
+- [Overview](#overview)
+- [Commands](#commands)
+- [Command: init](#command-init)
+- [Command: plan](#command-plan)
+- [Command: tasks](#command-tasks)
+- [Command: analyze](#command-analyze)
+- [Command: clarify](#command-clarify)
+- [Command: implement](#command-implement)
+- [Memory File System](#memory-file-system)
+- [Idempotency](#idempotency)
+
+---
 
 ## Overview
 
-This skill converts raw requirements into production-ready automation packages containing:
-- Claude Code `/commands` organized by lifecycle phase
-- Supporting scripts with `--json` output
-- Structured templates for deliverables
-- Memory files for persistent project state
-- Validation and verification infrastructure
-
-## Quick Start Workflow
+SpecKit provides a complete workflow for specification-driven development:
 
 ```
-Task Progress:
-- [ ] Phase 1: Requirements Elicitation
-- [ ] Phase 2: Command Architecture Design
-- [ ] Phase 3: Infrastructure Design
-- [ ] Phase 4: Implementation
-- [ ] Phase 5: Validation & Packaging
+init → plan → tasks → implement
+  ↑      ↑      ↑         ↑
+  └──────┴──────┴─────────┘
+         analyze/clarify (anytime)
 ```
 
-## Phase 1: Requirements Elicitation
+### Core Principles
 
-### 1.1 Input Classification
+1. **Separation of Concerns**: Plans define WHAT, tasks define HOW
+2. **Memory-Driven Compliance**: All execution references constitution.md and relevant memory files
+3. **Idempotent Operations**: All commands safe to run repeatedly
+4. **Deterministic Analysis**: analyze produces identical output for identical input
 
-Determine input type and apply appropriate elicitation strategy:
+---
 
-| Input Type | Strategy |
-|------------|----------|
-| Formal SRS/Requirements Doc | Extract directly, clarify ambiguities |
-| Informal Notes/Description | Structured elicitation interview |
-| Verbal/Conceptual | Goal decomposition with examples |
-| Existing Codebase | Analysis + gap identification |
+## Commands
 
-### 1.2 Elicitation Questions
+| Command | Purpose | When to Use |
+|---------|---------|-------------|
+| `/speckit.init` | Establish .claude/ foundation | New projects or incomplete setup |
+| `/speckit.plan` | Create plans from specifications | After specs exist in resources/ |
+| `/speckit.tasks` | Generate tasks from plans | After plans are approved |
+| `/speckit.analyze` | Audit project consistency | Anytime for health check |
+| `/speckit.clarify` | Resolve ambiguities | When specs have open questions |
+| `/speckit.implement` | Execute tasks | When ready to implement |
 
-Ask these questions to establish project scope (2-3 per message max):
+---
 
-**Project Identity:**
-- What is the project name and primary domain?
-- Who are the key stakeholders (developers, reviewers, end users)?
-- What lifecycle gates exist (SRR, PDR, CDR, or equivalent)?
+## Command: init
 
-**Deliverable Inventory:**
-- What engineering artifacts does this project produce?
-- Which deliverables are highest value for automation?
-- What review/approval processes exist?
+Establish the `.claude/` foundation with appropriate memory files for the project.
 
-**Technical Context:**
-- What programming languages/frameworks are used?
-- Are there existing templates or standards to follow?
-- What tools/integrations are required?
+### Trigger
+- Explicit: `/speckit.init`
+- Automatic: Other commands detect missing setup
 
-### 1.3 Competitor Analysis
+### Workflow
 
-Before designing, search for existing solutions. Run the competitor analysis script:
+1. **Check existing state** - Detect if .claude/ exists
+2. **Detect tech stack** - Analyze project for languages/frameworks
+3. **Present detection** - Show detected stack and recommended memory files
+4. **Create structure** - Build directory structure
+5. **Copy memory files** - Select and copy based on tech stack
+6. **Generate project context** - Create project-context.md
 
-```bash
-python scripts/competitor_analysis.py "<project-domain>" --output-format json
+### Directory Structure Created
+
+```
+.claude/
+├── commands/      # Custom project commands
+├── memory/        # constitution.md + tech-specific files
+│   └── MANIFEST.md
+├── resources/     # Specifications, designs
+├── templates/     # Output templates
+└── scripts/       # Project scripts
 ```
 
-**Manual Search Strategy:**
+### Memory File Selection
 
-1. Search web for: `"<domain>" automation tools`, `"<domain>" CLI`, `"<domain>" SDK`
-2. Check GitHub for: similar projects, established patterns
-3. Document findings with sources for traceability
+| Category | Files | Selection |
+|----------|-------|-----------|
+| Universal | constitution.md, documentation.md, git-cicd.md, security.md, testing.md | Always |
+| TypeScript/JS | typescript.md | If TS/JS detected |
+| React/Next.js | react-nextjs.md | If React/Next detected |
+| Tailwind | tailwind-shadcn.md | If Tailwind detected |
+| Python | python.md | If Python detected |
+| Rust | rust.md | If Rust detected |
 
-Mark all competitive analysis with evidence sources:
-- `[VERIFIED: <url>]` - Confirmed from source
-- `[ASSUMPTION]` - Reasonable inference, needs validation
+### Options
 
-### 1.4 Requirements Capture Template
+```
+Options:
+1. Accept recommended selection
+2. Add additional memory files
+3. Remove memory files from selection
+4. Override detected stack manually
+```
 
-For each automation requirement, complete:
+See `references/command-workflows/init-workflow.md` for detailed workflow.
+
+---
+
+## Command: plan
+
+Create implementation plans from specification files. Hierarchical for complex/multi-domain specs.
+
+### Trigger
+- `/speckit.plan`
+- `/speckit.plan spec.md`
+- `/speckit.plan --all`
+
+### Workflow
+
+1. **Locate specs** - Find spec files in .claude/resources/
+2. **Assess complexity** - Single domain vs multi-domain
+3. **Generate plans** - Create plan.md (and domain plans if complex)
+4. **Validate** - Check plan completeness and consistency
+
+### Output Structure
+
+**Simple (single domain)**:
+```
+.claude/resources/
+├── spec.md
+└── plan.md
+```
+
+**Complex (multi-domain)**:
+```
+.claude/resources/
+├── spec.md
+├── plan.md              # Master plan with domain references
+└── plans/
+    ├── domain-a-plan.md
+    ├── domain-b-plan.md
+    └── domain-c-plan.md
+```
+
+### Plan Content
+
+Plans contain:
+- Requirements mapping (which spec sections covered)
+- Architecture decisions
+- Implementation approach (phases, NOT tasks)
+- Verification strategy
+- Notes for task generation
+
+Plans do NOT contain:
+- Individual tasks (that's /speckit.tasks)
+- Implementation code
+- Detailed how-to instructions
+
+### Complexity Detection
+
+| Indicator | Simple | Complex |
+|-----------|--------|---------|
+| Domains | Single | Multiple distinct |
+| Page count | <10 pages | >10 pages |
+| Stakeholder count | 1-2 | 3+ |
+
+User can override detection.
+
+See `references/command-workflows/plan-workflow.md` for detailed workflow.
+
+---
+
+## Command: tasks
+
+Generate implementation tasks from plans + constitution + memory files.
+
+### Trigger
+- `/speckit.tasks`
+- `/speckit.tasks plan.md`
+- `/speckit.tasks --all`
+
+### Workflow
+
+1. **Load plan(s)** - Read plan files
+2. **Load constitution** - Extract relevant sections
+3. **Load memory files** - Get tech-specific guidelines
+4. **Generate tasks** - Create *-tasks.md with phases
+5. **Validate** - Check task completeness
+
+### Output
 
 ```markdown
-## AR-### [Deliverable Name]
+# [Domain] Tasks
 
-**Stakeholder Need**: [What problem does this solve?]
+## Phase 1: Foundation
 
-**Inputs**:
-- [ ] [Input 1] - Source: [where it comes from]
-
-**Outputs**:
-- [ ] [Output 1] - Format: [format/template]
-
-**Quality Criteria**:
-- [ ] [Criterion 1]
-
-**Frequency**: [One-time / Periodic / Event-driven]
-
-**Automation Pattern**:
-- [ ] Generator (creates structured documents)
-- [ ] Analyzer (examines codebase/artifacts)
-- [ ] Orchestrator (multi-phase execution)
-- [ ] Decision (guides choices with criteria)
-
-**Evidence Grounding**:
-- [VERIFIED/ASSUMPTION]: [basis for requirement]
+### TASK-001: [Title]
+**Status**: PENDING
+**Priority**: P1
+**Constitution Sections**: §4.1, §4.2
+**Memory Files**: typescript.md, git-cicd.md
+**Plan Reference**: PLAN-001
+**Description**: ...
+**Acceptance Criteria**:
+- [ ] Criterion 1
+- [ ] Criterion 2
 ```
 
-## Phase 2: Command Architecture Design
+### Task Statuses
 
-### 2.1 Command Taxonomy
-
-Organize by lifecycle phase, not technical function:
-
-```
-.claude/commands/
-├── requirements/
-│   ├── requirements.capture.md
-│   ├── requirements.trace.md
-│   └── requirements.baseline.md
-├── architecture/
-│   ├── architecture.analyze.md
-│   ├── architecture.design.md
-│   └── architecture.review.md
-├── trades/
-│   ├── trades.initiate.md
-│   ├── trades.evaluate.md
-│   └── trades.document.md
-├── risk/
-│   ├── risk.identify.md
-│   ├── risk.assess.md
-│   └── risk.mitigate.md
-├── test/
-│   ├── test.plan.md
-│   ├── test.procedure.md
-│   └── test.report.md
-└── review/
-    ├── review.prepare.md
-    └── review.disposition.md
-```
-
-### 2.2 Pattern Selection Matrix
-
-| Deliverable Characteristic | Pattern | Command Structure |
-|---------------------------|---------|-------------------|
-| Creates structured documents from inputs | Generator | Single command, template-driven |
-| Examines existing artifacts for insights | Analyzer | Read → Process → Report |
-| Requires multiple sequential phases | Orchestrator | Main command + sub-commands |
-| Involves stakeholder decisions | Decision | Criteria → Evaluate → Recommend |
-
-### 2.3 Command Design Checklist
-
-For each command, verify:
-- [ ] Purpose section states deliverable produced
-- [ ] Workflow uses numbered phases with decision points
-- [ ] Script references use `--json` output for parsing
-- [ ] Template references specify placeholder names
-- [ ] Completion criteria are checkable conditions
-- [ ] Handoffs provide context for next command
-- [ ] Assumptions marked with `[ASSUMPTION]`
-
-## Phase 3: Infrastructure Design
-
-### 3.1 Script Identification
-
-Map commands to supporting scripts:
-
-| Command | Script Need | Script Purpose |
-|---------|-------------|----------------|
-| `requirements.trace.md` | `check-coverage.sh` | Parse requirements, check coverage |
-| `trades.evaluate.md` | `calculate-scores.py` | Calculate weighted scores |
-| `risk.assess.md` | `risk-matrix.py` | Generate risk matrix |
-| `test.report.md` | `aggregate-results.py` | Aggregate test results |
-
-Script requirements:
-- All scripts MUST support `--json` flag for machine parsing
-- Include validation and error handling
-- Document expected inputs and outputs
-
-### 3.2 Template Requirements
-
-Apply the 7 INCOSE-derived principles to all templates:
-
-1. **Traceability**: Parent/child trace fields
-2. **Maturity States**: DRAFT → IN_REVIEW → BASELINED → SUPERSEDED
-3. **Verification Binding**: Evidence linked to claims
-4. **Decision Rationale**: Context, criteria, alternatives
-5. **Stakeholder Abstraction**: Audience-appropriate content
-6. **Temporal Context**: Timestamps, validity periods
-7. **Completeness Criteria**: "Done" checklist
-
-See `references/deliverable-principles.md` for full principle details.
-
-### 3.3 Memory File Design
-
-Define persistent state across command invocations:
-
-```
-.claude/memory/
-├── project-context.md       # Project identity, stakeholders
-├── requirements-status.md   # Requirements state tracking
-├── trades-status.md         # Active trade studies
-├── risk-register.md         # Current risk inventory
-├── decisions-log.md         # Decision history
-├── assumptions-log.md       # Tracked assumptions [CRITICAL]
-└── review-tracker.md        # Review action items
-```
-
-## Phase 4: Implementation
-
-### 4.1 Build Order
-
-Implement in dependency order:
-
-```
-1. Foundation Layer
-   ├── Memory files (project-context.md)
-   ├── Common scripts (validate-output.sh)
-   └── Base templates
-
-2. Core Commands
-   ├── Entry point ([domain].init.md)
-   ├── Primary generator ([domain].create.md)
-   └── Validation command ([domain].validate.md)
-
-3. Orchestration Layer
-   ├── Handoff configuration
-   ├── State update logic
-   └── Phase completion checks
-
-4. Integration Layer
-   ├── Cross-command references
-   ├── Shared script libraries
-   └── Template inheritance
-```
-
-### 4.2 Command Implementation
-
-Use the command template from `assets/templates/commands/command-template.md`.
-
-Key patterns:
-- Start with clear purpose and deliverable description
-- Use numbered workflow phases
-- Reference scripts with exact execution syntax
-- Define explicit handoffs to next commands
-- Include validation checkpoints
-
-### 4.3 Assumption Tracking
-
-All generated content MUST track grounding:
-
-```markdown
-<!-- GROUNDING -->
-## Evidence & Assumptions
-
-### Verified Information
-- [VERIFIED: url/source] Description of verified fact
-
-### Assumptions
-- [ASSUMPTION: rationale] Description of assumption
-  - Validation approach: [how to verify]
-  - Risk if wrong: [impact assessment]
-```
-
-## Phase 5: Validation & Packaging
-
-### 5.1 Validation Checks
-
-Run validation before packaging:
-
-```bash
-python scripts/validate_speckit.py <output-dir> --strict
-```
-
-Checks performed:
-- YAML syntax valid in all commands
-- Handoff targets exist
-- Template placeholders consistent
-- Scripts executable
-- Memory files defined
-- Assumptions documented
-
-### 5.2 Package Generation
-
-Generate the complete SpecKit package:
-
-```bash
-python scripts/generate_speckit.py \
-  --requirements "<requirements-file>" \
-  --output-dir "<project>/.claude" \
-  --include-examples
-```
-
-### 5.3 Deliverable Checklist
-
-Before delivery, verify:
-
-```
-Package Verification:
-- [ ] All commands have valid YAML frontmatter
-- [ ] Scripts have been tested with sample data
-- [ ] Templates include all required principle fields
-- [ ] Memory files have initial structure
-- [ ] README documents command dependencies
-- [ ] Assumptions log is complete
-- [ ] Competitor analysis documented with sources
-```
-
-## Workflow Handoffs
-
-```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│   Phase 1    │────▶│   Phase 2    │────▶│   Phase 3    │
-│  Elicitation │     │   Command    │     │    Infra     │
-│              │     │   Design     │     │   Design     │
-└──────────────┘     └──────────────┘     └──────────────┘
-       │                                         │
-       ▼                                         ▼
- • Deliverable                             • Scripts
-   inventory                               • Templates
- • Lifecycle map                           • State files
- • Automation reqs                         • Validation
- • Competitor analysis
-       │                                         │
-       ▼                                         ▼
-┌──────────────┐     ┌──────────────┐
-│   Phase 4    │────▶│   Phase 5    │
-│   Build      │     │  Validate    │
-│              │     │  & Package   │
-└──────────────┘     └──────────────┘
-```
-
-## Reference Documents
-
-- **Methodology Details**: See `references/methodology.md` for complete 5-phase process
-- **Deliverable Principles**: See `references/deliverable-principles.md` for INCOSE-aligned standards
-- **Command Patterns**: See `references/command-patterns.md` for template examples
-- **Validation Rules**: See `references/validation-rules.md` for check criteria
-
-## Scripts Reference
-
-| Script | Purpose |
+| Status | Meaning |
 |--------|---------|
-| `scripts/competitor_analysis.py` | Search for existing solutions |
-| `scripts/validate_speckit.py` | Validate generated package |
-| `scripts/generate_speckit.py` | Generate complete package |
-| `scripts/check_assumptions.py` | Audit assumption coverage |
+| PENDING | Not started |
+| IN_PROGRESS | Currently being worked |
+| BLOCKED | Waiting on dependency |
+| COMPLETED | Done and verified |
+| SKIPPED | Intentionally not done |
 
-## Anti-Patterns to Avoid
+See `references/command-workflows/tasks-workflow.md` for detailed workflow.
 
-| Anti-Pattern | Problem | Better Approach |
-|--------------|---------|-----------------|
-| Feature-scoped commands | Incomplete artifacts | Deliverable-scoped commands |
-| Ungrounded claims | Unreliable outputs | Evidence markers |
-| Skipping competitor analysis | Reinventing wheels | Analyze before design |
-| Missing validation phase | Broken workflows | Validation gates |
-| Implicit assumptions | Hidden risks | Explicit assumption tracking |
+---
+
+## Command: analyze
+
+Deterministic, read-only audit of project artifacts for consistency and completeness.
+
+### Trigger
+- `/speckit.analyze`
+- `/speckit.analyze --verbose`
+- `/speckit.analyze --category gaps`
+
+### Characteristics
+
+- **Read-only**: Never modifies files
+- **Deterministic**: Same inputs = same outputs
+- **Stable IDs**: Finding IDs remain stable across runs
+- **Quantified**: Metrics for coverage, completeness
+
+### Analysis Categories
+
+| Category | Description |
+|----------|-------------|
+| GAPS | Missing required elements |
+| INCONSISTENCIES | Contradictions between artifacts |
+| AMBIGUITIES | Unclear or undefined items |
+| ORPHANS | Unreferenced elements |
+| ASSUMPTIONS | Untracked/unvalidated assumptions |
+
+### Severity Levels
+
+| Level | Meaning |
+|-------|---------|
+| CRITICAL | Blocks progress, must fix |
+| HIGH | Significant risk, should fix |
+| MEDIUM | Notable issue, plan to fix |
+| LOW | Minor concern |
+
+### Output Format
+
+```markdown
+# Analysis Report
+
+Generated: [timestamp]
+Artifacts analyzed: [count]
+
+## Summary
+| Category | Critical | High | Medium | Low |
+|----------|----------|------|--------|-----|
+| GAPS     | 2        | 3    | 5      | 1   |
+| ...      |          |      |        |     |
+
+## Findings
+
+### GAP-001 [CRITICAL]
+**Location**: spec.md:45
+**Description**: Missing error handling specification
+**Recommendation**: Define error states for API failures
+```
+
+See `references/command-workflows/analyze-workflow.md` for detailed workflow.
+
+---
+
+## Command: clarify
+
+Structured ambiguity resolution with immediate spec updates.
+
+### Trigger
+- `/speckit.clarify`
+- `/speckit.clarify spec.md`
+
+### Characteristics
+
+- **One question at a time**: Focused, manageable
+- **Multiple choice or short phrase**: Quick answers
+- **5-question maximum per session**: Avoid fatigue
+- **Immediate updates**: Specs updated after each answer
+- **9-category taxonomy**: Structured classification
+
+### Ambiguity Categories
+
+| Category | Example Question |
+|----------|-----------------|
+| SCOPE | "Should X include Y functionality?" |
+| BEHAVIOR | "What happens when user does X?" |
+| DATA | "What format should X be stored in?" |
+| ERROR | "How should X error be handled?" |
+| SEQUENCE | "Does X happen before or after Y?" |
+| CONSTRAINT | "What are the limits for X?" |
+| INTERFACE | "How does X communicate with Y?" |
+| AUTHORITY | "Who approves X?" |
+| TEMPORAL | "How long should X take?" |
+
+### Workflow
+
+1. **Scan for ambiguity** - Find [TBD], [NEEDS CLARIFICATION], vague language
+2. **Prioritize** - Rank by impact on implementation
+3. **Present question** - One at a time with options
+4. **Update spec** - Apply answer immediately
+5. **Log session** - Record Q&A for traceability
+
+### Question Format
+
+```
+CLARIFY-001 [BEHAVIOR]
+
+The spec mentions "user authentication" but doesn't specify the method.
+
+Which authentication method should be used?
+1. OAuth 2.0 with Google/GitHub (Recommended)
+2. Email/password with JWT
+3. Magic link (passwordless)
+4. Other (please specify)
+
+Your choice:
+```
+
+See `references/command-workflows/clarify-workflow.md` for detailed workflow.
+
+---
+
+## Command: implement
+
+Execute tasks from *-tasks.md with batch+gates execution model.
+
+### Trigger
+- `/speckit.implement TASK-001`
+- `/speckit.implement TASK-001..TASK-005`
+- `/speckit.implement "Phase 1"`
+- `/speckit.implement @foundation`
+
+### Task Selection
+
+| Selector | Meaning |
+|----------|---------|
+| `TASK-001` | Single task |
+| `TASK-001..TASK-005` | Range of tasks |
+| `"Phase 1"` | All tasks in phase |
+| `@foundation` | All tasks with @foundation group |
+
+### Execution Model: Batch + Gates
+
+```
+Execute Phase 1 tasks
+    ↓
+GATE: "Phase 1 complete. Review outputs?"
+    ↓
+[User confirms]
+    ↓
+Execute Phase 2 tasks
+    ↓
+GATE: "Phase 2 complete. Review outputs?"
+    ...
+```
+
+### Workflow
+
+For each task:
+1. **Load context** - Read referenced constitution sections + memory files
+2. **Present context** - Show agent the relevant guidelines
+3. **Execute** - Perform the task
+4. **Update status** - PENDING → IN_PROGRESS → COMPLETED
+5. **Verify** - Check acceptance criteria
+
+### Gate Behavior
+
+At phase/group boundaries:
+```
+Phase [N] complete.
+
+Tasks completed: [count]
+Tasks failed: [count]
+
+Options:
+1. Continue to Phase [N+1]
+2. Review completed work
+3. Re-run failed tasks
+4. Stop execution
+```
+
+### Context Loading
+
+```markdown
+## Execution Context for TASK-001
+
+### Constitution Requirements (§4.1, §4.2)
+[Extracted sections from constitution.md]
+
+### Memory File Guidelines
+From typescript.md:
+[Relevant sections]
+
+From git-cicd.md:
+[Relevant sections]
+
+### Task Details
+[Full task content]
+```
+
+See `references/command-workflows/implement-workflow.md` for detailed workflow.
+
+---
+
+## Memory File System
+
+Memory files provide persistent guidelines that inform all commands.
+
+### Universal Files (Always Loaded)
+
+| File | Purpose |
+|------|---------|
+| constitution.md | Core principles, mandatory constraints |
+| documentation.md | Documentation standards |
+| git-cicd.md | Git workflow, CI/CD practices |
+| security.md | Security requirements |
+| testing.md | Testing strategies |
+
+### Tech-Specific Files (Loaded by Detection)
+
+| File | Triggers |
+|------|----------|
+| typescript.md | TypeScript, JavaScript, Node.js |
+| react-nextjs.md | React, Next.js |
+| tailwind-shadcn.md | Tailwind CSS, shadcn/ui |
+| python.md | Python, Django, Flask, FastAPI |
+| rust.md | Rust |
+
+### Constitution Section References
+
+Tasks reference constitution sections by ID:
+- `§1.0` - Chapter reference
+- `§1.1` - Section reference
+- `§1.1.a` - Subsection reference
+
+Example task:
+```markdown
+**Constitution Sections**: §4.1 (Error Handling), §4.2 (Logging)
+```
+
+---
+
+## Idempotency
+
+All commands are designed to be safe when run repeatedly.
+
+### Init Idempotency
+
+- Skips existing directories
+- Updates changed memory files only
+- Preserves project customizations
+
+### Plan Idempotency
+
+- Detects existing plans
+- Offers update or regenerate
+- Preserves manual edits with warning
+
+### Tasks Idempotency
+
+- Preserves task statuses
+- Adds new tasks for new plan items
+- Never removes manually added tasks
+
+### Analyze Idempotency
+
+- Read-only, always safe
+- Stable finding IDs across runs
+
+### Clarify Idempotency
+
+- Tracks answered questions
+- Skips already-clarified items
+- Session history preserved
+
+### Implement Idempotency
+
+- Skips COMPLETED tasks
+- Resumes from last position
+- Re-runnable for failed tasks
+
+---
+
+## Catching Up
+
+When running on an existing project:
+
+1. **Init detects state** - Finds what exists, what's missing
+2. **Commands offer catch-up** - "Missing setup. Run init first?"
+3. **Incremental updates** - Only process what's new
+4. **Never destructive** - No deletions without explicit request
