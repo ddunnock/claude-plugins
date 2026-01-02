@@ -2,6 +2,34 @@
 
 Methods for identifying and analyzing critical dependencies, bottlenecks, and failure chains.
 
+## Table of Contents
+- [Dependency Mapping](#dependency-mapping)
+  - [N² (N-Squared) Diagram](#n²-n-squared-diagram)
+  - [Dependency Types](#dependency-types)
+- [Critical Path Identification](#critical-path-identification)
+  - [Definition](#definition)
+  - [Finding Critical Paths](#finding-critical-paths)
+  - [Critical Path Metrics](#critical-path-metrics)
+- [Single Points of Failure (SPOF)](#single-points-of-failure-spof)
+  - [Identification Questions](#identification-questions)
+  - [SPOF Categories](#spof-categories)
+  - [SPOF Remediation Patterns](#spof-remediation-patterns)
+- [Bottleneck Detection](#bottleneck-detection)
+  - [Bottleneck Indicators](#bottleneck-indicators)
+  - [Common Bottleneck Locations](#common-bottleneck-locations)
+  - [Bottleneck Analysis Template](#bottleneck-analysis-template)
+- [Temporal Analysis](#temporal-analysis)
+  - [Sequencing Issues](#sequencing-issues)
+  - [Timing Dependency Analysis](#timing-dependency-analysis)
+  - [Timeout Strategy Evaluation](#timeout-strategy-evaluation)
+- [Cascade Failure Analysis](#cascade-failure-analysis)
+  - [Failure Propagation Paths](#failure-propagation-paths)
+  - [Blast Radius Estimation](#blast-radius-estimation)
+  - [Circuit Breaker Placement](#circuit-breaker-placement)
+- [Risk Scoring Matrix](#risk-scoring-matrix)
+
+---
+
 ## Dependency Mapping
 
 ### N² (N-Squared) Diagram

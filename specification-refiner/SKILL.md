@@ -9,82 +9,134 @@ description: >
 
 # Specification Refiner
 
-Systematically analyze and refine specifications, requirements, and architectural designs through iterative gap analysis with persistent memory.
+Systematically analyze and refine specifications, requirements, and architectural designs through iterative gap analysis with persistent memory and explicit user confirmation at each phase.
 
 ## Core Workflow
 
 ```
-1. INGEST    → Load and understand the specification/plan
-2. ANALYZE   → Run SEAMS + Critical Path analysis
-3. PRESENT   → Surface findings with context and remediations
-4. ITERATE   → Accept new ideas, re-analyze affected areas
-5. PERSIST   → Update memory files with current state
+0. ASSESS     → Evaluate complexity, select mode, confirm with user
+1. INGEST     → Load document, confirm understanding with user
+2. ANALYZE    → Run SEAMS + Critical Path, present preliminary findings
+3. PRESENT    → Surface detailed findings, manage questions with user
+4. ITERATE    → Accept changes, re-analyze, present deltas
+5. SYNTHESIZE → Present comprehensive summary for user approval
+6. OUTPUT     → Generate refined specification(s) based on mode
 ```
 
-## Analysis Invocation
+Each phase ends with a **full summary gate** requiring user confirmation before proceeding.
 
-On receiving a specification, requirements doc, architecture design, or project plan:
+---
 
-### Phase 1: Ingestion
+## Phase 0: ASSESS
 
-1. Parse the document structure (sections, dependencies, interfaces)
-2. Create initial memory file: `analysis-state.md`
-3. Identify document type and select appropriate analysis lenses
+On receiving a specification document, first assess complexity to determine the appropriate mode.
 
-### Phase 2: Dual-Process Analysis
+### Complexity Assessment
 
-Run BOTH analysis frameworks in parallel:
+Evaluate these factors:
+- **Document size**: Page/word count
+- **Domains identified**: Single vs. multi-domain
+- **Stakeholder count**: How many perspectives involved
+- **Scope clarity**: Clear, moderate, or ambiguous boundaries
+
+### Mode Selection
+
+Present to user:
+
+```
+Based on initial assessment:
+- Document size: [X pages / Y words]
+- Domains identified: [list domains]
+- Stakeholder count: [N stakeholders]
+- Scope clarity: [Clear/Moderate/Ambiguous]
+
+Recommended mode: [SIMPLE/COMPLEX]
+
+Options:
+1. Proceed with recommended mode
+2. Override to SIMPLE mode
+3. Override to COMPLEX mode
+4. Explain the modes in more detail
+
+Your choice:
+```
+
+**SIMPLE Mode**: Single-domain, <10 pages, clear scope → SEAMS analysis, single output document
+**COMPLEX Mode**: Multi-domain, >10 pages, ambiguous scope → Full dual-framework analysis, separate output files per domain
+
+### Phase 0 Gate
+
+Present gate summary (see `references/gate-templates.md` for full format). Wait for user confirmation before proceeding.
+
+---
+
+## Phase 1: INGEST
+
+### Actions
+1. Parse document structure (sections, dependencies, interfaces)
+2. Create initial memory file: `analysis-state.md` using template from `assets/analysis-state-template.md`
+3. Record mode selection in memory file
+4. Identify document type and select appropriate analysis lenses
+5. Note any questions that arise during parsing
+
+### Question Management
+- Add questions to the Open Questions list with "Raised In: Phase 1: INGEST"
+- Attempt to answer any Phase 0 questions from document content
+- Update question statuses
+
+### Phase 1 Gate
+
+Present full summary including: document info, sections identified, key entities, dependencies, and question status. See `references/gate-templates.md` for format. Wait for user confirmation—user may answer questions here.
+
+---
+
+## Phase 2: ANALYZE
+
+Run analysis frameworks based on mode.
+
+### SIMPLE Mode
+Run SEAMS Analysis only (see `references/seams-framework.md`).
+
+### COMPLEX Mode
+Run BOTH frameworks in parallel:
 
 #### Framework A: SEAMS Analysis
-
 **S**tructure → **E**xecution → **A**ssumptions → **M**ismatches → **S**takeholders
 
 | Lens | Questions to Answer |
 |------|---------------------|
-| **Structure** | Completeness of I/O paths? Cohesion of components? Coupling risks? Boundary clarity? |
-| **Execution** | Happy path works? Edge cases covered? Failure modes handled? Recovery possible? |
-| **Assumptions** | Technical assumptions? Organizational assumptions? Environmental assumptions? |
-| **Mismatches** | Requirements ↔ Design aligned? Design ↔ Implementation consistent? Docs ↔ Reality synced? |
-| **Stakeholders** | Operator perspective? Security perspective? Integrator perspective? End-user perspective? |
+| **Structure** | Completeness of I/O paths? Cohesion? Coupling risks? Boundary clarity? |
+| **Execution** | Happy path works? Edge cases covered? Failure modes handled? |
+| **Assumptions** | Technical assumptions? Organizational? Environmental? |
+| **Mismatches** | Requirements ↔ Design aligned? Design ↔ Implementation consistent? |
+| **Stakeholders** | Operator view? Security view? Integrator view? End-user view? |
 
 #### Framework B: Critical Path Analysis
+See `references/critical-path-analysis.md` for detailed methods.
 
-1. **Dependency Mapping**: Build N² matrix of component dependencies
+1. **Dependency Mapping**: Build N² matrix
 2. **Critical Path Identification**: Find longest/riskiest chains
-3. **Single Points of Failure**: Components whose failure cascades
-4. **Bottleneck Detection**: Throughput limiters, scaling blockers
-5. **Temporal Analysis**: Sequencing issues, timing dependencies
+3. **Single Points of Failure**: Cascade risk components
+4. **Bottleneck Detection**: Throughput limiters
+5. **Temporal Analysis**: Sequencing issues
 
-### Phase 3: Findings Synthesis
+### Question Management
+- Add new questions discovered during analysis with "Raised In: Phase 2: ANALYZE"
+- Note which findings are blocked by unanswered questions
 
-For EACH identified issue, document:
+### Phase 2 Gate
 
-```markdown
-## [ISSUE-ID]: [Brief Title]
+Present preliminary findings summary with severity counts, top 3 issues, question status, and blocked findings. See `references/gate-templates.md` for format. Wait for user confirmation—user may answer blocking questions here.
 
-**Category**: [Gap | Weakness | Inefficiency | Complication | Risk]
-**Severity**: [Critical | High | Medium | Low]
-**Confidence**: [High | Medium | Low]
+---
 
-### Description
-[What the issue is and why it matters]
+## Phase 3: PRESENT
 
-### Evidence
-[Specific references to the source material]
+### Finding Format
 
-### Impact
-[What happens if unaddressed]
+For EACH identified issue, include: ID, title, category, severity, confidence, blocked-by status, description, evidence, impact, remediation options (with trade-offs), and related issues. See `references/gate-templates.md` for full template.
 
-### Remediation Options
-1. [Option A with trade-offs]
-2. [Option B with trade-offs]
-3. [Option C with trade-offs]
-
-### Related Issues
-[Cross-references to connected findings]
-```
-
-### Phase 4: Presentation
+### Presentation Order
 
 Present findings grouped by:
 1. **Critical blockers** (must fix before proceeding)
@@ -92,66 +144,135 @@ Present findings grouped by:
 3. **Optimization opportunities** (efficiency improvements)
 4. **Considerations** (context-dependent, need user input)
 
-Always end with: "What aspects would you like to explore further, or do you have new constraints/ideas to incorporate?"
+### Question Management
+- Present all unanswered questions explicitly
+- Ask user to answer questions or confirm assumptions
+- Update question tracking with answers received
 
-### Phase 5: Iteration Loop
+### Phase 3 Gate
 
-When user provides new information or ideas:
+Present findings summary with severity counts, question status, and assumptions made. Offer options: (1) Iterate, (2) Skip to Synthesize, (3) Answer questions, (4) Review details. See `references/gate-templates.md` for format.
 
+---
+
+## Phase 4: ITERATE
+
+When user provides new information, constraints, or requests changes:
+
+### Actions
 1. **Validate new input** against existing analysis
 2. **Identify affected areas** in the specification
 3. **Re-run analysis** on affected sections only (delta analysis)
 4. **Assess cascading effects** on previously-identified issues
 5. **Update memory file** with new state
-6. **Present delta findings** (what changed, what's resolved, what's new)
+
+### Question Management
+- Add new questions with "Raised In: Phase 4: ITERATE"
+- Check if new input answers existing questions
+- Update all question statuses
+
+### Phase 4 Gate
+
+Present delta summary: changes incorporated, new/modified/resolved findings, key changes, question status. Offer options: (1) Continue iterating, (2) Synthesize, (3) Review findings. See `references/gate-templates.md` for format.
+
+---
+
+## Phase 5: SYNTHESIZE
+
+Before generating any output, present a comprehensive summary for user approval.
+
+### Summary Contents
+
+Present comprehensive summary covering:
+- **Document Overview**: Title, mode, iteration count
+- **Findings Resolution**: By severity with resolved/unresolved breakdown, key resolutions, unresolved critical/high items
+- **Questions Status**: Answered, unanswered (with impact), deferred (with reason)
+- **Assumptions**: Confirmed vs. unverified
+- **Proposed Output Structure**: Based on mode (single doc for SIMPLE, separate files for COMPLEX)
+
+See `references/gate-templates.md` for full format.
+
+### Phase 5 Gate
+
+Offer options: (1) Approve and output, (2) Return to iterate, (3) Modify structure, (4) Answer questions. Wait for explicit approval before generating output.
+
+---
+
+## Phase 6: OUTPUT
+
+Generate refined specification(s) based on mode.
+
+### SIMPLE Mode Output
+Generate single refined specification document incorporating:
+- All resolved findings
+- Selected remediations
+- Documented assumptions
+- Remaining open questions (in dedicated section)
+
+### COMPLEX Mode Output
+Generate separate files per domain:
+- `[domain-1]-spec.md`
+- `[domain-2]-spec.md`
+- `cross-cutting-concerns.md` (if applicable)
+- `open-items.md` (consolidated questions and unresolved findings)
+
+### Final Actions
+1. Update `analysis-state.md` with completion status
+2. Present output files to user
+3. Summarize what was generated
+
+### Phase 6 Completion
+
+Present: files created (based on mode), analysis state saved, summary of findings addressed, assumptions documented, and open items. See `references/gate-templates.md` for format.
+
+---
+
+## Question Tracking System
+
+### Question Categories
+- **Technical**: Architecture, implementation, performance
+- **Process**: Workflow, governance, approval
+- **Scope**: Boundaries, requirements, features
+- **Stakeholder**: Roles, responsibilities, ownership
+- **Timeline**: Sequencing, dependencies, deadlines
+
+### Question Lifecycle
+1. **Raised**: Question identified, logged with phase
+2. **Answered**: Response received from user or inferred from analysis
+3. **Deferred**: Explicitly set aside with reason and revisit trigger
+
+### Question Table Format
+
+Track questions in `analysis-state.md` using tables for Unanswered (ID, Question, Category, Raised In, Blocks), Answered (ID, Question, Answer, Answered By, Answered In), and Deferred (ID, Question, Reason, Deferred In, Revisit When).
+
+---
 
 ## Memory File Management
 
 ### Required Memory File: `analysis-state.md`
 
-Create in the working directory. Structure:
+Use the template from `assets/analysis-state-template.md`. Key sections:
 
-```markdown
-# Specification Analysis State
+- Document metadata (title, version, hash)
+- Mode selection (SIMPLE/COMPLEX)
+- Analysis iterations table
+- Active and resolved findings
+- Question tracking tables (per-phase)
+- Assumption register
+- User-provided constraints
 
-## Document Under Analysis
-- **Title**: [document name]
-- **Version**: [version/date analyzed]
-- **Hash**: [content hash for change detection]
+### Update Protocol
 
-## Analysis Iterations
-| Iteration | Date | Trigger | Key Changes |
-|-----------|------|---------|-------------|
-| 1 | [date] | Initial analysis | [summary] |
-| 2 | [date] | User input: [topic] | [summary] |
-
-## Active Findings
-[List of current open issues with status]
-
-## Resolved Findings
-[Issues closed by iteration, with resolution notes]
-
-## Assumption Register
-| ID | Assumption | Status | Validation Method |
-|----|------------|--------|-------------------|
-| A1 | [assumption] | [Unverified/Confirmed/Invalidated] | [how to check] |
-
-## User-Provided Constraints
-[Constraints or decisions provided during iteration]
-
-## Open Questions
-[Questions awaiting user input]
-```
-
-### Memory Update Protocol
-
-After EACH interaction:
+After EACH phase:
 1. Read current `analysis-state.md`
-2. Append new iteration entry
+2. Update phase completion status
 3. Update finding statuses
-4. Record any new assumptions
-5. Log user-provided constraints
-6. Write updated file
+4. Update question tables
+5. Record new assumptions
+6. Log user decisions
+7. Write updated file
+
+---
 
 ## Analysis Depth Calibration
 
@@ -165,15 +286,21 @@ Match depth to document maturity:
 | **Implementation Plan** | Dependencies, sequencing, resource conflicts |
 | **Review/Audit** | Full SEAMS sweep, stakeholder perspectives |
 
+---
+
 ## Quick Assessment Mode
 
-For rapid feedback, use compressed analysis:
+For rapid feedback when full analysis is not needed:
 
-1. **Boundaries**: What's in/out of scope? What crosses the line?
+1. **Boundaries**: What's in/out of scope?
 2. **One Thread**: Trace critical path from input to output
 3. **Three Assumptions**: The riskiest unstated beliefs
-4. **Silent Failure**: What breaks without anyone noticing?
+4. **Silent Failure**: What breaks without notice?
 5. **Naive Question**: What would a newcomer ask that has no answer?
+
+Note: Quick Assessment skips the full phase gate workflow but still creates `analysis-state.md`.
+
+---
 
 ## Output Formatting
 
@@ -188,20 +315,28 @@ For rapid feedback, use compressed analysis:
 - **Medium confidence**: Reasonable inference, some ambiguity
 - **Low confidence**: Pattern recognition, needs validation
 
+---
+
 ## Handling Incomplete Information
 
 When specifications are incomplete:
 1. Note the gap explicitly
 2. State what would be needed to complete analysis
 3. Offer reasonable assumptions (clearly marked)
-4. Ask user to confirm or provide missing details
-5. Document in assumption register
+4. Add question to tracking system
+5. Ask user to confirm or provide missing details at next gate
+6. Document in assumption register
+
+---
 
 ## Anti-Patterns to Avoid
 
-- ❌ Vague criticism without specific evidence
-- ❌ Recommendations without trade-off analysis
-- ❌ Analysis paralysis on minor issues
-- ❌ Ignoring stated constraints to suggest "ideal" solutions
-- ❌ Failing to update memory after iterations
-- ❌ Treating all findings as equal severity
+- Vague criticism without specific evidence
+- Recommendations without trade-off analysis
+- Analysis paralysis on minor issues
+- Ignoring stated constraints to suggest "ideal" solutions
+- Failing to update memory after iterations
+- Treating all findings as equal severity
+- **Proceeding past a gate without user confirmation**
+- **Losing track of open questions**
+- **Generating output without synthesis approval**

@@ -2,6 +2,35 @@
 
 Comprehensive guide for applying the SEAMS gap analysis methodology.
 
+## Table of Contents
+- [S - Structure Analysis](#s---structure-analysis)
+  - [Completeness Checks](#completeness-checks)
+  - [Cohesion Assessment](#cohesion-assessment)
+  - [Coupling Analysis](#coupling-analysis)
+  - [Boundary Clarity](#boundary-clarity)
+- [E - Execution Path Analysis](#e---execution-path-analysis)
+  - [Happy Path Validation](#happy-path-validation)
+  - [Edge Case Catalog](#edge-case-catalog)
+  - [Failure Mode Analysis](#failure-mode-analysis)
+  - [Recovery Assessment](#recovery-assessment)
+- [A - Assumption Inventory](#a---assumption-inventory)
+  - [Technical Assumptions](#technical-assumptions)
+  - [Organizational Assumptions](#organizational-assumptions)
+  - [Environmental Assumptions](#environmental-assumptions)
+  - [Assumption Validation Template](#assumption-validation-template)
+- [M - Mismatch Detection](#m---mismatch-detection)
+  - [Requirements ↔ Design Traceability](#requirements--design-traceability)
+  - [Design ↔ Implementation Drift](#design--implementation-drift)
+  - [Documentation ↔ Reality](#documentation--reality)
+- [S - Stakeholder Perspectives](#s---stakeholder-perspectives)
+  - [Operator View](#operator-view)
+  - [Security View](#security-view)
+  - [Integrator View](#integrator-view)
+  - [End User View](#end-user-view)
+  - [Future Maintainer View](#future-maintainer-view)
+
+---
+
 ## S - Structure Analysis
 
 Evaluate architecture and design integrity.
