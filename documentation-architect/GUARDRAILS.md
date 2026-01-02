@@ -2,7 +2,9 @@
 
 ## Purpose
 
-This document defines strict behavioral guardrails for the Documentation Architect skill. These guardrails prevent assumptions, ensure source grounding, maintain quality standards, and keep the user in control at every step.
+This document defines strict behavioral guardrails for the Documentation Architect skill. These guardrails prevent assumptions, ensure source grounding, maintain quality standards, keep the user in control at every step, and guarantee idempotent operations that are safe to run at any stage of a project.
+
+**Commands Covered**: `/docs.init`, `/docs.inventory`, `/docs.plan`, `/docs.generate`, `/docs.sync`, `/docs.analyze`, `/docs.readme`
 
 ---
 
@@ -153,16 +155,17 @@ This skill uses RFC 2119 terminology:
 - Do not skip questions based on inferred context
 - Record all responses for audit trail
 
-**Question Categories by Phase**:
+**Question Categories by Command**:
 
-| Phase | Required Question Types |
-|-------|------------------------|
-| Discovery | Audience, goals, constraints, success criteria |
-| Inventory | Source locations, access methods, priorities |
-| Analysis | Quality expectations, existing standards, stakeholders |
-| Planning | Timeline, effort constraints, tool preferences |
-| Execution | Review process, approval workflow, style guides |
-| Validation | Acceptance criteria, delivery format, maintenance plan |
+| Command | Required Question Types |
+|---------|------------------------|
+| `/docs.init` | Audience, goals, project type, existing structure |
+| `/docs.inventory` | Source locations, access methods, priorities |
+| `/docs.plan` | Quality expectations, timeline constraints, dependencies |
+| `/docs.generate` | Review process, approval workflow, style guides |
+| `/docs.sync` | Scope (full/incremental), component focus, update policy |
+| `/docs.analyze` | Strictness level, focus areas, output format |
+| `/docs.readme` | Version, changelog categories, custom sections |
 
 **Anti-Pattern**:
 ❌ "Based on the repository structure, I can see this is a developer-focused project..."
@@ -432,22 +435,74 @@ To resume this session, provide this state summary and say "resume documentation
 
 ---
 
+### 13. MANDATORY IDEMPOTENT OPERATIONS
+
+**Rule**: All commands MUST be safe to run at any stage of a project without causing harm.
+
+**Implementation**:
+- Check existing state before any modification
+- Skip existing files that match expected content
+- Preserve user customizations and manual edits
+- Never delete existing documentation
+- Offer update/regenerate/skip options for existing content
+
+**Idempotency Guarantees by Command**:
+
+| Command | Guarantee |
+|---------|-----------|
+| `/docs.init` | Skips existing directories, updates changed files only |
+| `/docs.inventory` | Re-scans all sources, adds new, never removes |
+| `/docs.plan` | Detects existing plan, offers update or regenerate |
+| `/docs.generate` | Preserves completed items, regenerates pending only |
+| `/docs.sync` | Always safe, produces comparison report, user chooses |
+| `/docs.analyze` | Read-only, never modifies any files |
+| `/docs.readme` | Proposes changes, creates backup, user approves |
+
+**Detection Before Modification**:
+```python
+# Pseudo-code for idempotency check
+if file_exists(target):
+    if content_matches(source, target):
+        skip("File unchanged")
+    elif has_manual_edits(target):
+        offer_options(["Keep existing", "Merge", "Overwrite (backup)"])
+    else:
+        offer_options(["Update", "Skip"])
+else:
+    create_file(target)
+```
+
+**Prohibited**:
+- Auto-overwriting existing files without user consent
+- Deleting existing documentation
+- Ignoring existing state during initialization
+- Assuming clean slate on any command run
+
+**Required**:
+- Check existing state at command start
+- Present current state summary before modifications
+- Offer explicit options when conflicts detected
+- Create backups before overwriting (if user chooses)
+
+---
+
 ## Enforcement Mechanisms
 
-### Phase Gates
+### Command Gates
 
-Each phase has a mandatory gate blocking progression:
+Each command has mandatory gates ensuring safe operation:
 
-| Phase | Gate Requirements |
-|-------|-------------------|
-| Discovery | User confirmed audience, goals, sources identified |
-| Inventory | All sources registered, token estimates complete |
-| Analysis | Diátaxis assessment complete, gaps identified |
-| Planning | WBS approved, chunking plan confirmed |
-| Execution | Each document passes review loop (see below) |
-| Validation | Quality thresholds met OR user override |
+| Command | Gate Requirements |
+|---------|-------------------|
+| `/docs.init` | Check existing state, confirm project type, user approves structure |
+| `/docs.inventory` | All sources registered, token estimates complete, coverage assessed |
+| `/docs.plan` | WBS approved, phases defined, chunking plan confirmed |
+| `/docs.generate` | Each document passes review loop (see below) |
+| `/docs.sync` | Discrepancy report presented, user selects update actions |
+| `/docs.analyze` | Read-only verification, stable IDs, report generated |
+| `/docs.readme` | Changes presented, user approves before writing |
 
-### Document Review Gate (Phase 5)
+### Document Review Gate (/docs.generate)
 
 EVERY document requires completion of the review loop:
 
