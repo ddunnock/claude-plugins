@@ -3,14 +3,9 @@ name: streaming-output
 description: >
   Stream long-form content to markdown files with resume capability. Writes content incrementally
   with section markers, enabling recovery if context limits are hit. Use when generating long
-  documents, reports, specifications, or any content that may exceed output limits.
+  documents (over 1000 lines), B-SPEC or specification writing, multi-section reports, any task where
+  context compaction may occur mid-generation, or when user explicitly requests streaming output.
   Commands: init, write, status, resume, finalize, repair.
-triggers:
-  - Long document generation (>1000 lines expected)
-  - B-SPEC or specification writing
-  - Multi-section reports
-  - Any task where context compaction may occur mid-generation
-  - User explicitly requests streaming output
 ---
 
 # Streaming Output
