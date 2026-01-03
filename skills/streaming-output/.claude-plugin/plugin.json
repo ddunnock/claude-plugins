@@ -1,5 +1,5 @@
 {
   "name": "streaming-output",
-  "description": "Handle streaming output patterns",
-  "version": "1.0.0"
+  "description": "Stream long-form content to markdown files with resume capability and context preservation",
+  "version": "2.1.0"
 }

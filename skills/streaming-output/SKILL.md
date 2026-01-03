@@ -379,8 +379,20 @@ Partial content here...
 
 **Recovery**:
 1. `/stream.status --verify` detects incomplete section
-2. `/stream.repair analysis` removes partial content
-3. `/stream.write analysis` regenerates the section
+2. `/stream.repair analysis` removes partial content **and preserves it as context**
+3. `/stream.status` shows the preserved context file with preview
+4. `/stream.write analysis` **continues** from where interrupted (don't restart!)
+
+**Context Preservation**:
+When repair runs, incomplete content is saved to a `.context` file:
+```
+report.analysis.context  # Contains the incomplete content
+```
+
+This allows Claude to:
+- Review what was being written
+- Continue coherently from where interrupted
+- Not waste tokens regenerating already-written content
 
 ### Scenario 2: Session ended between sections
 
@@ -510,6 +522,46 @@ Stream Progress: [document-name]
 
 ---
 
+## Context-Aware Resume
+
+When context compaction interrupts a section write, the system preserves your work:
+
+### Automatic Context Preservation
+
+1. **During repair**: Incomplete content is saved to `<file>.<section>.context`
+2. **On status check**: Context files are detected and previewed
+3. **When resuming**: Review the context file to continue coherently
+
+### Resume Workflow
+
+```bash
+# 1. Check status and see context
+python scripts/stream_status.py report.md
+
+# Output includes:
+# 📝 Context files (from previous incomplete writes):
+#    analysis: report.analysis.context (2847 bytes)
+#    Preview (last 500 chars):
+#    | The normalization formula uses...
+#    | This ensures that all criteria...
+
+# 2. Read the full context if needed
+cat report.analysis.context
+
+# 3. Continue writing (DON'T restart from scratch)
+# Your content should pick up where the context file ended
+```
+
+### Important: Continue, Don't Restart
+
+When a context file exists:
+- **DO**: Read it, understand where you left off, continue from that point
+- **DON'T**: Ignore it and regenerate the entire section from scratch
+
+This saves significant tokens and maintains coherence.
+
+---
+
 ## Best Practices
 
 1. **Plan sections upfront**: Define all sections before starting
@@ -520,6 +572,7 @@ Stream Progress: [document-name]
 6. **Use --verify flag**: Run `/stream.status --verify` after resuming
 7. **Never skip repair**: If corruption is detected, repair before continuing
 8. **Use templates**: For known document types like B-SPECs, use built-in templates
+9. **Review context files**: When resuming, always check for and use `.context` files
 
 ---
 
@@ -575,6 +628,13 @@ Run any script with `--help` for detailed options.
 ---
 
 ## Changelog
+
+### v2.1 (2026-01-03)
+- **Context preservation on repair**: Incomplete content now saved to `.context` files
+- **Context-aware status**: Status command shows context files with previews
+- **Resume guidance**: Clear instructions to continue from context, not restart
+- Added "Context-Aware Resume" section with workflow guidance
+- Updated recovery scenarios to emphasize context preservation
 
 ### v2.0 (2026-01-03)
 - Added `/stream.repair` command for fixing corrupted sections

@@ -108,7 +108,7 @@ def find_section_markers(content: str, section_id: str) -> dict:
 
 
 def repair_section(filepath: str, section_id: str, strategy: str = 'remove',
-                   dry_run: bool = False) -> dict:
+                   dry_run: bool = False, preserve_context: bool = True) -> dict:
     """Repair a corrupted section.
 
     Args:
@@ -116,6 +116,7 @@ def repair_section(filepath: str, section_id: str, strategy: str = 'remove',
         section_id: ID of the section to repair
         strategy: Repair strategy (remove, complete, backup)
         dry_run: If True, don't make changes, just report what would happen
+        preserve_context: If True, save incomplete content to .context file for resume
 
     Returns:
         Dictionary with repair results
@@ -189,6 +190,17 @@ def repair_section(filepath: str, section_id: str, strategy: str = 'remove',
             start_pos = markers['start_pos']
             end_pos = markers['partial_end_pos']
             removed_content = content[start_pos:end_pos]
+            
+            # Extract just the content (without the START marker) for context
+            partial_content = markers.get('partial_content', '')
+            
+            # Preserve incomplete content for resume context
+            if preserve_context and partial_content and not dry_run:
+                context_path = path.with_suffix(f'.{section_id}.context')
+                context_path.write_text(partial_content.strip())
+                result['context_path'] = str(context_path)
+                result['changes'].append(f'Preserved incomplete content to: {context_path}')
+            
             new_content = content[:start_pos] + content[end_pos:]
 
             result['removed_chars'] = len(removed_content)
@@ -308,8 +320,18 @@ def print_result(result: dict):
     if result.get('message'):
         print(f"\n{result['message']}")
 
+    # Show context file info for resume
+    if result.get('context_path'):
+        print(f"\n📝 Incomplete content preserved for context:")
+        print(f"   {result['context_path']}")
+        print(f"\n   To view before resuming:")
+        print(f"   cat {result['context_path']}")
+        print(f"\n   Continue from where you left off - don't start over!")
+
     if result['action'] != 'none':
-        print(f"\nReady to regenerate: /stream.write {result['section_id']}")
+        print(f"\nReady to continue: /stream.write {result['section_id']}")
+        if result.get('context_path'):
+            print(f"(Review the .context file first to continue coherently)")
 
 
 def main():

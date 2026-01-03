@@ -84,6 +84,28 @@ def check_markers(content: str, sections: list[dict]) -> list[dict]:
     return result
 
 
+def find_context_files(filepath: str, sections: list[dict]) -> dict:
+    """Find any .context files for sections.
+    
+    Returns:
+        Dictionary mapping section_id to context file path
+    """
+    path = Path(filepath)
+    context_files = {}
+    
+    for section in sections:
+        section_id = section['id']
+        context_path = path.with_suffix(f'.{section_id}.context')
+        if context_path.exists():
+            context_files[section_id] = {
+                'path': str(context_path),
+                'size': context_path.stat().st_size,
+                'preview': context_path.read_text()[-500:] if context_path.stat().st_size > 0 else ''
+            }
+    
+    return context_files
+
+
 def get_status(filepath: str) -> dict:
     """Get comprehensive status of a streaming file.
 
@@ -110,6 +132,9 @@ def get_status(filepath: str) -> dict:
 
     sections = frontmatter['stream_plan'].get('sections', [])
     sections_with_markers = check_markers(content, sections)
+    
+    # Check for context files (preserved incomplete content)
+    context_files = find_context_files(filepath, sections)
 
     # Calculate stats
     completed = sum(1 for s in sections_with_markers if s['status'] == 'completed')
@@ -142,7 +167,8 @@ def get_status(filepath: str) -> dict:
         'resume_section': resume_section,
         'has_incomplete': incomplete > 0,
         'is_complete': pending == 0 and incomplete == 0,
-        'created': frontmatter['stream_plan'].get('created')
+        'created': frontmatter['stream_plan'].get('created'),
+        'context_files': context_files
     }
 
 
@@ -179,10 +205,24 @@ def print_status(status: dict):
         print("\n!! Found incomplete section (partial write).")
         print("   Delete the partial content, then resume.")
 
+    # Show context files if they exist
+    context_files = status.get('context_files', {})
+    if context_files:
+        print("\n📝 Context files (from previous incomplete writes):")
+        for section_id, info in context_files.items():
+            print(f"   {section_id}: {info['path']} ({info['size']} bytes)")
+            if info.get('preview'):
+                print(f"\n   Preview (last 500 chars):")
+                for line in info['preview'].splitlines()[-10:]:
+                    print(f"   | {line[:80]}")
+        print("\n   ⚠️  Review context before writing - continue where you left off!")
+
     if status['is_complete']:
         print("\nAll sections complete! Run 'stream.finalize' to finish.")
     elif status['resume_section']:
         print(f"\nNext section: {status['resume_section']}")
+        if status['resume_section'] in context_files:
+            print(f"   (Has context file - continue from where interrupted, don't restart)")
 
 
 def main():
