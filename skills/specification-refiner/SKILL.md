@@ -20,7 +20,8 @@ Systematically analyze and refine specifications, requirements, and architectura
 3. PRESENT    → Surface detailed findings, manage questions with user
 4. ITERATE    → Accept changes, re-analyze, present deltas
 5. SYNTHESIZE → Present comprehensive summary for user approval
-6. OUTPUT     → Generate refined specification(s) based on mode
+6. OUTPUT     → Generate refined specification(s) in Draft status
+7. VALIDATE   → Review, validate traceability, advance status
 ```
 
 Each phase ends with a **full summary gate** requiring user confirmation before proceeding.
@@ -61,8 +62,14 @@ Options:
 Your choice:
 ```
 
-**SIMPLE Mode**: Single-domain, <10 pages, clear scope → SEAMS analysis, single output document
-**COMPLEX Mode**: Multi-domain, >10 pages, ambiguous scope → Full dual-framework analysis, separate output files per domain
+**SIMPLE Mode**: Single-domain, <10 pages, clear scope
+- SEAMS analysis only
+- Single A-Spec output with numbered requirements (`A-REQ-NNN`)
+
+**COMPLEX Mode**: Multi-domain, >10 pages, ambiguous scope
+- Full dual-framework analysis (SEAMS + Critical Path)
+- A-Spec/B-Spec hierarchy per domain (see `references/spec-hierarchy.md`)
+- Requirements Traceability Matrix generation
 
 ### Phase 0 Gate
 
@@ -200,30 +207,102 @@ Offer options: (1) Approve and output, (2) Return to iterate, (3) Modify structu
 
 ## Phase 6: OUTPUT
 
-Generate refined specification(s) based on mode.
+Generate refined specification(s) based on mode, all in **Draft** status.
 
 ### SIMPLE Mode Output
-Generate single refined specification document incorporating:
-- All resolved findings
-- Selected remediations
+Generate single A-Spec document (`refined-specification.md`) with:
+- Numbered requirements (`A-REQ-001`, `A-REQ-002`, etc.)
+- All resolved findings incorporated
+- Selected remediations applied
 - Documented assumptions
-- Remaining open questions (in dedicated section)
+- Remaining open questions in dedicated section
 
 ### COMPLEX Mode Output
-Generate separate files per domain:
-- `[domain-1]-spec.md`
-- `[domain-2]-spec.md`
+Generate specification hierarchy per domain:
+
+**A-Spec files** (one per domain):
+- Naming: `[domain]-a-spec.md`
+- Requirements: `A-REQ-[DOMAIN]-NNN`
+- High-level requirements defining WHAT
+
+**B-Spec files** (one or more per domain):
+- Naming: `[domain]-[subsystem]-b-spec.md`
+- Requirements: `B-REQ-[DOMAIN]-NNN`
+- Each requirement MUST include `Traces to: A-REQ-XXX-NNN`
+- Detailed requirements defining HOW
+
+**Supporting files**:
+- `traceability-matrix.md` - Full RTM (see `assets/traceability-matrix-template.md`)
 - `cross-cutting-concerns.md` (if applicable)
-- `open-items.md` (consolidated questions and unresolved findings)
+- `open-items.md`
+
+See `references/spec-hierarchy.md` for detailed format specifications.
+
+### RTM Generation (COMPLEX mode)
+1. Extract all A-REQ-* from A-Spec files
+2. Extract all B-REQ-* from B-Spec files with their traces
+3. Build coverage matrix
+4. Calculate coverage percentage
+5. Identify gaps (A-Reqs with no B-Req coverage)
+6. Generate `traceability-matrix.md`
+7. Update `analysis-state.md` with RTM summary
 
 ### Final Actions
-1. Update `analysis-state.md` with completion status
-2. Present output files to user
-3. Summarize what was generated
+1. Set all specification statuses to **Draft**
+2. Update `analysis-state.md` with completion status and RTM summary
+3. Present output files to user
+4. Summarize what was generated
+5. Prompt transition to Phase 7
 
 ### Phase 6 Completion
 
-Present: files created (based on mode), analysis state saved, summary of findings addressed, assumptions documented, and open items. See `references/gate-templates.md` for format.
+Present: mode, files created with requirement counts, RTM summary (COMPLEX mode), findings addressed, assumptions documented. Prompt user to proceed to Phase 7. See `references/gate-templates.md` for format.
+
+---
+
+## Phase 7: VALIDATE
+
+Final review and validation phase ensuring specifications are comprehensive, traceable, and approved. **Mandatory for both SIMPLE and COMPLEX modes.**
+
+### Status Workflow
+Specifications progress through statuses:
+```
+Draft → Reviewed → Approved → Baselined
+```
+
+- **Draft**: Initial output from Phase 6 (automatic)
+- **Reviewed**: Technical review complete, no critical gaps
+- **Approved**: Stakeholder sign-off received
+- **Baselined**: Locked for change control
+
+### Validation Actions
+1. **Completeness check**: All required sections present, cross-references valid
+2. **RTM validation** (COMPLEX): Coverage percentage, gap identification
+3. **Traceability check** (COMPLEX): All B-Reqs trace to A-Reqs
+4. **Consistency check**: Terminology, formatting, priority scales aligned
+5. **Present validation findings** with severity
+
+### Status Advancement
+- Require explicit user approval to advance status
+- Document status change with timestamp and approver
+- Update `analysis-state.md` with new status and history
+
+### Advancement Criteria
+| Transition | Requirements |
+|------------|--------------|
+| Draft → Reviewed | No critical RTM gaps, completeness checks pass |
+| Reviewed → Approved | All high-priority issues resolved, stakeholder review |
+| Approved → Baselined | Formal approval documented, change control established |
+
+### Phase 7 Gate
+Present validation summary with:
+- Current status and proposed advancement
+- RTM coverage metrics (COMPLEX mode)
+- Completeness and consistency checklist
+- Validation findings
+- Options: advance status, return to fix issues, review details
+
+See `references/gate-templates.md` for full template.
 
 ---
 
@@ -340,3 +419,7 @@ When specifications are incomplete:
 - **Proceeding past a gate without user confirmation**
 - **Losing track of open questions**
 - **Generating output without synthesis approval**
+- **Generating B-Specs without traces to A-Specs**
+- **Skipping RTM generation for COMPLEX mode**
+- **Advancing status without validation**
+- **Baselining specs with unresolved critical gaps**

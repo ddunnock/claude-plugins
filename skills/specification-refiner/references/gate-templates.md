@@ -10,6 +10,7 @@ Detailed templates for each phase gate. Use these exact formats when presenting 
 - [Phase 4: ITERATE Gate](#phase-4-iterate-gate)
 - [Phase 5: SYNTHESIZE Gate](#phase-5-synthesize-gate)
 - [Phase 6: OUTPUT Completion](#phase-6-output-completion)
+- [Phase 7: VALIDATE Gate](#phase-7-validate-gate)
 
 ---
 
@@ -250,13 +251,34 @@ Your choice:
 ```
 PHASE 6 COMPLETE: OUTPUT GENERATED
 
-Files created:
-[For SIMPLE]: refined-specification.md
+Mode: [SIMPLE/COMPLEX]
+All specifications generated with status: **Draft**
+
+=== FILES CREATED ===
+
+[For SIMPLE]:
+- refined-specification.md (A-Spec with [N] requirements)
+
 [For COMPLEX]:
-- domain-1-spec.md
-- domain-2-spec.md
+A-Spec files:
+- [domain1]-a-spec.md ([N] requirements)
+- [domain2]-a-spec.md ([N] requirements)
+
+B-Spec files:
+- [domain1]-[subsystem1]-b-spec.md ([N] requirements)
+- [domain1]-[subsystem2]-b-spec.md ([N] requirements)
+- [domain2]-[subsystem1]-b-spec.md ([N] requirements)
+
+Supporting files:
+- traceability-matrix.md
 - cross-cutting-concerns.md (if applicable)
 - open-items.md
+
+=== RTM SUMMARY === (COMPLEX mode)
+- A-Spec requirements: [count]
+- B-Spec requirements: [count]
+- Coverage: [X]%
+- Gaps identified: [count]
 
 Analysis state saved to: analysis-state.md
 
@@ -265,7 +287,138 @@ Summary:
 - Assumptions documented: [count]
 - Open items for future: [count]
 
-The refined specification(s) are ready for review.
+Ready to proceed to Phase 7 (VALIDATE) for final review and status advancement?
+```
+
+---
+
+## Phase 7: VALIDATE Gate
+
+### Validation Summary Template
+
+```
+PHASE 7: VALIDATION SUMMARY
+
+=== SPECIFICATION STATUS ===
+Current status: [Draft | Reviewed | Approved | Baselined]
+
+Status by specification:
+| Specification | Type | Status |
+|---------------|------|--------|
+| [spec-name] | A-Spec | [status] |
+| [spec-name] | B-Spec | [status] |
+
+Status history:
+- Draft: [timestamp] - Generated in Phase 6
+- [Subsequent status changes with timestamps and approvers]
+
+=== TRACEABILITY VALIDATION === (COMPLEX mode)
+A-Spec requirements: [count]
+B-Spec requirements: [count]
+Coverage: [X]%
+
+Coverage breakdown:
+| Category | Count | Percentage |
+|----------|-------|------------|
+| Fully covered | [count] | [X]% |
+| Partially covered | [count] | [X]% |
+| Not covered (GAP) | [count] | [X]% |
+
+Gaps identified:
+[List A-Spec requirements with no/partial B-Spec coverage]
+
+=== COMPLETENESS CHECK ===
+- [ ] All required sections present
+- [ ] Cross-references valid
+- [ ] Assumptions documented
+- [ ] Open items captured
+- [ ] Requirement IDs consistent
+- [ ] Traces verified (COMPLEX mode)
+
+Issues found: [count]
+[List any completeness issues]
+
+=== CONSISTENCY CHECK ===
+- [ ] Terminology consistent across specs
+- [ ] Formatting consistent
+- [ ] Priority/severity scales aligned
+- [ ] No conflicting requirements
+
+Issues found: [count]
+[List any consistency issues]
+
+=== VALIDATION FINDINGS ===
+Critical issues: [count]
+[List any blocking issues that prevent status advancement]
+
+Recommendations: [count]
+[List suggested improvements]
+
+=== STATUS ADVANCEMENT ===
+Current status: [status]
+Eligible for: [next status]
+
+Requirements for advancement:
+[For Draft → Reviewed]:
+- No critical gaps in RTM coverage
+- All completeness checks pass
+- Technical review completed
+
+[For Reviewed → Approved]:
+- All high-priority issues resolved
+- Stakeholder review completed
+- No outstanding blockers
+
+[For Approved → Baselined]:
+- Formal approval documented
+- Change control process established
+- All specs finalized
+
+Options:
+1. Advance status to [next status]
+2. Return to Phase 6 to regenerate specs
+3. Return to Phase 4 to iterate on findings
+4. Review specific findings in detail
+5. Export validation report
+
+Your choice:
+```
+
+### Status Change Confirmation
+
+```
+STATUS CHANGE CONFIRMATION
+
+Changing status:
+- Specification(s): [list]
+- From: [current status]
+- To: [new status]
+- Reason: [user-provided or default reason]
+- Approved by: [user identifier]
+- Timestamp: [date/time]
+
+Confirm status change? (Yes/No)
+```
+
+### Validation Complete Template
+
+```
+PHASE 7 COMPLETE: VALIDATION FINISHED
+
+Final specification status: [Reviewed | Approved | Baselined]
+
+Specifications:
+[List all specs with final status]
+
+RTM Coverage: [X]% (COMPLEX mode)
+Validation findings addressed: [count]
+
+Analysis complete. Specifications are [status] and ready for [next step based on status].
+
+Output files:
+- Specifications: [list]
+- Traceability matrix: traceability-matrix.md (COMPLEX mode)
+- Analysis state: analysis-state.md
 ```
 
 ---

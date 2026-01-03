@@ -18,8 +18,29 @@
 | 1 | [DATE] | ASSESS | Initial analysis | Mode selected: [MODE] |
 
 ## Current Phase
-- **Phase**: [0:ASSESS | 1:INGEST | 2:ANALYZE | 3:PRESENT | 4:ITERATE | 5:SYNTHESIZE | 6:OUTPUT]
+- **Phase**: [0:ASSESS | 1:INGEST | 2:ANALYZE | 3:PRESENT | 4:ITERATE | 5:SYNTHESIZE | 6:OUTPUT | 7:VALIDATE]
 - **Status**: [In Progress | Awaiting User Confirmation | Complete]
+
+---
+
+## Specification Status
+
+### Status Definitions
+- **Draft**: Initial output from Phase 6, pending review
+- **Reviewed**: Technical review complete, no major gaps
+- **Approved**: Stakeholder sign-off received
+- **Baselined**: Locked for change control
+
+### Current Spec Status
+| Specification | Type | Status | Last Changed | Changed By |
+|---------------|------|--------|--------------|------------|
+| [spec-name] | A-Spec | Draft | [date] | Phase 6 |
+| [spec-name] | B-Spec | Draft | [date] | Phase 6 |
+
+### Status History
+| Date | Specification | From | To | Reason | Approved By |
+|------|---------------|------|-----|--------|-------------|
+| [date] | [spec-name] | Draft | Reviewed | [reason] | [user] |
 
 ---
 
@@ -109,15 +130,44 @@
 
 ---
 
+## Requirements Traceability Summary
+
+### Coverage Metrics
+| Metric | Value |
+|--------|-------|
+| Total A-Spec Requirements | [count] |
+| Total B-Spec Requirements | [count] |
+| Coverage Percentage | [X]% |
+| Fully Covered A-Reqs | [count] |
+| Partially Covered A-Reqs | [count] |
+| Uncovered A-Reqs (GAPS) | [count] |
+
+### Gap Summary
+<!-- A-Spec requirements with no B-Spec coverage -->
+| A-Spec Requirement | Gap Status | Impact | Notes |
+|--------------------|------------|--------|-------|
+| A-REQ-XXX-001 | No coverage | [High/Med/Low] | [reason/plan] |
+
+### Traceability Notes
+<!-- Key observations about requirement coverage -->
+
+---
+
 ## Output Structure (Phase 5+)
 
 ### SIMPLE Mode
-- Single output: `refined-specification.md`
+- Single A-Spec output: `refined-specification.md`
+- Requirements format: `A-REQ-NNN`
+- Status: Draft (initial), progresses through validation
 
 ### COMPLEX Mode
-- Domain specifications: [List planned files]
+- A-Spec files: [List planned A-Spec files by domain]
+- B-Spec files: [List planned B-Spec files by subsystem]
+- Requirements format: `A-REQ-[DOMAIN]-NNN`, `B-REQ-[DOMAIN]-NNN`
+- Traceability: `traceability-matrix.md`
 - Cross-cutting: `cross-cutting-concerns.md` (if applicable)
 - Open items: `open-items.md`
+- All specs status: Draft (initial), progresses through validation
 
 ---
 
