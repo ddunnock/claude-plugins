@@ -60,3 +60,47 @@ User can override detection.
 - Detects existing plans
 - Offers update or regenerate
 - Preserves manual edits with warning
+
+---
+
+## GATE: Required Before Proceeding
+
+**STOP after plan generation. DO NOT proceed to `/speckit.tasks` automatically.**
+
+After generating plans, you MUST:
+
+1. **Present a plan summary** to the user showing:
+   - Number of plans created (master + domain plans if complex)
+   - Key architectural decisions made
+   - Any assumptions or open questions identified
+
+2. **Recommend next steps**:
+   - Run `/speckit.analyze` to check plan compliance with constitution.md
+   - Run `/speckit.clarify` if any `[TBD]` or `[NEEDS CLARIFICATION]` items exist
+   - Review plans manually before approval
+
+3. **Wait for explicit user approval** before proceeding to tasks
+
+### Gate Response Template
+
+```
+## Plan Generation Complete
+
+Created [N] plan(s):
+- plan.md (master plan)
+- plans/domain-a-plan.md
+- [etc.]
+
+### Key Decisions
+- [List major architectural/approach decisions]
+
+### Open Questions
+- [Any [TBD] items or ambiguities found]
+
+### Recommended Next Steps
+1. Review the generated plan(s)
+2. Run `/speckit.analyze` to validate compliance
+3. Run `/speckit.clarify` to resolve open questions
+
+**Awaiting your approval before generating tasks.**
+```

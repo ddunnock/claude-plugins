@@ -1,5 +1,5 @@
 {
   "name": "speckit-generator",
-  "description": "Generate automation packages from requirements",
-  "version": "1.0.0"
+  "description": "Project-focused specification and task management with mandatory approval gates",
+  "version": "1.1.0"
 }

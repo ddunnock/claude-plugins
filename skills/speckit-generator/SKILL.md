@@ -1,12 +1,12 @@
 ---
 name: speckit-generator
 description: >
-  Project-focused specification and task management system with 6 core commands.
-  Use when the user wants to initialize project infrastructure, create plans from specs,
-  generate tasks from plans, analyze project consistency, clarify ambiguities, or
-  execute implementation tasks. Triggers on: /speckit.init, /speckit.plan, /speckit.tasks,
-  /speckit.analyze, /speckit.clarify, /speckit.implement, or mentions of project setup,
-  spec-to-plan workflows, task generation, or spec-kit.
+  Project-focused specification and task management system with 6 individual commands.
+  Each command MUST be invoked separately and requires user approval before proceeding.
+  Commands: /speckit.init, /speckit.plan, /speckit.tasks, /speckit.analyze, /speckit.clarify,
+  /speckit.implement. NEVER chain commands automatically - each produces output that
+  requires user review. Use /speckit.plan when user wants to create plans from specs.
+  Use /speckit.tasks only AFTER user has approved plans.
 ---
 
 # SpecKit Generator
@@ -14,6 +14,7 @@ description: >
 Project-focused specification management with 6 commands that work together to transform specifications into executed implementations.
 
 ## Table of Contents
+- [Critical Workflow Rules](#critical-workflow-rules)
 - [Overview](#overview)
 - [Commands](#commands)
 - [Command: init](#command-init)
@@ -24,6 +25,65 @@ Project-focused specification management with 6 commands that work together to t
 - [Command: implement](#command-implement)
 - [Memory File System](#memory-file-system)
 - [Idempotency](#idempotency)
+
+---
+
+## Critical Workflow Rules
+
+**MANDATORY: Commands must NOT be chained automatically.**
+
+Each command produces artifacts that require user review and approval before proceeding to the next phase. This is not optional.
+
+### Required Gates
+
+| After Command | MUST DO | Before Proceeding To |
+|---------------|---------|---------------------|
+| `/speckit.init` | Present created structure, confirm memory files | Any other command |
+| `/speckit.plan` | Present plan summary, wait for explicit approval | `/speckit.tasks` |
+| `/speckit.tasks` | Present task summary, wait for explicit approval | `/speckit.implement` |
+
+### Recommended Workflow
+
+```
+/speckit.init
+    ↓ [User reviews structure]
+/speckit.plan
+    ↓ [User reviews plan]
+/speckit.analyze ← Run BEFORE approving plan
+    ↓ [Address any CRITICAL/HIGH findings]
+/speckit.clarify ← Run if [TBD] items exist
+    ↓ [User approves final plan]
+/speckit.tasks
+    ↓ [User reviews tasks]
+/speckit.implement
+```
+
+### What NOT To Do
+
+- ❌ Run `/speckit.plan` then immediately `/speckit.tasks` without user approval
+- ❌ Generate all artifacts in one session without checkpoints
+- ❌ Skip `/speckit.analyze` before plan approval
+- ❌ Proceed past a GATE without explicit user confirmation
+
+### Gate Response Format
+
+After completing a command, present results in this format:
+
+```
+## [Command] Complete
+
+[Summary of what was created/modified]
+
+### Artifacts Created
+- [list of files]
+
+### Recommended Next Steps
+1. Review the [artifacts] above
+2. Run `/speckit.analyze` to check compliance (if applicable)
+3. Run `/speckit.clarify` to resolve any [TBD] items (if applicable)
+
+**Awaiting your approval before proceeding.**
+```
 
 ---
 

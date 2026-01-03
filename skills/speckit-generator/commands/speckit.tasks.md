@@ -46,3 +46,53 @@ Generate implementation tasks from plans + constitution + memory files.
 - Preserves task statuses
 - Adds new tasks for new plan items
 - Never removes manually added tasks
+
+---
+
+## GATE: Required Before Proceeding
+
+**STOP after task generation. DO NOT proceed to `/speckit.implement` automatically.**
+
+After generating tasks, you MUST:
+
+1. **Present a task summary** to the user showing:
+   - Total number of tasks generated
+   - Breakdown by phase
+   - Task priority distribution (P1/P2/P3)
+   - Constitution sections referenced
+
+2. **Highlight any concerns**:
+   - Tasks with unclear acceptance criteria
+   - Dependencies that may cause blocking
+   - Tasks that may need clarification
+
+3. **Wait for explicit user approval** before implementation
+
+### Gate Response Template
+
+```
+## Task Generation Complete
+
+Generated [N] tasks across [M] phases:
+
+| Phase | Tasks | P1 | P2 | P3 |
+|-------|-------|----|----|----|
+| Phase 1: Foundation | 5 | 3 | 2 | 0 |
+| [etc.] |
+
+### Constitution Coverage
+- §4.1 (Error Handling): 8 tasks
+- §4.2 (Logging): 5 tasks
+- [etc.]
+
+### Potential Concerns
+- [Any blocking dependencies]
+- [Tasks needing clarification]
+
+### Recommended Next Steps
+1. Review the generated tasks
+2. Adjust priorities if needed
+3. Resolve any blocking dependencies
+
+**Awaiting your approval before implementation.**
+```

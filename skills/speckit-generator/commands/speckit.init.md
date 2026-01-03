@@ -45,3 +45,59 @@ Establish the `.claude/` foundation with appropriate memory files for the projec
 - Skips existing directories
 - Updates changed memory files only
 - Preserves project customizations
+
+---
+
+## GATE: Required Before Proceeding
+
+**STOP after initialization. Present results and confirm before proceeding.**
+
+After initialization, you MUST:
+
+1. **Present the created structure** showing:
+   - Directories created
+   - Memory files installed
+   - Detected tech stack
+
+2. **Confirm memory file selection** is appropriate:
+   - List universal files (always included)
+   - List tech-specific files (based on detection)
+   - Ask if any adjustments needed
+
+3. **Wait for user confirmation** before proceeding to other commands
+
+### Gate Response Template
+
+```
+## Initialization Complete
+
+### Directory Structure Created
+.claude/
+├── commands/
+├── memory/
+├── resources/
+├── templates/
+└── scripts/
+
+### Detected Tech Stack
+- [Languages detected]
+- [Frameworks detected]
+
+### Memory Files Installed
+**Universal:**
+- constitution.md
+- documentation.md
+- git-cicd.md
+- security.md
+- testing.md
+
+**Tech-Specific:**
+- [Based on detection]
+
+### Next Steps
+1. Review the memory files for your project needs
+2. Add specifications to .claude/resources/
+3. Run `/speckit.plan` when specs are ready
+
+**Is this configuration correct, or would you like to adjust the memory files?**
+```

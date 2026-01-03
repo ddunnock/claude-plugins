@@ -5,16 +5,34 @@ Skill Packager - Creates a distributable .skill file of a skill folder
 Usage:
     python utils/package_skill.py <path/to/skill-folder> [output-directory]
 
+Output defaults to the 'dist/' directory relative to the repository root.
+
 Example:
     python utils/package_skill.py skills/public/my-skill
-    python utils/package_skill.py skills/public/my-skill ./dist
+    python utils/package_skill.py skills/public/my-skill ./custom-output
 """
 
+import subprocess
 import sys
 import zipfile
 from pathlib import Path
 
 from quick_validate import validate_skill
+
+
+def get_repo_root():
+    """Get the root directory of the git repository."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return Path(result.stdout.strip())
+    except subprocess.CalledProcessError:
+        # Not in a git repo, fall back to current directory
+        return Path.cwd()
 
 
 def package_skill(skill_path, output_dir=None):
@@ -54,13 +72,14 @@ def package_skill(skill_path, output_dir=None):
         return None
     print(f"{message}\n")
 
-    # Determine output location
+    # Determine output location (default to dist/ in repo root)
     skill_name = skill_path.name
     if output_dir:
         output_path = Path(output_dir).resolve()
-        output_path.mkdir(parents=True, exist_ok=True)
     else:
-        output_path = Path.cwd()
+        output_path = get_repo_root() / "dist"
+
+    output_path.mkdir(parents=True, exist_ok=True)
 
     skill_filename = output_path / f"{skill_name}.skill"
 
@@ -88,9 +107,10 @@ def main():
         print(
             "Usage: python utils/package_skill.py <path/to/skill-folder> [output-directory]"
         )
+        print("\nOutput defaults to 'dist/' in the repository root.")
         print("\nExample:")
         print("  python utils/package_skill.py skills/public/my-skill")
-        print("  python utils/package_skill.py skills/public/my-skill ./dist")
+        print("  python utils/package_skill.py skills/public/my-skill ./custom-output")
         sys.exit(1)
 
     skill_path = sys.argv[1]
@@ -99,6 +119,8 @@ def main():
     print(f"Packaging skill: {skill_path}")
     if output_dir:
         print(f"   Output directory: {output_dir}")
+    else:
+        print(f"   Output directory: dist/ (default)")
     print()
 
     result = package_skill(skill_path, output_dir)
