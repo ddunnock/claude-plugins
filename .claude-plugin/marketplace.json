@@ -1,0 +1,46 @@
+{
+  "name": "dunnock-plugins",
+  "owner": {
+    "name": "dunnock"
+  },
+  "metadata": {
+    "description": "A collection of plugins that extend Claude's capabilities"
+  },
+  "plugins": [
+    {
+      "name": "documentation-architect",
+      "source": "./skills/documentation-architect",
+      "description": "Transform documentation using the Diátaxis framework"
+    },
+    {
+      "name": "research-opportunity-investigator",
+      "source": "./skills/research-opportunity-investigator",
+      "description": "Research and opportunity investigation for protocols"
+    },
+    {
+      "name": "specification-refiner",
+      "source": "./skills/specification-refiner",
+      "description": "Refine and improve specifications"
+    },
+    {
+      "name": "speckit-generator",
+      "source": "./skills/speckit-generator",
+      "description": "Generate automation packages from requirements"
+    },
+    {
+      "name": "streaming-output",
+      "source": "./skills/streaming-output",
+      "description": "Handle streaming output patterns"
+    },
+    {
+      "name": "trade-study-analysis",
+      "source": "./skills/trade-study-analysis",
+      "description": "Systematic trade study using DAU 9-Step Process"
+    },
+    {
+      "name": "session-memory",
+      "source": "./mcps/session-memory",
+      "description": "Persistent session memory with searchable storage and checkpoints"
+    }
+  ]
+}

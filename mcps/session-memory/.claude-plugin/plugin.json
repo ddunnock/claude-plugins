@@ -1,0 +1,5 @@
+{
+  "name": "session-memory",
+  "description": "Persistent session memory with searchable storage and checkpoints",
+  "version": "1.0.0"
+}

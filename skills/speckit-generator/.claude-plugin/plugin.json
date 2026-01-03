@@ -1,0 +1,5 @@
+{
+  "name": "speckit-generator",
+  "description": "Generate automation packages from requirements",
+  "version": "1.0.0"
+}
