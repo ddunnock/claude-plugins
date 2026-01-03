@@ -1,0 +1,8 @@
+{
+  "auto_checkpoint_interval_minutes": 5,
+  "auto_checkpoint_max_count": 10,
+  "events_file": "storage/events.jsonl",
+  "index_file": "storage/index.sqlite",
+  "checkpoints_dir": "storage/checkpoints",
+  "handoffs_dir": "handoffs"
+}

@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "claude-plugins",
+  "description": "A collection of plugins that extend Claude's capabilities",
+  "version": "1.0.0",
+  "plugins": {
+    "skills": [
+      {
+        "name": "documentation-architect",
+        "path": "skills/documentation-architect",
+        "description": "Transform documentation using the Diátaxis framework"
+      },
+      {
+        "name": "research-opportunity-investigator",
+        "path": "skills/research-opportunity-investigator",
+        "description": "Research and opportunity investigation for protocols"
+      },
+      {
+        "name": "specification-refiner",
+        "path": "skills/specification-refiner",
+        "description": "Refine and improve specifications"
+      },
+      {
+        "name": "speckit-generator",
+        "path": "skills/speckit-generator",
+        "description": "Generate automation packages from requirements"
+      },
+      {
+        "name": "streaming-output",
+        "path": "skills/streaming-output",
+        "description": "Handle streaming output patterns"
+      },
+      {
+        "name": "trade-study-analysis",
+        "path": "skills/trade-study-analysis",
+        "description": "Systematic trade study using DAU 9-Step Process"
+      }
+    ],
+    "mcps": [
+      {
+        "name": "session-memory",
+        "path": "mcps/session-memory",
+        "description": "Persistent session memory with searchable storage and checkpoints"
+      }
+    ]
+  }
+}

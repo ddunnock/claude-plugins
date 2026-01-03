@@ -6,7 +6,6 @@ __pycache__/
 .Python
 *.egg-info/
 .eggs/
-dist/
 build/
 
 # Virtual environments
@@ -29,3 +28,16 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Plugin distribution
+/dist/
+*.plugin
+
+# MCP runtime storage
+mcps/*/storage/
+mcps/*/handoffs/
+
+# Local development only
+/_references/
+/_examples/
+/.claude/
