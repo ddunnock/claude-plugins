@@ -1,5 +1,11 @@
 {
   "name": "session-memory",
   "description": "Persistent session memory with searchable storage and checkpoints",
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "mcpServers": {
+    "session-memory": {
+      "command": "python3",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/server.py"]
+    }
+  }
 }
