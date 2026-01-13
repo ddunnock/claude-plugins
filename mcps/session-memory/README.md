@@ -12,10 +12,17 @@ Persistent session memory for Claude Desktop that survives context limits and se
 
 ## Installation
 
+### Via Claude Code Plugin Marketplace (Recommended)
+
+1. Enable the plugin in Claude Code settings
+2. The MCP server is automatically configured
+
+### Manual Installation
+
 1. Ensure Python 3.10+ is installed
-2. Install MCP SDK:
+2. Install dependencies:
    ```bash
-   pip install mcp
+   pip install -r requirements.txt
    ```
 
 3. Add to Claude Desktop configuration (`~/.config/claude/claude_desktop_config.json` or similar):
@@ -31,6 +38,39 @@ Persistent session memory for Claude Desktop that survives context limits and se
    ```
 
 4. Restart Claude Desktop
+
+## Environment Variables
+
+The server automatically loads environment variables from `.env` files (requires `python-dotenv`):
+
+| Priority | Location | Use Case |
+|----------|----------|----------|
+| 1 (highest) | Explicit env vars | CI/CD, MCP config `env` block |
+| 2 | Project `.env` | Project-specific overrides |
+| 3 (lowest) | `~/.claude/.env` | Global defaults |
+
+### Supported Variables
+
+```bash
+# OpenAI - for semantic search embeddings (optional)
+OPENAI_API_KEY=sk-your-key
+
+# Cloudflare - for cloud sync (optional)
+CF_ACCOUNT_ID=your-account-id
+CF_API_TOKEN=your-api-token
+CF_D1_DATABASE_ID=your-d1-database-id
+CF_R2_BUCKET=your-r2-bucket-name
+```
+
+### Example `~/.claude/.env`
+
+```bash
+# Global defaults for all projects
+OPENAI_API_KEY=sk-your-openai-key
+CF_ACCOUNT_ID=your-cloudflare-account-id
+CF_API_TOKEN=your-cloudflare-api-token
+CF_D1_DATABASE_ID=your-d1-database-id
+```
 
 ## Usage
 
@@ -185,6 +225,109 @@ Edit `config.json`:
   "checkpoints_dir": "storage/checkpoints",
   "handoffs_dir": "handoffs"
 }
+```
+
+## Optional Features
+
+All optional features degrade gracefully if dependencies are missing.
+
+### Semantic Search (Embeddings)
+
+Search session events using natural language with OpenAI embeddings.
+
+**Setup:**
+1. Install OpenAI SDK: `pip install openai`
+2. Set `OPENAI_API_KEY` in your `.env` file
+3. Enable in `config.json`:
+   ```json
+   "features": {
+     "embeddings": {
+       "enabled": true,
+       "api_key_env": "OPENAI_API_KEY"
+     }
+   }
+   ```
+
+**Usage:**
+```
+session_semantic_search(query="authentication decisions", limit=5)
+```
+
+### Cloud Sync (Cloudflare D1)
+
+Sync session data across devices using Cloudflare D1 (SQLite) and R2 (objects).
+
+**Setup:**
+
+1. Install httpx: `pip install httpx`
+
+2. Create a Cloudflare API token with permissions:
+   - `Account` → `D1` → `Edit`
+   - `Account` → `Workers R2 Storage` → `Edit` (optional)
+
+3. Create a D1 database:
+   ```bash
+   npx wrangler d1 create session-memory-sync
+   ```
+
+4. Add credentials to `~/.claude/.env`:
+   ```bash
+   CF_ACCOUNT_ID=your-account-id
+   CF_API_TOKEN=your-api-token
+   CF_D1_DATABASE_ID=your-database-id
+   ```
+
+5. Enable in `config.json`:
+   ```json
+   "features": {
+     "cloud_sync": {
+       "enabled": true,
+       "account_id_env": "CF_ACCOUNT_ID",
+       "api_token_env": "CF_API_TOKEN",
+       "d1_database_id_env": "CF_D1_DATABASE_ID"
+     }
+   }
+   ```
+
+**Usage:**
+```
+sync_status()           # Check sync status
+sync_push()             # Push local changes to cloud
+sync_pull()             # Pull cloud changes to local
+```
+
+### Cross-Session Learning
+
+Store and retrieve reusable patterns across sessions.
+
+**Usage:**
+```
+# Search for relevant learnings
+session_learn(query="error handling patterns", min_confidence=0.7)
+
+# Create a new learning
+learning_create(
+    category="pattern",
+    title="Retry with exponential backoff",
+    description="Use exponential backoff for transient failures",
+    confidence=0.8
+)
+```
+
+### Knowledge Graph (Entities)
+
+Track relationships between files, functions, decisions, and concepts.
+
+**Usage:**
+```
+# Create an entity
+entity_create(entity_type="function", name="handleAuth", qualified_name="src/auth.ts:handleAuth")
+
+# Link entities
+entity_link(source="handleAuth", target="JWT", relation_type="uses")
+
+# Query the graph
+entity_query(entity_type="function", related_to="authentication")
 ```
 
 ## Creating Custom Plugins
