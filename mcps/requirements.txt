@@ -1,0 +1,35 @@
+# MCP Server Dependencies
+# For session-memory and streaming-output MCPs
+
+# MCP SDK - required for both servers
+mcp>=1.0.0
+
+# ============================================================================
+# Optional Dependencies for session-memory Enhanced Features
+# ============================================================================
+# These are optional - features gracefully degrade if not installed.
+# Install specific groups with: pip install -r requirements.txt -e ".[embeddings,documents,cloud]"
+
+# Semantic Search (embeddings feature)
+# - Enables session_semantic_search tool with OpenAI embeddings
+# - Requires OPENAI_API_KEY environment variable
+openai>=1.0.0  # optional
+
+# Document Ingestion (document_ingest feature)
+# - Enables session_ingest tool for PDF, DOCX, HTML parsing
+# - Install formats you need:
+PyMuPDF>=1.23.0  # optional - for PDF support (fitz)
+python-docx>=0.8.11  # optional - for DOCX support
+beautifulsoup4>=4.12  # optional - for HTML support
+lxml>=4.9  # optional - for better HTML parsing
+
+# Cloud Sync (cloud_sync feature)
+# - Enables sync_push, sync_pull, sync_status tools
+# - Requires CF_ACCOUNT_ID and CF_API_TOKEN environment variables
+httpx>=0.25.0  # optional - for Cloudflare D1/R2 sync
+
+# ============================================================================
+# Development Dependencies
+# ============================================================================
+# pytest>=7.0  # for testing
+# pytest-asyncio>=0.21  # for async tests

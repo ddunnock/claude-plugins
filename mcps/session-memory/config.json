@@ -4,5 +4,40 @@
   "events_file": "storage/events.jsonl",
   "index_file": "storage/index.sqlite",
   "checkpoints_dir": "storage/checkpoints",
-  "handoffs_dir": "handoffs"
+  "handoffs_dir": "handoffs",
+
+  "features": {
+    "embeddings": {
+      "enabled": true,
+      "provider": "openai",
+      "model": "text-embedding-3-small",
+      "api_key_env": "OPENAI_API_KEY",
+      "auto_embed_categories": ["decision", "finding", "question"]
+    },
+    "entities": {
+      "enabled": true,
+      "auto_extract": true,
+      "extract_from_tool_calls": true
+    },
+    "learning": {
+      "enabled": true,
+      "min_confidence_to_surface": 0.6,
+      "auto_suggest": true
+    },
+    "cloud_sync": {
+      "enabled": false,
+      "provider": "cloudflare",
+      "account_id_env": "CF_ACCOUNT_ID",
+      "api_token_env": "CF_API_TOKEN",
+      "d1_database_id": null,
+      "r2_bucket": null,
+      "auto_sync_on_checkpoint": false
+    },
+    "document_ingest": {
+      "enabled": true,
+      "default_chunk_size": 1000,
+      "default_overlap": 200,
+      "extract_images": false
+    }
+  }
 }

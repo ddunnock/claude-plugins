@@ -109,6 +109,9 @@ class SessionMemoryServer:
         # Lock for thread safety
         self._lock = threading.RLock()
 
+        # Initialize feature modules (all optional, graceful degradation)
+        self._init_feature_modules()
+
     def _load_config(self):
         """Load configuration from config.json if it exists."""
         config_path = self.base_path / "config.json"
@@ -191,8 +194,185 @@ class SessionMemoryServer:
         except sqlite3.OperationalError:
             pass  # FTS5 may not be available on all systems
 
+        # Extended schema for new features
+        conn.executescript("""
+            -- Cross-session Learning
+            CREATE TABLE IF NOT EXISTS learnings (
+                id TEXT PRIMARY KEY,
+                timestamp TEXT NOT NULL,
+                category TEXT NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT,
+                context_hash TEXT,
+                source_session_ids TEXT,
+                confidence REAL DEFAULT 0.7,
+                usage_count INTEGER DEFAULT 0,
+                last_applied TEXT,
+                metadata TEXT
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_learnings_category
+                ON learnings(category, confidence DESC);
+            CREATE INDEX IF NOT EXISTS idx_learnings_context
+                ON learnings(context_hash);
+
+            -- Semantic Search Embeddings
+            CREATE TABLE IF NOT EXISTS embeddings (
+                id TEXT PRIMARY KEY,
+                event_id TEXT NOT NULL,
+                model TEXT NOT NULL,
+                embedding TEXT NOT NULL,
+                content_hash TEXT,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (event_id) REFERENCES events(id)
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_embeddings_event
+                ON embeddings(event_id);
+            CREATE INDEX IF NOT EXISTS idx_embeddings_hash
+                ON embeddings(content_hash);
+
+            -- Knowledge Graph: Entities
+            CREATE TABLE IF NOT EXISTS entities (
+                id TEXT PRIMARY KEY,
+                type TEXT NOT NULL,
+                name TEXT NOT NULL,
+                qualified_name TEXT,
+                first_seen_session TEXT,
+                first_seen_event TEXT,
+                metadata TEXT
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_entities_type
+                ON entities(type);
+            CREATE INDEX IF NOT EXISTS idx_entities_name
+                ON entities(name);
+            CREATE INDEX IF NOT EXISTS idx_entities_qualified
+                ON entities(qualified_name);
+
+            -- Knowledge Graph: Relations
+            CREATE TABLE IF NOT EXISTS entity_relations (
+                id TEXT PRIMARY KEY,
+                source_entity_id TEXT NOT NULL,
+                target_entity_id TEXT NOT NULL,
+                relation_type TEXT NOT NULL,
+                session_id TEXT,
+                event_id TEXT,
+                weight REAL DEFAULT 1.0,
+                metadata TEXT,
+                FOREIGN KEY (source_entity_id) REFERENCES entities(id),
+                FOREIGN KEY (target_entity_id) REFERENCES entities(id)
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_relations_source
+                ON entity_relations(source_entity_id);
+            CREATE INDEX IF NOT EXISTS idx_relations_target
+                ON entity_relations(target_entity_id);
+            CREATE INDEX IF NOT EXISTS idx_relations_type
+                ON entity_relations(relation_type);
+
+            -- Cloud Sync State
+            CREATE TABLE IF NOT EXISTS sync_state (
+                id TEXT PRIMARY KEY,
+                resource_type TEXT NOT NULL,
+                resource_id TEXT NOT NULL,
+                local_version INTEGER NOT NULL DEFAULT 1,
+                remote_version INTEGER,
+                sync_status TEXT NOT NULL DEFAULT 'pending',
+                last_sync TEXT,
+                conflict_data TEXT
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_sync_status
+                ON sync_state(sync_status);
+            CREATE INDEX IF NOT EXISTS idx_sync_resource
+                ON sync_state(resource_type, resource_id);
+
+            -- Document Ingestion
+            CREATE TABLE IF NOT EXISTS ingested_documents (
+                id TEXT PRIMARY KEY,
+                filename TEXT NOT NULL,
+                file_type TEXT NOT NULL,
+                file_hash TEXT NOT NULL,
+                file_path TEXT NOT NULL,
+                ingested_at TEXT NOT NULL,
+                session_id TEXT NOT NULL,
+                chunk_count INTEGER DEFAULT 0,
+                word_count INTEGER DEFAULT 0,
+                page_count INTEGER,
+                title TEXT,
+                metadata TEXT
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_docs_session
+                ON ingested_documents(session_id);
+            CREATE INDEX IF NOT EXISTS idx_docs_hash
+                ON ingested_documents(file_hash);
+        """)
+
+        # Create FTS for learnings (separate try block)
+        try:
+            conn.execute("""
+                CREATE VIRTUAL TABLE IF NOT EXISTS learnings_fts USING fts5(
+                    id, title, description, category,
+                    tokenize='porter unicode61'
+                )
+            """)
+        except sqlite3.OperationalError:
+            pass  # FTS5 may not be available
+
         conn.commit()
         conn.close()
+
+    def _init_feature_modules(self):
+        """Initialize optional feature modules with graceful degradation."""
+        features = self.config.get("features", {})
+
+        # Learning service
+        self.learning_service = None
+        if features.get("learning", {}).get("enabled", True):
+            try:
+                from modules.learning import LearningService
+                self.learning_service = LearningService(str(self.db_path))
+            except ImportError:
+                pass
+
+        # Embedding service (requires OpenAI)
+        self.embedding_service = None
+        if features.get("embeddings", {}).get("enabled", True):
+            try:
+                from modules.embeddings import EmbeddingService
+                self.embedding_service = EmbeddingService(str(self.db_path))
+            except ImportError:
+                pass
+
+        # Knowledge graph
+        self.knowledge_graph = None
+        if features.get("entities", {}).get("enabled", True):
+            try:
+                from modules.entities import KnowledgeGraph
+                self.knowledge_graph = KnowledgeGraph(str(self.db_path))
+            except ImportError:
+                pass
+
+        # Cloud sync service
+        self.cloud_sync = None
+        cloud_config = features.get("cloud_sync", {})
+        if cloud_config.get("enabled", False):
+            try:
+                from modules.cloud_sync import CloudSyncService
+                self.cloud_sync = CloudSyncService(str(self.db_path), cloud_config)
+            except ImportError:
+                pass
+
+        # Document ingestor
+        self.document_ingestor = None
+        if features.get("document_ingest", {}).get("enabled", True):
+            try:
+                from modules.document_ingest import DocumentIngestor
+                self.document_ingestor = DocumentIngestor()
+            except ImportError:
+                pass
 
     def _register_plugins(self):
         """Register available plugins."""
@@ -208,6 +388,37 @@ class SessionMemoryServer:
         try:
             from plugins.spec_refiner import SpecRefinerPlugin
             plugins.append(SpecRefinerPlugin())
+        except ImportError:
+            pass
+
+        try:
+            from plugins.speckit_maal import SpecKitMaalPlugin
+            plugins.append(SpecKitMaalPlugin())
+        except ImportError:
+            pass
+
+        # Session template plugins
+        try:
+            from plugins.code_review import CodeReviewPlugin
+            plugins.append(CodeReviewPlugin())
+        except ImportError:
+            pass
+
+        try:
+            from plugins.bug_investigation import BugInvestigationPlugin
+            plugins.append(BugInvestigationPlugin())
+        except ImportError:
+            pass
+
+        try:
+            from plugins.feature_impl import FeatureImplementationPlugin
+            plugins.append(FeatureImplementationPlugin())
+        except ImportError:
+            pass
+
+        try:
+            from plugins.research import ResearchPlugin
+            plugins.append(ResearchPlugin())
         except ImportError:
             pass
 
@@ -734,6 +945,321 @@ class SessionMemoryServer:
             }
 
     # =========================================================================
+    # Learning Tools
+    # =========================================================================
+
+    def session_learn(
+        self,
+        query: Optional[str] = None,
+        context: Optional[str] = None,
+        category: Optional[str] = None,
+        min_confidence: float = 0.5,
+        limit: int = 10
+    ) -> Dict[str, Any]:
+        """Search learnings from past sessions."""
+        if not self.learning_service:
+            return {"available": False, "error": "Learning service not enabled"}
+
+        try:
+            learnings = self.learning_service.search_learnings(
+                query=query,
+                context=context,
+                category=category,
+                min_confidence=min_confidence,
+                limit=limit
+            )
+            return {
+                "learnings": [l.to_dict() for l in learnings],
+                "count": len(learnings)
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    def learning_create(
+        self,
+        category: str,
+        title: str,
+        description: str,
+        confidence: float = 0.7,
+        source_events: Optional[List[str]] = None,
+        metadata: Optional[Dict] = None
+    ) -> Dict[str, Any]:
+        """Create a learning from current session."""
+        if not self.learning_service:
+            return {"available": False, "error": "Learning service not enabled"}
+
+        if not self.current_session:
+            return {"error": "No active session"}
+
+        try:
+            learning = self.learning_service.create_learning(
+                category=category,
+                title=title,
+                description=description,
+                session_id=self.current_session.id,
+                confidence=confidence,
+                source_events=source_events,
+                metadata=metadata
+            )
+            return learning.to_dict()
+        except Exception as e:
+            return {"error": str(e)}
+
+    def learning_apply(
+        self,
+        learning_id: str,
+        outcome: str,
+        notes: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Record that a learning was applied and update confidence."""
+        if not self.learning_service:
+            return {"available": False, "error": "Learning service not enabled"}
+
+        try:
+            return self.learning_service.apply_learning(
+                learning_id=learning_id,
+                outcome=outcome,
+                notes=notes
+            )
+        except Exception as e:
+            return {"error": str(e)}
+
+    # =========================================================================
+    # Semantic Search Tools
+    # =========================================================================
+
+    def session_semantic_search(
+        self,
+        query: str,
+        session_id: Optional[str] = None,
+        categories: Optional[List[str]] = None,
+        top_k: int = 10,
+        threshold: float = 0.7
+    ) -> Dict[str, Any]:
+        """Search events using semantic similarity."""
+        if not self.embedding_service:
+            return {"available": False, "error": "Embedding service not enabled"}
+
+        if not self.embedding_service.available:
+            return {"available": False, "error": "OpenAI API key not configured"}
+
+        sid = session_id or (self.current_session.id if self.current_session else None)
+
+        try:
+            results = self.embedding_service.search(
+                query=query,
+                session_id=sid,
+                categories=categories,
+                top_k=top_k,
+                threshold=threshold
+            )
+            return {
+                "results": results,
+                "count": len(results),
+                "query": query
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    # =========================================================================
+    # Entity/Knowledge Graph Tools
+    # =========================================================================
+
+    def entity_create(
+        self,
+        entity_type: str,
+        name: str,
+        qualified_name: Optional[str] = None,
+        metadata: Optional[Dict] = None
+    ) -> Dict[str, Any]:
+        """Create an entity in the knowledge graph."""
+        if not self.knowledge_graph:
+            return {"available": False, "error": "Knowledge graph not enabled"}
+
+        try:
+            from modules.entities import Entity
+            entity = Entity(
+                id=f"{entity_type}:{name}",
+                type=entity_type,
+                name=name,
+                qualified_name=qualified_name,
+                first_seen_session=self.current_session.id if self.current_session else None,
+                metadata=metadata or {}
+            )
+            entity_id = self.knowledge_graph.add_entity(
+                entity,
+                session_id=self.current_session.id if self.current_session else None
+            )
+            return {"entity_id": entity_id, "created": True}
+        except Exception as e:
+            return {"error": str(e)}
+
+    def entity_link(
+        self,
+        source: str,
+        target: str,
+        relation_type: str,
+        weight: float = 1.0,
+        metadata: Optional[Dict] = None
+    ) -> Dict[str, Any]:
+        """Create a relationship between entities."""
+        if not self.knowledge_graph:
+            return {"available": False, "error": "Knowledge graph not enabled"}
+
+        try:
+            relation_id = self.knowledge_graph.add_relation(
+                source_id=source,
+                target_id=target,
+                relation_type=relation_type,
+                session_id=self.current_session.id if self.current_session else None,
+                weight=weight,
+                metadata=metadata
+            )
+            return {"relation_id": relation_id, "created": True}
+        except Exception as e:
+            return {"error": str(e)}
+
+    def entity_query(
+        self,
+        entity_type: Optional[str] = None,
+        name_pattern: Optional[str] = None,
+        related_to: Optional[str] = None,
+        relation_types: Optional[List[str]] = None,
+        session_id: Optional[str] = None,
+        include_relations: bool = True,
+        limit: int = 50
+    ) -> Dict[str, Any]:
+        """Query entities and their relationships."""
+        if not self.knowledge_graph:
+            return {"available": False, "error": "Knowledge graph not enabled"}
+
+        sid = session_id or (self.current_session.id if self.current_session else None)
+
+        try:
+            return self.knowledge_graph.query(
+                entity_type=entity_type,
+                name_pattern=name_pattern,
+                related_to=related_to,
+                relation_types=relation_types,
+                session_id=sid,
+                include_relations=include_relations,
+                limit=limit
+            )
+        except Exception as e:
+            return {"error": str(e)}
+
+    # =========================================================================
+    # Cloud Sync Tools
+    # =========================================================================
+
+    def sync_status(self) -> Dict[str, Any]:
+        """Get cloud sync status."""
+        if not self.cloud_sync:
+            return {"available": False, "enabled": False, "message": "Cloud sync not configured"}
+
+        return self.cloud_sync.get_status()
+
+    def sync_push(
+        self,
+        resource_types: Optional[List[str]] = None,
+        force: bool = False
+    ) -> Dict[str, Any]:
+        """Push local changes to cloud."""
+        if not self.cloud_sync:
+            return {"available": False, "error": "Cloud sync not configured"}
+
+        return self.cloud_sync.push(resource_types=resource_types, force=force)
+
+    def sync_pull(
+        self,
+        resource_types: Optional[List[str]] = None,
+        force: bool = False
+    ) -> Dict[str, Any]:
+        """Pull changes from cloud to local."""
+        if not self.cloud_sync:
+            return {"available": False, "error": "Cloud sync not configured"}
+
+        return self.cloud_sync.pull(resource_types=resource_types, force=force)
+
+    # =========================================================================
+    # Document Ingestion Tools
+    # =========================================================================
+
+    def session_ingest(
+        self,
+        file_path: str,
+        chunk_size: Optional[int] = None,
+        overlap: Optional[int] = None,
+        extract_images: bool = False
+    ) -> Dict[str, Any]:
+        """Ingest a document (PDF, DOCX, HTML, Markdown) into session memory."""
+        if not self.document_ingestor:
+            return {"available": False, "error": "Document ingestor not enabled"}
+
+        if not self.current_session:
+            return {"error": "No active session"}
+
+        features = self.config.get("features", {}).get("document_ingest", {})
+        chunk_size = chunk_size or features.get("default_chunk_size", 1000)
+        overlap = overlap or features.get("default_overlap", 200)
+
+        try:
+            # Check available formats
+            available = self.document_ingestor.get_available_formats()
+            missing = self.document_ingestor.get_missing_dependencies()
+
+            # Ingest document
+            chunks, doc = self.document_ingestor.ingest(
+                file_path=file_path,
+                chunk_size=chunk_size,
+                overlap=overlap,
+                extract_images=extract_images
+            )
+
+            # Create events from chunks
+            events = self.document_ingestor.create_events_from_chunks(chunks, doc)
+
+            # Record each chunk as an event
+            recorded_ids = []
+            for event_data in events:
+                result = self.session_record(
+                    category="document",
+                    type="chunk",
+                    data=event_data
+                )
+                recorded_ids.append(result["event_id"])
+
+            # Save document metadata to database
+            conn = sqlite3.connect(self.db_path)
+            conn.execute("""
+                INSERT INTO ingested_documents
+                (id, filename, file_type, file_hash, file_path, ingested_at,
+                 session_id, chunk_count, word_count, page_count, title, metadata)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                doc.id, doc.filename, doc.file_type, doc.file_hash, doc.file_path,
+                datetime.utcnow().isoformat() + "Z", self.current_session.id,
+                doc.chunk_count, doc.word_count, doc.page_count, doc.title,
+                json.dumps(doc.metadata)
+            ))
+            conn.commit()
+            conn.close()
+
+            return {
+                "document_id": doc.id,
+                "filename": doc.filename,
+                "file_type": doc.file_type,
+                "chunk_count": doc.chunk_count,
+                "word_count": doc.word_count,
+                "page_count": doc.page_count,
+                "events_created": len(recorded_ids),
+                "available_formats": available,
+                "missing_dependencies": missing
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    # =========================================================================
     # Helper Methods
     # =========================================================================
 
@@ -1085,6 +1611,166 @@ def create_mcp_server() -> "Server":
                     "type": "object",
                     "properties": {}
                 }
+            ),
+            # =========================================================================
+            # Cross-Session Learning Tools
+            # =========================================================================
+            Tool(
+                name="session_learn",
+                description="Search learnings from past sessions by category, keyword, or context",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "Search query for learnings"},
+                        "category": {"type": "string", "enum": ["pattern", "decision", "anti-pattern"], "description": "Learning category filter"},
+                        "min_confidence": {"type": "number", "minimum": 0, "maximum": 1, "description": "Minimum confidence threshold"},
+                        "limit": {"type": "integer", "default": 10, "description": "Maximum results to return"}
+                    }
+                }
+            ),
+            Tool(
+                name="learning_create",
+                description="Create a learning from the current session",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "category": {"type": "string", "enum": ["pattern", "decision", "anti-pattern"], "description": "Learning category"},
+                        "title": {"type": "string", "description": "Learning title"},
+                        "description": {"type": "string", "description": "Detailed description of the learning"},
+                        "confidence": {"type": "number", "minimum": 0, "maximum": 1, "default": 0.5, "description": "Confidence level"},
+                        "metadata": {"type": "object", "description": "Additional metadata"}
+                    },
+                    "required": ["category", "title"]
+                }
+            ),
+            Tool(
+                name="learning_apply",
+                description="Record that a learning was applied, with outcome",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "learning_id": {"type": "string", "description": "ID of the learning that was applied"},
+                        "success": {"type": "boolean", "description": "Whether application was successful"},
+                        "notes": {"type": "string", "description": "Notes about the application"}
+                    },
+                    "required": ["learning_id", "success"]
+                }
+            ),
+            # =========================================================================
+            # Semantic Search Tools
+            # =========================================================================
+            Tool(
+                name="session_semantic_search",
+                description="Search session events using semantic similarity (requires OpenAI API key)",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "Natural language search query"},
+                        "session_id": {"type": "string", "description": "Session ID to search within (defaults to current)"},
+                        "category": {"type": "string", "description": "Optional category filter"},
+                        "limit": {"type": "integer", "default": 10, "description": "Maximum results to return"},
+                        "min_similarity": {"type": "number", "minimum": 0, "maximum": 1, "default": 0.5, "description": "Minimum similarity threshold"}
+                    },
+                    "required": ["query"]
+                }
+            ),
+            # =========================================================================
+            # Knowledge Graph / Entity Tools
+            # =========================================================================
+            Tool(
+                name="entity_create",
+                description="Create an entity in the knowledge graph",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "entity_type": {"type": "string", "enum": ["file", "function", "class", "decision", "person", "concept", "service"], "description": "Type of entity"},
+                        "name": {"type": "string", "description": "Entity name"},
+                        "qualified_name": {"type": "string", "description": "Fully qualified name (e.g., module.Class.method)"},
+                        "metadata": {"type": "object", "description": "Additional metadata"}
+                    },
+                    "required": ["entity_type", "name"]
+                }
+            ),
+            Tool(
+                name="entity_link",
+                description="Create a relationship between two entities",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "source": {"type": "string", "description": "Source entity ID"},
+                        "target": {"type": "string", "description": "Target entity ID"},
+                        "relation_type": {"type": "string", "enum": ["calls", "imports", "depends_on", "modifies", "extends", "implements", "owns", "references"], "description": "Type of relationship"},
+                        "weight": {"type": "number", "minimum": 0, "maximum": 1, "default": 1.0, "description": "Relationship weight/strength"},
+                        "metadata": {"type": "object", "description": "Additional metadata"}
+                    },
+                    "required": ["source", "target", "relation_type"]
+                }
+            ),
+            Tool(
+                name="entity_query",
+                description="Query entities and their relationships",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "entity_type": {"type": "string", "description": "Filter by entity type"},
+                        "name_pattern": {"type": "string", "description": "Name pattern to match (supports SQL LIKE)"},
+                        "related_to": {"type": "string", "description": "Entity ID to find related entities"},
+                        "relation_types": {"type": "array", "items": {"type": "string"}, "description": "Filter by relation types"},
+                        "session_id": {"type": "string", "description": "Filter by session"},
+                        "include_relations": {"type": "boolean", "default": True, "description": "Include relationships in results"},
+                        "limit": {"type": "integer", "default": 50, "description": "Maximum results to return"}
+                    }
+                }
+            ),
+            # =========================================================================
+            # Cloud Sync Tools
+            # =========================================================================
+            Tool(
+                name="sync_status",
+                description="Get cloud synchronization status",
+                inputSchema={
+                    "type": "object",
+                    "properties": {}
+                }
+            ),
+            Tool(
+                name="sync_push",
+                description="Push local changes to cloud storage (Cloudflare D1/R2)",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "resource_types": {"type": "array", "items": {"type": "string"}, "description": "Types to sync (sessions, checkpoints, learnings)"},
+                        "force": {"type": "boolean", "default": False, "description": "Force push even if conflicts exist"}
+                    }
+                }
+            ),
+            Tool(
+                name="sync_pull",
+                description="Pull changes from cloud storage to local",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "resource_types": {"type": "array", "items": {"type": "string"}, "description": "Types to sync (sessions, checkpoints, learnings)"},
+                        "force": {"type": "boolean", "default": False, "description": "Force pull, overwriting local changes"}
+                    }
+                }
+            ),
+            # =========================================================================
+            # Document Ingestion Tools
+            # =========================================================================
+            Tool(
+                name="session_ingest",
+                description="Ingest a document (PDF, DOCX, HTML, Markdown) into session memory",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "file_path": {"type": "string", "description": "Path to the document file"},
+                        "chunk_size": {"type": "integer", "default": 1000, "description": "Size of text chunks"},
+                        "overlap": {"type": "integer", "default": 200, "description": "Overlap between chunks"},
+                        "extract_images": {"type": "boolean", "default": False, "description": "Extract images from document (PDF only)"}
+                    },
+                    "required": ["file_path"]
+                }
             )
         ]
 
@@ -1107,6 +1793,33 @@ def create_mcp_server() -> "Server":
                 result = memory.session_handoff(**arguments)
             elif name == "session_status":
                 result = memory.session_status()
+            # Cross-Session Learning Tools
+            elif name == "session_learn":
+                result = memory.session_learn(**arguments)
+            elif name == "learning_create":
+                result = memory.learning_create(**arguments)
+            elif name == "learning_apply":
+                result = memory.learning_apply(**arguments)
+            # Semantic Search Tools
+            elif name == "session_semantic_search":
+                result = memory.session_semantic_search(**arguments)
+            # Knowledge Graph / Entity Tools
+            elif name == "entity_create":
+                result = memory.entity_create(**arguments)
+            elif name == "entity_link":
+                result = memory.entity_link(**arguments)
+            elif name == "entity_query":
+                result = memory.entity_query(**arguments)
+            # Cloud Sync Tools
+            elif name == "sync_status":
+                result = memory.sync_status()
+            elif name == "sync_push":
+                result = memory.sync_push(**arguments)
+            elif name == "sync_pull":
+                result = memory.sync_pull(**arguments)
+            # Document Ingestion Tools
+            elif name == "session_ingest":
+                result = memory.session_ingest(**arguments)
             else:
                 return [TextContent(type="text", text=f"Unknown tool: {name}")]
 
