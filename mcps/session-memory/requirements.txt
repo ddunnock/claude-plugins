@@ -1,0 +1,16 @@
+# Required
+mcp>=1.25.0
+
+# Optional - for .env file support
+python-dotenv>=1.0.0
+
+# Optional - for semantic search (embeddings)
+openai>=1.0.0
+
+# Optional - for cloud sync
+httpx>=0.25.0
+
+# Optional - for document ingestion
+PyPDF2>=3.0.0
+python-docx>=1.0.0
+beautifulsoup4>=4.12.0

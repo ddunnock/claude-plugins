@@ -31,13 +31,20 @@ class EmbeddingService:
     def __init__(
         self,
         db_path: str,
-        api_key: Optional[str] = None
+        config: Optional[Dict[str, Any]] = None
     ):
         self.db_path = db_path
         self.available = OPENAI_AVAILABLE
+        config = config or {}
 
         if self.available:
-            key = api_key or os.environ.get("OPENAI_API_KEY")
+            # Check config first, then custom env var name, then default env var
+            # Supports: api_key (direct), api_key_env (custom env var name), or OPENAI_API_KEY (default)
+            key = (
+                config.get("api_key") or
+                os.environ.get(config.get("api_key_env", ""), "") or
+                os.environ.get("OPENAI_API_KEY")
+            )
             if key:
                 self.client = openai.OpenAI(api_key=key)
             else:

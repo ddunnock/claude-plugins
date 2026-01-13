@@ -30,10 +30,27 @@ class CloudSyncService:
         self.enabled = config.get("enabled", False)
 
         # Load credentials from config or environment
-        self.account_id = config.get("account_id") or os.environ.get("CF_ACCOUNT_ID")
-        self.api_token = config.get("api_token") or os.environ.get("CF_API_TOKEN")
-        self.d1_database_id = config.get("d1_database_id")
-        self.r2_bucket = config.get("r2_bucket")
+        # Supports direct values, custom env var names via _env suffix, or default env vars
+        self.account_id = (
+            config.get("account_id") or
+            os.environ.get(config.get("account_id_env", ""), "") or
+            os.environ.get("CF_ACCOUNT_ID")
+        )
+        self.api_token = (
+            config.get("api_token") or
+            os.environ.get(config.get("api_token_env", ""), "") or
+            os.environ.get("CF_API_TOKEN")
+        )
+        self.d1_database_id = (
+            config.get("d1_database_id") or
+            os.environ.get(config.get("d1_database_id_env", ""), "") or
+            os.environ.get("CF_D1_DATABASE_ID")
+        )
+        self.r2_bucket = (
+            config.get("r2_bucket") or
+            os.environ.get(config.get("r2_bucket_env", ""), "") or
+            os.environ.get("CF_R2_BUCKET")
+        )
 
         # Check availability
         self.available = (

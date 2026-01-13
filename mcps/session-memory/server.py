@@ -21,6 +21,18 @@ Configuration in Claude Desktop:
             }
         }
     }
+
+Environment Variables:
+    Loaded automatically from .env files (requires python-dotenv):
+    - Project root .env (highest priority)
+    - ~/.claude/.env (fallback for global defaults)
+
+    Supported variables:
+    - OPENAI_API_KEY: For semantic search embeddings
+    - CF_ACCOUNT_ID: Cloudflare account ID for cloud sync
+    - CF_API_TOKEN: Cloudflare API token for cloud sync
+    - CF_D1_DATABASE_ID: Cloudflare D1 database ID
+    - CF_R2_BUCKET: Cloudflare R2 bucket name
 """
 
 import asyncio
@@ -33,6 +45,24 @@ from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+# Load environment variables from .env files (optional dependency)
+# Precedence: existing env vars > project .env > ~/.claude/.env
+try:
+    from dotenv import load_dotenv
+
+    # Load ~/.claude/.env first (lowest priority)
+    claude_env = Path.home() / ".claude" / ".env"
+    if claude_env.exists():
+        load_dotenv(claude_env, override=False)
+
+    # Load project root .env (higher priority, but won't override existing vars)
+    project_env = Path.cwd() / ".env"
+    if project_env.exists():
+        load_dotenv(project_env, override=False)
+
+except ImportError:
+    pass  # python-dotenv not installed, use only explicit env vars
 
 # Add plugins to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -339,10 +369,11 @@ class SessionMemoryServer:
 
         # Embedding service (requires OpenAI)
         self.embedding_service = None
-        if features.get("embeddings", {}).get("enabled", True):
+        embeddings_config = features.get("embeddings", {})
+        if embeddings_config.get("enabled", True):
             try:
                 from modules.embeddings import EmbeddingService
-                self.embedding_service = EmbeddingService(str(self.db_path))
+                self.embedding_service = EmbeddingService(str(self.db_path), embeddings_config)
             except ImportError:
                 pass
 
