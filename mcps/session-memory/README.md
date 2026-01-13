@@ -14,8 +14,15 @@ Persistent session memory for Claude Desktop that survives context limits and se
 
 ### Via Claude Code Plugin Marketplace (Recommended)
 
-1. Enable the plugin in Claude Code settings
-2. The MCP server is automatically configured
+```bash
+claude plugin add session-memory@dunnock-plugins
+```
+
+Or enable `session-memory@dunnock-plugins` in your Claude Code settings.
+
+This automatically configures the MCP server - no additional setup required for basic usage.
+
+For optional features (semantic search, cloud sync), see [Environment Variables](#environment-variables) below.
 
 ### Manual Installation
 
