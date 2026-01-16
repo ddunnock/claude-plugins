@@ -109,9 +109,9 @@ Load these directive files for compliance checking:
 
 | Artifact | Source |
 |----------|--------|
-| spec.md | `.claude/resources/features/[feature]/spec.md` |
-| plan.md | `.claude/resources/features/[feature]/plan.md` |
-| tasks.md | `.claude/resources/features/[feature]/tasks.md` |
+| spec.md | `speckit/spec.md` |
+| plan.md | `speckit/plan.md` |
+| tasks.md | `speckit/*-tasks.md` |
 
 ---
 
@@ -135,7 +135,7 @@ Load these directive files for compliance checking:
 **Invoke compliance-checker agent:**
 ```
 subagent_type: "speckit-generator:compliance-checker"
-prompt: "Check compliance of .claude/resources/*.md against .claude/memory/constitution.md and all tech-specific memory files"
+prompt: "Check compliance of speckit/*.md against .claude/memory/constitution.md and all tech-specific memory files"
 ```
 
 The agent checks:
@@ -148,7 +148,7 @@ The agent checks:
 **Invoke coverage-mapper agent:**
 ```
 subagent_type: "speckit-generator:coverage-mapper"
-prompt: "Map coverage between .claude/resources/spec.md, .claude/resources/plan.md, and .claude/resources/*-tasks.md"
+prompt: "Map coverage between speckit/spec.md, speckit/plan.md, and speckit/*-tasks.md"
 ```
 
 The agent identifies:

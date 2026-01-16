@@ -139,7 +139,7 @@ After generating tasks, verify requirement coverage.
 **Invoke via Task tool:**
 ```
 subagent_type: "speckit-generator:coverage-mapper"
-prompt: "Map coverage between .claude/resources/spec.md, .claude/resources/plan.md, and .claude/resources/*-tasks.md"
+prompt: "Map coverage between speckit/spec.md, speckit/plan.md, and speckit/*-tasks.md"
 ```
 
 The agent will identify:
@@ -160,7 +160,7 @@ After generating tasks, validate all acceptance criteria.
 **Invoke via Task tool:**
 ```
 subagent_type: "speckit-generator:smart-validator"
-prompt: "Validate SMART criteria in .claude/resources/*-tasks.md at [SELECTED_STRICTNESS] strictness, suggest fixes for failures"
+prompt: "Validate SMART criteria in speckit/*-tasks.md at [SELECTED_STRICTNESS] strictness, suggest fixes for failures"
 ```
 
 The agent will check each criterion for:
@@ -254,7 +254,7 @@ Before completing task generation, verify ALL items:
 
 | Output | Location |
 |--------|----------|
-| Tasks file | `.claude/resources/*-tasks.md` |
+| Tasks file | `speckit/*-tasks.md` |
 | Updated status | `.claude/memory/project-status.md` |
 
 ---
@@ -362,8 +362,29 @@ Generated [N] tasks across [M] phases:
 2. Fix any SMART failures
 3. Adjust priorities if needed
 4. Resolve any blocking dependencies
+5. Run `/design TASK-XXX` for detailed implementation designs (optional)
 
 **Awaiting your approval before implementation.**
+
+---
+
+### Design Files (Optional)
+
+For complex tasks, generate detailed implementation designs before implementing:
+
+```
+/design TASK-007           # Generate design with algorithms, tests, edge cases
+/design TASK-003,TASK-004  # Design multiple tasks
+```
+
+Design files provide:
+- Data model definitions with validation
+- Method signatures with full type annotations
+- Algorithm pseudo-code with step-by-step logic
+- Test cases covering acceptance criteria
+- Edge case handling
+
+Designs are saved to `speckit/designs/design-[TASK-ID].md`
 ```
 
 ---

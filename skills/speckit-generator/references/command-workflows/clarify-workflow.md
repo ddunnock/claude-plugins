@@ -92,7 +92,7 @@ This workflow expects:
 ```
 Loading clarification context...
 
-Spec: .claude/resources/features/auth/spec.md (145 lines)
+Spec: speckit/spec.md (145 lines)
 Existing clarifications: 3 (from 2024-01-14 session)
 Questions remaining: 7 of 10 total
 
@@ -339,7 +339,7 @@ Report using four-status taxonomy:
 
 ### Session Statistics
 - Questions asked: 5
-- Path to updated spec: .claude/resources/features/auth/spec.md
+- Path to updated spec: speckit/spec.md
 - Sections touched: Authentication, Data Model, Error Handling
 
 ### Coverage Summary

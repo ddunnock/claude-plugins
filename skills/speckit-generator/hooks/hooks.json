@@ -1,4 +1,5 @@
 {
+  "description": "Speckit workflow hooks: git validation, checkpoint creation, init state checks, task tracking, and implementation completion verification",
   "hooks": {
     "PreToolUse": [
       {
@@ -56,6 +57,7 @@
     ],
     "Stop": [
       {
+        "matcher": "*",
         "hooks": [
           {
             "type": "prompt",

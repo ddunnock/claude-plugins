@@ -1,4 +1,5 @@
 #!/bin/bash
+set -uo pipefail
 # check-init-state.sh
 # Validates that a project has been initialized with /speckit.init
 # before running other speckit commands.

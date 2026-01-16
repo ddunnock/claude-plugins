@@ -112,9 +112,15 @@ Create standard directories:
 .claude/
 ├── commands/      # Custom project commands
 ├── memory/        # Memory files (populated by init)
-├── resources/     # Project resources (specs, designs)
 ├── templates/     # Output templates
 └── scripts/       # Project scripts
+
+speckit/           # Specification artifacts (at project root)
+├── spec.md        # Main specification file
+├── plan.md        # Implementation plan (generated)
+├── *-tasks.md     # Task files (generated)
+├── plans/         # Domain-specific plans (if complex)
+└── designs/       # Detailed task designs
 ```
 
 ### Step 5: Copy Memory Files
@@ -162,7 +168,7 @@ Create `.claude/memory/project-status.md` for tracking implementation progress:
 
 ## Next Actions
 
-- [ ] Add specifications to .claude/resources/
+- [ ] Add specifications to speckit/
 - [ ] Run /speckit.plan to create implementation plan
 - [ ] Run /speckit.tasks to generate tasks
 
@@ -243,7 +249,7 @@ Project context: .claude/project-context.md
 
 Next steps:
 1. Review .claude/memory/ files for project-specific adjustments
-2. Add spec files to .claude/resources/
+2. Add spec files to speckit/
 3. Run /speckit.plan to create implementation plans
 ```
 

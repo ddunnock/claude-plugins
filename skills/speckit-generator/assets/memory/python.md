@@ -16,6 +16,61 @@
 
 ---
 
+## 1.1 Design Philosophy (PEP 20)
+
+Python code **MUST** embody [The Zen of Python (PEP 20)](https://peps.python.org/pep-0020/) as actionable rules:
+
+| Principle | Rule Level | Actionable Directive |
+|-----------|------------|---------------------|
+| Readability counts | **MUST** | Prefer clear variable names over terse abbreviations; prioritize understandability over cleverness |
+| Explicit is better than implicit | **MUST** | Avoid magic methods, hidden state, or implicit type coercion; make behavior obvious |
+| Simple is better than complex | **MUST** | Resist premature optimization; solve the immediate problem without speculative generalization |
+| Flat is better than nested | **SHOULD** | Limit nesting to 3 levels; extract nested logic into named functions |
+| Sparse is better than dense | **SHOULD** | One statement per line; avoid compound one-liners that sacrifice clarity |
+| Errors should never pass silently | **MUST** | Never use bare `except:`; catch specific exceptions and handle or re-raise |
+| In the face of ambiguity, refuse to guess | **MUST** | Require explicit configuration over convention-based defaults |
+| There should be one obvious way | **SHOULD** | Follow established patterns from this memory file rather than inventing alternatives |
+| Practicality beats purity | **SHOULD** | Trade-off purity for pragmatism when justified with inline comments |
+
+### Anti-Patterns (MUST NOT)
+
+```python
+# ❌ MUST NOT: Clever one-liner that sacrifices readability
+result = [x for x in (y for y in data if y > 0) if x < 100 and x % 2 == 0]
+
+# ✓ MUST: Readable multi-step filtering
+positives = (y for y in data if y > 0)
+result = [x for x in positives if x < 100 and x % 2 == 0]
+
+# ❌ MUST NOT: Implicit behavior via __getattr__ magic
+class Config:
+    def __getattr__(self, name): return os.environ.get(name)
+
+# ✓ MUST: Explicit configuration
+class Config:
+    def __init__(self, api_key: str, timeout: int):
+        self.api_key = api_key
+        self.timeout = timeout
+
+# ❌ MUST NOT: Bare except that silences errors
+try:
+    process_data()
+except:
+    pass
+
+# ✓ MUST: Specific exception handling
+try:
+    process_data()
+except ValidationError as e:
+    logger.warning(f"Invalid data: {e}")
+    raise
+except IOError as e:
+    logger.error(f"IO failure: {e}")
+    raise ProcessingError(f"Failed to process: {e}") from e
+```
+
+---
+
 ## 2. Dependency Management
 
 ### 2.1 Complexity Threshold
@@ -569,3 +624,233 @@ async def create_resource(
     result = await service.create(data, owner=current_user)
     return ResourceResponse.model_validate(result)
 ```
+
+---
+
+## 10. Security Practices (OWASP)
+
+Python code **MUST** follow security best practices from [OWASP](https://owasp.org/www-project-python-security/) and [Bandit](https://bandit.readthedocs.io/).
+
+### 10.1 Prohibited Functions (MUST NOT)
+
+| Function | Risk | Alternative |
+|----------|------|-------------|
+| `eval()` / `exec()` | Code injection | Use `ast.literal_eval()` for safe parsing, or structured data formats |
+| `pickle.load()` from untrusted sources | Arbitrary code execution | Use JSON or MessagePack for serialization |
+| `shell=True` in subprocess | Command injection | Use `subprocess.run([cmd, arg1], shell=False)` |
+| `os.system()` | Command injection | Use `subprocess.run()` with argument list |
+| `__import__()` with user input | Code injection | Use allowlist of permitted modules |
+| `yaml.load()` without Loader | Code execution | Use `yaml.safe_load()` |
+| `requests.get(verify=False)` | MitM attacks | Always verify SSL certificates |
+
+### 10.2 Secret Management (MUST)
+
+```python
+# ❌ MUST NOT: Hardcoded secrets
+API_KEY = "sk-abc123secret"
+DATABASE_URL = "postgresql://user:password@localhost/db"
+
+# ✓ MUST: Environment variables or secrets manager
+import os
+from functools import lru_cache
+
+@lru_cache
+def get_settings() -> Settings:
+    """Load settings from environment with validation."""
+    return Settings(
+        api_key=os.environ["API_KEY"],  # Fails fast if missing
+        database_url=os.environ["DATABASE_URL"],
+    )
+
+# ✓ For local development, use .env with python-dotenv
+# .env files MUST be in .gitignore
+```
+
+### 10.3 Input Validation (MUST)
+
+```python
+from pydantic import BaseModel, Field, field_validator
+import re
+
+class UserInput(BaseModel):
+    """Validated user input with security constraints."""
+
+    username: str = Field(min_length=3, max_length=50, pattern=r'^[a-zA-Z0-9_]+$')
+    email: str = Field(pattern=r'^[\w\.-]+@[\w\.-]+\.\w+$')
+
+    @field_validator('username')
+    @classmethod
+    def no_sql_injection(cls, v: str) -> str:
+        """Reject common SQL injection patterns."""
+        dangerous = ["'", '"', ';', '--', '/*', '*/']
+        if any(char in v for char in dangerous):
+            raise ValueError('Invalid characters in username')
+        return v
+```
+
+### 10.4 Path Traversal Prevention (MUST)
+
+```python
+from pathlib import Path
+
+def safe_read_file(base_dir: Path, user_filename: str) -> str:
+    """Read file safely, preventing directory traversal.
+
+    Args:
+        base_dir: Allowed directory (must be absolute)
+        user_filename: User-provided filename
+
+    Returns:
+        File contents
+
+    Raises:
+        ValueError: If path would escape base_dir
+    """
+    # Resolve to absolute path
+    target = (base_dir / user_filename).resolve()
+
+    # MUST verify path is within base_dir
+    if not target.is_relative_to(base_dir.resolve()):
+        raise ValueError(f"Path traversal attempt: {user_filename}")
+
+    return target.read_text()
+```
+
+---
+
+## 11. Architecture Principles
+
+### 11.1 Single Responsibility Principle (MUST)
+
+Each module, class, and function **MUST** have a single, well-defined responsibility:
+
+```python
+# ❌ MUST NOT: God module doing everything
+# file: service.py (500+ lines)
+class UserService:
+    def create_user(self): ...
+    def send_email(self): ...          # Email is separate concern
+    def generate_pdf_report(self): ... # Reporting is separate concern
+    def sync_to_crm(self): ...         # Integration is separate concern
+
+# ✓ MUST: Focused modules with single responsibility
+# file: services/user.py
+class UserService:
+    def __init__(self, repository: UserRepository, event_bus: EventBus):
+        self._repository = repository
+        self._event_bus = event_bus
+
+    def create_user(self, data: UserCreate) -> User:
+        user = self._repository.create(data)
+        self._event_bus.publish(UserCreated(user_id=user.id))
+        return user
+
+# file: services/email.py
+class EmailService:
+    def send_welcome_email(self, user: User) -> None: ...
+
+# file: handlers/user_events.py
+class UserEventHandlers:
+    def on_user_created(self, event: UserCreated) -> None:
+        self._email_service.send_welcome_email(event.user_id)
+```
+
+### 11.2 Anti-Patterns (MUST NOT)
+
+| Anti-Pattern | Symptom | Remedy |
+|--------------|---------|--------|
+| **God Module** | File >500 lines, >10 public functions | Split by responsibility |
+| **Circular Imports** | `ImportError` at runtime | Extract shared types to separate module |
+| **Deep Nesting** | >3 levels of indentation | Extract to named functions |
+| **Magic Numbers** | Unexplained literals in code | Define named constants with docstrings |
+| **Catch-All Exception** | `except Exception:` | Catch specific exceptions |
+| **Mutable Default Args** | `def f(items=[]):` | Use `def f(items=None):` |
+
+### 11.3 Module Size Guidelines
+
+| Metric | SHOULD | MUST NOT Exceed |
+|--------|--------|-----------------|
+| Lines per module | ≤300 | 500 |
+| Public functions per module | ≤7 | 15 |
+| Parameters per function | ≤5 | 8 |
+| Cyclomatic complexity | ≤10 | 15 |
+
+### 11.4 Dependency Direction (MUST)
+
+```
+Domain Models ← Services ← API/CLI ← Infrastructure
+     ↑             ↑           ↑
+   (pure)      (business)  (I/O boundary)
+```
+
+- **Domain models** MUST NOT import from services or infrastructure
+- **Services** MUST NOT import from API handlers
+- **Use dependency injection** for infrastructure dependencies (database, external APIs)
+
+---
+
+## 12. Agent Enforcement Rules
+
+This section defines rule levels for automated agents (Claude Code, linters, CI checks).
+
+### 12.1 Rule Levels
+
+| Level | Meaning | Agent Behavior |
+|-------|---------|----------------|
+| **MUST** | Mandatory requirement | Agent MUST comply; failure blocks completion |
+| **MUST NOT** | Prohibited action | Agent MUST NOT perform; violation is error |
+| **SHOULD** | Recommended practice | Agent SHOULD comply; deviation requires comment |
+| **MAY** | Optional guidance | Agent MAY choose based on context |
+
+### 12.2 Pre-Completion Checklist (MUST)
+
+Before marking any Python task as complete, agents **MUST** verify:
+
+| Check | Command | Pass Criteria |
+|-------|---------|---------------|
+| Type checking | `pyright --outputjson` | Zero errors |
+| Linting | `ruff check .` | Zero errors |
+| Formatting | `ruff format --check .` | No changes needed |
+| Tests pass | `pytest` | All tests pass |
+| Coverage | `pytest --cov --cov-fail-under=80` | ≥80% coverage |
+
+### 12.3 Code Quality Rules
+
+| Rule | Level | Verification |
+|------|-------|--------------|
+| Type hints on public functions | **MUST** | Pyright strict mode |
+| Google-style docstrings on public API | **MUST** | Ruff D rules |
+| No unused imports | **MUST** | Ruff F401 |
+| No hardcoded secrets | **MUST** | Manual review + Bandit |
+| Tests for new functionality | **MUST** | Coverage delta |
+| Single responsibility per function | **SHOULD** | Function ≤50 lines |
+| Flat module structure | **SHOULD** | Nesting ≤3 levels |
+
+### 12.4 Deviation Handling (MUST)
+
+When deviating from a **SHOULD** rule, agents **MUST**:
+
+1. Add inline comment explaining the deviation
+2. Reference the rule being deviated from
+3. Justify why deviation is appropriate
+
+```python
+# Deviation from §11.3: Function exceeds 50 lines because
+# splitting would break the transaction boundary. The atomic
+# operation requires all steps in sequence.
+def complex_but_atomic_operation(data: Input) -> Output:
+    ...
+```
+
+### 12.5 Authoritative Sources
+
+All Python code **MUST** align with these authoritative references:
+
+| Source | URL | Scope |
+|--------|-----|-------|
+| PEP 8 | https://peps.python.org/pep-0008/ | Style guide |
+| PEP 20 | https://peps.python.org/pep-0020/ | Design philosophy |
+| PEP 257 | https://peps.python.org/pep-0257/ | Docstring conventions |
+| PEP 484 | https://peps.python.org/pep-0484/ | Type hints |
+| Google Style Guide | https://google.github.io/styleguide/pyguide.html | Docstrings, naming |
+| OWASP Python Security | https://owasp.org/www-project-python-security/ | Security practices |

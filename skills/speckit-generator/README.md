@@ -50,7 +50,7 @@ The skill is automatically available when the skill files are in the skills dire
 
 | Command | Purpose | When to Use |
 |---------|---------|-------------|
-| `/plan` | Create plans from specifications | After specs exist in resources/ |
+| `/plan` | Create plans from specifications | After specs exist in speckit/ |
 | `/tasks` | Generate tasks from plans | After plans are approved |
 | `/analyze` | Audit project consistency | Anytime for health check |
 | `/clarify` | SEAMS-enhanced ambiguity resolution | When specs have open questions |
@@ -96,10 +96,10 @@ This will:
 
 ### 2. Add Your Specification
 
-Place your specification document in `.claude/resources/`:
+Place your specification document in `speckit/`:
 
 ```
-.claude/resources/my-feature-spec.md
+speckit/spec.md
 ```
 
 ### 3. Generate a Plan
@@ -158,12 +158,15 @@ After initialization, your project will have:
 │   ├── constitution.md    # Core principles
 │   ├── MANIFEST.md        # Memory file index
 │   └── project-status.md  # Implementation progress tracking
-├── resources/             # Specifications, plans, tasks
-│   ├── spec.md            # Your specification
-│   ├── plan.md            # Generated plan
-│   └── *-tasks.md         # Generated tasks
 ├── templates/             # Output templates
 └── scripts/               # Project scripts
+
+speckit/                   # Specification artifacts (at project root)
+├── spec.md                # Your specification
+├── plan.md                # Generated plan
+├── *-tasks.md             # Generated tasks
+├── plans/                 # Domain-specific plans (if complex)
+└── designs/               # Detailed task designs
 ```
 
 ## Memory Files
@@ -440,7 +443,14 @@ Ensure you're running the full implement workflow. Post-implementation hooks onl
 
 ## Version History
 
-### v1.7.0 (Current)
+### v1.8.0 (Current)
+- **Breaking Change**: Specification artifacts now output to `speckit/` directory at project root instead of `.claude/resources/`
+- This avoids Claude Code's Edit tool restrictions on `.claude/` paths
+- New directory structure: `speckit/spec.md`, `speckit/plan.md`, `speckit/*-tasks.md`, `speckit/plans/`, `speckit/designs/`
+- Updated all command templates, agents, and workflow references
+- `/speckit.init` now creates `speckit/` directory alongside `.claude/`
+
+### v1.7.0
 - **Restructured**: Non-init commands moved to `references/example-commands/` for clarity
 - **New**: 5 specialized analysis agents to reduce context pollution:
   - `compliance-checker` - Validates artifacts against directive rules

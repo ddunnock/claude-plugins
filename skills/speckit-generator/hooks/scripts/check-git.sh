@@ -1,4 +1,5 @@
 #!/bin/bash
+set -uo pipefail
 # check-git.sh
 # Validates git is available and project is in a git repository.
 # Called during /speckit.init to ensure checkpoint/revert will work.

@@ -146,9 +146,15 @@ Establish the `.claude/` foundation with appropriate memory files for the projec
 ├── commands/      # Custom project commands
 ├── memory/        # constitution.md + tech-specific files
 │   └── MANIFEST.md
-├── resources/     # Specifications, designs
 ├── templates/     # Output templates
 └── scripts/       # Project scripts
+
+speckit/           # SpecKit artifacts (specs, plans, tasks, designs)
+├── spec.md
+├── plan.md
+├── tasks.md
+├── plans/         # Multi-domain plans (if complex)
+└── designs/       # Design documents
 ```
 
 ### Memory File Selection
@@ -187,7 +193,7 @@ Create implementation plans from specification files. Hierarchical for complex/m
 
 ### Workflow
 
-1. **Locate specs** - Find spec files in .claude/resources/
+1. **Locate specs** - Find spec files in speckit/
 2. **Assess complexity** - Single domain vs multi-domain
 3. **Generate plans** - Create plan.md (and domain plans if complex)
 4. **Validate** - Check plan completeness and consistency
@@ -196,14 +202,14 @@ Create implementation plans from specification files. Hierarchical for complex/m
 
 **Simple (single domain)**:
 ```
-.claude/resources/
+speckit/
 ├── spec.md
 └── plan.md
 ```
 
 **Complex (multi-domain)**:
 ```
-.claude/resources/
+speckit/
 ├── spec.md
 ├── plan.md              # Master plan with domain references
 └── plans/
@@ -645,3 +651,20 @@ When running on an existing project:
 2. **Commands offer catch-up** - "Missing setup. Run init first?"
 3. **Incremental updates** - Only process what's new
 4. **Never destructive** - No deletions without explicit request
+
+---
+
+## Related Skills
+
+These skills auto-activate based on context to provide supplementary guidance:
+
+| Skill | Auto-Triggers When | Purpose |
+|-------|-------------------|---------|
+| `requirement-patterns` | Writing specs, requirements, user stories | Patterns for clear, testable requirements |
+| `adr-authoring` | Creating ADRs, documenting decisions | MADR templates and best practices |
+
+### When to Use
+
+- **Before `/speckit.plan`**: Use `requirement-patterns` to write better specifications
+- **During `/speckit.plan`**: Use `adr-authoring` for architecture decisions
+- **With `/speckit.analyze`**: Skills provide context for interpreting findings

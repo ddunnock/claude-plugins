@@ -1,6 +1,9 @@
 ---
 description: "Execute implementation tasks with mandatory status tracking and verification"
 handoffs:
+  - label: Design Task First
+    agent: design
+    prompt: Generate detailed implementation design for task
   - label: Revert Changes
     agent: revert
     prompt: Revert to checkpoint if implementation failed
@@ -36,7 +39,7 @@ REMOVE these instruction comments from the final output.
 
 # Implement
 
-Execute tasks from `.claude/resources/*-tasks.md` with batch execution, gates, and mandatory hooks.
+Execute tasks from `speckit/*-tasks.md` with batch execution, gates, and mandatory hooks.
 
 ## User Input
 
@@ -169,7 +172,28 @@ The specified selection has no pending tasks:
    ```
 ```
 
-### Pre-Hook 4: Present Execution Plan
+### Pre-Hook 4: Check Design Files
+
+For each task, check if a design file exists:
+
+```
+Check: speckit/designs/design-[TASK-ID].md
+```
+
+**IF design file exists:**
+- Load design and use as implementation guide
+- Follow data models, method signatures, and test cases from design
+- Verify implementation matches design specifications
+
+**IF design file does NOT exist:**
+- Note task lacks detailed design
+- For complex tasks (Scope: L or M), suggest:
+  ```
+  Consider running `/design [TASK-ID]` first for detailed implementation guidance.
+  ```
+- For simple tasks (Scope: S), proceed without design
+
+### Pre-Hook 5: Present Execution Plan
 
 Before executing, present the plan:
 
@@ -179,15 +203,16 @@ Before executing, present the plan:
 **Selection**: [what user specified]
 **Tasks to execute**: [count]
 
-| Task | Title | Status | Dependencies |
-|------|-------|--------|--------------|
-| TASK-004 | [Title] | PENDING | None |
-| TASK-005 | [Title] | PENDING | TASK-004 |
-| TASK-006 | [Title] | FAILED | None (retry) |
+| Task | Title | Status | Dependencies | Design |
+|------|-------|--------|--------------|--------|
+| TASK-004 | [Title] | PENDING | None | ✓ Available |
+| TASK-005 | [Title] | PENDING | TASK-004 | ✗ None |
+| TASK-006 | [Title] | FAILED | None (retry) | ✓ Available |
 
 **Context to load**:
 - Constitution: §3.1, §4.2, §5.1
 - Memory: typescript.md, testing.md
+- Designs: design-TASK-004.md, design-TASK-006.md
 
 **Proceed with execution?**
 ```
@@ -203,9 +228,13 @@ For each task:
 1. **Load context**:
    - Extract referenced constitution sections (§X.Y)
    - Load relevant memory file sections
+   - Load design file if available (`speckit/designs/design-[TASK-ID].md`)
    - Present context before execution
 
-2. **Execute** the task implementation
+2. **Execute** the task implementation:
+   - If design exists: Follow data models, method signatures, and algorithm from design
+   - If no design: Implement based on task description and acceptance criteria
+   - Run test cases from design (if provided)
 
 3. **Update status**: PENDING → IN_PROGRESS → COMPLETED
 
@@ -326,6 +355,7 @@ Update with:
 - [ ] project-status.md read and understood
 - [ ] Argument validated (or status shown if missing)
 - [ ] Task selection verified as actionable
+- [ ] Design files checked for each task
 - [ ] Execution plan presented and confirmed
 
 ### Post-Execution (must complete after tasks)
@@ -341,7 +371,7 @@ Update with:
 
 | Output | Location |
 |--------|----------|
-| Updated tasks | `.claude/resources/*-tasks.md` |
+| Updated tasks | `speckit/*-tasks.md` |
 | Project status | `.claude/memory/project-status.md` |
 | Completion summary | Displayed to user |
 
@@ -425,6 +455,12 @@ Then re-run `/speckit.init` to update this command.
 ---
 
 ## Handoffs
+
+### Design Complex Tasks First
+For tasks lacking designs:
+```
+/design TASK-XXX
+```
 
 ### Continue Implementation
 ```

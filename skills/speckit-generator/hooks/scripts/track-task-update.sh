@@ -1,4 +1,5 @@
 #!/bin/bash
+set -uo pipefail
 # track-task-update.sh
 # Tracks task status updates for post-implementation hook verification.
 # Logs updates to a session file for verification at stop hook.
@@ -31,7 +32,14 @@ fi
 
 # Parse tool input to determine what was updated
 TOOL_INPUT="${CLAUDE_TOOL_INPUT:-{}}"
-FILE_PATH=$(echo "$TOOL_INPUT" | grep -o '"file_path"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"\([^"]*\)"$/\1/')
+
+# Use jq for proper JSON parsing, fall back gracefully if unavailable
+if command -v jq &> /dev/null; then
+    FILE_PATH=$(echo "$TOOL_INPUT" | jq -r '.file_path // empty' 2>/dev/null)
+else
+    # Fallback: use python3 which is already required by this script
+    FILE_PATH=$(python3 -c "import json,sys; d=json.loads(sys.argv[1]); print(d.get('file_path',''))" "$TOOL_INPUT" 2>/dev/null || echo "")
+fi
 
 if [[ -z "$FILE_PATH" ]]; then
     # No file path found, just continue

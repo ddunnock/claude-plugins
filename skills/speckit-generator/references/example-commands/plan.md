@@ -94,7 +94,7 @@ Each architecture decision follows this structure:
 
 ## Workflow
 
-1. **Locate specs** - Find spec files in .claude/resources/
+1. **Locate specs** - Find spec files in speckit/
 2. **Assess complexity** - Single domain vs multi-domain
 3. **PLANS coverage scan** - Evaluate all 5 categories
 4. **Generate plans** - Create plan.md (and domain plans if complex)
@@ -128,14 +128,14 @@ Before generating plans, evaluate current state:
 
 **Simple (single domain)**:
 ```
-.claude/resources/
+speckit/
 ├── spec.md
 └── plan.md
 ```
 
 **Complex (multi-domain)**:
 ```
-.claude/resources/
+speckit/
 ├── spec.md
 ├── plan.md              # Master plan with domain references
 └── plans/

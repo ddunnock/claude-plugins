@@ -734,7 +734,7 @@ MUST output this summary to the user after every `/speckit.implement` run:
 
 ### Artifacts Updated
 
-✓ `.claude/resources/*-tasks.md` - Task statuses and criteria
+✓ `speckit/*-tasks.md` - Task statuses and criteria
 ✓ `.claude/memory/project-status.md` - Progress metrics
 
 ### Project Progress

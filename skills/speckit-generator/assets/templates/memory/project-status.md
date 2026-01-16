@@ -127,7 +127,7 @@ Based on current state, recommended next steps:
 /speckit.analyze
 
 # To review tasks:
-cat .claude/resources/*-tasks.md
+cat speckit/*-tasks.md
 ```
 
 ---

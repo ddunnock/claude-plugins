@@ -105,7 +105,7 @@ git reset --hard [checkpoint]
 
 1. **project-status.md** - Log revert, add blocker
 2. **tasks.md** - Reset status, add failure notes
-3. **Create failure report** - .claude/resources/failure-analysis-[date].md
+3. **Create failure report** - speckit/failure-analysis-[date].md
 
 ---
 

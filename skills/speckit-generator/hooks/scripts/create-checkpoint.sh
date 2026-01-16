@@ -1,4 +1,5 @@
 #!/bin/bash
+set -uo pipefail
 # create-checkpoint.sh
 # Creates a git checkpoint (tag) before implementation begins.
 # Called before /speckit.implement executes any tasks.

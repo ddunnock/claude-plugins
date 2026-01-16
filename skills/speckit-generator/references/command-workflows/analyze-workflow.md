@@ -35,7 +35,7 @@ Run the prerequisite check script and parse JSON output:
 
 ```json
 {
-  "FEATURE_DIR": ".claude/resources/features/my-feature",
+  "FEATURE_DIR": "speckit",
   "AVAILABLE_DOCS": ["spec.md", "plan.md", "tasks.md"]
 }
 ```

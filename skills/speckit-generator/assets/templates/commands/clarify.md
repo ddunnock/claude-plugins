@@ -142,7 +142,7 @@ Scan using this combined taxonomy. For each category, mark status: **Clear** / *
 
 ### Step 1: Load Context
 
-1. Read spec files from `.claude/resources/`
+1. Read spec files from `speckit/`
 2. Load directive files from `.claude/memory/`
 3. Load the spec into memory (maintain in-memory representation)
 4. Check for previous clarify sessions in spec's `## Clarifications` section
@@ -152,7 +152,7 @@ Scan using this combined taxonomy. For each category, mark status: **Clear** / *
 **Invoke ambiguity-scanner agent:**
 ```
 subagent_type: "speckit-generator:ambiguity-scanner"
-prompt: "Scan .claude/resources/spec.md for ambiguities, prioritize by Impact × Uncertainty"
+prompt: "Scan speckit/spec.md for ambiguities, prioritize by Impact × Uncertainty"
 ```
 
 The agent runs detection across all 13 SEAMS categories and returns:

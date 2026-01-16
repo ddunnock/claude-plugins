@@ -1,4 +1,5 @@
 #!/bin/bash
+set -uo pipefail
 # check-checkpoint.sh
 # Validates that checkpoints exist before allowing revert.
 # Called before /speckit.revert executes.

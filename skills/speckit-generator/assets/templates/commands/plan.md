@@ -145,7 +145,7 @@ Systematic coverage scan for implementation planning:
 
 ## Workflow
 
-1. **Locate specs** - Find spec files in .claude/resources/
+1. **Locate specs** - Find spec files in speckit/
 2. **Assess complexity** - Single domain vs multi-domain
 3. **PLANS coverage scan** - Evaluate all 5 categories
 4. **Generate plans** - Create plan.md (and domain plans if complex)
@@ -163,7 +163,7 @@ After creating ADRs, invoke the ADR validator agent to ensure completeness.
 **Invoke via Task tool:**
 ```
 subagent_type: "speckit-generator:adr-validator"
-prompt: "Validate ADRs in .claude/resources/plan.md at [SELECTED_LEVEL] level"
+prompt: "Validate ADRs in speckit/plan.md at [SELECTED_LEVEL] level"
 ```
 
 The agent will check:
@@ -180,14 +180,14 @@ The agent will check:
 
 **Simple (single domain)**:
 ```
-.claude/resources/
+speckit/
 ├── spec.md
 └── plan.md
 ```
 
 **Complex (multi-domain)**:
 ```
-.claude/resources/
+speckit/
 ├── spec.md
 ├── plan.md              # Master plan with domain references
 └── plans/
@@ -248,8 +248,8 @@ Before completing plan generation, verify ALL items:
 
 | Output | Location |
 |--------|----------|
-| Master plan | `.claude/resources/plan.md` |
-| Domain plans (if complex) | `.claude/resources/plans/*.md` |
+| Master plan | `speckit/plan.md` |
+| Domain plans (if complex) | `speckit/plans/*.md` |
 
 ---
 

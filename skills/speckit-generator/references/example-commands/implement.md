@@ -295,7 +295,7 @@ MUST update with:
 5. If issues persist: `/speckit.revert` to return to checkpoint
 
 **Files Updated**:
-- `.claude/resources/core-tasks.md`
+- `speckit/core-tasks.md`
 - `.claude/memory/project-status.md`
 ```
 

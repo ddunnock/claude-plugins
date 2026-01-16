@@ -356,7 +356,7 @@ For each reverted task:
 ### Artifacts Updated
 - ✓ project-status.md - Activity logged, blocker added
 - ✓ *-tasks.md - Task statuses reset, notes added
-- ✓ Failure analysis saved to .claude/resources/failure-analysis-20240115.md
+- ✓ Failure analysis saved to speckit/failure-analysis-20240115.md
 
 ### Next Steps
 1. Run `/speckit.clarify` to resolve session storage question

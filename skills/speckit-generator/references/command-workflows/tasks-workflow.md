@@ -60,7 +60,7 @@ Every acceptance criterion must pass SMART validation:
 ### Step 1: Load Plan(s)
 
 ```
-1. Find plan files in .claude/resources/
+1. Find plan files in speckit/
 2. Parse plan structure (phases, requirements, ADRs)
 3. Identify domains from complex plans
 4. Extract task generation notes from each phase

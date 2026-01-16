@@ -60,7 +60,7 @@ Systematic coverage scan for implementation planning:
 ### Step 1: Locate Specifications
 
 ```
-1. Check .claude/resources/ for spec files
+1. Check speckit/ for spec files
 2. Accept explicit spec file argument
 3. If no specs found, offer to create template
 
