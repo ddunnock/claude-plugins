@@ -13,7 +13,6 @@ Copies selected memory files from template location to project .claude/memory/
 import json
 import os
 import shutil
-import sys
 from pathlib import Path
 from typing import TypedDict
 
@@ -202,8 +201,9 @@ class SelectionResult(TypedDict):
     source_path: str | None
     target_path: str
     copied: list[str]
-    skipped: list[str]  # Existing files that were skipped
-    updated: list[str]  # Existing files that were updated
+    skipped: list[str]  # Existing files that were skipped (unchanged or customized)
+    updated: list[str]  # Existing files that were updated (not customized by user)
+    customized: list[str]  # Files the user has customized (preserved)
     errors: list[str]
 
 
@@ -216,20 +216,74 @@ def get_file_hash(path: Path) -> str:
         return ""
 
 
+MANIFEST_FILENAME = ".manifest.json"
+
+
+def load_manifest(target_dir: Path) -> dict[str, str]:
+    """
+    Load the hash manifest that tracks original template hashes.
+
+    The manifest stores the hash of each file AT THE TIME IT WAS COPIED.
+    This allows us to detect if the user has customized a file:
+    - If current_hash == manifest_hash: user hasn't touched it, safe to update
+    - If current_hash != manifest_hash: user has customized it, preserve it
+
+    Returns:
+        Dict mapping filename to original template hash
+    """
+    manifest_path = target_dir / MANIFEST_FILENAME
+    if manifest_path.exists():
+        try:
+            return json.loads(manifest_path.read_text())
+        except (json.JSONDecodeError, Exception):
+            return {}
+    return {}
+
+
+def save_manifest(target_dir: Path, manifest: dict[str, str]) -> None:
+    """Save the hash manifest to track original template hashes."""
+    manifest_path = target_dir / MANIFEST_FILENAME
+    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
+
+
+def is_user_customized(
+    target_file: Path,
+    manifest: dict[str, str]
+) -> bool:
+    """
+    Check if a file has been customized by the user.
+
+    A file is considered customized if:
+    - It exists in the manifest AND
+    - Its current hash differs from the manifest hash
+
+    If the file doesn't exist in manifest, it's a new file (not customized).
+    """
+    filename = target_file.name
+    if filename not in manifest:
+        return False  # No manifest entry = new file, not customized
+
+    original_hash = manifest[filename]
+    current_hash = get_file_hash(target_file)
+
+    return current_hash != original_hash
+
+
 def copy_memory_files(
     project_path: str | Path,
     files: list[str],
     source_path: str | Path | None = None,
     dry_run: bool = False,
     force: bool = False,
-    update_if_newer: bool = True
+    preserve_customizations: bool = True
 ) -> SelectionResult:
     """
     Copy selected memory files to project .claude/memory/ directory.
 
     Idempotent: Safe to run on existing projects.
-    - Skips files that already exist and match source (same content)
-    - Updates files that exist but differ from source (if update_if_newer=True)
+    - Tracks original template hashes in .manifest.json
+    - Preserves user-customized files (detected via manifest comparison)
+    - Updates unchanged files when template changes
     - Creates only missing files
     - Never deletes existing files
 
@@ -238,8 +292,8 @@ def copy_memory_files(
         files: List of memory file names to copy
         source_path: Optional source directory (auto-detected if None)
         dry_run: If True, don't actually copy files
-        force: If True, overwrite existing files unconditionally
-        update_if_newer: If True, update existing files when source differs
+        force: If True, overwrite ALL files including customized ones
+        preserve_customizations: If True, preserve user-customized files (default)
 
     Returns:
         SelectionResult with details of the operation
@@ -262,6 +316,7 @@ def copy_memory_files(
         "copied": [],
         "skipped": [],
         "updated": [],
+        "customized": [],
         "errors": [],
     }
 
@@ -276,6 +331,10 @@ def copy_memory_files(
     if not dry_run:
         target_dir.mkdir(parents=True, exist_ok=True)
 
+    # Load manifest for tracking customizations
+    manifest = load_manifest(target_dir) if target_dir.exists() else {}
+    manifest_updated = False
+
     for filename in files:
         source_file = source_dir / filename
         target_file = target_dir / filename
@@ -284,22 +343,29 @@ def copy_memory_files(
             result["errors"].append(f"Source file not found: {filename}")
             continue
 
+        source_hash = get_file_hash(source_file)
+
         # Check if target already exists
         if target_file.exists():
-            source_hash = get_file_hash(source_file)
             target_hash = get_file_hash(target_file)
 
             if source_hash == target_hash:
-                # Files are identical - skip
+                # Files are identical - skip (but ensure manifest is up to date)
+                if filename not in manifest and not dry_run:
+                    manifest[filename] = source_hash
+                    manifest_updated = True
                 result["skipped"].append(filename)
                 continue
 
-            if not force and not update_if_newer:
-                # Don't overwrite existing different file
-                result["skipped"].append(filename)
-                continue
+            # File differs - check if user has customized it
+            if preserve_customizations and not force:
+                if is_user_customized(target_file, manifest):
+                    # User has modified this file - preserve their customizations
+                    result["customized"].append(filename)
+                    continue
 
-            # Update the file
+            # File differs but user hasn't customized it (template changed)
+            # OR force=True - update it
             action = "updated"
             result_list = result["updated"]
         else:
@@ -313,8 +379,18 @@ def copy_memory_files(
             try:
                 shutil.copy2(source_file, target_file)
                 result_list.append(filename)
+                # Record the template hash in manifest
+                manifest[filename] = source_hash
+                manifest_updated = True
             except Exception as e:
                 result["errors"].append(f"Failed to {action} {filename}: {e}")
+
+    # Save updated manifest
+    if manifest_updated and not dry_run:
+        try:
+            save_manifest(target_dir, manifest)
+        except Exception as e:
+            result["errors"].append(f"Failed to save manifest: {e}")
 
     return result
 
@@ -424,6 +500,11 @@ def main():
         action="store_true",
         help="Output as JSON"
     )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite all files including customized ones"
+    )
 
     args = parser.parse_args()
 
@@ -447,7 +528,8 @@ def main():
         args.project_path,
         files,
         source_path=args.source,
-        dry_run=args.dry_run
+        dry_run=args.dry_run,
+        force=args.force
     )
 
     if args.json:
@@ -461,9 +543,14 @@ def main():
                 print(f"  + {f}")
 
         if result["updated"]:
-            print(f"\n{prefix}Updated (changed):")
+            print(f"\n{prefix}Updated (template changed):")
             for f in result["updated"]:
                 print(f"  ~ {f}")
+
+        if result["customized"]:
+            print(f"\nPreserved (user customized):")
+            for f in result["customized"]:
+                print(f"  * {f}")
 
         if result["skipped"]:
             print(f"\nSkipped (unchanged):")
@@ -475,7 +562,7 @@ def main():
             for err in result["errors"]:
                 print(f"  ! {err}")
 
-        if not any([result["copied"], result["updated"], result["skipped"]]):
+        if not any([result["copied"], result["updated"], result["skipped"], result["customized"]]):
             print("No files to process.")
 
 

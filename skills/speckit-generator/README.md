@@ -406,7 +406,14 @@ Ensure you're running the full implement workflow. Post-implementation hooks onl
 
 ## Version History
 
-### v1.6.0 (Current)
+### v1.6.1 (Current)
+- **Bug Fix**: Memory file customizations are now preserved during re-initialization
+- Added `.manifest.json` tracking for detecting user customizations
+- Customization detection: compares current file hash against original template hash
+- New CLI option: `--force` to explicitly overwrite customized files
+- Improved output: shows "Preserved (user customized)" for protected files
+
+### v1.6.0
 - Enhanced `/speckit.plan` with PLANS taxonomy (Phases, Linkages, Architecture, Notes, Scope)
 - Added ADR-style architecture decisions using MADR template format
 - ADR template levels: Lightweight, Standard, Full based on complexity

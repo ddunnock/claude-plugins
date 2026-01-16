@@ -1,7 +1,7 @@
 {
   "name": "speckit-generator",
   "description": "Project-focused specification and task management with PLANS taxonomy, ADR-style architecture decisions, SMART acceptance criteria, SEAMS-enhanced clarification, git checkpoints, mandatory approval gates, and session-memory hooks",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "author": {
     "name": "Claude Code Skills"
   },
