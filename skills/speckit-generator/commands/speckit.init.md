@@ -128,6 +128,15 @@ This will iterate until all Phase 1 tasks have verified acceptance criteria.
 
 ## Memory File Selection
 
+**Source Location**: Memory file templates are located in the plugin at:
+```
+${CLAUDE_PLUGIN_ROOT}/assets/memory/
+```
+
+To find this path, the plugin root is typically:
+- `~/.claude/plugins/cache/[plugin-id]/` for installed plugins
+- The directory containing this command file's parent `.claude-plugin/` folder
+
 | Category | Files | Selection |
 |----------|-------|-----------|
 | Universal | constitution.md, documentation.md, git-cicd.md, security.md, testing.md | Always |
@@ -136,6 +145,13 @@ This will iterate until all Phase 1 tasks have verified acceptance criteria.
 | Tailwind | tailwind-shadcn.md | If Tailwind detected |
 | Python | python.md | If Python detected |
 | Rust | rust.md | If Rust detected |
+
+### Copy Process
+
+1. **Identify plugin root** - Find where speckit-generator plugin is installed
+2. **Read source files** - From `${CLAUDE_PLUGIN_ROOT}/assets/memory/[filename].md`
+3. **Write to project** - To `.claude/memory/[filename].md`
+4. **Create MANIFEST.md** - List installed memory files with timestamps
 
 ## Options
 
@@ -148,13 +164,18 @@ This will iterate until all Phase 1 tasks have verified acceptance criteria.
 
 ---
 
-## MANDATORY: Command Customization (Step 8)
+## MANDATORY: Command Customization (Step 9)
 
 When copying command templates to the user's project, you **MUST** customize them based on the detected tech stack. Command templates contain `<!-- INIT: ... -->` instructions that guide customization.
 
+**Source Location**: Command templates are located in the plugin at:
+```
+${CLAUDE_PLUGIN_ROOT}/assets/templates/commands/
+```
+
 ### Customization Process
 
-1. **Read the template** from `assets/templates/commands/[command].md`
+1. **Read the template** from `${CLAUDE_PLUGIN_ROOT}/assets/templates/commands/[command].md`
 2. **Find INIT instructions** in HTML comments (`<!-- INIT: ... -->`)
 3. **Apply customizations** based on detected tech stack
 4. **Remove all INIT comments** from the final output

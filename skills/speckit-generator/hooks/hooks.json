@@ -59,7 +59,7 @@
         "hooks": [
           {
             "type": "prompt",
-            "prompt": "If this session involved '/speckit.implement' or task implementation:\n\nVerify ALL post-implementation hooks completed:\n1. Git checkpoint created before implementation\n2. Task statuses updated in *-tasks.md with evidence\n3. Acceptance criteria verified (checkboxes marked)\n4. project-status.md updated with current metrics and checkpoint tag\n5. Completion summary output to user\n6. Next steps clearly stated (including revert option if issues)\n\nIf ANY post-hook is incomplete:\n- Return {\"decision\": \"block\", \"reason\": \"Post-implementation hooks incomplete. Update [specific missing item] before ending.\"}\n\nIf no implementation occurred OR all hooks complete:\n- Return {\"decision\": \"allow\"}"
+            "prompt": "If this session involved '/speckit.implement' or task implementation:\n\nVerify ALL post-implementation hooks completed:\n1. Git checkpoint created before implementation\n2. Task statuses updated in *-tasks.md with evidence\n3. Acceptance criteria verified (checkboxes marked)\n4. project-status.md updated with current metrics and checkpoint tag\n5. Completion summary output to user\n6. Next steps clearly stated (including revert option if issues)\n\nIf ANY post-hook is incomplete:\n- Return {\"ok\": false, \"message\": \"Post-implementation hooks incomplete. Update [specific missing item] before ending.\"}\n\nIf no implementation occurred OR all hooks complete:\n- Return {\"ok\": true}"
           }
         ]
       }
