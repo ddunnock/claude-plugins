@@ -1,289 +1,68 @@
 {
-  "$schema": "https://claude.ai/hooks-schema.json",
-  "hooks": [
-    {
-      "description": "Validate git availability during project initialization",
-      "matcher": {
-        "tool_name": "Bash",
-        "pre_conditions": [
-          "Message contains '/speckit.init' or 'speckit.init'"
-        ]
-      },
-      "hooks": [
-        {
-          "type": "preToolUse",
-          "hook": {
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/check-git.sh",
             "timeout_ms": 5000
           }
-        }
-      ]
-    },
-    {
-      "description": "Create git checkpoint before implementation begins",
-      "matcher": {
-        "tool_name": "Write|Edit|Bash",
-        "pre_conditions": [
-          "Message contains '/speckit.implement' or '/implement'",
-          "First tool call in implementation sequence"
         ]
       },
-      "hooks": [
-        {
-          "type": "preToolUse",
-          "hook": {
+      {
+        "matcher": "Write|Edit|Bash",
+        "hooks": [
+          {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/create-checkpoint.sh",
             "timeout_ms": 10000
           }
-        }
-      ]
-    },
-    {
-      "description": "Enforce pre-implementation checks before task execution begins",
-      "matcher": {
-        "tool_name": "Write|Edit|Bash",
-        "pre_conditions": [
-          "Message contains 'TASK-' or '/speckit.implement' or '/implement'"
         ]
       },
-      "hooks": [
-        {
-          "type": "preToolUse",
-          "hook": {
-            "type": "prompt",
-            "prompt": "Before executing implementation tasks:\n\n1. Has project-status.md been read? Check for '.claude/memory/project-status.md'\n2. Was a valid task selector provided?\n3. Are selected tasks PENDING or FAILED (not COMPLETED)?\n4. Was execution plan presented to user?\n5. Was git checkpoint created?\n\nIf any pre-hook is missing, return {\"decision\": \"block\", \"reason\": \"Pre-implementation hooks incomplete. Read project-status.md, validate task selection, and create checkpoint first.\"}\n\nIf all pre-hooks satisfied, return {\"decision\": \"allow\"}"
-          }
-        }
-      ]
-    },
-    {
-      "description": "Validate project initialization state before speckit commands",
-      "matcher": {
-        "tool_name": "Read|Glob|Grep",
-        "pre_conditions": [
-          "Message contains '/speckit.' and not '/speckit.init'"
-        ]
-      },
-      "hooks": [
-        {
-          "type": "preToolUse",
-          "hook": {
+      {
+        "matcher": "Read|Glob|Grep",
+        "hooks": [
+          {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/check-init-state.sh",
             "timeout_ms": 5000
           }
-        }
-      ]
-    },
-    {
-      "description": "Track task status changes for post-hook verification",
-      "matcher": {
-        "tool_name": "Edit|Write",
-        "pre_conditions": [
-          "Tool input contains '*-tasks.md' or 'project-status.md'"
         ]
       },
-      "hooks": [
-        {
-          "type": "postToolUse",
-          "hook": {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/track-task-update.sh",
-            "timeout_ms": 3000
-          }
-        }
-      ]
-    },
-    {
-      "description": "Ensure post-implementation hooks complete before session ends",
-      "matcher": {
-        "tool_name": "*"
-      },
-      "hooks": [
-        {
-          "type": "stop",
-          "hook": {
-            "type": "prompt",
-            "prompt": "If this session involved '/speckit.implement' or task implementation:\n\nVerify ALL post-implementation hooks completed:\n1. ☐ Git checkpoint created before implementation\n2. ☐ Task statuses updated in *-tasks.md with evidence\n3. ☐ Acceptance criteria verified (checkboxes marked)\n4. ☐ project-status.md updated with current metrics and checkpoint tag\n5. ☐ Completion summary output to user\n6. ☐ Next steps clearly stated (including revert option if issues)\n\nIf ANY post-hook is incomplete:\n- Return {\"decision\": \"block\", \"reason\": \"Post-implementation hooks incomplete. Update [specific missing item] before ending.\"}\n\nIf no implementation occurred OR all hooks complete:\n- Return {\"decision\": \"allow\"}"
-          }
-        }
-      ]
-    },
-    {
-      "description": "Prevent automatic command chaining between speckit commands",
-      "matcher": {
-        "tool_name": "Bash|Task",
-        "pre_conditions": [
-          "Previous tool call was a speckit command",
-          "Current call attempts to run another speckit command"
-        ]
-      },
-      "hooks": [
-        {
-          "type": "preToolUse",
-          "hook": {
-            "type": "prompt",
-            "prompt": "GATE VIOLATION CHECK:\n\nSpecKit commands must NOT be chained automatically. Each command produces artifacts requiring user review.\n\nRequired gates:\n- After /speckit.init → Present structure, wait for approval\n- After /speckit.plan → Present plan summary, wait for approval  \n- After /speckit.tasks → Present task summary, wait for approval\n\nIf attempting to chain commands without explicit user approval between them:\nReturn {\"decision\": \"block\", \"reason\": \"Gate required. Present previous command's output and await user approval before proceeding.\"}\n\nIf user explicitly requested this command after reviewing previous output:\nReturn {\"decision\": \"allow\"}"
-          }
-        }
-      ]
-    },
-    {
-      "description": "Validate checkpoint exists before revert",
-      "matcher": {
-        "tool_name": "Bash",
-        "pre_conditions": [
-          "Message contains '/speckit.revert' or '/revert'"
-        ]
-      },
-      "hooks": [
-        {
-          "type": "preToolUse",
-          "hook": {
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/check-checkpoint.sh",
             "timeout_ms": 5000
           }
-        }
-      ]
-    },
-    {
-      "description": "Record plan generation start in session memory",
-      "matcher": {
-        "tool_name": "Read|Glob",
-        "pre_conditions": [
-          "Message contains '/speckit.plan' or '/plan'",
-          "First tool call in plan generation sequence"
         ]
-      },
-      "hooks": [
-        {
-          "type": "postToolUse",
-          "hook": {
-            "type": "prompt",
-            "prompt": "If session-memory MCP server is available (mcp__session-memory__session_record tool exists):\n\nRecord a phase event for plan start:\n- category: \"phase\"\n- type: \"plan_started\"\n- data: { spec_files: [list of spec files found], complexity_mode: \"simple|complex\", existing_plan: true|false }\n- tags: [\"speckit\", \"plan\"]\n\nReturn {\"decision\": \"allow\"} after recording (or if MCP not available)."
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/track-task-update.sh",
+            "timeout_ms": 3000
           }
-        }
-      ]
-    },
-    {
-      "description": "Record ADR creation in session memory",
-      "matcher": {
-        "tool_name": "Write|Edit",
-        "pre_conditions": [
-          "Message contains '/speckit.plan' or '/plan'",
-          "Tool input contains 'ADR-' and 'status:' and 'Decision Outcome'"
         ]
-      },
-      "hooks": [
-        {
-          "type": "postToolUse",
-          "hook": {
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
             "type": "prompt",
-            "prompt": "If session-memory MCP server is available (mcp__session-memory__session_record tool exists):\n\nRecord a decision event for ADR creation:\n- category: \"decision\"\n- type: \"architecture_decision\"\n- data: { adr_id: \"ADR-XXX\", title: [decision title], status: \"proposed|accepted\", requirements: [linked REQ-XXX] }\n- tags: [\"speckit\", \"plan\", \"adr\"]\n\nReturn {\"decision\": \"allow\"} after recording (or if MCP not available)."
+            "prompt": "If this session involved '/speckit.implement' or task implementation:\n\nVerify ALL post-implementation hooks completed:\n1. Git checkpoint created before implementation\n2. Task statuses updated in *-tasks.md with evidence\n3. Acceptance criteria verified (checkboxes marked)\n4. project-status.md updated with current metrics and checkpoint tag\n5. Completion summary output to user\n6. Next steps clearly stated (including revert option if issues)\n\nIf ANY post-hook is incomplete:\n- Return {\"decision\": \"block\", \"reason\": \"Post-implementation hooks incomplete. Update [specific missing item] before ending.\"}\n\nIf no implementation occurred OR all hooks complete:\n- Return {\"decision\": \"allow\"}"
           }
-        }
-      ]
-    },
-    {
-      "description": "Record plan completion and create checkpoint in session memory",
-      "matcher": {
-        "tool_name": "Write|Edit",
-        "pre_conditions": [
-          "Message contains '/speckit.plan' or '/plan'",
-          "Tool input contains 'plan.md' or '-plan.md'",
-          "Plan generation is complete (7-point validation passed)"
         ]
-      },
-      "hooks": [
-        {
-          "type": "postToolUse",
-          "hook": {
-            "type": "prompt",
-            "prompt": "If session-memory MCP server is available:\n\n1. Record a phase event for plan completion:\n   - category: \"phase\"\n   - type: \"plan_complete\"\n   - data: { plans_created: [count], phases: [count], adrs: [count], coverage: { requirements_mapped: N, total: M } }\n   - tags: [\"speckit\", \"plan\", \"milestone\"]\n\n2. Create a session checkpoint:\n   - name: \"plan-complete-{timestamp}\"\n   - summary: \"Plan generation complete with N phases and M ADRs\"\n\nReturn {\"decision\": \"allow\"} after recording (or if MCP not available)."
-          }
-        }
-      ]
-    },
-    {
-      "description": "Record task generation start in session memory",
-      "matcher": {
-        "tool_name": "Read|Glob",
-        "pre_conditions": [
-          "Message contains '/speckit.tasks' or '/tasks'",
-          "First tool call in task generation sequence"
-        ]
-      },
-      "hooks": [
-        {
-          "type": "postToolUse",
-          "hook": {
-            "type": "prompt",
-            "prompt": "If session-memory MCP server is available (mcp__session-memory__session_record tool exists):\n\nRecord a phase event for tasks start:\n- category: \"phase\"\n- type: \"tasks_started\"\n- data: { plan_files: [list of plan files], existing_tasks: true|false }\n- tags: [\"speckit\", \"tasks\"]\n\nReturn {\"decision\": \"allow\"} after recording (or if MCP not available)."
-          }
-        }
-      ]
-    },
-    {
-      "description": "Record task generation completion in session memory",
-      "matcher": {
-        "tool_name": "Write|Edit",
-        "pre_conditions": [
-          "Message contains '/speckit.tasks' or '/tasks'",
-          "Tool input contains '*-tasks.md'",
-          "Task generation is complete (8-point validation passed)"
-        ]
-      },
-      "hooks": [
-        {
-          "type": "postToolUse",
-          "hook": {
-            "type": "prompt",
-            "prompt": "If session-memory MCP server is available:\n\n1. Record a finding event for tasks generated:\n   - category: \"finding\"\n   - type: \"tasks_generated\"\n   - data: { count: [total tasks], by_phase: { phase1: N, phase2: M }, smart_compliance: \"XX%\", smart_failures: [count] }\n   - tags: [\"speckit\", \"tasks\", \"smart\"]\n\n2. Create a session checkpoint:\n   - name: \"tasks-complete-{timestamp}\"\n   - summary: \"Task generation complete with N tasks, XX% SMART compliant\"\n\nReturn {\"decision\": \"allow\"} after recording (or if MCP not available)."
-          }
-        }
-      ]
-    },
-    {
-      "description": "Record individual task start in session memory",
-      "matcher": {
-        "tool_name": "Write|Edit|Bash",
-        "pre_conditions": [
-          "Message contains '/speckit.implement' or '/implement'",
-          "Message contains 'TASK-' followed by task ID",
-          "Beginning work on a specific task"
-        ]
-      },
-      "hooks": [
-        {
-          "type": "preToolUse",
-          "hook": {
-            "type": "prompt",
-            "prompt": "If session-memory MCP server is available (mcp__session-memory__session_record tool exists):\n\nRecord a phase event for task start:\n- category: \"phase\"\n- type: \"task_started\"\n- data: { task_id: \"TASK-XXX\", title: [task title], dependencies: [list], acceptance_criteria_count: N }\n- tags: [\"speckit\", \"implement\", \"task\"]\n\nReturn {\"decision\": \"allow\"} after recording (or if MCP not available)."
-          }
-        }
-      ]
-    },
-    {
-      "description": "Record individual task completion in session memory",
-      "matcher": {
-        "tool_name": "Edit|Write",
-        "pre_conditions": [
-          "Tool input contains '*-tasks.md'",
-          "Tool input contains 'Status**: COMPLETED' or marking task as complete"
-        ]
-      },
-      "hooks": [
-        {
-          "type": "postToolUse",
-          "hook": {
-            "type": "prompt",
-            "prompt": "If session-memory MCP server is available:\n\nRecord a finding event for task completion:\n- category: \"finding\"\n- type: \"task_complete\"\n- data: { task_id: \"TASK-XXX\", status: \"COMPLETED|FAILED|SKIPPED\", criteria_verified: N, criteria_total: M, evidence: [summary of verifications] }\n- tags: [\"speckit\", \"implement\", \"task-complete\"]\n\nReturn {\"decision\": \"allow\"} after recording (or if MCP not available)."
-          }
-        }
-      ]
-    }
-  ]
+      }
+    ]
+  }
 }
