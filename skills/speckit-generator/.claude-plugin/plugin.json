@@ -7,6 +7,5 @@
   },
   "license": "MIT",
   "repository": "https://github.com/anthropics/claude-code-plugins",
-  "keywords": ["specification", "project-management", "task-management", "git-checkpoints", "workflow", "hooks", "adr", "smart-criteria", "session-memory"],
-  "hooks": "./hooks/hooks.json"
+  "keywords": ["specification", "project-management", "task-management", "git-checkpoints", "workflow", "hooks", "adr", "smart-criteria", "session-memory"]
 }
