@@ -147,9 +147,20 @@ Scan using this combined taxonomy. For each category, mark status: **Clear** / *
 3. Load the spec into memory (maintain in-memory representation)
 4. Check for previous clarify sessions in spec's `## Clarifications` section
 
-### Step 2: SEAMS Coverage Scan
+### Step 2: SEAMS Coverage Scan (Agent)
 
-Run detection across all 13 categories. Produce internal coverage map:
+**Invoke ambiguity-scanner agent:**
+```
+subagent_type: "speckit-generator:ambiguity-scanner"
+prompt: "Scan .claude/resources/spec.md for ambiguities, prioritize by Impact × Uncertainty"
+```
+
+The agent runs detection across all 13 SEAMS categories and returns:
+- Prioritized findings ranked by score
+- Recommended questions for top findings
+- Coverage summary by category
+
+Use the agent's output to populate the internal coverage map:
 
 ```
 Coverage Map (internal - do not output unless no questions):

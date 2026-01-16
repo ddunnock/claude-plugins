@@ -231,6 +231,26 @@ Options:
 
 **CRITICAL**: These hooks MUST execute after ANY implementation run. The command is NOT complete without them.
 
+### Post-Hook 0: Compliance Check (Agent)
+
+After implementing code, verify compliance with project directives.
+
+**Invoke compliance-checker agent:**
+```
+subagent_type: "speckit-generator:compliance-checker"
+prompt: "Check compliance of [MODIFIED_FILES] against .claude/memory/constitution.md and relevant tech-specific memory files"
+```
+
+The agent validates:
+- MUST/MUST NOT rules from constitution
+- Technology-specific requirements
+- Security requirements
+
+**Handle results:**
+- CRITICAL: Must fix before marking task complete
+- HIGH: Should fix, warn if proceeding
+- MEDIUM/LOW: Document for later review
+
 ### Post-Hook 1: Update tasks.md
 
 For EACH task worked on:

@@ -1,16 +1,22 @@
 # SpecKit Generator
 
-Project-focused specification and task management system for Claude Code with git checkpoint safety, mandatory approval gates, and implementation hooks.
+Project-focused specification and task management system for Claude Code with git checkpoint safety, mandatory approval gates, implementation hooks, and specialized analysis agents.
 
 ## Overview
 
-SpecKit Generator transforms specifications into executed implementations through a structured workflow with 7 commands. Each command produces artifacts that require user review before proceeding, ensuring quality and alignment at every step.
+SpecKit Generator transforms specifications into executed implementations through a structured workflow. The plugin provides one bootstrap command (`/speckit.init`) that installs 6 project-local commands. Each command produces artifacts that require user review before proceeding, ensuring quality and alignment at every step.
 
 ```
-/speckit.init → /speckit.plan → /speckit.tasks → /speckit.implement
-                     ↑              ↑                    ↓
-              /speckit.analyze  /speckit.clarify   /speckit.revert
+/speckit.init → /plan → /tasks → /implement
+                   ↑        ↑          ↓
+               /analyze  /clarify   /revert
 ```
+
+### Key Architecture
+
+- **Bootstrap Command**: `/speckit.init` is the only plugin-level command
+- **Project Commands**: 6 commands installed to `.claude/commands/` for project use
+- **Analysis Agents**: 5 specialized agents for deep analysis (reducing context pollution)
 
 ### Key Features
 
@@ -34,15 +40,43 @@ The skill is automatically available when the skill files are in the skills dire
 
 ## Commands
 
+### Plugin Command (Bootstrap)
+
 | Command | Purpose | When to Use |
 |---------|---------|-------------|
-| `/speckit.init` | Establish .claude/ foundation with git | New projects or incomplete setup |
-| `/speckit.plan` | Create plans from specifications | After specs exist in resources/ |
-| `/speckit.tasks` | Generate tasks from plans | After plans are approved |
-| `/speckit.analyze` | Audit project consistency | Anytime for health check |
-| `/speckit.clarify` | SEAMS-enhanced ambiguity resolution | When specs have open questions |
-| `/speckit.implement` | Execute tasks with git checkpoint | When ready to implement |
-| `/speckit.revert` | Revert to checkpoint with analysis | When implementation fails |
+| `/speckit.init` | Establish .claude/ foundation with git, install project commands | New projects or incomplete setup |
+
+### Project Commands (Installed by /speckit.init)
+
+| Command | Purpose | When to Use |
+|---------|---------|-------------|
+| `/plan` | Create plans from specifications | After specs exist in resources/ |
+| `/tasks` | Generate tasks from plans | After plans are approved |
+| `/analyze` | Audit project consistency | Anytime for health check |
+| `/clarify` | SEAMS-enhanced ambiguity resolution | When specs have open questions |
+| `/implement` | Execute tasks with git checkpoint | When ready to implement |
+| `/revert` | Revert to checkpoint with analysis | When implementation fails |
+
+## Analysis Agents
+
+SpecKit includes 5 specialized agents that handle deep analysis tasks, keeping the main conversation context clean.
+
+| Agent | Purpose | Used By |
+|-------|---------|---------|
+| `compliance-checker` | Validate code against directive rules (constitution, tech-specific) | /analyze, /implement |
+| `ambiguity-scanner` | SEAMS-based detection across 13 categories | /clarify |
+| `coverage-mapper` | Map requirements → phases → tasks, identify gaps | /analyze, /tasks, /implement |
+| `smart-validator` | Validate acceptance criteria against SMART framework | /tasks |
+| `adr-validator` | Validate ADRs have required fields for their level | /plan |
+
+### Invoking Agents
+
+Agents are invoked via the Task tool:
+
+```
+subagent_type: "speckit-generator:compliance-checker"
+prompt: "Check compliance of src/auth/*.ts against constitution.md"
+```
 
 ## Quick Start
 
@@ -71,7 +105,7 @@ Place your specification document in `.claude/resources/`:
 ### 3. Generate a Plan
 
 ```bash
-/speckit.plan
+/plan
 ```
 
 Review the generated plan and approve before proceeding.
@@ -79,7 +113,7 @@ Review the generated plan and approve before proceeding.
 ### 4. Generate Tasks
 
 ```bash
-/speckit.tasks
+/tasks
 ```
 
 Review the generated tasks with their acceptance criteria.
@@ -87,7 +121,7 @@ Review the generated tasks with their acceptance criteria.
 ### 5. Implement
 
 ```bash
-/speckit.implement "Phase 1"
+/implement "Phase 1"
 ```
 
 This will:
@@ -99,7 +133,7 @@ This will:
 ### 6. If Something Goes Wrong
 
 ```bash
-/speckit.revert
+/revert
 ```
 
 This will:
@@ -160,29 +194,29 @@ SpecKit uses memory files to provide consistent guidelines across all commands.
 
 ### How It Works
 
-1. **Before `/speckit.implement`**: A checkpoint tag is created
+1. **Before `/implement`**: A checkpoint tag is created
    ```
    speckit-checkpoint-20240115_143500
    ```
 
 2. **During implementation**: Normal git operations continue
 
-3. **If something goes wrong**: Use `/speckit.revert` to return to checkpoint
+3. **If something goes wrong**: Use `/revert` to return to checkpoint
 
 ### Checkpoint Commands
 
 ```bash
 # List all checkpoints
-/speckit.revert --list
+/revert --list
 
 # Revert to most recent
-/speckit.revert
+/revert
 
 # Revert to specific checkpoint
-/speckit.revert speckit-checkpoint-20240115_143500
+/revert speckit-checkpoint-20240115_143500
 
 # Preview without reverting
-/speckit.revert --dry-run
+/revert --dry-run
 ```
 
 ## Hooks
@@ -222,7 +256,7 @@ When you revert, SpecKit analyzes what went wrong:
 
 ## Plan Command (PLANS-Enhanced)
 
-The `/speckit.plan` command uses the PLANS taxonomy for systematic implementation planning with ADR-style architecture decisions.
+The `/plan` command uses the PLANS taxonomy for systematic implementation planning with ADR-style architecture decisions. It invokes the **adr-validator** agent to ensure ADR completeness.
 
 ### PLANS Taxonomy
 
@@ -254,7 +288,7 @@ The `/speckit.plan` command uses the PLANS taxonomy for systematic implementatio
 
 ## Tasks Command (SMART-Enhanced)
 
-The `/speckit.tasks` command uses SMART validation for verifiable acceptance criteria.
+The `/tasks` command uses SMART validation for verifiable acceptance criteria. It invokes **coverage-mapper** and **smart-validator** agents for thorough validation.
 
 ### SMART Acceptance Criteria
 
@@ -295,7 +329,7 @@ The `/speckit.tasks` command uses SMART validation for verifiable acceptance cri
 
 ## Clarify Command (SEAMS-Enhanced)
 
-The `/speckit.clarify` command uses the SEAMS framework (Structure, Execution, Assumptions, Mismatches, Stakeholders) for systematic ambiguity detection.
+The `/clarify` command uses the SEAMS framework (Structure, Execution, Assumptions, Mismatches, Stakeholders) for systematic ambiguity detection. It invokes the **ambiguity-scanner** agent to identify and prioritize specification gaps.
 
 ### Key Features
 
@@ -332,14 +366,14 @@ The `/speckit.clarify` command uses the SEAMS framework (Structure, Execution, A
 
 ### Autonomous Mode (Ralph Loop)
 
-If the `ralph-loop` plugin is installed, `/speckit.clarify --ralph` enables autonomous clarification until all CRITICAL/HIGH ambiguities are resolved.
+If the `ralph-loop` plugin is installed, `/clarify --ralph` enables autonomous clarification until all CRITICAL/HIGH ambiguities are resolved.
 
 ## Workflow Best Practices
 
 ### Do
 
-- Run `/speckit.analyze` before approving plans
-- Run `/speckit.clarify` when specs have [TBD] items
+- Run `/analyze` before approving plans
+- Run `/clarify` when specs have [TBD] items
 - Review each command's output before proceeding
 - Use git commits between major phases
 - Check project-status.md for current state
@@ -406,7 +440,18 @@ Ensure you're running the full implement workflow. Post-implementation hooks onl
 
 ## Version History
 
-### v1.6.1 (Current)
+### v1.7.0 (Current)
+- **Restructured**: Non-init commands moved to `references/example-commands/` for clarity
+- **New**: 5 specialized analysis agents to reduce context pollution:
+  - `compliance-checker` - Validates artifacts against directive rules
+  - `ambiguity-scanner` - SEAMS-based ambiguity detection (13 categories)
+  - `coverage-mapper` - Maps requirements → phases → tasks
+  - `smart-validator` - Validates SMART acceptance criteria
+  - `adr-validator` - Validates ADR completeness
+- **Updated**: Command templates now invoke agents via Task tool
+- **Clarified**: Plugin-level vs project-level command distinction
+
+### v1.6.1
 - **Bug Fix**: Memory file customizations are now preserved during re-initialization
 - Added `.manifest.json` tracking for detecting user customizations
 - Customization detection: compares current file hash against original template hash

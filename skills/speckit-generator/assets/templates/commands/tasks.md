@@ -125,9 +125,55 @@ Every acceptance criterion must pass SMART validation:
 2. **Load constitution** - Extract relevant sections
 3. **Load memory files** - Get tech-specific guidelines
 4. **Generate tasks** - Create *-tasks.md with phases
-5. **SMART validate** - Check all acceptance criteria
-6. **Validate** - 8-point checklist before completion
-7. **Report** - Summary with SMART compliance
+5. **Validate coverage** - Run coverage mapper agent
+6. **SMART validate** - Run SMART validator agent
+7. **Validate checklist** - 8-point checklist before completion
+8. **Report** - Summary with SMART compliance
+
+---
+
+## Coverage Validation (Agent)
+
+After generating tasks, verify requirement coverage.
+
+**Invoke via Task tool:**
+```
+subagent_type: "speckit-generator:coverage-mapper"
+prompt: "Map coverage between .claude/resources/spec.md, .claude/resources/plan.md, and .claude/resources/*-tasks.md"
+```
+
+The agent will identify:
+- Orphan requirements (no task coverage)
+- Orphan tasks (no requirement trace)
+- Coverage percentage per requirement
+
+**Handle results:**
+- Review orphan requirements - add tasks or mark as out-of-scope
+- Review orphan tasks - link to requirements or mark as infrastructure
+
+---
+
+## SMART Validation (Agent)
+
+After generating tasks, validate all acceptance criteria.
+
+**Invoke via Task tool:**
+```
+subagent_type: "speckit-generator:smart-validator"
+prompt: "Validate SMART criteria in .claude/resources/*-tasks.md at [SELECTED_STRICTNESS] strictness, suggest fixes for failures"
+```
+
+The agent will check each criterion for:
+- **S**pecific - No vague adjectives
+- **M**easurable - Has verification command/check
+- **A**chievable - Single task scope
+- **R**elevant - Traces to plan/requirement
+- **T**ime-bound - Immediate verification
+
+**Handle results:**
+- PASS: Proceed to 8-point validation
+- WARN: Review warnings, consider rewording
+- FAIL (Strict mode): Must fix before proceeding
 
 ## Output Format
 

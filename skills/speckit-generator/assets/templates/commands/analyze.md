@@ -130,12 +130,28 @@ Load these directive files for compliance checking:
 - User stories missing acceptance criteria
 - Tasks referencing undefined components
 
-### D. Directive Alignment
+### D. Directive Alignment (Agent)
+
+**Invoke compliance-checker agent:**
+```
+subagent_type: "speckit-generator:compliance-checker"
+prompt: "Check compliance of .claude/resources/*.md against .claude/memory/constitution.md and all tech-specific memory files"
+```
+
+The agent checks:
 - Any element conflicting with MUST/MUST NOT from loaded directives
 - Missing mandated quality gates (test coverage, documentation)
 - Security violations, language-specific violations
 
-### E. Coverage Gaps
+### E. Coverage Gaps (Agent)
+
+**Invoke coverage-mapper agent:**
+```
+subagent_type: "speckit-generator:coverage-mapper"
+prompt: "Map coverage between .claude/resources/spec.md, .claude/resources/plan.md, and .claude/resources/*-tasks.md"
+```
+
+The agent identifies:
 - Requirements with zero associated tasks
 - Tasks with no mapped requirement
 - Non-functional requirements not reflected in tasks

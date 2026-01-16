@@ -150,8 +150,31 @@ Systematic coverage scan for implementation planning:
 3. **PLANS coverage scan** - Evaluate all 5 categories
 4. **Generate plans** - Create plan.md (and domain plans if complex)
 5. **Create ADRs** - Document architecture decisions with rationale
-6. **Validate** - 7-point checklist before completion
-7. **Report** - Coverage summary with recommendations
+6. **Validate ADRs** - Run ADR validator agent
+7. **Validate checklist** - 7-point checklist before completion
+8. **Report** - Coverage summary with recommendations
+
+---
+
+## ADR Validation (Agent)
+
+After creating ADRs, invoke the ADR validator agent to ensure completeness.
+
+**Invoke via Task tool:**
+```
+subagent_type: "speckit-generator:adr-validator"
+prompt: "Validate ADRs in .claude/resources/plan.md at [SELECTED_LEVEL] level"
+```
+
+The agent will check:
+- All required fields present for the selected level
+- Content meets quality requirements
+- Status consistency (rejected ADRs have rationale, etc.)
+
+**Handle results:**
+- PASS: Proceed to 7-point validation
+- WARN: Review warnings, fix if blocking
+- FAIL: Must fix before proceeding
 
 ## Output Structure
 
