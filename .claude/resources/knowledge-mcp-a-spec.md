@@ -231,6 +231,22 @@ Knowledge MCP enables Claude Desktop (and other MCP clients) to search, retrieve
 }
 ```
 
+**Similar Terms Algorithm:** *(CLARIFY-003)*
+
+1. Search definition chunks using query term with semantic embedding similarity
+2. Return top 3 results with similarity score > 0.5
+3. If fewer than 3 semantic matches found, supplement with fuzzy string matching:
+   - Use Levenshtein edit distance ≤ 2 against indexed definition terms
+   - Exclude duplicates already found via semantic search
+4. Return empty array if no similar terms found by either method
+
+**Example:**
+- Query: "requiremnt" (typo)
+- Semantic search: ["system requirement", "functional requirement"]
+- Fuzzy match: ["requirement"] (edit distance = 1)
+- Result: ["requirement", "system requirement", "functional requirement"]
+
+
 ---
 
 #### 3.1.3 knowledge_requirements
