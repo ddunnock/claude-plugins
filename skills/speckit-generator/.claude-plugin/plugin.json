@@ -22,13 +22,13 @@
   "engines": {
     "claude-code": ">=1.0.0"
   },
-  "hooks": "../hooks/hooks.json",
+  "hooks": "./hooks/hooks.json",
   "commands": [
     {
       "name": "speckit.init",
       "displayName": "Initialize Project",
       "description": "Establish .claude/ foundation with memory files, git validation, and project commands",
-      "file": "../commands/speckit.init.md",
+      "file": "./commands/speckit.init.md",
       "usage": "/speckit.init",
       "examples": [
         "/speckit.init"
@@ -38,7 +38,7 @@
       "name": "speckit.plan",
       "displayName": "Create Plan",
       "description": "Create implementation plans from specifications",
-      "file": "../commands/speckit.plan.md",
+      "file": "./commands/speckit.plan.md",
       "usage": "/speckit.plan [spec-file]",
       "examples": [
         "/speckit.plan",
@@ -50,7 +50,7 @@
       "name": "speckit.tasks",
       "displayName": "Generate Tasks",
       "description": "Generate tasks from plans with constitution/memory references",
-      "file": "../commands/speckit.tasks.md",
+      "file": "./commands/speckit.tasks.md",
       "usage": "/speckit.tasks [plan-file]",
       "examples": [
         "/speckit.tasks",
@@ -62,7 +62,7 @@
       "name": "speckit.analyze",
       "displayName": "Analyze Artifacts",
       "description": "Deterministic audit of project artifacts for consistency and completeness",
-      "file": "../commands/speckit.analyze.md",
+      "file": "./commands/speckit.analyze.md",
       "usage": "/speckit.analyze [--category <category>] [--verbose]",
       "examples": [
         "/speckit.analyze",
@@ -74,7 +74,7 @@
       "name": "speckit.clarify",
       "displayName": "Clarify Ambiguities",
       "description": "Structured ambiguity resolution with immediate spec updates",
-      "file": "../commands/speckit.clarify.md",
+      "file": "./commands/speckit.clarify.md",
       "usage": "/speckit.clarify [spec-file]",
       "examples": [
         "/speckit.clarify",
@@ -85,7 +85,7 @@
       "name": "speckit.implement",
       "displayName": "Implement Tasks",
       "description": "Execute tasks with git checkpoints and pre/post implementation hooks",
-      "file": "../commands/speckit.implement.md",
+      "file": "./commands/speckit.implement.md",
       "usage": "/speckit.implement <selector>",
       "examples": [
         "/speckit.implement TASK-001",
@@ -100,7 +100,7 @@
       "name": "speckit.revert",
       "displayName": "Revert to Checkpoint",
       "description": "Revert to checkpoint with intelligent failure analysis and artifact recommendations",
-      "file": "../commands/speckit.revert.md",
+      "file": "./commands/speckit.revert.md",
       "usage": "/speckit.revert [checkpoint-tag] [--list] [--dry-run]",
       "examples": [
         "/speckit.revert",
@@ -112,71 +112,71 @@
   ],
   "resources": {
     "memory_templates": {
-      "path": "../assets/memory/",
+      "path": "./assets/memory/",
       "description": "Constitution and tech-specific memory files for project guidance"
     },
     "command_templates": {
-      "path": "../assets/templates/commands/",
+      "path": "./assets/templates/commands/",
       "description": "Project-level command templates installed by init"
     },
     "plan_templates": {
-      "path": "../assets/templates/plan/",
+      "path": "./assets/templates/plan/",
       "description": "Templates for plan generation"
     },
     "task_templates": {
-      "path": "../assets/templates/tasks/",
+      "path": "./assets/templates/tasks/",
       "description": "Templates for task generation"
     },
     "report_templates": {
-      "path": "../assets/templates/report/",
+      "path": "./assets/templates/report/",
       "description": "Templates for analysis and clarify reports"
     }
   },
   "scripts": {
     "detect_stack": {
-      "path": "../scripts/detect_stack.py",
+      "path": "./scripts/detect_stack.py",
       "description": "Detect project tech stack for memory file selection"
     },
     "validate_plan": {
-      "path": "../scripts/validate_plan.py",
+      "path": "./scripts/validate_plan.py",
       "description": "Validate plan structure and completeness"
     },
     "analyze_artifacts": {
-      "path": "../scripts/analyze_artifacts.py",
+      "path": "./scripts/analyze_artifacts.py",
       "description": "Analyze project artifacts for consistency"
     },
     "select_memory": {
-      "path": "../scripts/select_memory.py",
+      "path": "./scripts/select_memory.py",
       "description": "Select appropriate memory files based on tech stack"
     },
     "check_assumptions": {
-      "path": "../scripts/check_assumptions.py",
+      "path": "./scripts/check_assumptions.py",
       "description": "Check and validate project assumptions"
     },
     "validate_speckit": {
-      "path": "../scripts/validate_speckit.py",
+      "path": "./scripts/validate_speckit.py",
       "description": "Validate speckit configuration and artifacts"
     }
   },
   "hooks_scripts": {
     "check_git": {
-      "path": "../hooks/scripts/check-git.sh",
+      "path": "./hooks/scripts/check-git.sh",
       "description": "Validate git is installed and repository exists"
     },
     "check_init_state": {
-      "path": "../hooks/scripts/check-init-state.sh",
+      "path": "./hooks/scripts/check-init-state.sh",
       "description": "Validate project has been initialized"
     },
     "create_checkpoint": {
-      "path": "../hooks/scripts/create-checkpoint.sh",
+      "path": "./hooks/scripts/create-checkpoint.sh",
       "description": "Create git checkpoint before implementation"
     },
     "check_checkpoint": {
-      "path": "../hooks/scripts/check-checkpoint.sh",
+      "path": "./hooks/scripts/check-checkpoint.sh",
       "description": "Validate checkpoints exist before revert"
     },
     "track_task_update": {
-      "path": "../hooks/scripts/track-task-update.sh",
+      "path": "./hooks/scripts/track-task-update.sh",
       "description": "Track task status updates for hook verification"
     }
   },
