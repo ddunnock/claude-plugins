@@ -8,11 +8,131 @@ Execute tasks from *-tasks.md with batch+gates execution model. Provides structu
 
 ## Key Characteristics
 
+- **Pre-hooks**: Always loads status and validates before execution
 - **Context-aware**: Loads constitution sections and memory files per task
 - **Batch execution**: Runs related tasks together
 - **Gates**: Pauses at phase/group boundaries for review
 - **Status tracking**: Updates task statuses in real-time
+- **Post-hooks**: Updates status files and outputs summary
 - **Resumable**: Can stop and continue later
+
+---
+
+## MANDATORY: Pre-Implementation Hooks
+
+**CRITICAL**: These hooks MUST execute BEFORE any task work begins.
+
+### Pre-Hook 1: Load Project Status
+
+**ALWAYS** read `.claude/memory/project-status.md` first:
+
+```
+Read: .claude/memory/project-status.md
+
+Extract and understand:
+- Current Phase: [phase name]
+- Progress: [X]/[Y] tasks ([Z]%)
+- Last Activity: [date] - [what was done]
+- Blockers: [any outstanding issues]
+- Recommended Next Actions: [from file]
+```
+
+### Pre-Hook 2: Validate Argument / Show Status
+
+**IF no argument provided OR invalid argument:**
+
+```markdown
+## Current Project Status
+
+| Metric | Value |
+|--------|-------|
+| Project | [PROJECT_NAME] |
+| Current Phase | Phase [N]: [Name] |
+| Progress | [X]/[Y] tasks ([Z]%) |
+| Last Updated | [DATE] |
+
+### Phase Progress
+| Phase | Status | Completed/Total |
+|-------|--------|-----------------|
+| Phase 1 | ✓ COMPLETE | 6/6 |
+| Phase 2 | IN PROGRESS | 3/8 |
+| Phase 3 | PENDING | 0/5 |
+
+### Recommended Next Action
+
+Based on current state, you should run:
+```
+/speckit.implement "Phase 2"
+```
+
+Or to continue from where you left off:
+```
+/speckit.implement --continue
+```
+
+### Available Selectors
+
+| Selector | What It Does |
+|----------|--------------|
+| `TASK-XXX` | Execute single task |
+| `TASK-XXX..TASK-YYY` | Execute range |
+| `"Phase N"` | Execute all in phase |
+| `@group` | Execute all with group tag |
+| `--continue` | Resume from last position |
+| `--all` | Execute all pending tasks |
+
+**Please specify which tasks to implement.**
+```
+
+**STOP HERE** - Do not proceed without valid task selection.
+
+### Pre-Hook 3: Validate Task Selection
+
+For valid arguments, verify:
+
+1. **Tasks exist** - Check *-tasks.md contains specified tasks
+2. **Tasks are actionable** - Filter out COMPLETED tasks
+3. **Dependencies met** - Check for BLOCKED status
+
+**IF no actionable tasks found:**
+
+```markdown
+## No Actionable Tasks
+
+The specified selection has no pending tasks:
+
+- `TASK-001`: COMPLETED (2024-01-15)
+- `TASK-002`: COMPLETED (2024-01-15)
+
+### Suggestions
+
+1. Move to next phase: `/speckit.implement "Phase [N+1]"`
+2. Re-run a task: `/speckit.implement TASK-XXX --force`
+3. Check status: `cat .claude/memory/project-status.md`
+```
+
+### Pre-Hook 4: Present Execution Plan
+
+Before executing, present the plan for confirmation:
+
+```markdown
+## Execution Plan
+
+**Selection**: [what user specified]
+**Tasks to execute**: [count]
+
+| Task | Title | Status | Dependencies |
+|------|-------|--------|--------------|
+| TASK-004 | [Title] | PENDING | None |
+| TASK-005 | [Title] | PENDING | TASK-004 |
+| TASK-006 | [Title] | FAILED | None (retry) |
+
+**Context to load**:
+- Constitution: §3.1, §4.2, §5.1
+- Memory: typescript.md, testing.md
+
+**Proceed with execution?**
+```
 
 ---
 
@@ -393,3 +513,323 @@ Execution complete. Run /speckit.analyze to verify consistency?
 - **Resume IN_PROGRESS**: Interrupted tasks restart
 - **Preserve history**: Completion timestamps preserved
 - **Re-runnable FAILED**: Failed tasks can retry
+
+---
+
+## MANDATORY: Post-Implementation Hooks
+
+**CRITICAL**: The following hooks MUST execute after ANY `/speckit.implement` run. These are NOT optional and the command is not complete without them.
+
+### Hook Workflow Diagram
+
+```
+Execution Complete
+        │
+        ▼
+┌───────────────────────────────────────┐
+│ HOOK 1: Update tasks.md               │
+│                                       │
+│ For each completed task:              │
+│ 1. Set Status: COMPLETED              │
+│ 2. Add Completed timestamp            │
+│ 3. Verify EACH acceptance criterion   │
+│ 4. Mark [x] or [ ] with evidence      │
+└───────────────────────────────────────┘
+        │
+        ▼
+┌───────────────────────────────────────┐
+│ HOOK 2: Update project-status.md      │
+│                                       │
+│ 1. Update progress metrics            │
+│ 2. Update phase status                │
+│ 3. Log recent activity                │
+│ 4. List next actions                  │
+└───────────────────────────────────────┘
+        │
+        ▼
+┌───────────────────────────────────────┐
+│ HOOK 3: Output Completion Summary     │
+│                                       │
+│ 1. Tasks completed table              │
+│ 2. Acceptance criteria summary        │
+│ 3. Failed criteria (if any)           │
+│ 4. Project status confirmation        │
+│ 5. Recommended next steps             │
+└───────────────────────────────────────┘
+        │
+        ▼
+    COMMAND COMPLETE
+```
+
+---
+
+### Hook 1: Update tasks.md - Detailed Process
+
+#### Step 1.1: Update Task Status
+
+```markdown
+### TASK-001: [Title]
+
+**Status**: COMPLETED          ← Change from PENDING/IN_PROGRESS
+**Completed**: 2024-01-15T14:35:00Z    ← Add timestamp
+**Verified By**: Claude        ← Add verification attribution
+```
+
+#### Step 1.2: Verify Each Acceptance Criterion
+
+For EACH criterion in the task's acceptance criteria:
+
+| Criterion Type | Verification Method | Example |
+|----------------|---------------------|---------|
+| File exists | `ls` or `Glob` tool | `ls src/components/Button.tsx` |
+| Tests pass | Run test command | `npm test -- Button.test.ts` |
+| Code compiles | Run build | `npm run build` |
+| Lint passes | Run linter | `npm run lint` |
+| Type checks | Run type checker | `npm run typecheck` |
+| Endpoint works | Make request | `curl localhost:3000/api/health` |
+| Config valid | Validate schema | `npx ajv validate -s schema.json` |
+
+#### Step 1.3: Document Evidence
+
+Transform acceptance criteria from:
+```markdown
+**Acceptance Criteria**:
+- [ ] Button component exists in src/components/
+- [ ] Component has proper TypeScript types
+- [ ] Unit tests pass with >80% coverage
+```
+
+To:
+```markdown
+**Acceptance Criteria**:
+- [x] Button component exists in src/components/
+      Verified: `ls src/components/Button.tsx` → exists
+- [x] Component has proper TypeScript types
+      Verified: `npx pyright src/components/Button.tsx` → 0 errors
+- [x] Unit tests pass with >80% coverage
+      Verified: `npm test -- --coverage` → 94% coverage
+```
+
+Or if failed:
+```markdown
+- [ ] Unit tests pass with >80% coverage
+      FAILED: `npm test -- --coverage` → 72% coverage (below 80% threshold)
+```
+
+---
+
+### Hook 2: Update project-status.md - Detailed Process
+
+#### File Location
+
+`.claude/memory/project-status.md`
+
+If this file does not exist, CREATE IT using the template below.
+
+#### Template Structure
+
+```markdown
+# Project Status
+
+## Current State
+
+| Metric | Value |
+|--------|-------|
+| Project | [PROJECT_NAME] |
+| Current Phase | Phase [N]: [Phase Name] |
+| Total Tasks | [TOTAL] |
+| Completed | [COMPLETED] |
+| In Progress | [IN_PROGRESS] |
+| Blocked | [BLOCKED] |
+| Pending | [PENDING] |
+| Progress | [PERCENTAGE]% |
+| Last Updated | [ISO_TIMESTAMP] |
+
+## Phase Progress
+
+| Phase | Status | Tasks | Completed | Remaining |
+|-------|--------|-------|-----------|-----------|
+| Phase 1: [Name] | ✓ COMPLETE | [N] | [N] | 0 |
+| Phase 2: [Name] | IN PROGRESS | [N] | [M] | [N-M] |
+| Phase 3: [Name] | PENDING | [N] | 0 | [N] |
+
+## Recent Activity
+
+| Date | Session | Tasks | Status |
+|------|---------|-------|--------|
+| [DATE] | [SESSION_ID] | TASK-XXX..TASK-YYY | Completed [N] tasks |
+| [DATE] | [SESSION_ID] | TASK-XXX | Partial - 2/3 criteria met |
+
+## Blockers & Issues
+
+| Task | Issue | Impact | Resolution |
+|------|-------|--------|------------|
+| TASK-XXX | [Description] | Blocks Phase 2 | [Action needed] |
+
+## Next Actions
+
+- [ ] [Next immediate action]
+- [ ] [Following action]
+- [ ] [Future action]
+
+---
+
+*Generated by SpecKit Generator*
+*Last Updated: [ISO_TIMESTAMP]*
+```
+
+#### Update Process
+
+1. **Read current project-status.md** (or create from template)
+2. **Calculate metrics**:
+   - Count tasks by status from *-tasks.md
+   - Calculate completion percentage
+   - Identify current phase
+3. **Update phase table**:
+   - Mark phases complete when all tasks done
+   - Set IN PROGRESS for current phase
+4. **Add activity log entry**:
+   - Record tasks completed this session
+   - Note any failures or partial completions
+5. **Update next actions**:
+   - Clear completed actions
+   - Add new relevant actions
+
+---
+
+### Hook 3: Generate Completion Summary - Template
+
+MUST output this summary to the user after every `/speckit.implement` run:
+
+```markdown
+## Implementation Complete
+
+### Session Summary
+- **Started**: [START_TIME]
+- **Duration**: [DURATION]
+- **Tasks Attempted**: [N]
+- **Tasks Completed**: [M]
+
+### Tasks Completed This Session
+
+| Task ID | Title | Status | Criteria |
+|---------|-------|--------|----------|
+| TASK-001 | [Title] | ✓ COMPLETED | 3/3 ✓ |
+| TASK-002 | [Title] | ✓ COMPLETED | 4/4 ✓ |
+| TASK-003 | [Title] | ⚠ PARTIAL | 2/3 |
+
+### Acceptance Criteria Verification
+
+**Total Criteria Checked**: [N]
+**Passed**: [M] ([PERCENTAGE]%)
+**Failed**: [F]
+
+[If any failed:]
+
+#### ⚠ Failed Criteria Requiring Attention
+
+| Task | Criterion | Failure Reason |
+|------|-----------|----------------|
+| TASK-003 | Unit tests pass | Coverage at 72%, required 80% |
+
+### Artifacts Updated
+
+✓ `.claude/resources/*-tasks.md` - Task statuses and criteria
+✓ `.claude/memory/project-status.md` - Progress metrics
+
+### Project Progress
+
+| Metric | Before | After | Change |
+|--------|--------|-------|--------|
+| Completed Tasks | [N] | [M] | +[DIFF] |
+| Progress | [X]% | [Y]% | +[DIFF]% |
+| Current Phase | Phase [N] | Phase [M] | [same/advanced] |
+
+### Recommended Next Steps
+
+[Based on current state, provide specific guidance:]
+
+1. **[If all criteria passed and phase not complete]**:
+   Continue with remaining phase tasks:
+   ```
+   /speckit.implement "Phase [N]"
+   ```
+
+2. **[If any criteria failed]**:
+   Address failed criteria:
+   - [Specific action for each failure]
+   Then re-run:
+   ```
+   /speckit.implement TASK-XXX
+   ```
+
+3. **[If phase complete]**:
+   Proceed to next phase:
+   ```
+   /speckit.implement "Phase [N+1]"
+   ```
+
+4. **[If all phases complete]**:
+   Run final consistency check:
+   ```
+   /speckit.analyze
+   ```
+
+5. **[Always include]**:
+   Review updated status:
+   ```
+   cat .claude/memory/project-status.md
+   ```
+```
+
+---
+
+### Hook Enforcement
+
+The `/speckit.implement` command is **NOT COMPLETE** until this checklist is satisfied:
+
+```
+Post-Implementation Checklist:
+
+[HOOK 1: tasks.md Updates]
+□ All executed task statuses updated to COMPLETED/FAILED
+□ Completion timestamps added
+□ Each acceptance criterion individually verified
+□ Evidence documented for each criterion
+□ Checkboxes accurately reflect verification results
+
+[HOOK 2: project-status.md Updates]
+□ File exists at .claude/memory/project-status.md
+□ Progress metrics are current and accurate
+□ Phase progress table reflects reality
+□ Recent activity entry added for this session
+□ Next actions list is current
+
+[HOOK 3: User Summary Output]
+□ Task completion table displayed
+□ Acceptance criteria summary shown
+□ Failed criteria highlighted (if any)
+□ Artifact update confirmation shown
+□ Next steps clearly communicated
+□ Specific commands provided for next actions
+```
+
+---
+
+### Error Handling in Hooks
+
+If a hook cannot complete:
+
+```markdown
+⚠ Post-Implementation Hook Warning
+
+Hook 2 (project-status.md update) encountered an issue:
+- File not found and could not be created
+- Reason: [error details]
+
+Manual action required:
+1. Create .claude/memory/project-status.md using template
+2. Re-run: /speckit.implement --continue
+
+Hook 1 and Hook 3 completed successfully.
+```

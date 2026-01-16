@@ -1,17 +1,17 @@
 ---
 name: speckit-generator
 description: >
-  Project-focused specification and task management system with 6 individual commands.
+  Project-focused specification and task management system with 7 individual commands.
   Each command MUST be invoked separately and requires user approval before proceeding.
   Commands: /speckit.init, /speckit.plan, /speckit.tasks, /speckit.analyze, /speckit.clarify,
-  /speckit.implement. NEVER chain commands automatically - each produces output that
-  requires user review. Use /speckit.plan when user wants to create plans from specs.
-  Use /speckit.tasks only AFTER user has approved plans.
+  /speckit.implement, /speckit.revert. NEVER chain commands automatically - each produces output
+  that requires user review. Use /speckit.plan when user wants to create plans from specs.
+  Use /speckit.tasks only AFTER user has approved plans. Git checkpoints enable safe revert.
 ---
 
 # SpecKit Generator
 
-Project-focused specification management with 6 commands that work together to transform specifications into executed implementations.
+Project-focused specification management with 7 commands that work together to transform specifications into executed implementations with git checkpoint safety.
 
 ## Table of Contents
 - [Critical Workflow Rules](#critical-workflow-rules)
@@ -23,6 +23,7 @@ Project-focused specification management with 6 commands that work together to t
 - [Command: analyze](#command-analyze)
 - [Command: clarify](#command-clarify)
 - [Command: implement](#command-implement)
+- [Command: revert](#command-revert)
 - [Memory File System](#memory-file-system)
 - [Idempotency](#idempotency)
 
@@ -111,12 +112,13 @@ init → plan → tasks → implement
 
 | Command | Purpose | When to Use |
 |---------|---------|-------------|
-| `/speckit.init` | Establish .claude/ foundation | New projects or incomplete setup |
+| `/speckit.init` | Establish .claude/ foundation with git | New projects or incomplete setup |
 | `/speckit.plan` | Create plans from specifications | After specs exist in resources/ |
 | `/speckit.tasks` | Generate tasks from plans | After plans are approved |
 | `/speckit.analyze` | Audit project consistency | Anytime for health check |
 | `/speckit.clarify` | Resolve ambiguities | When specs have open questions |
-| `/speckit.implement` | Execute tasks | When ready to implement |
+| `/speckit.implement` | Execute tasks with git checkpoint | When ready to implement |
+| `/speckit.revert` | Revert to checkpoint with analysis | When implementation fails |
 
 ---
 
@@ -439,6 +441,8 @@ Execute Phase 2 tasks
     ↓
 GATE: "Phase 2 complete. Review outputs?"
     ...
+    ↓
+MANDATORY: Post-Implementation Hooks
 ```
 
 ### Workflow
@@ -485,7 +489,72 @@ From git-cicd.md:
 [Full task content]
 ```
 
-See `references/command-workflows/implement-workflow.md` for detailed workflow.
+### MANDATORY: Pre-Implementation Hooks
+
+**CRITICAL**: These hooks MUST execute BEFORE any task work begins:
+
+| Pre-Hook | Action | Purpose |
+|----------|--------|---------|
+| **Pre-Hook 1** | Read project-status.md | Understand current state and context |
+| **Pre-Hook 2** | Validate argument | Show status if missing/invalid, stop until valid |
+| **Pre-Hook 3** | Verify tasks actionable | Filter completed, check dependencies |
+| **Pre-Hook 4** | Present execution plan | Get user confirmation before proceeding |
+| **Pre-Hook 5** | Create git checkpoint | Tag current state for potential revert |
+
+**If no argument or invalid argument**: Show current status and available selectors, then **STOP** until user provides valid selection.
+
+### MANDATORY: Post-Implementation Hooks
+
+**CRITICAL**: These hooks MUST execute after ANY `/speckit.implement` run:
+
+| Post-Hook | Action | Updates |
+|-----------|--------|---------|
+| **Post-Hook 1** | Update tasks.md | Status → COMPLETED, verify each criterion with evidence |
+| **Post-Hook 2** | Update project-status.md | Progress metrics, phase status, activity log |
+| **Post-Hook 3** | Output summary to user | Completed tasks, criteria results, next steps |
+
+The command is **NOT COMPLETE** until all hooks execute. See `references/command-workflows/implement-workflow.md` for detailed templates and verification methods.
+
+---
+
+## Command: revert
+
+Revert to a previous git checkpoint with intelligent failure analysis and artifact recommendations.
+
+### Trigger
+- `/speckit.revert` - Most recent checkpoint
+- `/speckit.revert [checkpoint-tag]` - Specific checkpoint
+- `/speckit.revert --list` - List available checkpoints
+
+### Workflow
+
+1. **List checkpoints** - Show available speckit-checkpoint-* tags
+2. **Preview revert** - Show files and tasks that will be affected
+3. **Execute revert** - `git reset --hard [checkpoint]`
+4. **Analyze failure** - Determine what went wrong
+5. **Recommend fixes** - Suggest spec/plan/task updates
+
+### Failure Analysis Categories
+
+| Category | Indicators | Recommendation |
+|----------|------------|----------------|
+| SPEC_GAP | Requirements unclear | Run `/speckit.clarify` |
+| APPROACH_WRONG | Architecture mismatch | Run `/speckit.plan --revise` |
+| DEPENDENCY_ISSUE | External problems | Update dependencies, retry |
+| TEST_MISMATCH | Tests don't match reality | Update test fixtures |
+| SCOPE_CREEP | Too much at once | Decompose tasks |
+| KNOWLEDGE_GAP | Unfamiliar technology | Research, then retry |
+
+### Output
+
+After revert, provides:
+- Summary of what was reverted
+- Root cause analysis
+- Specific recommendations for next steps
+- Updated project-status.md with revert logged
+- Updated tasks.md with failure notes
+
+See `commands/speckit.revert.md` for detailed workflow.
 
 ---
 

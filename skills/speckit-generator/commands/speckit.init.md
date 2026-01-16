@@ -2,23 +2,78 @@ Establish the `.claude/` foundation with appropriate memory files for the projec
 
 ## Workflow
 
-1. **Check existing state** - Detect if .claude/ exists
-2. **Detect tech stack** - Analyze project for languages/frameworks
-3. **Present detection** - Show detected stack and recommended memory files
-4. **Create structure** - Build directory structure
-5. **Copy memory files** - Select and copy based on tech stack
-6. **Generate project context** - Create project-context.md
+1. **Validate git** - Check git is available, initialize repo if needed
+2. **Check existing state** - Detect if .claude/ exists
+3. **Detect tech stack** - Analyze project for languages/frameworks
+4. **Present detection** - Show detected stack and recommended memory files
+5. **Create structure** - Build directory structure
+6. **Copy memory files** - Select and copy based on tech stack
+7. **Initialize project-status.md** - Create status tracking file
+8. **Install project commands** - Copy implement.md and revert.md with hooks embedded
+9. **Ensure .gitignore** - Create or update .gitignore for project safety
+10. **Generate project context** - Create project-context.md
+
+---
+
+## MANDATORY: Git Validation (Step 1)
+
+**CRITICAL**: Git must be available for checkpoint/revert functionality.
+
+### Git Check Process
+
+```bash
+# 1. Verify git is installed
+git --version
+
+# 2. Check if in a git repository
+git rev-parse --git-dir 2>/dev/null
+
+# 3. If not in a repo, offer to initialize
+git init
+```
+
+### Git Check Outcomes
+
+| State | Action |
+|-------|--------|
+| Git not installed | **STOP** - Instruct user to install git |
+| Not a git repo | Offer to run `git init` |
+| Git repo exists | Continue |
+| Git repo with uncommitted changes | Warn user, recommend commit before proceeding |
+
+### Git Check Output
+
+```markdown
+## Git Status Check
+
+| Check | Status |
+|-------|--------|
+| Git installed | ✓ v2.x.x |
+| Git repository | ✓ Initialized |
+| Working tree | ✓ Clean / ⚠ [N] uncommitted changes |
+
+[If uncommitted changes:]
+**Recommendation**: Commit current changes before running /speckit.init
+```bash
+git add . && git commit -m "Pre-speckit checkpoint"
+```
+```
+
+---
 
 ## Directory Structure Created
 
 ```
 .claude/
-├── commands/      # Custom project commands
-├── memory/        # constitution.md + tech-specific files
-│   └── MANIFEST.md
-├── resources/     # Specifications, designs
-├── templates/     # Output templates
-└── scripts/       # Project scripts
+├── commands/           # Project commands (with hooks embedded)
+│   ├── implement.md    # Task execution with mandatory hooks
+│   └── revert.md       # Checkpoint revert with analysis
+├── memory/             # constitution.md + tech-specific files
+│   ├── MANIFEST.md
+│   └── project-status.md  # Implementation progress tracking
+├── resources/          # Specifications, designs
+├── templates/          # Output templates
+└── scripts/            # Project scripts
 ```
 
 ## Memory File Selection
@@ -41,10 +96,67 @@ Establish the `.claude/` foundation with appropriate memory files for the projec
 4. Override detected stack manually
 ```
 
+---
+
+## MANDATORY: .gitignore Setup (Step 9)
+
+### Check and Create .gitignore
+
+**IF .gitignore does not exist**, create with speckit-appropriate defaults:
+
+```gitignore
+# SpecKit Generator - Default .gitignore
+# Created by /speckit.init
+
+# Dependencies
+node_modules/
+venv/
+.venv/
+__pycache__/
+*.pyc
+target/
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Environment
+.env
+.env.local
+*.local
+
+# Logs
+*.log
+logs/
+
+# SpecKit session tracking (local only)
+.claude/sessions/
+.claude/.cache/
+```
+
+**IF .gitignore exists**, check for and append if missing:
+
+```gitignore
+# SpecKit additions
+.claude/sessions/
+.claude/.cache/
+```
+
+---
+
 ## Idempotency
 - Skips existing directories
 - Updates changed memory files only
 - Preserves project customizations
+- Does not overwrite existing .gitignore entries
 
 ---
 
@@ -55,6 +167,7 @@ Establish the `.claude/` foundation with appropriate memory files for the projec
 After initialization, you MUST:
 
 1. **Present the created structure** showing:
+   - Git status and any warnings
    - Directories created
    - Memory files installed
    - Detected tech stack
@@ -71,10 +184,18 @@ After initialization, you MUST:
 ```
 ## Initialization Complete
 
+### Git Status
+- Git version: [VERSION]
+- Repository: [Initialized / Already existed]
+- .gitignore: [Created / Updated / Already configured]
+
 ### Directory Structure Created
 .claude/
 ├── commands/
+│   ├── implement.md (with checkpoint + completion hooks)
+│   └── revert.md (checkpoint revert with analysis)
 ├── memory/
+│   └── project-status.md (initialized)
 ├── resources/
 ├── templates/
 └── scripts/
@@ -93,6 +214,19 @@ After initialization, you MUST:
 
 **Tech-Specific:**
 - [Based on detection]
+
+### Commands Installed
+- implement.md - Task execution with git checkpoints + post-hooks
+  - Creates git checkpoint before execution
+  - Updates task statuses and project-status.md
+  - Enables revert to pre-implementation state
+- revert.md - Intelligent revert with failure analysis
+  - Reverts to checkpoint
+  - Analyzes what went wrong
+  - Suggests plan/task updates
+
+### Status Tracking
+- project-status.md initialized and ready for /speckit.implement updates
 
 ### Next Steps
 1. Review the memory files for your project needs
