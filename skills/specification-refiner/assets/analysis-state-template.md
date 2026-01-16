@@ -18,7 +18,7 @@
 | 1 | [DATE] | ASSESS | Initial analysis | Mode selected: [MODE] |
 
 ## Current Phase
-- **Phase**: [0:ASSESS | 1:INGEST | 2:ANALYZE | 3:PRESENT | 4:ITERATE | 5:SYNTHESIZE | 6:OUTPUT | 7:VALIDATE]
+- **Phase**: [0:ASSESS | 1:INGEST | 2:ANALYZE | 3:CLARIFY | 4:PRESENT | 5:ITERATE | 6:SYNTHESIZE | 7:OUTPUT | 8:VALIDATE]
 - **Status**: [In Progress | Awaiting User Confirmation | Complete]
 
 ---
@@ -60,6 +60,41 @@
 | ID | Question | Reason | Deferred In | Revisit When |
 |----|----------|--------|-------------|--------------|
 | Q3 | [QUESTION] | [Out of scope/Future phase/etc.] | Phase X: NAME | [Trigger condition] |
+
+---
+
+## Clarification Tracking (Phase 3)
+
+### Session Limits
+- **Questions this session**: [count] / 5
+- **Total questions across analysis**: [count] / 10
+- **Session count**: [N]
+
+### Clarification Log
+| ID | Category | Question Summary | Answer | Impact Score | Integrated |
+|----|----------|------------------|--------|--------------|------------|
+| CLARIFY-001 | [Category] | [Brief question] | [Answer choice] | [1-25] | ✓/✗ |
+
+### Coverage Map
+| Category | Status | Notes |
+|----------|--------|-------|
+| Functional Scope & Behavior | [Clear/Partial/Missing] | |
+| Domain & Data Model | [Clear/Partial/Missing] | |
+| Interaction & UX Flow | [Clear/Partial/Missing] | |
+| Non-Functional Quality Attributes | [Clear/Partial/Missing] | |
+| Integration & External Dependencies | [Clear/Partial/Missing] | |
+| Edge Cases & Failure Handling | [Clear/Partial/Missing] | |
+| Constraints & Tradeoffs | [Clear/Partial/Missing] | |
+| Terminology & Consistency | [Clear/Partial/Missing] | |
+| Completion Signals | [Clear/Partial/Missing] | |
+| Assumptions & Risks | [Clear/Partial/Missing] | |
+| Misc & Placeholders | [Clear/Partial/Missing] | |
+
+### Remaining Ambiguities
+<!-- Items not clarified due to limits or user deferral -->
+| Category | Ambiguity | Severity | Handling |
+|----------|-----------|----------|----------|
+| [Category] | [Description] | [Critical/High/Medium/Low] | [Assumed/Deferred/Documented] |
 
 ---
 

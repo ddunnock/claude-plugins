@@ -6,11 +6,12 @@ Detailed templates for each phase gate. Use these exact formats when presenting 
 - [Phase 0: ASSESS Gate](#phase-0-assess-gate)
 - [Phase 1: INGEST Gate](#phase-1-ingest-gate)
 - [Phase 2: ANALYZE Gate](#phase-2-analyze-gate)
-- [Phase 3: PRESENT Gate](#phase-3-present-gate)
-- [Phase 4: ITERATE Gate](#phase-4-iterate-gate)
-- [Phase 5: SYNTHESIZE Gate](#phase-5-synthesize-gate)
-- [Phase 6: OUTPUT Completion](#phase-6-output-completion)
-- [Phase 7: VALIDATE Gate](#phase-7-validate-gate)
+- [Phase 3: CLARIFY Gate](#phase-3-clarify-gate)
+- [Phase 4: PRESENT Gate](#phase-4-present-gate)
+- [Phase 5: ITERATE Gate](#phase-5-iterate-gate)
+- [Phase 6: SYNTHESIZE Gate](#phase-6-synthesize-gate)
+- [Phase 7: OUTPUT Completion](#phase-7-output-completion)
+- [Phase 8: VALIDATE Gate](#phase-8-validate-gate)
 
 ---
 
@@ -109,15 +110,99 @@ QUESTIONS STATUS:
 
 Blocked findings: [count findings waiting on question answers]
 
-Ready to proceed to Phase 3 (PRESENT) for detailed findings?
+Ready to proceed to Phase 3 (CLARIFY) for ambiguity resolution?
 ```
 
 ---
 
-## Phase 3: PRESENT Gate
+## Phase 3: CLARIFY Gate
+
+### Sequential Question Format
+
+Present ONE question at a time using constrained answer formats:
 
 ```
-PHASE 3 COMPLETE: PRESENTATION
+CLARIFY-[NNN] [CATEGORY]
+
+[Context: 1-2 sentences explaining what triggered this question]
+
+**Question**: [The specific question]
+
+**Recommended:** Option [X] - [1-2 sentence reasoning based on best practices, risk reduction, or project context]
+
+| Option | Description |
+|--------|-------------|
+| A | [Option A description] |
+| B | [Option B description] |
+| C | [Option C description] |
+| D | [Option D description] (if needed) |
+| Short | Provide a different short answer (≤5 words) |
+
+Reply with the option letter (e.g., "A"), accept the recommendation by saying "yes" or "recommended", or provide your own short answer.
+```
+
+### After Each Answer
+
+```
+✓ Integrated: [Brief description of how answer was applied]
+
+[Question count] of 5 this session | [Total count] of 10 total
+```
+
+### Coverage Map (After Each Question)
+
+```
+COVERAGE MAP:
+| Category | Status | Notes |
+|----------|--------|-------|
+| Functional Scope | [Clear/Partial/Missing] | [Brief note] |
+| Domain & Data | [Clear/Partial/Missing] | [Brief note] |
+| Interaction & UX | [Clear/Partial/Missing] | [Brief note] |
+| Non-Functional | [Clear/Partial/Missing] | [Brief note] |
+| Integration | [Clear/Partial/Missing] | [Brief note] |
+| Edge Cases | [Clear/Partial/Missing] | [Brief note] |
+| Constraints | [Clear/Partial/Missing] | [Brief note] |
+| Terminology | [Clear/Partial/Missing] | [Brief note] |
+| Completion Signals | [Clear/Partial/Missing] | [Brief note] |
+| Assumptions | [Clear/Partial/Missing] | [Brief note] |
+| Misc | [Clear/Partial/Missing] | [Brief note] |
+```
+
+### Gate Summary
+
+```
+PHASE 3 COMPLETE: CLARIFICATION
+
+Questions asked this session: [count] / 5
+Total questions across analysis: [count] / 10
+
+COVERAGE STATUS:
+- Clear: [count] categories
+- Partial: [count] categories
+- Missing: [count] categories
+
+KEY CLARIFICATIONS:
+1. [CLARIFY-001]: [Question summary] → [Answer]
+2. [CLARIFY-002]: [Question summary] → [Answer]
+...
+
+REMAINING AMBIGUITIES:
+[List any unresolved items with category and severity]
+
+Options:
+1. Proceed to Phase 4 (PRESENT) with current clarity
+2. Ask additional questions (if quota remains)
+3. Mark remaining ambiguities as assumptions
+
+Your choice:
+```
+
+---
+
+## Phase 4: PRESENT Gate
+
+```
+PHASE 4 COMPLETE: PRESENTATION
 
 FINDINGS SUMMARY:
 - Critical: [count] ([resolved count] have remediations selected)
@@ -136,9 +221,9 @@ ASSUMPTIONS MADE: [count]
 [List key assumptions with risk levels]
 
 Options:
-1. Proceed to Phase 4 (ITERATE) with new input/constraints
-2. Skip to Phase 5 (SYNTHESIZE) if analysis is complete
-3. Answer remaining questions
+1. Proceed to Phase 5 (ITERATE) with new input/constraints
+2. Skip to Phase 6 (SYNTHESIZE) if analysis is complete
+3. Return to Phase 3 (CLARIFY) for more questions
 4. Review specific findings in detail
 
 Your choice:
@@ -146,10 +231,10 @@ Your choice:
 
 ---
 
-## Phase 4: ITERATE Gate
+## Phase 5: ITERATE Gate
 
 ```
-PHASE 4 COMPLETE: ITERATION
+PHASE 5 COMPLETE: ITERATION
 
 Changes incorporated: [summary of user input]
 
@@ -171,20 +256,21 @@ QUESTIONS STATUS:
 
 Options:
 1. Continue iterating (more changes to incorporate)
-2. Proceed to Phase 5 (SYNTHESIZE)
-3. Return to Phase 3 to review updated findings
+2. Proceed to Phase 6 (SYNTHESIZE)
+3. Return to Phase 4 to review updated findings
+4. Return to Phase 3 (CLARIFY) for additional questions
 
 Your choice:
 ```
 
 ---
 
-## Phase 5: SYNTHESIZE Gate
+## Phase 6: SYNTHESIZE Gate
 
 ### Full Summary Template
 
 ```
-PHASE 5: SYNTHESIS SUMMARY
+PHASE 6: SYNTHESIS SUMMARY
 
 === DOCUMENT OVERVIEW ===
 Title: [document title]
@@ -236,20 +322,20 @@ Unverified (proceeding with): [count]
 Ready to generate output?
 
 Options:
-1. Approve and proceed to Phase 6 (OUTPUT)
-2. Return to Phase 4 to address unresolved items
+1. Approve and proceed to Phase 7 (OUTPUT)
+2. Return to Phase 5 to address unresolved items
 3. Modify the proposed output structure
-4. Answer remaining questions first
+4. Return to Phase 3 (CLARIFY) for remaining questions
 
 Your choice:
 ```
 
 ---
 
-## Phase 6: OUTPUT Completion
+## Phase 7: OUTPUT Completion
 
 ```
-PHASE 6 COMPLETE: OUTPUT GENERATED
+PHASE 7 COMPLETE: OUTPUT GENERATED
 
 Mode: [SIMPLE/COMPLEX]
 All specifications generated with status: **Draft**
@@ -287,17 +373,17 @@ Summary:
 - Assumptions documented: [count]
 - Open items for future: [count]
 
-Ready to proceed to Phase 7 (VALIDATE) for final review and status advancement?
+Ready to proceed to Phase 8 (VALIDATE) for final review and status advancement?
 ```
 
 ---
 
-## Phase 7: VALIDATE Gate
+## Phase 8: VALIDATE Gate
 
 ### Validation Summary Template
 
 ```
-PHASE 7: VALIDATION SUMMARY
+PHASE 8: VALIDATION SUMMARY
 
 === SPECIFICATION STATUS ===
 Current status: [Draft | Reviewed | Approved | Baselined]
@@ -376,10 +462,11 @@ Requirements for advancement:
 
 Options:
 1. Advance status to [next status]
-2. Return to Phase 6 to regenerate specs
-3. Return to Phase 4 to iterate on findings
-4. Review specific findings in detail
-5. Export validation report
+2. Return to Phase 7 to regenerate specs
+3. Return to Phase 5 to iterate on findings
+4. Return to Phase 3 (CLARIFY) for remaining questions
+5. Review specific findings in detail
+6. Export validation report
 
 Your choice:
 ```
@@ -403,7 +490,7 @@ Confirm status change? (Yes/No)
 ### Validation Complete Template
 
 ```
-PHASE 7 COMPLETE: VALIDATION FINISHED
+PHASE 8 COMPLETE: VALIDATION FINISHED
 
 Final specification status: [Reviewed | Approved | Baselined]
 

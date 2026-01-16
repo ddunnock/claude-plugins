@@ -1,5 +1,20 @@
 {
   "name": "specification-refiner",
-  "description": "Refine and improve specifications",
-  "version": "1.0.0"
+  "description": "Systematic analysis and refinement of specifications with SEAMS framework, sequential clarification questioning, and multi-phase workflow",
+  "version": "2.0.0",
+  "author": {
+    "name": "Claude Code Skills"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/anthropics/claude-code-plugins",
+  "keywords": [
+    "specification",
+    "requirements",
+    "analysis",
+    "gap-analysis",
+    "SEAMS",
+    "clarification",
+    "refinement",
+    "architecture"
+  ]
 }

@@ -20,7 +20,8 @@
     {
       "name": "specification-refiner",
       "source": "./skills/specification-refiner",
-      "description": "Refine and improve specifications"
+      "description": "Systematic analysis and refinement of specifications with SEAMS framework, sequential clarification questioning, and 9-phase workflow",
+      "version": "2.0.0"
     },
     {
       "name": "speckit-generator",
