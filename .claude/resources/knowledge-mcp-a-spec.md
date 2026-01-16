@@ -1,11 +1,12 @@
 # Knowledge MCP — A-Specification
 
 > **Document ID**: KMCP-A-SPEC
-> **Version**: 0.1.0
-> **Status**: Reviewed
+> **Version**: 0.2.0
+> **Status**: Clarified
 > **Created**: 2026-01-15
-> **Last Updated**: 2026-01-15
+> **Last Updated**: 2026-01-16
 > **Validated**: 2026-01-15
+> **Clarifications**: KMCP-CLARIFY v1.0.0 (7 resolutions)
 
 ---
 
@@ -1115,4 +1116,3 @@ Complete error code enumeration is defined in section 4.2.3.
 ---
 
 *End of Document*
-test
