@@ -799,6 +799,22 @@ knowledge-mcp [OPTIONS]
 | Dimensions | 1536                     | Yes (256-3072) |
 | Batch size | 100 texts                | Yes            |
 
+**Error Handling for OpenAI API:** *(CLARIFY-002)*
+
+| OpenAI Error | Error Code | Action |
+|--------------|------------|--------|
+| 401 Unauthorized | `auth_error` | Fail immediately, exit code 3 |
+| 429 Rate Limited (temporary) | `rate_limited` | Retry with backoff per §6.2.2 |
+| 429 Quota Exceeded | `rate_limited` | Fail with clear message, suggest billing check |
+| 400 Invalid Request | `invalid_input` | Skip content, log ERROR with chunk details |
+| 500+ Server Error | `internal_error` | Retry with backoff per §6.2.2 |
+
+For quota exhaustion: The system shall fail with a clear error message indicating:
+- Current quota status (if available from API response)
+- Suggestion to check OpenAI billing dashboard
+- No local embedding fallback (preserves embedding space consistency)
+
+
 ---
 
 ### 5.3 Vector Store
