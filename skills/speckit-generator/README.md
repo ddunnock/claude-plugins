@@ -56,6 +56,7 @@ This will:
 - Validate git is available (required for checkpoints)
 - Detect your tech stack
 - Create the `.claude/` directory structure
+- Install all 6 project commands (plan, tasks, analyze, clarify, implement, revert)
 - Install appropriate memory files
 - Set up `.gitignore` for speckit
 
@@ -112,7 +113,11 @@ After initialization, your project will have:
 
 ```
 .claude/
-├── commands/              # Project-specific commands
+├── commands/              # Project-specific commands (all 6 installed)
+│   ├── plan.md            # Create implementation plans
+│   ├── tasks.md           # Generate tasks from plans
+│   ├── analyze.md         # Read-only project audit
+│   ├── clarify.md         # Resolve spec ambiguities
 │   ├── implement.md       # Task execution with hooks
 │   └── revert.md          # Checkpoint revert with analysis
 ├── memory/                # Constitution + tech-specific guidelines
@@ -287,7 +292,12 @@ Ensure you're running the full implement workflow. Post-implementation hooks onl
 
 ## Version History
 
-### v1.3.0 (Current)
+### v1.4.0 (Current)
+- `/speckit.init` now installs all 6 commands as project-local `/plan`, `/tasks`, `/analyze`, `/clarify`, `/implement`, `/revert`
+- Added `handoffs` YAML frontmatter to all command templates for command flow navigation
+- Added `$ARGUMENTS` user input support to all command templates
+
+### v1.3.0
 - Added `/speckit.revert` command with intelligent failure analysis
 - Added git checkpoint system to `/speckit.implement`
 - Added git validation to `/speckit.init`

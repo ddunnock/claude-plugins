@@ -1,12 +1,25 @@
 ---
 description: "Execute implementation tasks with mandatory status tracking and verification"
-agent:
-  model: sonnet
+handoffs:
+  - label: Revert Changes
+    agent: revert
+    prompt: Revert to checkpoint if implementation failed
+  - label: Analyze Results
+    agent: analyze
+    prompt: Verify implementation consistency
 ---
 
 # Implement
 
 Execute tasks from `.claude/resources/*-tasks.md` with batch execution, gates, and mandatory hooks.
+
+## User Input
+
+```text
+$ARGUMENTS
+```
+
+You **MUST** consider the user input before proceeding (if not empty).
 
 ## Usage
 

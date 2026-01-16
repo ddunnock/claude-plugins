@@ -1,12 +1,28 @@
 ---
 description: "Revert to checkpoint with intelligent failure analysis"
-agent:
-  model: sonnet
+handoffs:
+  - label: Clarify Requirements
+    agent: clarify
+    prompt: Resolve spec gaps that caused failure
+  - label: Revise Plan
+    agent: plan
+    prompt: Update plan with different approach
+  - label: Retry Implementation
+    agent: implement
+    prompt: Retry implementation after fixes
 ---
 
 # Revert
 
 Revert to a previous git checkpoint with failure analysis and artifact recommendations.
+
+## User Input
+
+```text
+$ARGUMENTS
+```
+
+You **MUST** consider the user input before proceeding (if not empty).
 
 ## Usage
 

@@ -9,7 +9,7 @@ Establish the `.claude/` foundation with appropriate memory files for the projec
 5. **Create structure** - Build directory structure
 6. **Copy memory files** - Select and copy based on tech stack
 7. **Initialize project-status.md** - Create status tracking file
-8. **Install project commands** - Copy implement.md and revert.md with hooks embedded
+8. **Install project commands** - Copy all 6 commands (plan, tasks, analyze, clarify, implement, revert) with hooks embedded
 9. **Ensure .gitignore** - Create or update .gitignore for project safety
 10. **Generate project context** - Create project-context.md
 
@@ -66,6 +66,10 @@ git add . && git commit -m "Pre-speckit checkpoint"
 ```
 .claude/
 ├── commands/           # Project commands (with hooks embedded)
+│   ├── plan.md         # Create implementation plans
+│   ├── tasks.md        # Generate tasks from plans
+│   ├── analyze.md      # Read-only project audit
+│   ├── clarify.md      # Resolve spec ambiguities
 │   ├── implement.md    # Task execution with mandatory hooks
 │   └── revert.md       # Checkpoint revert with analysis
 ├── memory/             # constitution.md + tech-specific files
@@ -192,8 +196,12 @@ After initialization, you MUST:
 ### Directory Structure Created
 .claude/
 ├── commands/
-│   ├── implement.md (with checkpoint + completion hooks)
-│   └── revert.md (checkpoint revert with analysis)
+│   ├── plan.md
+│   ├── tasks.md
+│   ├── analyze.md
+│   ├── clarify.md
+│   ├── implement.md
+│   └── revert.md
 ├── memory/
 │   └── project-status.md (initialized)
 ├── resources/
@@ -216,22 +224,31 @@ After initialization, you MUST:
 - [Based on detection]
 
 ### Commands Installed
-- implement.md - Task execution with git checkpoints + post-hooks
-  - Creates git checkpoint before execution
-  - Updates task statuses and project-status.md
-  - Enables revert to pre-implementation state
-- revert.md - Intelligent revert with failure analysis
-  - Reverts to checkpoint
-  - Analyzes what went wrong
-  - Suggests plan/task updates
+| Command | Description | Handoffs To |
+|---------|-------------|-------------|
+| /plan | Create implementation plans | /analyze, /clarify, /tasks |
+| /tasks | Generate tasks from plans | /analyze, /implement |
+| /analyze | Read-only project audit | /clarify, /plan |
+| /clarify | Resolve spec ambiguities | /analyze, /plan |
+| /implement | Task execution with checkpoints | /revert, /analyze |
+| /revert | Checkpoint revert with analysis | /clarify, /plan, /implement |
 
 ### Status Tracking
-- project-status.md initialized and ready for /speckit.implement updates
+- project-status.md initialized and ready for /implement updates
 
 ### Next Steps
 1. Review the memory files for your project needs
 2. Add specifications to .claude/resources/
-3. Run `/speckit.plan` when specs are ready
+3. Run `/plan` when specs are ready
+
+### Command Flow
+```
+/plan → /tasks → /implement
+   ↓       ↓          ↓
+/analyze  /analyze   /revert
+   ↓                   ↓
+/clarify            /clarify
+```
 
 **Is this configuration correct, or would you like to adjust the memory files?**
 ```
