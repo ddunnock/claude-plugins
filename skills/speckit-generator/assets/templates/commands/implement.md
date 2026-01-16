@@ -9,6 +9,31 @@ handoffs:
     prompt: Verify implementation consistency
 ---
 
+<!--
+================================================================================
+INIT AGENT INSTRUCTIONS
+================================================================================
+When copying this template to the user's project, you MUST customize the
+"Ralph Loop Mode" section based on whether the ralph-loop plugin is detected.
+
+CHECK for ralph-loop:
+```bash
+cat ~/.claude/plugins/installed_plugins.json | grep -q "ralph-loop"
+```
+
+IF ralph-loop IS detected:
+- Include the full "Ralph Loop Mode (Autonomous Execution)" section
+- Set Status to "✓ Enabled (ralph-loop plugin detected)"
+- Include usage examples and exit criteria
+
+IF ralph-loop is NOT detected:
+- Include a disabled notice with installation instructions
+- Set Status to "✗ Disabled (ralph-loop plugin not installed)"
+
+REMOVE these instruction comments from the final output.
+================================================================================
+-->
+
 # Implement
 
 Execute tasks from `.claude/resources/*-tasks.md` with batch execution, gates, and mandatory hooks.
@@ -310,6 +335,74 @@ Update with:
 | Task dependency not met | Skip and mark BLOCKED |
 | Criterion verification fails | Document failure, continue |
 | project-status.md missing | Create from template |
+
+---
+
+## Ralph Loop Mode (Autonomous Execution)
+
+<!-- INIT: Customize this section based on ralph-loop plugin detection -->
+
+<!-- INIT: IF ralph-loop IS detected, use this content: -->
+**Status**: ✓ Enabled (ralph-loop plugin detected)
+
+Use `--ralph` flag for autonomous implementation that iterates until all acceptance criteria are verified:
+
+```
+/implement "Phase 1" --ralph
+/implement TASK-001..TASK-010 --ralph --max-iterations 30
+```
+
+### How It Works
+
+1. Wraps implementation in a ralph-loop with `/ralph-loop`
+2. Completion promise: `<promise>ALL_CRITERIA_VERIFIED</promise>`
+3. Iterates until ALL acceptance criteria for selected tasks are `[x]` checked
+4. Safety limit: 50 iterations (override with `--max-iterations`)
+
+### Exit Criteria
+
+The loop exits ONLY when:
+- Every selected task has status: COMPLETED
+- Every acceptance criterion is marked `[x]` with verification evidence
+- No criteria remain `[ ]` or FAILED
+
+### Ralph Loop Prompt Construction
+
+When `--ralph` is specified, construct the ralph-loop call:
+
+```
+/ralph-loop "Execute the following implementation tasks and verify ALL acceptance criteria.
+
+Tasks: [TASK_SELECTION]
+
+For each task:
+1. Read task details from tasks.md
+2. Implement the task
+3. Verify EACH acceptance criterion with evidence
+4. Mark criterion [x] with verification notes
+5. Update task status to COMPLETED
+
+Exit criteria: ALL acceptance criteria must be [x] verified.
+
+When ALL criteria are verified, output: <promise>ALL_CRITERIA_VERIFIED</promise>
+
+If stuck after multiple attempts, document blockers but do NOT output the promise until genuinely complete." --completion-promise "ALL_CRITERIA_VERIFIED" --max-iterations [N]
+```
+
+<!-- INIT: IF ralph-loop is NOT detected, use this content instead:
+**Status**: ✗ Disabled (ralph-loop plugin not installed)
+
+To enable autonomous implementation mode, install the ralph-loop plugin:
+```
+/install-plugin ralph-loop
+```
+
+Then re-run `/speckit.init` to update this command.
+-->
+
+<!-- INIT: Remove all HTML comments from final output -->
+
+---
 
 ## Handoffs
 

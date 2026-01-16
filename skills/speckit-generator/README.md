@@ -40,7 +40,7 @@ The skill is automatically available when the skill files are in the skills dire
 | `/speckit.plan` | Create plans from specifications | After specs exist in resources/ |
 | `/speckit.tasks` | Generate tasks from plans | After plans are approved |
 | `/speckit.analyze` | Audit project consistency | Anytime for health check |
-| `/speckit.clarify` | Resolve ambiguities | When specs have open questions |
+| `/speckit.clarify` | SEAMS-enhanced ambiguity resolution | When specs have open questions |
 | `/speckit.implement` | Execute tasks with git checkpoint | When ready to implement |
 | `/speckit.revert` | Revert to checkpoint with analysis | When implementation fails |
 
@@ -220,6 +220,47 @@ When you revert, SpecKit analyzes what went wrong:
 | SCOPE_CREEP | Too much at once | Decompose tasks |
 | KNOWLEDGE_GAP | Unfamiliar technology | Research first |
 
+## Clarify Command (SEAMS-Enhanced)
+
+The `/speckit.clarify` command uses the SEAMS framework (Structure, Execution, Assumptions, Mismatches, Stakeholders) for systematic ambiguity detection.
+
+### Key Features
+
+- **Sequential Questioning**: One question at a time, never reveals the queue
+- **Table-Based Options**: Multiple choice with prominent recommendations
+- **Atomic Saves**: Spec updated immediately after each answer
+- **Impact × Uncertainty Prioritization**: Questions ranked by `Priority = Impact × Uncertainty`
+- **Four-Status Coverage**: Resolved (✓), Clear (○), Deferred (◐), Outstanding (⚠)
+- **Post-Write Validation**: 6-point checklist after each integration
+
+### 13-Category Taxonomy
+
+| Category | Group | Focus |
+|----------|-------|-------|
+| SCOPE | Functional | Feature boundaries, in/out scope |
+| BEHAVIOR | Functional | User actions, state transitions |
+| SEQUENCE | Functional | Order of operations |
+| AUTHORITY | Functional | Decision makers, permissions |
+| DATA | Data/Integration | Entities, formats, validation |
+| INTERFACE | Data/Integration | API contracts, protocols |
+| CONSTRAINT | Data/Integration | Limits, bounds |
+| TEMPORAL | Data/Integration | Timing, duration |
+| ERROR | Quality/Ops | Error handling, failure modes |
+| RECOVERY | Quality/Ops | Degradation, retry, fallback |
+| ASSUMPTION | Quality/Ops | Implicit beliefs |
+| STAKEHOLDER | Quality/Ops | Operator, security, user views |
+| TRACEABILITY | Quality/Ops | Requirements ↔ design coverage |
+
+### Session Constraints
+
+- **5 questions max** per interactive session
+- **10 questions max** total across all sessions for a spec
+- **Answer format**: Option letter OR ≤5 words
+
+### Autonomous Mode (Ralph Loop)
+
+If the `ralph-loop` plugin is installed, `/speckit.clarify --ralph` enables autonomous clarification until all CRITICAL/HIGH ambiguities are resolved.
+
 ## Workflow Best Practices
 
 ### Do
@@ -247,7 +288,7 @@ The plugin is configured via `.claude-plugin/plugin.json`:
 ```json
 {
   "name": "speckit-generator",
-  "version": "1.3.0",
+  "version": "1.5.0",
   "hooks": "../hooks/hooks.json",
   "commands": [...]
 }
@@ -292,7 +333,17 @@ Ensure you're running the full implement workflow. Post-implementation hooks onl
 
 ## Version History
 
-### v1.4.0 (Current)
+### v1.5.0 (Current)
+- Enhanced `/speckit.clarify` with SEAMS framework (Structure, Execution, Assumptions, Mismatches, Stakeholders)
+- Added 13-category taxonomy for comprehensive ambiguity detection
+- Sequential questioning loop with table-based options and recommendations
+- Atomic saves after each answer with post-write validation
+- Impact × Uncertainty prioritization formula
+- Four-status coverage model (Resolved/Deferred/Clear/Outstanding)
+- Ralph Loop autonomous mode integration for clarify command
+- Tech-stack aware directive loading via INIT customization
+
+### v1.4.0
 - `/speckit.init` now installs all 6 commands as project-local `/plan`, `/tasks`, `/analyze`, `/clarify`, `/implement`, `/revert`
 - Added `handoffs` YAML frontmatter to all command templates for command flow navigation
 - Added `$ARGUMENTS` user input support to all command templates

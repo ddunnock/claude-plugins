@@ -5,13 +5,14 @@ Establish the `.claude/` foundation with appropriate memory files for the projec
 1. **Validate git** - Check git is available, initialize repo if needed
 2. **Check existing state** - Detect if .claude/ exists
 3. **Detect tech stack** - Analyze project for languages/frameworks
-4. **Present detection** - Show detected stack and recommended memory files
-5. **Create structure** - Build directory structure
-6. **Copy memory files** - Select and copy based on tech stack
-7. **Initialize project-status.md** - Create status tracking file
-8. **Install project commands** - Copy all 6 commands (plan, tasks, analyze, clarify, implement, revert) with hooks embedded
-9. **Ensure .gitignore** - Create or update .gitignore for project safety
-10. **Generate project context** - Create project-context.md
+4. **Detect plugins** - Check for ralph-loop and other compatible plugins
+5. **Present detection** - Show detected stack, plugins, and recommended memory files
+6. **Create structure** - Build directory structure
+7. **Copy memory files** - Select and copy based on tech stack
+8. **Initialize project-status.md** - Create status tracking file
+9. **Install project commands** - Copy all 6 commands (plan, tasks, analyze, clarify, implement, revert) with customizations based on detected stack and plugins
+10. **Ensure .gitignore** - Create or update .gitignore for project safety
+11. **Generate project context** - Create project-context.md
 
 ---
 
@@ -61,6 +62,51 @@ git add . && git commit -m "Pre-speckit checkpoint"
 
 ---
 
+## Plugin Detection (Step 4)
+
+Detect installed Claude Code plugins that enhance speckit functionality.
+
+### Ralph Loop Detection
+
+Check if the `ralph-loop` plugin is installed and enabled:
+
+```bash
+# Check installed_plugins.json for ralph-loop
+cat ~/.claude/plugins/installed_plugins.json | grep -q "ralph-loop"
+```
+
+**If ralph-loop is detected:**
+- Enable autonomous implementation mode in `/implement` command
+- Configure completion criteria based on acceptance criteria verification
+- Add `--ralph` flag documentation to implement command
+
+### Plugin Detection Output
+
+```markdown
+## Plugin Detection
+
+| Plugin | Status | Integration |
+|--------|--------|-------------|
+| ralph-loop | ✓ Installed | Enables autonomous `/implement --ralph` mode |
+| [other plugins] | ✓/✗ | [integration notes] |
+
+### Ralph Loop Integration (if detected)
+
+The `/implement` command will include:
+- `--ralph` flag for autonomous execution mode
+- Completion criteria: All task acceptance criteria verified
+- Safety limit: `--max-iterations 50` (configurable)
+
+**Example usage:**
+```
+/implement "Phase 1" --ralph --max-iterations 30
+```
+
+This will iterate until all Phase 1 tasks have verified acceptance criteria.
+```
+
+---
+
 ## Directory Structure Created
 
 ```
@@ -102,7 +148,221 @@ git add . && git commit -m "Pre-speckit checkpoint"
 
 ---
 
-## MANDATORY: .gitignore Setup (Step 9)
+## MANDATORY: Command Customization (Step 8)
+
+When copying command templates to the user's project, you **MUST** customize them based on the detected tech stack. Command templates contain `<!-- INIT: ... -->` instructions that guide customization.
+
+### Customization Process
+
+1. **Read the template** from `assets/templates/commands/[command].md`
+2. **Find INIT instructions** in HTML comments (`<!-- INIT: ... -->`)
+3. **Apply customizations** based on detected tech stack
+4. **Remove all INIT comments** from the final output
+5. **Write the customized command** to `.claude/commands/[command].md`
+
+### analyze.md Customization
+
+The `analyze.md` template has a "Memory Directives" section that must be customized:
+
+**Template placeholder:**
+```markdown
+**Project-specific:**
+<!-- INIT: List only the tech-specific files detected for this project -->
+- `[DETECTED_TECH_FILE].md` - [Description]
+```
+
+**Customized output (example for TypeScript + React):**
+```markdown
+**Project-specific (detected: TypeScript, React, Next.js):**
+- `typescript.md` - TypeScript standards
+- `react-nextjs.md` - React/Next.js patterns
+- `tailwind-shadcn.md` - Styling standards
+```
+
+### Directive File Mapping
+
+| Detected Stack | Directive File | Description |
+|----------------|----------------|-------------|
+| TypeScript, JavaScript | `typescript.md` | TypeScript/JS standards |
+| Python | `python.md` | Python standards |
+| Rust | `rust.md` | Rust standards |
+| React, Next.js | `react-nextjs.md` | React/Next.js patterns |
+| Tailwind CSS | `tailwind-shadcn.md` | Styling standards (personal) |
+| Tailwind CSS (L3Harris) | `tailwind-l3harris.md` | Styling standards (L3Harris) |
+| CI/CD pipelines | `git-cicd.md` | Git and CI/CD workflows |
+
+### Example: Full analyze.md Customization
+
+**Input (detected: TypeScript, React, Next.js, Tailwind):**
+
+Before:
+```markdown
+## Memory Directives
+
+<!-- INIT: Replace this section with the actual directive files for this project -->
+
+Load these directive files for compliance checking:
+
+**Always loaded:**
+- `constitution.md` - Global principles, quality gates
+- `security.md` - Security requirements
+- `testing.md` - Test coverage requirements
+- `documentation.md` - Documentation standards
+
+**Project-specific:**
+<!-- INIT: List only the tech-specific files detected for this project -->
+- `[DETECTED_TECH_FILE].md` - [Description]
+
+<!-- INIT: Remove all HTML comments from final output -->
+```
+
+After:
+```markdown
+## Memory Directives
+
+Load these directive files for compliance checking:
+
+**Always loaded:**
+- `constitution.md` - Global principles, quality gates
+- `security.md` - Security requirements
+- `testing.md` - Test coverage requirements
+- `documentation.md` - Documentation standards
+
+**Project-specific (detected: TypeScript, React, Next.js, Tailwind):**
+- `typescript.md` - TypeScript standards
+- `react-nextjs.md` - React/Next.js patterns
+- `tailwind-shadcn.md` - Styling standards
+```
+
+### clarify.md Customization
+
+The `clarify.md` template has three sections that must be customized:
+
+**1. Memory Directives Section:**
+Same as analyze.md - replace placeholder with detected tech-specific directive files.
+
+**2. SEAMS Lens Activation:**
+Enable relevant SEAMS lenses based on project type:
+
+| Project Type | Recommended Lenses |
+|--------------|-------------------|
+| Web App | Structure, Execution, Stakeholders |
+| API/Backend | Interface, Execution, Assumptions |
+| Data Pipeline | Data, Traceability, Assumptions |
+| CLI Tool | Execution, Assumptions |
+
+**Example for a Web App:**
+```markdown
+**Active lenses for this project:**
+- [x] **Structure**: Boundary clarity, cohesion analysis
+- [x] **Execution**: Happy paths, edge cases, failure modes
+- [ ] **Assumptions**: Implicit technical/organizational assumptions
+- [ ] **Mismatches**: Requirements <-> design gaps
+- [x] **Stakeholders**: Operator, security, end-user perspectives
+```
+
+**3. Ralph Loop Mode Section:**
+Same pattern as implement.md - customize based on ralph-loop plugin detection.
+
+**If ralph-loop IS detected:**
+```markdown
+## Ralph Loop Mode (Autonomous Clarification)
+
+**Status**: ✓ Enabled (ralph-loop plugin detected)
+
+Use `--ralph` flag for autonomous clarification:
+```
+/clarify --ralph                    # Until all CRITICAL/HIGH resolved
+/clarify --ralph --confidence 90    # Until 90% coverage confidence
+```
+
+### Exit Criteria
+- All CRITICAL and HIGH impact ambiguities resolved
+- Coverage confidence threshold reached (if specified)
+- Hard limit: 10 questions per session
+```
+
+**If ralph-loop NOT detected:**
+```markdown
+## Ralph Loop Mode (Autonomous Clarification)
+
+**Status**: ✗ Disabled (ralph-loop plugin not installed)
+
+To enable autonomous clarification mode, install the ralph-loop plugin:
+```
+/install-plugin ralph-loop
+```
+```
+
+---
+
+### implement.md Customization (Ralph Loop Integration)
+
+The `implement.md` template has a "Ralph Loop Mode" section that must be customized based on plugin detection.
+
+**If ralph-loop plugin IS detected:**
+
+Include the full Ralph Loop Mode section with enabled functionality:
+
+```markdown
+## Ralph Loop Mode (Autonomous Execution)
+
+**Status**: ✓ Enabled (ralph-loop plugin detected)
+
+Use `--ralph` flag for autonomous implementation that iterates until all acceptance criteria are verified:
+
+```
+/implement "Phase 1" --ralph
+/implement TASK-001..TASK-010 --ralph --max-iterations 30
+```
+
+### How It Works
+
+1. Wraps implementation in a ralph-loop
+2. Completion promise: `<promise>ALL_CRITERIA_VERIFIED</promise>`
+3. Iterates until ALL acceptance criteria for selected tasks are `[x]` checked
+4. Safety limit: 50 iterations (override with `--max-iterations`)
+
+### Exit Criteria
+
+The loop exits ONLY when:
+- Every selected task has status: COMPLETED
+- Every acceptance criterion is marked `[x]` with verification evidence
+- No criteria remain `[ ]` or FAILED
+
+### Example
+
+```
+/implement "Phase 1" --ralph --max-iterations 30
+```
+
+Claude will:
+1. Execute Phase 1 tasks
+2. Verify each acceptance criterion
+3. If any fail, iterate and fix
+4. Output `<promise>ALL_CRITERIA_VERIFIED</promise>` when done
+```
+
+**If ralph-loop plugin is NOT detected:**
+
+Include a disabled notice:
+
+```markdown
+## Ralph Loop Mode (Autonomous Execution)
+
+**Status**: ✗ Disabled (ralph-loop plugin not installed)
+
+To enable autonomous implementation mode, install the ralph-loop plugin:
+```
+/install-plugin ralph-loop
+```
+
+Then re-run `/speckit.init` to update this command.
+```
+
+---
+
+## MANDATORY: .gitignore Setup (Step 10)
 
 ### Check and Create .gitignore
 
@@ -211,6 +471,11 @@ After initialization, you MUST:
 ### Detected Tech Stack
 - [Languages detected]
 - [Frameworks detected]
+
+### Plugin Integrations
+| Plugin | Status | Integration |
+|--------|--------|-------------|
+| ralph-loop | [✓ Installed / ✗ Not found] | [Autonomous /implement --ralph mode / Not available] |
 
 ### Memory Files Installed
 **Universal:**

@@ -4,207 +4,309 @@ Detailed workflow for the `/speckit.analyze` command.
 
 ## Purpose
 
-Provide deterministic, read-only audit of project artifacts for consistency and completeness. Like a linter for specifications and project structure.
+Perform a non-destructive cross-artifact consistency and quality analysis across `spec.md`, `plan.md`, and `tasks.md` before implementation. This is a **pre-implementation quality gate** that verifies your planning artifacts are internally consistent and compliant with project directives.
 
 ## Key Characteristics
 
 - **Read-only**: Never modifies any files
 - **Deterministic**: Identical inputs produce identical outputs
 - **Stable Finding IDs**: IDs remain consistent across runs
-- **Quantified Metrics**: Coverage percentages, counts, scores
+- **Directive-aware**: Validates against constitution and all applicable memory files
+
+---
+
+## Prerequisites
+
+This command requires all three core artifacts to exist:
+
+1. `spec.md` - Created by `/speckit.clarify`
+2. `plan.md` - Created by `/speckit.plan`
+3. `tasks.md` - Created by `/speckit.tasks`
+
+If any are missing, the command will abort with instructions to run the prerequisite command.
 
 ---
 
 ## Workflow Steps
 
-### Step 1: Discover Artifacts
+### Step 1: Initialize Analysis Context
 
-Scan project for analyzable files:
+Run the prerequisite check script and parse JSON output:
 
-```
-.claude/
-├── memory/          → Constitution compliance
-├── resources/       → Specs, plans, tasks
-└── project-context.md
-
-Source files         → Code-spec alignment
+```json
+{
+  "FEATURE_DIR": ".claude/resources/features/my-feature",
+  "AVAILABLE_DOCS": ["spec.md", "plan.md", "tasks.md"]
+}
 ```
 
-Report discovery:
+Derive absolute paths:
+- SPEC = FEATURE_DIR/spec.md
+- PLAN = FEATURE_DIR/plan.md
+- TASKS = FEATURE_DIR/tasks.md
+
+### Step 2: Load Directive Files
+
+> **Architecture Note**: The `/speckit.init` command customizes the `analyze.md` command
+> during installation with the specific directive files for the project's tech stack.
+> The installed command will have an explicit list of directives to load, not conditional
+> logic. This makes the analyze command deterministic and explicit.
+
+**Always loaded (cross-cutting concerns):**
+
+| File | Purpose |
+|------|---------|
+| `constitution.md` | Global principles, quality gates, RFC 2119 normative language |
+| `security.md` | Input validation, secrets management, dependency security |
+| `testing.md` | Coverage thresholds, test patterns, E2E requirements |
+| `documentation.md` | Diátaxis framework, required documentation |
+
+**Tech-specific (determined at init time):**
+
+| Detected Stack | Directive File |
+|----------------|----------------|
+| TypeScript/JavaScript | `typescript.md` |
+| Python | `python.md` |
+| Rust | `rust.md` |
+| React/Next.js | `react-nextjs.md` |
+| Tailwind (personal) | `tailwind-shadcn.md` |
+| Tailwind (L3Harris) | `tailwind-l3harris.md` |
+| CI/CD pipelines | `git-cicd.md` |
+
+**Example installed command (TypeScript + React project):**
+```markdown
+## Memory Directives
+
+**Always loaded:**
+- constitution.md, security.md, testing.md, documentation.md
+
+**Project-specific (detected: TypeScript, React, Next.js):**
+- typescript.md
+- react-nextjs.md
+- tailwind-shadcn.md
 ```
-Artifacts discovered:
-- Specifications: 2 files
-- Plans: 3 files (1 master, 2 domain)
-- Tasks: 2 files (28 tasks total)
-- Memory: 6 files
-- Source: 45 files
+
+### Step 3: Build Semantic Models
+
+Create internal representations for analysis:
+
+**Requirements Inventory:**
+```
+user-can-upload-file → { source: "spec.md:L45", type: "functional" }
+api-response-under-500ms → { source: "spec.md:L78", type: "non-functional" }
 ```
 
-### Step 2: Run Analysis Passes
+**Task Coverage Mapping:**
+```
+TASK-001 → [user-can-upload-file]
+TASK-002 → [api-response-under-500ms, user-can-upload-file]
+TASK-003 → [] ← ORPHAN
+```
 
-#### Pass 1: Gap Analysis (GAPS)
+**Directive Rule Set:**
+```
+constitution.md:
+  - MUST: Test coverage ≥80% line, ≥75% branch
+  - MUST: All public APIs documented
 
-Check for missing required elements:
+security.md:
+  - MUST NOT: Secrets in code
+  - MUST: Parameterized SQL queries
 
-| Check | Severity |
-|-------|----------|
-| Requirements without plan coverage | CRITICAL |
-| Plan phases without tasks | HIGH |
-| Tasks without acceptance criteria | MEDIUM |
-| Missing memory files for tech stack | HIGH |
+typescript.md:
+  - MUST: strict mode enabled
+  - SHOULD: JSDoc on public functions
+```
 
-#### Pass 2: Consistency Analysis (INCONSISTENCIES)
+### Step 4: Run Detection Passes
 
-Check for contradictions:
+#### Pass A: Duplication Detection
 
-| Check | Severity |
-|-------|----------|
-| Conflicting requirements | CRITICAL |
-| Plan contradicts spec | CRITICAL |
-| Task contradicts plan | HIGH |
-| Memory file conflicts | HIGH |
+Identify semantically similar requirements:
 
-#### Pass 3: Ambiguity Analysis (AMBIGUITIES)
+| Check | Example |
+|-------|---------|
+| Near-duplicate functional requirements | "User can upload file" vs "User uploads files" |
+| Redundant non-functional requirements | Same performance target stated twice |
 
-Detect unclear specifications:
+#### Pass B: Ambiguity Detection
 
 | Pattern | Severity |
 |---------|----------|
-| `[TBD]`, `[TODO]` markers | HIGH |
-| `[NEEDS CLARIFICATION]` | HIGH |
-| Vague language ("should", "might", "probably") | MEDIUM |
-| Missing error handling specs | MEDIUM |
+| Vague adjectives without metrics | "fast", "scalable", "intuitive" |
+| Unresolved placeholders | `TODO`, `TKTK`, `???`, `<placeholder>` |
+| `[TBD]`, `[NEEDS CLARIFICATION]` markers | HIGH |
 
-#### Pass 4: Orphan Analysis (ORPHANS)
-
-Find unreferenced elements:
+#### Pass C: Underspecification
 
 | Check | Severity |
 |-------|----------|
-| Tasks not traced to plan | HIGH |
-| Plan sections not traced to spec | MEDIUM |
-| Architecture decisions not used | LOW |
+| Requirements with verbs but no measurable outcome | MEDIUM |
+| User stories missing acceptance criteria | HIGH |
+| Tasks referencing undefined components | HIGH |
 
-#### Pass 5: Assumption Analysis (ASSUMPTIONS)
+#### Pass D: Directive Alignment
 
-Track unvalidated assumptions:
+| Check | Source | Severity |
+|-------|--------|----------|
+| Test coverage not specified | testing.md | CRITICAL |
+| Missing input validation tasks | security.md | CRITICAL |
+| No JSDoc requirement for public APIs | typescript.md | MEDIUM |
+| Missing required documentation | documentation.md | HIGH |
+
+#### Pass E: Coverage Gaps
 
 | Check | Severity |
 |-------|----------|
-| Unvalidated technical assumptions | MEDIUM |
-| Implicit organizational assumptions | MEDIUM |
-| Environmental assumptions | LOW |
+| Requirements with zero tasks | CRITICAL (if core) / HIGH |
+| Tasks with no mapped requirement | MEDIUM |
+| Non-functional requirements not in tasks | HIGH |
 
-### Step 3: Generate Stable Finding IDs
+#### Pass F: Inconsistency
+
+| Check | Severity |
+|-------|----------|
+| Terminology drift across files | MEDIUM |
+| Data entities in plan but not spec | HIGH |
+| Task ordering contradictions | HIGH |
+| Conflicting technology choices | CRITICAL |
+
+### Step 5: Generate Stable Finding IDs
 
 Finding IDs are deterministic based on:
 ```
-FINDING_ID = hash(category + location + description_normalized)
+FINDING_ID = CategoryPrefix + hash(location + description_normalized)
 ```
 
-Example: `GAP-a1b2c3`
+Prefixes:
+- `A` - Duplication
+- `B` - Ambiguity
+- `C` - Underspecification
+- `D` - Directive Alignment
+- `E` - Coverage Gap
+- `F` - Inconsistency
 
-This ensures:
-- Same issue gets same ID across runs
-- Resolved issues can be tracked
-- Findings can be referenced in other documents
+Example: `D-a1b2c3` (Directive alignment issue)
 
-### Step 4: Calculate Metrics
+### Step 6: Assign Severity
 
-```
-Coverage Metrics:
-- Requirements → Plan: 95% (19/20)
-- Plan → Tasks: 100% (all phases covered)
-- Tasks → Constitution: 85% (24/28 have refs)
+| Level | Criteria |
+|-------|----------|
+| CRITICAL | Violates MUST/MUST NOT directive, blocks baseline functionality |
+| HIGH | Duplicate/conflicting requirement, security/performance ambiguity |
+| MEDIUM | Terminology drift, SHOULD violations, underspecified edge cases |
+| LOW | Style improvements, minor redundancy |
 
-Quality Metrics:
-- Ambiguity score: 12 (lower is better)
-- Orphan count: 3
-- Assumption count: 7 (4 validated)
-```
+---
 
-### Step 5: Generate Report
+## Output Format
+
+### Findings Table
 
 ```markdown
-# Analysis Report
+| ID | Category | Severity | Location(s) | Summary | Recommendation |
+|----|----------|----------|-------------|---------|----------------|
+| D-a1b2 | Directive | CRITICAL | plan.md:L45 | No test coverage task; violates testing.md §2.1 | Add task for test infrastructure |
+| E-b2c3 | Coverage | HIGH | spec.md:L23 | REQ "user-can-export-data" has no tasks | Generate tasks or mark as deferred |
+| B-c3d4 | Ambiguity | MEDIUM | spec.md:L67 | "fast response" lacks metric | Define threshold (e.g., <200ms P95) |
+```
 
-Generated: 2024-01-15T10:30:00Z
-Project: my-project
-Artifacts: 52 files
+### Coverage Summary
 
-## Summary
+```markdown
+| Requirement Key | Has Task? | Task IDs | Notes |
+|-----------------|-----------|----------|-------|
+| user-can-upload-file | ✓ | T-001, T-003 | |
+| api-response-under-500ms | ✓ | T-002 | |
+| user-can-export-data | ✗ | — | Missing coverage |
+```
 
-| Category | Critical | High | Medium | Low | Total |
-|----------|----------|------|--------|-----|-------|
-| GAPS | 1 | 3 | 5 | 2 | 11 |
-| INCONSISTENCIES | 0 | 1 | 2 | 0 | 3 |
-| AMBIGUITIES | 0 | 4 | 8 | 3 | 15 |
-| ORPHANS | 0 | 1 | 2 | 5 | 8 |
-| ASSUMPTIONS | 0 | 0 | 4 | 3 | 7 |
+### Directives Loaded
 
-**Total Findings**: 44
-**Critical/High**: 10 (require attention)
+```markdown
+- constitution.md ✓
+- security.md ✓
+- testing.md ✓
+- documentation.md ✓
+- typescript.md ✓ (detected: TypeScript)
+- react-nextjs.md ✓ (detected: Next.js)
+- python.md ✗ (not applicable)
+- rust.md ✗ (not applicable)
+```
 
-## Coverage Metrics
+### Metrics
 
-| Traceability | Coverage | Status |
-|--------------|----------|--------|
-| Spec → Plan | 95% | ⚠️ |
-| Plan → Tasks | 100% | ✓ |
-| Tasks → Constitution | 85% | ⚠️ |
-
-## Findings
-
-### GAP-a1b2c3 [CRITICAL]
-**Category**: GAPS
-**Location**: spec.md:45
-**Description**: Requirement REQ-015 has no plan coverage
-**Recommendation**: Add plan section addressing REQ-015
-
-### GAP-b2c3d4 [HIGH]
-**Category**: GAPS
-**Location**: plan.md:Phase 3
-**Description**: Phase 3 has no tasks generated
-**Recommendation**: Run /speckit.tasks or mark phase as deferred
-
-[... more findings ...]
-
-## Trend (if previous runs exist)
-
-| Metric | Previous | Current | Change |
-|--------|----------|---------|--------|
-| Total findings | 52 | 44 | -8 ⬇️ |
-| Critical | 2 | 1 | -1 ⬇️ |
-| Coverage | 82% | 93% | +11% ⬆️ |
+```markdown
+- Total Requirements: 15
+- Total Tasks: 28
+- Coverage: 93% (14/15 requirements have tasks)
+- Ambiguity Count: 3
+- Duplication Count: 1
+- Critical Issues: 2
 ```
 
 ---
 
-## Finding Format
+## Next Actions Logic
 
-```markdown
-### [FINDING-ID] [SEVERITY]
-
-**Category**: [GAPS | INCONSISTENCIES | AMBIGUITIES | ORPHANS | ASSUMPTIONS]
-**Location**: [file:line or file:section]
-**First Seen**: [date if tracking history]
-**Status**: [NEW | EXISTING | RESOLVED]
-
-**Description**:
-[Clear description of the issue]
-
-**Evidence**:
-[Specific quotes or references that demonstrate the issue]
-
-**Impact**:
-[What problems this causes if not addressed]
-
-**Recommendation**:
-[Specific action to resolve]
-
-**Related**:
-[Links to related findings]
+**If CRITICAL issues exist:**
 ```
+⚠️ CRITICAL issues found. Resolve before running /speckit.implement:
+1. D-a1b2: Add test coverage task (violates testing.md)
+2. F-d4e5: Resolve technology conflict (Next.js vs Vue)
+```
+
+**If only MEDIUM/LOW:**
+```
+✓ No blocking issues. You may proceed with /speckit.implement.
+
+Suggested improvements:
+- B-c3d4: Consider adding metric for "fast response"
+- C-e5f6: Clarify edge case handling for empty uploads
+```
+
+---
+
+## Integration Points
+
+### With /speckit.clarify
+
+Ambiguity findings can trigger clarification:
+```
+3 ambiguities found. Consider running /speckit.clarify to resolve.
+```
+
+### With /speckit.plan
+
+Inconsistency findings may require plan updates:
+```
+Technology conflict detected. Update plan.md to resolve.
+```
+
+### With /speckit.tasks
+
+Coverage gaps inform task generation:
+```
+2 requirements have no tasks. Run /speckit.tasks to generate coverage.
+```
+
+### With /speckit.implement
+
+Analysis gates implementation:
+```
+CRITICAL issues block /speckit.implement. Resolve first.
+```
+
+---
+
+## Determinism Requirements
+
+For identical inputs, output must be identical:
+
+1. **Sort order**: Findings sorted by severity (CRITICAL→LOW), then category, then ID
+2. **File scanning**: Consistent file order (alphabetical)
+3. **ID generation**: Hash-based, not sequence-based
+4. **Directive loading**: Same stack detection = same directives loaded
 
 ---
 
@@ -214,73 +316,13 @@ Artifacts: 52 files
 # Full analysis
 /speckit.analyze
 
-# Specific category only
-/speckit.analyze --category gaps
-/speckit.analyze --category inconsistencies
+# Filter by category
+/speckit.analyze --category directive
+/speckit.analyze --category coverage
 
-# Verbose output (show all findings, not just critical/high)
+# Verbose output (include LOW findings)
 /speckit.analyze --verbose
 
-# JSON output for tooling
-/speckit.analyze --json
-
-# Compare with previous run
-/speckit.analyze --diff
-
-# Specific files only
-/speckit.analyze --files spec.md,plan.md
+# Show only CRITICAL/HIGH
+/speckit.analyze --severity high
 ```
-
----
-
-## Determinism Requirements
-
-For identical inputs, output must be identical:
-
-1. **Sort order**: Findings sorted by severity, then category, then ID
-2. **Timestamps**: Use deterministic timestamps or exclude from comparison
-3. **File scanning**: Consistent file order (alphabetical)
-4. **ID generation**: Hash-based, not sequence-based
-
-Test with:
-```bash
-analyze > output1.md
-analyze > output2.md
-diff output1.md output2.md  # Should be empty
-```
-
----
-
-## Integration Points
-
-### With /speckit.clarify
-
-Ambiguity findings can trigger clarify:
-```
-15 ambiguities found. Run /speckit.clarify to resolve?
-```
-
-### With /speckit.plan
-
-Gap findings inform plan updates:
-```
-1 requirement has no plan coverage. Update plan?
-```
-
-### With /speckit.tasks
-
-Orphan tasks or missing task references inform task generation:
-```
-Phase 3 has no tasks. Run /speckit.tasks?
-```
-
----
-
-## Exit Codes (for scripting)
-
-| Code | Meaning |
-|------|---------|
-| 0 | No critical or high findings |
-| 1 | High findings exist |
-| 2 | Critical findings exist |
-| 3 | Analysis failed (error) |

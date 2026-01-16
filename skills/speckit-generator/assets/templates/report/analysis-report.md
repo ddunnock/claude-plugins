@@ -1,149 +1,131 @@
-# Analysis Report
+# Specification Analysis Report
 
 Generated: [ISO_TIMESTAMP]
-Project: [PROJECT_NAME]
-Artifacts Analyzed: [COUNT] files
+Feature: [FEATURE_NAME]
+Artifacts Analyzed: spec.md, plan.md, tasks.md
+
+---
 
 ## Executive Summary
 
-**Overall Health**: [HEALTHY | NEEDS_ATTENTION | CRITICAL]
+**Overall Status**: [PASS | NEEDS_ATTENTION | BLOCKED]
 **Critical Issues**: [COUNT]
-**Action Required**: [YES/NO]
-
----
-
-## Summary
-
-| Category | Critical | High | Medium | Low | Total |
-|----------|----------|------|--------|-----|-------|
-| GAPS | [N] | [N] | [N] | [N] | [N] |
-| INCONSISTENCIES | [N] | [N] | [N] | [N] | [N] |
-| AMBIGUITIES | [N] | [N] | [N] | [N] | [N] |
-| ORPHANS | [N] | [N] | [N] | [N] | [N] |
-| ASSUMPTIONS | [N] | [N] | [N] | [N] | [N] |
-| **Total** | **[N]** | **[N]** | **[N]** | **[N]** | **[N]** |
-
----
-
-## Coverage Metrics
-
-| Traceability | Coverage | Status |
-|--------------|----------|--------|
-| Requirements → Plan | [N]% | [✓/⚠️/❌] |
-| Plan → Tasks | [N]% | [✓/⚠️/❌] |
-| Tasks → Constitution | [N]% | [✓/⚠️/❌] |
-| Tasks → Acceptance Criteria | [N]% | [✓/⚠️/❌] |
+**Ready for Implementation**: [YES/NO]
 
 ---
 
 ## Findings
 
-### Critical Findings
+| ID | Category | Severity | Location(s) | Summary | Recommendation |
+|----|----------|----------|-------------|---------|----------------|
+| [ID] | [CAT] | [SEV] | [LOC] | [SUMMARY] | [REC] |
 
-#### [FINDING-ID] [CRITICAL]
-**Category**: [CATEGORY]
-**Location**: [file:line or file:section]
-**Status**: [NEW | EXISTING]
-
-**Description**:
-[Clear description of the issue]
-
-**Evidence**:
-> [Quote or reference demonstrating the issue]
-
-**Impact**:
-[What problems this causes if not addressed]
-
-**Recommendation**:
-[Specific action to resolve]
+*[N] findings total. Sorted by severity (CRITICAL → LOW).*
 
 ---
 
-### High Findings
+## Coverage Summary
 
-#### [FINDING-ID] [HIGH]
-**Category**: [CATEGORY]
-**Location**: [file:line]
-**Status**: [NEW | EXISTING]
+| Requirement Key | Has Task? | Task IDs | Notes |
+|-----------------|-----------|----------|-------|
+| [REQ-KEY] | [✓/✗] | [IDs] | [NOTES] |
 
-**Description**:
-[Description]
-
-**Evidence**:
-> [Evidence]
-
-**Impact**:
-[Impact]
-
-**Recommendation**:
-[Recommendation]
+**Coverage**: [N]% ([COVERED]/[TOTAL] requirements have ≥1 task)
 
 ---
 
-### Medium Findings
+## Directive Alignment
 
-#### [FINDING-ID] [MEDIUM]
-**Category**: [CATEGORY]
-**Location**: [file:line]
+### Directives Loaded
 
-**Description**:
-[Description]
+| Directive | Status | Reason |
+|-----------|--------|--------|
+| constitution.md | ✓ | Always loaded |
+| security.md | ✓ | Always loaded |
+| testing.md | ✓ | Always loaded |
+| documentation.md | ✓ | Always loaded |
+| typescript.md | [✓/✗] | [Detected: TypeScript / Not applicable] |
+| python.md | [✓/✗] | [Detected: Python / Not applicable] |
+| rust.md | [✓/✗] | [Detected: Rust / Not applicable] |
+| react-nextjs.md | [✓/✗] | [Detected: React/Next.js / Not applicable] |
+| tailwind-*.md | [✓/✗] | [Detected: Frontend styling / Not applicable] |
+| git-cicd.md | [✓/✗] | [CI/CD referenced / Not applicable] |
 
-**Recommendation**:
-[Recommendation]
+### Directive Violations
 
----
+*Grouped by source directive:*
 
-### Low Findings
+**From constitution.md:**
+- [FINDING-ID]: [Description]
 
-| ID | Category | Location | Description |
-|----|----------|----------|-------------|
-| [ID] | [CAT] | [LOC] | [DESC] |
+**From security.md:**
+- [FINDING-ID]: [Description]
 
----
+**From testing.md:**
+- [FINDING-ID]: [Description]
 
-## Trend Analysis
-
-*Available when previous analysis exists*
-
-| Metric | Previous | Current | Change |
-|--------|----------|---------|--------|
-| Total Findings | [N] | [N] | [±N] |
-| Critical | [N] | [N] | [±N] |
-| High | [N] | [N] | [±N] |
-| Coverage | [N]% | [N]% | [±N]% |
-
----
-
-## Recommendations
-
-### Immediate Actions (Critical/High)
-1. [Action 1 - addresses FINDING-XXX]
-2. [Action 2 - addresses FINDING-YYY]
-
-### Short-term Actions (Medium)
-1. [Action 1]
-2. [Action 2]
-
-### Long-term Improvements (Low)
-1. [Action 1]
-2. [Action 2]
+*(Or "No directive violations found." if clean)*
 
 ---
 
-## Artifacts Analyzed
+## Unmapped Tasks
 
-| Artifact Type | Count | Files |
-|---------------|-------|-------|
-| Specifications | [N] | [list] |
-| Plans | [N] | [list] |
-| Tasks | [N] | [list] |
-| Memory Files | [N] | [list] |
+Tasks with no traced requirement or user story:
+
+| Task ID | Description | Recommendation |
+|---------|-------------|----------------|
+| [ID] | [DESC] | [REC] |
+
+*(Or "All tasks are mapped to requirements." if clean)*
 
 ---
 
-## Analysis Configuration
+## Metrics
 
-- Analysis Version: [VERSION]
-- Categories Enabled: [LIST]
-- Severity Threshold: [LEVEL]
+| Metric | Value |
+|--------|-------|
+| Total Requirements | [N] |
+| Total Tasks | [N] |
+| Requirement Coverage | [N]% |
+| Ambiguity Count | [N] |
+| Duplication Count | [N] |
+| Underspecification Count | [N] |
+| Directive Violations | [N] |
+| Coverage Gaps | [N] |
+| Inconsistencies | [N] |
+| **Critical Issues** | **[N]** |
+| **High Issues** | **[N]** |
+
+---
+
+## Next Actions
+
+### If CRITICAL Issues Exist
+
+⚠️ **Resolve before `/speckit.implement`:**
+
+1. [FINDING-ID]: [Action] - [Command suggestion]
+2. [FINDING-ID]: [Action] - [Command suggestion]
+
+### If Only MEDIUM/LOW Issues
+
+✓ **You may proceed with `/speckit.implement`.**
+
+Suggested improvements:
+- [FINDING-ID]: [Suggestion]
+- [FINDING-ID]: [Suggestion]
+
+### Command Suggestions
+
+- `Run /speckit.clarify` - To resolve ambiguities
+- `Run /speckit.plan` - To adjust architecture/plan
+- `Run /speckit.tasks` - To regenerate tasks with better coverage
+- `Manually edit [file]` - For specific fixes
+
+---
+
+## Remediation Offer
+
+Would you like me to suggest concrete remediation edits for the top [N] issues?
+
+*(This is read-only analysis. No changes will be applied without explicit approval.)*

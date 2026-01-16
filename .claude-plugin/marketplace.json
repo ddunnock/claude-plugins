@@ -25,7 +25,7 @@
     {
       "name": "speckit-generator",
       "source": "./skills/speckit-generator",
-      "description": "Generate automation packages from requirements"
+      "description": "Specification and task management with SEAMS-enhanced clarification, git checkpoints, and implementation hooks"
     },
     {
       "name": "streaming-output",

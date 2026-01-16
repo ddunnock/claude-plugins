@@ -1,5 +1,5 @@
 ---
-description: "Deterministic read-only audit of project artifacts for consistency"
+description: "Perform a non-destructive cross-artifact consistency and quality analysis"
 handoffs:
   - label: Clarify Issues
     agent: clarify
@@ -9,9 +9,57 @@ handoffs:
     prompt: Revise plan to address gaps
 ---
 
+<!--
+================================================================================
+INIT AGENT INSTRUCTIONS
+================================================================================
+When copying this template to the user's project, you MUST customize the
+"Memory Directives" section below based on the detected tech stack.
+
+REPLACE the placeholder section with the actual directive files for this project.
+
+Example for a TypeScript + React + Next.js project:
+```markdown
+## Memory Directives
+
+Load these directive files for compliance checking:
+
+**Always loaded:**
+- `constitution.md` - Global principles, quality gates
+- `security.md` - Security requirements
+- `testing.md` - Test coverage requirements
+- `documentation.md` - Documentation standards
+
+**Project-specific (detected: TypeScript, React, Next.js):**
+- `typescript.md` - TypeScript standards
+- `react-nextjs.md` - React/Next.js patterns
+- `tailwind-shadcn.md` - Styling standards
+```
+
+Example for a Python + Rust project:
+```markdown
+## Memory Directives
+
+Load these directive files for compliance checking:
+
+**Always loaded:**
+- `constitution.md` - Global principles, quality gates
+- `security.md` - Security requirements
+- `testing.md` - Test coverage requirements
+- `documentation.md` - Documentation standards
+
+**Project-specific (detected: Python, Rust):**
+- `python.md` - Python standards
+- `rust.md` - Rust standards
+```
+
+REMOVE these instruction comments from the final output.
+================================================================================
+-->
+
 # Analyze
 
-Deterministic, read-only audit of project artifacts for consistency and completeness.
+Perform a non-destructive cross-artifact consistency and quality analysis across `spec.md`, `plan.md`, and `tasks.md` before implementation.
 
 ## User Input
 
@@ -23,107 +71,135 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 ---
 
-## Usage
+## Goal
 
-```
-/analyze                    # Full analysis
-/analyze --verbose          # Detailed output
-/analyze --category gaps    # Filter by category
-```
+Identify inconsistencies, duplications, ambiguities, and underspecified items across the three core artifacts before implementation. This is a **pre-implementation quality gate**.
 
 ---
 
-## Characteristics
+## Operating Constraints
 
-- **Read-only**: Never modifies files
-- **Deterministic**: Same inputs = same outputs
-- **Stable IDs**: Finding IDs remain stable across runs
-- **Quantified**: Metrics for coverage, completeness
+**STRICTLY READ-ONLY**: Do **not** modify any files. Output a structured analysis report.
 
-## Analysis Categories
+**Directive Authority**: The project directives in `/memory/` are **non-negotiable**. Directive conflicts are automatically CRITICAL and require adjustment of the spec, plan, or tasks.
 
-| Category | Description |
-|----------|-------------|
-| GAPS | Missing required elements |
-| INCONSISTENCIES | Contradictions between artifacts |
-| AMBIGUITIES | Unclear or undefined items |
-| ORPHANS | Unreferenced elements |
-| ASSUMPTIONS | Untracked/unvalidated assumptions |
+---
 
-## Severity Levels
+## Memory Directives
 
-| Level | Meaning |
-|-------|---------|
-| CRITICAL | Blocks progress, must fix |
-| HIGH | Significant risk, should fix |
-| MEDIUM | Notable issue, plan to fix |
-| LOW | Minor concern |
+<!-- INIT: Replace this section with the actual directive files for this project -->
+
+Load these directive files for compliance checking:
+
+**Always loaded:**
+- `constitution.md` - Global principles, quality gates
+- `security.md` - Security requirements
+- `testing.md` - Test coverage requirements
+- `documentation.md` - Documentation standards
+
+**Project-specific:**
+<!-- INIT: List only the tech-specific files detected for this project -->
+- `[DETECTED_TECH_FILE].md` - [Description]
+
+<!-- INIT: Remove all HTML comments from final output -->
+
+---
+
+## Artifacts to Analyze
+
+| Artifact | Source |
+|----------|--------|
+| spec.md | `.claude/resources/features/[feature]/spec.md` |
+| plan.md | `.claude/resources/features/[feature]/plan.md` |
+| tasks.md | `.claude/resources/features/[feature]/tasks.md` |
+
+---
+
+## Detection Passes
+
+### A. Duplication Detection
+- Identify near-duplicate requirements
+- Mark lower-quality phrasing for consolidation
+
+### B. Ambiguity Detection
+- Flag vague adjectives (fast, scalable, secure) lacking measurable criteria
+- Flag unresolved placeholders (TODO, TKTK, ???, `<placeholder>`)
+
+### C. Underspecification
+- Requirements with verbs but missing measurable outcome
+- User stories missing acceptance criteria
+- Tasks referencing undefined components
+
+### D. Directive Alignment
+- Any element conflicting with MUST/MUST NOT from loaded directives
+- Missing mandated quality gates (test coverage, documentation)
+- Security violations, language-specific violations
+
+### E. Coverage Gaps
+- Requirements with zero associated tasks
+- Tasks with no mapped requirement
+- Non-functional requirements not reflected in tasks
+
+### F. Inconsistency
+- Terminology drift across files
+- Data entities in plan but absent in spec
+- Task ordering contradictions
+- Conflicting technology choices
+
+---
+
+## Severity Assignment
+
+| Level | Criteria |
+|-------|----------|
+| CRITICAL | Violates MUST/MUST NOT directive, blocks baseline functionality |
+| HIGH | Duplicate/conflicting requirement, security/performance ambiguity |
+| MEDIUM | Terminology drift, SHOULD violations, underspecified edge cases |
+| LOW | Style improvements, minor redundancy |
+
+---
 
 ## Output Format
 
-```markdown
-# Analysis Report
+### Findings Table
 
-Generated: [timestamp]
-Artifacts analyzed: [count]
+| ID | Category | Severity | Location(s) | Summary | Recommendation |
+|----|----------|----------|-------------|---------|----------------|
 
-## Summary
-| Category | Critical | High | Medium | Low |
-|----------|----------|------|--------|-----|
-| GAPS     | 2        | 3    | 5      | 1   |
-| ...      |          |      |        |     |
+### Coverage Summary
 
-## Findings
+| Requirement Key | Has Task? | Task IDs | Notes |
+|-----------------|-----------|----------|-------|
 
-### GAP-001 [CRITICAL]
-**Location**: spec.md:45
-**Description**: Missing error handling specification
-**Recommendation**: Define error states for API failures
-```
+### Directive Alignment
 
-## Idempotency
-- Read-only, always safe
-- Stable finding IDs across runs
+**Directives Loaded:**
+- [List all loaded directive files with ✓]
 
----
+**Violations:** (if any, grouped by source file)
 
-## Outputs
+### Metrics
 
-| Output | Location |
-|--------|----------|
-| Analysis report | `.claude/resources/analysis-report.md` |
-| Findings summary | Displayed to user |
+- Total Requirements
+- Total Tasks
+- Coverage %
+- Critical Issues Count
 
 ---
 
-## GATE: Present Findings
+## Next Actions
 
-After analysis, present findings organized by severity and recommend next steps.
+- If CRITICAL issues: Recommend resolving before `/implement`
+- If only MEDIUM/LOW: User may proceed with suggestions
+- Provide command suggestions: `/clarify`, `/plan`, `/tasks`
 
-### Gate Response Template
+---
 
-```markdown
-## Analysis Complete
+## Remediation Offer
 
-Analyzed [N] artifacts:
-- Specs: [count]
-- Plans: [count]
-- Tasks: [count]
+Ask: "Would you like me to suggest concrete remediation edits for the top N issues?"
 
-### Summary
-| Category | Critical | High | Medium | Low |
-|----------|----------|------|--------|-----|
-| GAPS     | [n]      | [n]  | [n]    | [n] |
-| INCONSISTENCIES | [n] | [n] | [n]   | [n] |
-| AMBIGUITIES | [n]  | [n]  | [n]    | [n] |
-
-### Critical Findings
-[List any CRITICAL findings that block progress]
-
-### Recommended Actions
-1. [Based on findings]
-2. [Specific commands to run]
-```
+*(Read-only analysis. No changes without explicit approval.)*
 
 ---
 
@@ -131,10 +207,8 @@ Analyzed [N] artifacts:
 
 ### Clarify Issues
 Resolve ambiguities and unclear items found in analysis.
-
 Use: `/clarify`
 
 ### Update Plan
 Revise the plan to address gaps or inconsistencies.
-
 Use: `/plan`

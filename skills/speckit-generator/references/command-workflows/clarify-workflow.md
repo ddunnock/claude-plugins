@@ -1,330 +1,518 @@
 # Clarify Workflow Reference
 
-Detailed workflow for the `/speckit.clarify` command.
+Detailed workflow for the `/speckit.clarify` command with SEAMS-enhanced taxonomy, sequential questioning loop, and incremental spec updates.
 
 ## Purpose
 
-Structured ambiguity resolution through targeted Q&A with immediate specification updates. Reduces uncertainty systematically.
+Structured ambiguity resolution through targeted Q&A with immediate specification updates. Uses the SEAMS framework (Structure, Execution, Assumptions, Mismatches, Stakeholders) to systematically detect gaps. Each answer is validated and integrated atomically to prevent context loss.
 
 ## Key Characteristics
 
-- **One question at a time**: Focused, not overwhelming
-- **Multiple choice or short phrase**: Quick to answer
-- **5-question maximum per session**: Prevents fatigue
-- **Immediate updates**: Specs updated after each answer
-- **9-category taxonomy**: Structured classification
-- **Session logging**: Full traceability
+- **One question at a time**: Never reveal the queue
+- **Multiple choice with recommendations**: Table format, prominently featured suggestion
+- **"yes"/"recommended" acceptance**: Quick acceptance of suggested answers
+- **5-question maximum per session**: Prevents fatigue (10 total across all sessions)
+- **Atomic saves after each answer**: No context loss
+- **Post-write validation**: 6-point checklist after each integration
+- **13-category SEAMS-enhanced taxonomy**: Comprehensive coverage
+- **Four-status coverage model**: Resolved/Deferred/Clear/Outstanding
+- **Impact × Uncertainty prioritization**: Quantified selection formula
 
 ---
 
-## Workflow Steps
+## Session Constraints
 
-### Step 1: Scan for Ambiguities
+| Constraint | Value | Rationale |
+|------------|-------|-----------|
+| Max questions per session | 5 | Prevent fatigue |
+| Max questions total per spec | 10 | Diminishing returns |
+| Answer format | ≤5 words OR option letter | Quick, focused answers |
+| Queue visibility | Hidden | Prevent bias, maintain focus |
+| Save frequency | After each answer | Prevent context loss |
 
-Detect ambiguity patterns:
+---
 
-| Pattern | Category | Priority |
-|---------|----------|----------|
-| `[TBD]` marker | Any | HIGH |
-| `[TODO]` marker | Any | HIGH |
-| `[NEEDS CLARIFICATION]` | Any | HIGH |
-| "should" (without "must") | BEHAVIOR | MEDIUM |
-| "might", "probably", "possibly" | BEHAVIOR | MEDIUM |
-| "etc.", "and so on" | SCOPE | MEDIUM |
-| Missing error handling | ERROR | HIGH |
-| Undefined limits | CONSTRAINT | MEDIUM |
-| Vague time references | TEMPORAL | MEDIUM |
+## SEAMS Framework Integration
+
+### What is SEAMS?
+
+SEAMS is a gap analysis methodology examining specifications through five lenses:
+
+| Lens | Focus | Detection Target |
+|------|-------|------------------|
+| **S**tructure | System boundaries, component cohesion | Unclear scope, undefined modules |
+| **E**xecution | Runtime behavior, failure modes | Missing error handling, recovery strategies |
+| **A**ssumptions | Implicit beliefs, unstated constraints | Hidden dependencies, organizational assumptions |
+| **M**ismatches | Gaps between requirements and design | Orphan tasks, uncovered requirements |
+| **S**takeholders | Different user perspectives | Missing operator, security, end-user views |
+
+### 13-Category Taxonomy
+
+The taxonomy maps SEAMS lenses to specific detection categories:
+
+| Category | Group | SEAMS Lens | Status Markers |
+|----------|-------|------------|----------------|
+| SCOPE | Functional | Structure | `[TBD]`, "etc.", "might include" |
+| BEHAVIOR | Functional | Execution | "should", "might", "probably" |
+| SEQUENCE | Functional | - | "before/after" ambiguity |
+| AUTHORITY | Functional | - | "someone", "appropriate person" |
+| DATA | Data/Integration | Mismatch | Undefined formats, missing rules |
+| INTERFACE | Data/Integration | Stakeholder | Missing contracts, protocols |
+| CONSTRAINT | Data/Integration | Assumption | Undefined limits, implicit bounds |
+| TEMPORAL | Data/Integration | - | "soon", "quickly", "periodically" |
+| ERROR | Quality/Ops | Execution | Missing error handling |
+| RECOVERY | Quality/Ops | Execution | No fallback specified |
+| ASSUMPTION | Quality/Ops | Assumption | Unstated dependencies |
+| STAKEHOLDER | Quality/Ops | Stakeholder | Missing viewpoints |
+| TRACEABILITY | Quality/Ops | Mismatch | Orphan tasks, uncovered reqs |
+
+---
+
+## Prerequisites
+
+This workflow expects:
+
+1. **Spec file exists** - If missing, instruct user to run `/specify` first
+2. **Memory directives loaded** - From `/speckit.init`
+3. **Git clean state** - Warn if uncommitted changes exist
+
+---
+
+## Detailed Workflow Steps
+
+### Step 1: Initialize Context
+
+**Actions:**
+1. Load spec file into memory (maintain in-memory representation)
+2. Load directive files from `.claude/memory/`
+3. Check for existing `## Clarifications` section in spec
+4. Count previously answered questions (toward 10 total limit)
+
+**Context Loading Output:**
+```
+Loading clarification context...
+
+Spec: .claude/resources/features/auth/spec.md (145 lines)
+Existing clarifications: 3 (from 2024-01-14 session)
+Questions remaining: 7 of 10 total
+
+Directives loaded:
+- constitution.md ✓
+- security.md ✓
+- typescript.md ✓
+- react-nextjs.md ✓
+
+SEAMS lenses activated: Structure, Execution, Stakeholders
+```
+
+### Step 2: SEAMS Coverage Scan
+
+Run detection across all 13 categories. Produce internal coverage map:
 
 ```
-Ambiguities found: 15
+Coverage Map (INTERNAL - do not output to user):
 
-By category:
-- SCOPE: 3
-- BEHAVIOR: 5
-- ERROR: 4
-- CONSTRAINT: 2
-- SEQUENCE: 1
-
-By priority:
-- HIGH: 8
-- MEDIUM: 7
+| Category | Status | Candidate Qs | Impact | Uncertainty | Score |
+|----------|--------|--------------|--------|-------------|-------|
+| SCOPE | Partial | 2 | 4 | 3 | 12 |
+| BEHAVIOR | Missing | 3 | 5 | 5 | 25 |
+| DATA | Clear | 0 | - | - | - |
+| ERROR | Missing | 2 | 4 | 4 | 16 |
+| ASSUMPTION | Partial | 1 | 3 | 4 | 12 |
+| RECOVERY | Missing | 1 | 5 | 5 | 25 |
+| [etc.] |
 ```
 
-### Step 2: Prioritize Questions
+**Status definitions:**
+- **Clear**: Sufficient detail, no ambiguity detected
+- **Partial**: Some detail exists but gaps remain
+- **Missing**: No specification, critical gap
 
-Rank by impact on implementation:
+### Step 3: Generate Prioritized Queue
 
-1. **Blocking implementation**: Must know to proceed
-2. **Affects architecture**: Changes design decisions
-3. **Affects multiple tasks**: Wide impact
-4. **Affects single task**: Narrow impact
-5. **Nice to know**: Low urgency
+Build internal queue (max 5 questions). **Never reveal queue to user.**
 
-### Step 3: Present Questions (One at a Time)
+**Prioritization Formula:**
+```
+Priority Score = Impact × Uncertainty
+```
 
-Format each question:
+| Factor | Scale | Meaning |
+|--------|-------|---------|
+| Impact | 1-5 | Effect on architecture, tasks, tests, UX, ops, compliance |
+| Uncertainty | 1-5 | Current ambiguity level |
+
+**Selection Rules:**
+1. Only include questions whose answers **materially impact** implementation
+2. Favor HIGH impact categories over multiple LOW impact questions
+3. Ensure category balance (max 2 questions per category)
+4. Exclude questions already answered in previous sessions
+5. Exclude plan-level execution details unless blocking correctness
+6. If >5 candidates, select top 5 by Priority Score
+
+**Example Queue (internal):**
+```
+Priority Queue (5 questions):
+
+1. [BEHAVIOR] Authentication method - Score: 25
+2. [RECOVERY] Payment failure handling - Score: 25
+3. [ERROR] API timeout behavior - Score: 16
+4. [SCOPE] User management boundaries - Score: 12
+5. [ASSUMPTION] Deployment environment - Score: 12
+```
+
+### Step 4: Sequential Questioning Loop
+
+Present **EXACTLY ONE** question at a time. Wait for answer before proceeding.
+
+#### For Multiple-Choice Questions (2-5 options)
+
+1. **Analyze all options** based on:
+   - Best practices for project type
+   - Risk reduction (security, performance, maintainability)
+   - Alignment with project goals in spec
+   - Loaded directive requirements
+
+2. **Determine recommended option** with reasoning
+
+3. **Present using table format:**
 
 ```
-CLARIFY-001 [BEHAVIOR]
-
-Location: spec.md:45
+CLARIFY-004 [BEHAVIOR]
+Impact: HIGH | Affects: Authentication architecture, TASK-001 through TASK-005
 
 The specification states "users can authenticate" but doesn't specify
-the authentication method.
-
-**Context**: This affects the authentication architecture (AD-001) and
-multiple tasks in Phase 1.
+the authentication method. This decision affects security posture,
+user experience, and multiple implementation tasks.
 
 Which authentication method should be used?
 
-1. OAuth 2.0 with Google/GitHub (Recommended)
-   - Pros: Secure, no password management
-   - Cons: Requires OAuth setup
+**Recommended:** Option A - OAuth 2.0 with Google/GitHub
+Reasoning: Industry standard for web apps, eliminates password management
+burden, well-documented patterns for Next.js stack. Aligns with security.md
+requirement for "proven authentication."
 
-2. Email/password with JWT
-   - Pros: Full control, simpler setup
-   - Cons: Password security responsibility
+| Option | Description |
+|--------|-------------|
+| A | OAuth 2.0 with Google/GitHub providers |
+| B | Email/password with JWT tokens |
+| C | Magic link (passwordless) |
+| Short | Provide a different short answer (≤5 words) |
 
-3. Magic link (passwordless)
-   - Pros: Very secure, good UX
-   - Cons: Email dependency
-
-4. Other (please specify)
-
-Your choice:
+Reply with the option letter (e.g., "A"), accept the recommendation
+by saying "yes" or "recommended", or provide your own short answer.
 ```
 
-### Step 4: Process Answer
+#### For Short-Answer Questions (no discrete options)
 
-Based on answer:
+```
+CLARIFY-005 [CONSTRAINT]
+Impact: MEDIUM | Affects: File upload feature, storage costs
 
-1. **Update specification immediately**
-2. **Log the Q&A**
-3. **Update related documents if needed**
+The spec mentions file uploads but doesn't specify size limits.
+
+What is the maximum file upload size?
+
+**Suggested:** 10 MB
+Reasoning: Balances usability with server resource constraints.
+Common default for web applications. Can be increased later if needed.
+
+Format: Short answer (≤5 words).
+Reply "yes" or "suggested" to accept, or provide your own answer.
+```
+
+### Step 5: Process Answer
+
+After user responds:
+
+#### 5.1 Parse Response
+
+| User Says | Interpretation |
+|-----------|----------------|
+| "yes", "recommended", "suggested" | Use stated recommendation |
+| "A", "B", "C" (letter) | Map to that option |
+| Short text (≤5 words) | Use as custom answer |
+| Ambiguous/unclear | Ask for clarification (same question, doesn't count as new) |
+| "done", "stop", "proceed" | End session |
+
+#### 5.2 Validate Answer
+
+- If option letter, verify it exists in presented options
+- If short text, verify ≤5 words
+- If invalid, request clarification without incrementing question count
+
+#### 5.3 Record in Working Memory
+
+Store validated answer for spec integration.
+
+### Step 6: Incremental Spec Integration
+
+**Immediately after each accepted answer**, update spec atomically.
+
+#### 6.1 Ensure Clarifications Section
+
+If first answer in this session and section doesn't exist:
 
 ```markdown
-# In spec.md, replace:
-"users can authenticate"
+## Clarifications
 
-# With:
-"users authenticate via OAuth 2.0 with Google and GitHub providers
-(decided in clarify session 2024-01-15, CLARIFY-001)"
+### Session 2024-01-15
+- Q: Authentication method? → A: OAuth 2.0 with Google/GitHub
 ```
 
-### Step 5: Continue or Complete
+If section exists, append under today's date heading (create if new date).
 
-After each question:
+#### 6.2 Append Q&A Bullet
 
-```
-Question 1 of 5 answered.
-Spec updated: spec.md:45
-
-Remaining ambiguities by priority:
-- HIGH: 7
-- MEDIUM: 7
-
-Options:
-1. Continue to next question
-2. End session (progress saved)
-3. Skip to specific category
+```markdown
+- Q: [question summary] → A: [final answer]
 ```
 
-### Step 6: Session Summary
+#### 6.3 Apply to Appropriate Section
 
-After 5 questions or user ends:
+| Answer Type | Target Section | Action |
+|-------------|----------------|--------|
+| Functional behavior | Functional Requirements | Add/update bullet |
+| User interaction | User Stories or Actors | Clarify role/scenario |
+| Data shape/entity | Data Model | Add fields, types, relationships |
+| Non-functional | Quality Attributes | Convert vague → metric |
+| Edge case/negative | Edge Cases / Error Handling | Add new bullet |
+| Terminology | Throughout | Normalize, note "(formerly X)" once |
+
+#### 6.4 Remove Contradictions
+
+If clarification invalidates earlier text, **replace** it. Do not leave contradictory statements.
+
+#### 6.5 Save Atomically
+
+Write spec file immediately after integration. Do not batch saves.
+
+### Step 7: Post-Write Validation
+
+**After EACH write**, verify:
 
 ```
-Clarify Session Complete
+Post-Write Validation Checklist:
 
-Questions answered: 5
-Specs updated: 3 files
+- [ ] Clarifications section: exactly one bullet per accepted answer
+- [ ] Question IDs: no duplicates
+- [ ] Placeholders: updated sections have no lingering [TBD] the answer resolved
+- [ ] Contradictions: no earlier statement conflicts with new clarification
+- [ ] Markdown: valid structure, only allowed headings (## Clarifications, ### Session YYYY-MM-DD)
+- [ ] Terminology: consistent across all updated sections
+```
 
-Updates made:
-1. spec.md:45 - Authentication method defined
-2. spec.md:78 - Error handling specified
-3. plan.md:AD-001 - Updated with auth decision
+If any check fails, correct before proceeding to next question.
 
-Remaining ambiguities: 10
-- HIGH: 3
-- MEDIUM: 7
+### Step 8: Loop Continuation/Termination
 
-Session logged: .claude/resources/clarify-sessions/2024-01-15-session-1.md
+**Continue** to next question if:
+- Queue has remaining questions
+- Session limit (5) not reached
+- User hasn't signaled completion
 
-Run /speckit.clarify again to continue resolving ambiguities.
+**Terminate** when ANY of these occur:
+1. All critical ambiguities resolved (remaining queue unnecessary)
+2. User signals "done", "stop", "proceed", "no more", "good"
+3. Reached 5 questions for this session
+4. No valid questions existed (full coverage from start)
+
+---
+
+## Coverage Summary (End of Session)
+
+Report using four-status taxonomy:
+
+### Status Definitions
+
+| Symbol | Status | Meaning |
+|--------|--------|---------|
+| ✓ | Resolved | Was Partial/Missing, now addressed by this session |
+| ○ | Clear | Already sufficient, no question needed |
+| ◐ | Deferred | Exceeds quota or better suited for planning phase |
+| ⚠ | Outstanding | Still Partial/Missing, HIGH impact, needs attention |
+
+### Summary Template
+
+```markdown
+## Clarification Session Complete
+
+### Session Statistics
+- Questions asked: 5
+- Path to updated spec: .claude/resources/features/auth/spec.md
+- Sections touched: Authentication, Data Model, Error Handling
+
+### Coverage Summary
+
+| Category | Status | Notes |
+|----------|--------|-------|
+| SCOPE | ✓ Resolved | Was Partial, addressed in CLARIFY-004 |
+| BEHAVIOR | ✓ Resolved | Was Missing, addressed in CLARIFY-004, CLARIFY-006 |
+| DATA | ○ Clear | Already sufficient |
+| ERROR | ◐ Deferred | Exceeds quota, address in next session |
+| ASSUMPTION | ○ Clear | Already sufficient |
+| STAKEHOLDER | ○ Clear | Already sufficient |
+| RECOVERY | ⚠ Outstanding | Still Missing, HIGH impact |
+
+**Legend:**
+- ✓ Resolved: Was Partial/Missing, now addressed
+- ○ Clear: Already sufficient
+- ◐ Deferred: Exceeds quota or better for planning
+- ⚠ Outstanding: Still unresolved, needs attention
+
+### Recommendation
+
+[If Outstanding with HIGH impact:]
+⚠ RECOVERY category remains unresolved with HIGH impact.
+Consider running `/clarify` again before `/plan`.
+
+[If all critical resolved:]
+All critical ambiguities resolved. Proceed to `/plan`.
+
+### Suggested Next Command
+`/plan` - Create technical implementation plan
 ```
 
 ---
 
-## 9-Category Taxonomy
+## Pre-Question Research
 
-### SCOPE
-**What it covers**: Boundaries of functionality
+### When to Research
 
-**Example questions**:
-- "Should the search feature include fuzzy matching?"
-- "Does 'user management' include role assignment?"
-- "Are guest users in scope?"
+| Trigger | Research Focus |
+|---------|----------------|
+| CRITICAL + Security | CVEs, OWASP guidelines, compliance |
+| CRITICAL + Performance | Benchmarks, scaling patterns |
+| HIGH + Architecture | Design patterns, framework recommendations |
+| HIGH + Integration | API standards, protocol versions |
 
-**Update format**:
-```markdown
-**Scope clarification**: Search includes fuzzy matching with configurable
-threshold (decided: CLARIFY-XXX)
+### Research Process
+
+1. Identify tech stack from loaded directives
+2. Formulate query: `[topic] best practices [tech stack] 2024`
+3. Look for:
+   - Industry standard approaches
+   - Known pitfalls and anti-patterns
+   - Security advisories
+   - Performance benchmarks
+
+### Incorporating Research
+
+Include in recommendation reasoning:
+
 ```
-
-### BEHAVIOR
-**What it covers**: How things work
-
-**Example questions**:
-- "What happens when a user submits an invalid form?"
-- "Should changes auto-save or require explicit save?"
-- "How does the system handle concurrent edits?"
-
-**Update format**:
-```markdown
-**Behavior**: Invalid form submissions display inline errors without
-page reload. Form state is preserved. (decided: CLARIFY-XXX)
-```
-
-### DATA
-**What it covers**: Data formats, storage, structure
-
-**Example questions**:
-- "What date format should be used for display?"
-- "How long should session data be retained?"
-- "What's the maximum file upload size?"
-
-**Update format**:
-```markdown
-**Data format**: Dates displayed as "MMM DD, YYYY" (e.g., "Jan 15, 2024")
-internally stored as ISO 8601. (decided: CLARIFY-XXX)
-```
-
-### ERROR
-**What it covers**: Error handling and recovery
-
-**Example questions**:
-- "How should network errors be displayed to users?"
-- "Should failed operations retry automatically?"
-- "What's the fallback if the external API is unavailable?"
-
-**Update format**:
-```markdown
-**Error handling**: Network errors show toast notification with retry
-button. Auto-retry after 5 seconds, max 3 attempts. (decided: CLARIFY-XXX)
-```
-
-### SEQUENCE
-**What it covers**: Order of operations
-
-**Example questions**:
-- "Does email verification happen before or after profile creation?"
-- "Should validation run on blur or on submit?"
-- "What's the order of middleware execution?"
-
-**Update format**:
-```markdown
-**Sequence**: Email verification required before profile creation.
-User cannot access dashboard until verified. (decided: CLARIFY-XXX)
-```
-
-### CONSTRAINT
-**What it covers**: Limits and boundaries
-
-**Example questions**:
-- "What's the maximum number of items in a list?"
-- "What are the password complexity requirements?"
-- "How many concurrent sessions are allowed?"
-
-**Update format**:
-```markdown
-**Constraint**: Maximum 1000 items per list. Pagination required beyond
-100 items. (decided: CLARIFY-XXX)
-```
-
-### INTERFACE
-**What it covers**: Integration and API contracts
-
-**Example questions**:
-- "What authentication does the external API require?"
-- "What format should webhook payloads use?"
-- "How do components communicate state changes?"
-
-**Update format**:
-```markdown
-**Interface**: External API uses Bearer token auth. Tokens refreshed
-via OAuth 2.0 refresh flow. (decided: CLARIFY-XXX)
-```
-
-### AUTHORITY
-**What it covers**: Permissions and approval
-
-**Example questions**:
-- "Who can approve budget changes?"
-- "What role is required to delete users?"
-- "Who owns the data migration decision?"
-
-**Update format**:
-```markdown
-**Authority**: Only Admin role can delete users. Deletion requires
-confirmation with reason. (decided: CLARIFY-XXX)
-```
-
-### TEMPORAL
-**What it covers**: Time-related aspects
-
-**Example questions**:
-- "How long should the password reset link be valid?"
-- "What's the session timeout duration?"
-- "How often should data be synced?"
-
-**Update format**:
-```markdown
-**Temporal**: Password reset links valid for 24 hours. One-time use.
-New link invalidates previous. (decided: CLARIFY-XXX)
+**Recommended:** Option A - OAuth 2.0 with PKCE
+Reasoning: Current OAuth 2.0 security best practice (RFC 7636) recommends
+PKCE for public clients. Next.js auth libraries have built-in support.
+OWASP recommends this for SPA authentication.
 ```
 
 ---
 
-## Session Logging
+## Spec Update Format
 
-Each session creates a log file:
+### Clarifications Section
 
 ```markdown
-# Clarify Session Log
+## Clarifications
 
-Session: 2024-01-15-session-1
-Started: 2024-01-15T10:30:00Z
-Completed: 2024-01-15T10:45:00Z
-Questions: 5
+### Session 2024-01-15
+- Q: Authentication method? → A: OAuth 2.0 with Google/GitHub
+- Q: File upload size limit? → A: 10 MB maximum
+- Q: Session timeout? → A: 24 hours with sliding expiry
 
-## Questions & Answers
+### Session 2024-01-14
+- Q: User roles scope? → A: Full RBAC with custom roles
+- Q: Data retention period? → A: 7 years for compliance
+```
 
-### CLARIFY-001 [BEHAVIOR]
-**Location**: spec.md:45
-**Question**: Which authentication method should be used?
-**Answer**: Option 1 - OAuth 2.0 with Google/GitHub
-**Updated**: spec.md:45
-**Timestamp**: 2024-01-15T10:32:00Z
+### Inline Traceability
 
-### CLARIFY-002 [ERROR]
-...
+When updating spec sections:
 
-## Files Updated
-- spec.md (3 changes)
-- plan.md (1 change)
+```markdown
+## Authentication
 
-## Remaining Ambiguities
-[List of unresolved items]
+Users authenticate via OAuth 2.0 with Google and GitHub providers.
+New users are created on first successful OAuth login. Sessions use
+HTTP-only secure cookies with 24-hour sliding expiry.
+*(Clarified: CLARIFY-004, CLARIFY-006)*
+```
+
+---
+
+## Ralph Loop Mode
+
+### Autonomous Clarification
+
+When `--ralph` flag is used:
+
+```
+/clarify --ralph                    # Until CRITICAL/HIGH resolved
+/clarify --ralph --confidence 90    # Until 90% coverage
+/clarify --ralph --categories "SECURITY,DATA"
+```
+
+### Exit Criteria
+
+Loop exits when ANY condition met:
+1. All CRITICAL and HIGH ambiguities resolved
+2. Coverage confidence reaches threshold
+3. All specified category ambiguities resolved
+4. Hard limit of 10 questions reached
+
+### Ralph Loop Prompt
+
+```
+/ralph-loop "Perform structured ambiguity resolution.
+
+For each iteration:
+1. Scan spec (SEAMS taxonomy)
+2. Select highest priority (Impact × Uncertainty)
+3. Research if HIGH/CRITICAL
+4. Present ONE question (table format, recommendation)
+5. Wait for user answer
+6. Parse: 'yes'/'recommended' → use suggestion
+7. Validate answer
+8. Integrate into spec immediately
+9. Save atomically
+10. Run 6-point validation
+
+Exit when:
+- All CRITICAL/HIGH resolved, OR
+- Coverage >= threshold, OR
+- 10 questions asked
+
+Output: <promise>SPEC_CLARITY_ACHIEVED</promise>"
+--completion-promise "SPEC_CLARITY_ACHIEVED" --max-iterations 15
 ```
 
 ---
 
 ## Idempotency
 
-- **Skip answered**: Questions with existing answers skipped
-- **Track by location**: Same location = same question
-- **Session continuity**: Can resume previous sessions
-- **No duplicate updates**: Already-clarified items not re-asked
+### Question Tracking
+
+Questions tracked by content hash to prevent re-asking:
+
+```
+hash = sha256(category + location + question_text_normalized)
+```
+
+### Skip Logic
+
+On subsequent runs:
+1. Load Clarifications section from spec
+2. Build set of answered question hashes
+3. Exclude from candidate queue
+4. Only present new/changed ambiguities
+
+### Re-ask Conditions
+
+Re-ask when:
+- Content at location changed significantly
+- User explicitly requests (`--force`)
+- Category reclassified
 
 ---
 
@@ -332,23 +520,64 @@ Questions: 5
 
 ### From /speckit.analyze
 
-Ambiguity findings trigger clarify:
 ```
-analyze found 15 ambiguities.
-Run /speckit.clarify to resolve?
+Analysis found 15 ambiguities (3 CRITICAL, 5 HIGH).
+Run /speckit.clarify to resolve before implementation? [Y/n]
 ```
 
-### To Specification Updates
+### To /speckit.plan
 
-Direct spec modifications with traceability:
+Clarifications enable planning:
+```
+All CRITICAL ambiguities resolved.
+Ready for /speckit.plan
+```
+
+### To Spec File
+
+Direct updates with traceability:
 ```markdown
-Feature supports fuzzy search (decided: CLARIFY-001)
+## Clarifications
+### Session 2024-01-15
+- Q: Auth method? → A: OAuth 2.0
 ```
 
-### To Plan Updates
+---
 
-May require plan revision:
-```
-Answer affects architecture decision AD-001.
-Update plan.md?
+## Behavior Rules Summary
+
+| Condition | Action |
+|-----------|--------|
+| No spec file | Instruct: run `/specify` first |
+| No ambiguities | Report "No critical ambiguities", suggest proceeding |
+| Full coverage | Output compact summary (all Clear), suggest `/plan` |
+| User says "skip" | Warn rework risk increases, allow proceeding |
+| Quota reached + HIGH unresolved | Flag as Deferred, recommend another session |
+| Ambiguous answer | Request clarification (same question, no count increment) |
+
+---
+
+## Command Options
+
+```bash
+# Interactive mode (default)
+/speckit.clarify
+
+# Clarify specific spec
+/speckit.clarify spec.md
+
+# Focus on category
+/speckit.clarify --category SECURITY
+/speckit.clarify --category BEHAVIOR,DATA
+
+# Autonomous mode
+/speckit.clarify --ralph
+/speckit.clarify --ralph --confidence 90
+/speckit.clarify --ralph --categories "SECURITY,DATA"
+
+# Force re-ask answered questions
+/speckit.clarify --force
+
+# Show coverage without asking
+/speckit.clarify --status
 ```
