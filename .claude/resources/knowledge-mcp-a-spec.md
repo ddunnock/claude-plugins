@@ -393,6 +393,18 @@ Knowledge MCP enables Claude Desktop (and other MCP clients) to search, retrieve
   },
   "timestamp": "string (ISO 8601)"
 }
+
+**Health Status Determination:** *(CLARIFY-007)*
+
+| Condition | Status |
+|-----------|--------|
+| All checks up AND all latency < 500ms | `healthy` |
+| All checks up AND any latency ≥ 500ms | `degraded` |
+| Any check down | `unhealthy` |
+
+**Configuration:**
+- `HEALTH_LATENCY_THRESHOLD_MS`: Latency threshold in milliseconds (default: 500)
+
 ```
 
 ---
