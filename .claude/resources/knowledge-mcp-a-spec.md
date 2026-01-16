@@ -427,6 +427,25 @@ Knowledge MCP enables Claude Desktop (and other MCP clients) to search, retrieve
 | Markdown       | `.md`       | CommonMark with YAML frontmatter |
 
 ---
+**Error Handling for Inaccessible Documents:** *(CLARIFY-001)*
+
+When encountering corrupted, encrypted, or password-protected files during ingestion:
+
+1. Pause ingestion and display error details to user
+2. Prompt user with options:
+   - **Continue**: Skip problematic file(s), continue with remaining files (exit code 1)
+   - **Abort**: Stop ingestion entirely (exit code 2)
+3. Log skipped files with ERROR level including file path and reason
+4. Include skipped file count in final summary
+
+| Condition | User Options | Behavior |
+|-----------|--------------|----------|
+| Corrupted PDF | Continue / Abort | Prompt user before proceeding |
+| Encrypted PDF | Continue / Abort | Prompt user, suggest decryption |
+| Password-protected | Continue / Abort | Prompt user, request password or skip |
+| Empty document | Continue / Abort | Prompt user with warning |
+
+---
 
 #### 3.2.2 Ingestion Capability Matrix
 
@@ -464,6 +483,19 @@ Knowledge MCP enables Claude Desktop (and other MCP clients) to search, retrieve
 3. Detect and tag normative vs. informative content
 4. Extract definitions, requirements, and guidance as distinct chunk types
 5. Capture cross-references between sections
+**Hierarchy Depth Handling:** *(CLARIFY-004)*
+
+For documents with section hierarchy exceeding 6 levels:
+
+1. Store full `clause_number` as-is (e.g., "5.3.1.2.4.1.3")
+2. Truncate `section_hierarchy` array to first 6 entries
+3. Log INFO message indicating hierarchy truncation with document ID
+4. Filtering by `section_hierarchy` limited to 6 levels; use `clause_number` prefix match for deeper navigation
+
+**Example:**
+- Document has 8-level heading: "5.3.1.2.4.1.3.2 Detailed Subprocess"
+- `clause_number`: "5.3.1.2.4.1.3.2" (preserved)
+- `section_hierarchy`: ["5", "5.3", "5.3.1", "5.3.1.2", "5.3.1.2.4", "5.3.1.2.4.1"] (truncated)
 
 ---
 
@@ -523,6 +555,25 @@ Constraint: `chunk_overlap` < `chunk_size_min`
 2. Store hash as `content_hash` field
 3. On re-ingest with `--force`, replace chunks with matching document_id
 4. Log warning if identical content found in different documents
+**Partial Failure Recovery:** *(CLARIFY-006)*
+
+The ingestion pipeline uses idempotent upsert semantics:
+
+1. Each chunk upserted individually by `(document_id, chunk_id)` key
+2. Partial failures leave successfully processed chunks in store
+3. Re-running ingestion (with `--force`) safely replaces all chunks for affected documents
+4. No checkpoint/resume mechanism required
+
+**Recovery Workflow:**
+1. Ingestion fails at chunk 500/1000
+2. User fixes underlying issue (e.g., API quota, network)
+3. User re-runs: `knowledge-ingest --force <source>`
+4. All chunks for document replaced with fresh ingestion
+
+**CLI Reporting:**
+- Display progress: "Processing chunk 500/1000..."
+- On failure: "Ingestion failed at chunk 500. 499 chunks successfully stored."
+- Suggestion: "Re-run with --force after resolving the issue to replace partial ingestion."
 
 ---
 
@@ -849,6 +900,25 @@ For quota exhaustion: The system shall fail with a clear error message indicatin
 - Features: basic vector search, metadata filtering
 
 Backend selection via `VECTOR_STORE` environment variable.
+**Fallback Chain and Failure Handling:** *(CLARIFY-005)*
+
+| Scenario | Behavior |
+|----------|----------|
+| Qdrant available | Use Qdrant (primary) |
+| Qdrant unavailable, ChromaDB available | Use ChromaDB with WARNING log |
+| Both unavailable | Fail with `connection_error`, exit code 3 |
+
+**Startup Requirement**: At least one operational vector store is required.
+
+The system shall NOT:
+- Start in degraded read-only mode
+- Queue operations for later
+- Fall back to in-memory storage
+
+Error message shall indicate:
+- Which stores were attempted
+- Connection failure reasons
+- Configuration variables to check
 
 ---
 
