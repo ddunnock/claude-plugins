@@ -148,6 +148,142 @@
           }
         }
       ]
+    },
+    {
+      "description": "Record plan generation start in session memory",
+      "matcher": {
+        "tool_name": "Read|Glob",
+        "pre_conditions": [
+          "Message contains '/speckit.plan' or '/plan'",
+          "First tool call in plan generation sequence"
+        ]
+      },
+      "hooks": [
+        {
+          "type": "postToolUse",
+          "hook": {
+            "type": "prompt",
+            "prompt": "If session-memory MCP server is available (mcp__session-memory__session_record tool exists):\n\nRecord a phase event for plan start:\n- category: \"phase\"\n- type: \"plan_started\"\n- data: { spec_files: [list of spec files found], complexity_mode: \"simple|complex\", existing_plan: true|false }\n- tags: [\"speckit\", \"plan\"]\n\nReturn {\"decision\": \"allow\"} after recording (or if MCP not available)."
+          }
+        }
+      ]
+    },
+    {
+      "description": "Record ADR creation in session memory",
+      "matcher": {
+        "tool_name": "Write|Edit",
+        "pre_conditions": [
+          "Message contains '/speckit.plan' or '/plan'",
+          "Tool input contains 'ADR-' and 'status:' and 'Decision Outcome'"
+        ]
+      },
+      "hooks": [
+        {
+          "type": "postToolUse",
+          "hook": {
+            "type": "prompt",
+            "prompt": "If session-memory MCP server is available (mcp__session-memory__session_record tool exists):\n\nRecord a decision event for ADR creation:\n- category: \"decision\"\n- type: \"architecture_decision\"\n- data: { adr_id: \"ADR-XXX\", title: [decision title], status: \"proposed|accepted\", requirements: [linked REQ-XXX] }\n- tags: [\"speckit\", \"plan\", \"adr\"]\n\nReturn {\"decision\": \"allow\"} after recording (or if MCP not available)."
+          }
+        }
+      ]
+    },
+    {
+      "description": "Record plan completion and create checkpoint in session memory",
+      "matcher": {
+        "tool_name": "Write|Edit",
+        "pre_conditions": [
+          "Message contains '/speckit.plan' or '/plan'",
+          "Tool input contains 'plan.md' or '-plan.md'",
+          "Plan generation is complete (7-point validation passed)"
+        ]
+      },
+      "hooks": [
+        {
+          "type": "postToolUse",
+          "hook": {
+            "type": "prompt",
+            "prompt": "If session-memory MCP server is available:\n\n1. Record a phase event for plan completion:\n   - category: \"phase\"\n   - type: \"plan_complete\"\n   - data: { plans_created: [count], phases: [count], adrs: [count], coverage: { requirements_mapped: N, total: M } }\n   - tags: [\"speckit\", \"plan\", \"milestone\"]\n\n2. Create a session checkpoint:\n   - name: \"plan-complete-{timestamp}\"\n   - summary: \"Plan generation complete with N phases and M ADRs\"\n\nReturn {\"decision\": \"allow\"} after recording (or if MCP not available)."
+          }
+        }
+      ]
+    },
+    {
+      "description": "Record task generation start in session memory",
+      "matcher": {
+        "tool_name": "Read|Glob",
+        "pre_conditions": [
+          "Message contains '/speckit.tasks' or '/tasks'",
+          "First tool call in task generation sequence"
+        ]
+      },
+      "hooks": [
+        {
+          "type": "postToolUse",
+          "hook": {
+            "type": "prompt",
+            "prompt": "If session-memory MCP server is available (mcp__session-memory__session_record tool exists):\n\nRecord a phase event for tasks start:\n- category: \"phase\"\n- type: \"tasks_started\"\n- data: { plan_files: [list of plan files], existing_tasks: true|false }\n- tags: [\"speckit\", \"tasks\"]\n\nReturn {\"decision\": \"allow\"} after recording (or if MCP not available)."
+          }
+        }
+      ]
+    },
+    {
+      "description": "Record task generation completion in session memory",
+      "matcher": {
+        "tool_name": "Write|Edit",
+        "pre_conditions": [
+          "Message contains '/speckit.tasks' or '/tasks'",
+          "Tool input contains '*-tasks.md'",
+          "Task generation is complete (8-point validation passed)"
+        ]
+      },
+      "hooks": [
+        {
+          "type": "postToolUse",
+          "hook": {
+            "type": "prompt",
+            "prompt": "If session-memory MCP server is available:\n\n1. Record a finding event for tasks generated:\n   - category: \"finding\"\n   - type: \"tasks_generated\"\n   - data: { count: [total tasks], by_phase: { phase1: N, phase2: M }, smart_compliance: \"XX%\", smart_failures: [count] }\n   - tags: [\"speckit\", \"tasks\", \"smart\"]\n\n2. Create a session checkpoint:\n   - name: \"tasks-complete-{timestamp}\"\n   - summary: \"Task generation complete with N tasks, XX% SMART compliant\"\n\nReturn {\"decision\": \"allow\"} after recording (or if MCP not available)."
+          }
+        }
+      ]
+    },
+    {
+      "description": "Record individual task start in session memory",
+      "matcher": {
+        "tool_name": "Write|Edit|Bash",
+        "pre_conditions": [
+          "Message contains '/speckit.implement' or '/implement'",
+          "Message contains 'TASK-' followed by task ID",
+          "Beginning work on a specific task"
+        ]
+      },
+      "hooks": [
+        {
+          "type": "preToolUse",
+          "hook": {
+            "type": "prompt",
+            "prompt": "If session-memory MCP server is available (mcp__session-memory__session_record tool exists):\n\nRecord a phase event for task start:\n- category: \"phase\"\n- type: \"task_started\"\n- data: { task_id: \"TASK-XXX\", title: [task title], dependencies: [list], acceptance_criteria_count: N }\n- tags: [\"speckit\", \"implement\", \"task\"]\n\nReturn {\"decision\": \"allow\"} after recording (or if MCP not available)."
+          }
+        }
+      ]
+    },
+    {
+      "description": "Record individual task completion in session memory",
+      "matcher": {
+        "tool_name": "Edit|Write",
+        "pre_conditions": [
+          "Tool input contains '*-tasks.md'",
+          "Tool input contains 'Status**: COMPLETED' or marking task as complete"
+        ]
+      },
+      "hooks": [
+        {
+          "type": "postToolUse",
+          "hook": {
+            "type": "prompt",
+            "prompt": "If session-memory MCP server is available:\n\nRecord a finding event for task completion:\n- category: \"finding\"\n- type: \"task_complete\"\n- data: { task_id: \"TASK-XXX\", status: \"COMPLETED|FAILED|SKIPPED\", criteria_verified: N, criteria_total: M, evidence: [summary of verifications] }\n- tags: [\"speckit\", \"implement\", \"task-complete\"]\n\nReturn {\"decision\": \"allow\"} after recording (or if MCP not available)."
+          }
+        }
+      ]
     }
   ]
 }

@@ -1,5 +1,5 @@
 ---
-description: "Generate actionable, dependency-ordered tasks from plans"
+description: "Generate SMART-validated implementation tasks from plans"
 handoffs:
   - label: Analyze For Consistency
     agent: analyze
@@ -11,7 +11,7 @@ handoffs:
 
 # Tasks
 
-Generate implementation tasks from plans + constitution + memory files.
+Generate SMART-validated implementation tasks from plans + constitution + memory files.
 
 ## User Input
 
@@ -29,35 +29,143 @@ You **MUST** consider the user input before proceeding (if not empty).
 /tasks                  # Generate tasks from all plans
 /tasks plan.md          # Generate from specific plan
 /tasks --all            # Force regenerate all tasks
+/tasks --status         # Show task summary without generating
 ```
+
+---
+
+## Memory Directives
+
+<!-- INIT: Replace this section with the actual directive files for this project -->
+
+Load these directive files for task generation:
+
+**Always loaded:**
+- `constitution.md` - Global principles, section references for tasks
+- `testing.md` - Test coverage requirements
+- `git-cicd.md` - Git workflow and CI/CD standards
+
+**Project-specific:**
+<!-- INIT: List only the tech-specific files detected for this project -->
+- `[DETECTED_TECH_FILE].md` - [Description]
+
+<!-- INIT: Remove all HTML comments from final output -->
+
+---
+
+## SMART Acceptance Criteria Validation
+
+Every acceptance criterion must pass SMART validation:
+
+| Element | Requirement | Fail Condition |
+|---------|-------------|----------------|
+| **S**pecific | Clear, concrete action | "properly", "correctly", "fully", "appropriately" |
+| **M**easurable | Objective verification | No command/metric/file check defined |
+| **A**chievable | Single task scope | Requires other tasks to complete first |
+| **R**elevant | Ties to task purpose | No trace to plan/requirement/ADR |
+| **T**ime-bound | Immediate verification | Requires external delays or human approval |
+
+### SMART Strictness Level
+
+<!-- INIT: Select based on project type -->
+
+| Level | Behavior | When to Use |
+|-------|----------|-------------|
+| Strict | Block until criterion rewritten | Critical tasks, security-related |
+| Standard | Flag for review, allow with warning | Default for most tasks |
+| Relaxed | Log finding only | Exploratory/research tasks |
+
+**Selected for this project:** <!-- INIT: Strict | Standard | Relaxed --> Standard
+
+### Criterion Format
+
+```markdown
+**Acceptance Criteria**:
+- [ ] File `src/lib/auth.ts` exists
+      Verification: `ls src/lib/auth.ts`
+      SMART: S✓ M✓ A✓ R✓ T✓
+- [ ] Authentication function handles OAuth 2.0 flow
+      Verification: `npm test -- auth.test.ts`
+      SMART: S✓ M✓ A✓ R✓ T✓
+```
+
+---
+
+## Constitution Section Mapping
+
+<!-- INIT: Auto-populate based on detected constitution.md sections -->
+
+| Task Type | Constitution Sections |
+|-----------|----------------------|
+| Setup/Init | §3 (Structure), §7 (Security) |
+| API/Backend | §4 (Error Handling), §5 (Performance) |
+| UI/Frontend | §6 (Accessibility), §8 (UX) |
+| Testing | §9 (Testing), §10 (Quality) |
+| Documentation | §11 (Documentation) |
+
+---
+
+## Task Template Level
+
+<!-- INIT: Select based on project complexity -->
+
+| Level | Fields Included | When to Use |
+|-------|-----------------|-------------|
+| Lightweight | Status, Priority, Description, Criteria | Small projects, quick iterations |
+| Standard | + Phase, Group, Plan Reference, Dependencies | Default for most projects |
+| Detailed | + Constitution Sections, Memory Files, SMART validation | Complex/regulated projects |
+
+**Selected for this project:** <!-- INIT: Lightweight | Standard | Detailed --> Standard
 
 ---
 
 ## Workflow
 
-1. **Load plan(s)** - Read plan files
+1. **Load plan(s)** - Read plan files, extract phases and ADRs
 2. **Load constitution** - Extract relevant sections
 3. **Load memory files** - Get tech-specific guidelines
 4. **Generate tasks** - Create *-tasks.md with phases
-5. **Validate** - Check task completeness
+5. **SMART validate** - Check all acceptance criteria
+6. **Validate** - 8-point checklist before completion
+7. **Report** - Summary with SMART compliance
 
 ## Output Format
 
 ```markdown
 # [Domain] Tasks
 
+Generated: [timestamp]
+Plan: plan.md
+Constitution: [version]
+
+## Metadata
+- Total Tasks: [count]
+- Phases: [count]
+- SMART Compliance: [percentage]
+
 ## Phase 1: Foundation
 
 ### TASK-001: [Title]
 **Status**: PENDING
 **Priority**: P1
+**Phase**: 1
+**Group**: @foundation
+
+**Plan Reference**: PHASE-1, ADR-001
 **Constitution Sections**: §4.1, §4.2
 **Memory Files**: typescript.md, git-cicd.md
-**Plan Reference**: PLAN-001
+
 **Description**: ...
+
 **Acceptance Criteria**:
 - [ ] Criterion 1
+      Verification: `[command or check]`
+      SMART: S✓ M✓ A✓ R✓ T✓
 - [ ] Criterion 2
+      Verification: `[command or check]`
+      SMART: S✓ M✓ A✓ R✓ T✓
+
+**Dependencies**: None | TASK-XXX
 ```
 
 ## Task Statuses
@@ -69,11 +177,30 @@ You **MUST** consider the user input before proceeding (if not empty).
 | BLOCKED | Waiting on dependency |
 | COMPLETED | Done and verified |
 | SKIPPED | Intentionally not done |
+| FAILED | Attempted but criteria not met |
 
 ## Idempotency
 - Preserves task statuses
 - Adds new tasks for new plan items
 - Never removes manually added tasks
+- Updates SMART validation on regeneration
+
+---
+
+## 8-Point Validation Checklist
+
+Before completing task generation, verify ALL items:
+
+| # | Check | Status |
+|---|-------|--------|
+| 1 | SMART criteria validated for all acceptance criteria | [ ] |
+| 2 | Plan traceability established (TASK → PHASE → ADR) | [ ] |
+| 3 | Constitution references valid | [ ] |
+| 4 | Memory file references valid | [ ] |
+| 5 | No circular dependencies | [ ] |
+| 6 | Status-criteria consistency (COMPLETED ⟹ all [x]) | [ ] |
+| 7 | ID uniqueness verified | [ ] |
+| 8 | Phase grouping correct | [ ] |
 
 ---
 
@@ -83,6 +210,36 @@ You **MUST** consider the user input before proceeding (if not empty).
 |--------|----------|
 | Tasks file | `.claude/resources/*-tasks.md` |
 | Updated status | `.claude/memory/project-status.md` |
+
+---
+
+## Ralph Loop Mode (Autonomous Task Generation)
+
+<!-- INIT: Customize based on ralph-loop plugin detection -->
+
+**Status**: <!-- INIT: ✓ Enabled | ✗ Disabled --> ✗ Disabled (ralph-loop plugin not installed)
+
+<!-- INIT: If ralph-loop NOT detected, include this section: -->
+To enable autonomous task generation mode, install the ralph-loop plugin:
+```
+/install-plugin ralph-loop
+```
+
+<!-- INIT: If ralph-loop IS detected, include this section instead:
+**Status**: ✓ Enabled (ralph-loop plugin detected)
+
+Use `--ralph` flag for autonomous task refinement:
+```
+/tasks --ralph                    # Until 100% SMART compliance
+/tasks --ralph --smart-level strict   # Strict SMART validation
+```
+
+### Exit Criteria
+- All tasks have SMART-compliant acceptance criteria
+- 8-point validation passes
+- No blocking issues remain
+- Hard limit: 15 iterations
+-->
 
 ---
 
@@ -96,10 +253,11 @@ After generating tasks, you MUST:
    - Total number of tasks generated
    - Breakdown by phase
    - Task priority distribution (P1/P2/P3)
+   - SMART compliance percentage
    - Constitution sections referenced
 
 2. **Highlight any concerns**:
-   - Tasks with unclear acceptance criteria
+   - Tasks with SMART failures
    - Dependencies that may cause blocking
    - Tasks that may need clarification
 
@@ -115,12 +273,39 @@ Generated [N] tasks across [M] phases:
 | Phase | Tasks | P1 | P2 | P3 |
 |-------|-------|----|----|----|
 | Phase 1: Foundation | 5 | 3 | 2 | 0 |
+| Phase 2: Core | 8 | 2 | 4 | 2 |
 | [etc.] |
+
+### SMART Compliance
+
+| Status | Count |
+|--------|-------|
+| All criteria pass | 12 tasks |
+| Has warnings | 2 tasks |
+| Has failures | 1 task |
+
+**Overall**: 93% SMART compliant
+
+### SMART Failures (if any)
+
+| Task | Criterion | Issue | Suggested Fix |
+|------|-----------|-------|---------------|
+| TASK-007 | "Works correctly" | S✗ Not specific | "Returns 200 OK with user JSON" |
 
 ### Constitution Coverage
 - §4.1 (Error Handling): 8 tasks
 - §4.2 (Logging): 5 tasks
 - [etc.]
+
+### 8-Point Validation
+- [x] SMART criteria validated
+- [x] Plan traceability established
+- [x] Constitution references valid
+- [x] Memory references valid
+- [x] No circular dependencies
+- [x] Status-criteria consistent
+- [x] IDs unique
+- [x] Phase grouping correct
 
 ### Potential Concerns
 - [Any blocking dependencies]
@@ -128,8 +313,9 @@ Generated [N] tasks across [M] phases:
 
 ### Recommended Next Steps
 1. Review the generated tasks
-2. Adjust priorities if needed
-3. Resolve any blocking dependencies
+2. Fix any SMART failures
+3. Adjust priorities if needed
+4. Resolve any blocking dependencies
 
 **Awaiting your approval before implementation.**
 ```

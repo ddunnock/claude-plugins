@@ -25,7 +25,7 @@
     {
       "name": "speckit-generator",
       "source": "./skills/speckit-generator",
-      "description": "Specification and task management with SEAMS-enhanced clarification, git checkpoints, and implementation hooks"
+      "description": "Specification and task management with PLANS taxonomy, ADR-style decisions, SMART acceptance criteria, SEAMS clarification, git checkpoints, and session-memory hooks"
     },
     {
       "name": "streaming-output",

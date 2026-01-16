@@ -296,6 +296,167 @@ To enable autonomous clarification mode, install the ralph-loop plugin:
 
 ---
 
+### plan.md Customization
+
+The `plan.md` template has four sections that must be customized:
+
+**1. Memory Directives Section:**
+Same as analyze.md - replace placeholder with detected tech-specific directive files.
+
+**2. PLANS Taxonomy Activation:**
+Enable relevant PLANS categories based on project type:
+
+| Project Type | Heavy Categories | Rationale |
+|--------------|------------------|-----------|
+| Greenfield | ARCHITECTURE | New decisions needed |
+| Migration | LINKAGES | Dependencies critical |
+| Refactoring | ARCHITECTURE, NOTES | Preserve + improve |
+| Feature Addition | SCOPE, NOTES | Fit into existing |
+
+**Example for a Greenfield project:**
+```markdown
+**Active for this project:**
+- [x] **Phases**: Implementation phases, milestones
+- [x] **Linkages**: Inter-phase dependencies
+- [x] **Architecture**: ADR-based decisions (HEAVY - greenfield project)
+- [x] **Notes**: Task generation guidance
+- [x] **Scope**: Requirement coverage mapping
+```
+
+**3. ADR Template Level:**
+Select based on project complexity:
+
+| Level | When to Use | Required Fields |
+|-------|-------------|-----------------|
+| Lightweight | Simple decisions, single-option obvious | Status, Context, Decision, Consequences |
+| Standard | Multiple valid options | All except Confirmation |
+| Full | Critical/security decisions | All fields |
+
+**Example customization:**
+```markdown
+**Selected for this project:** Standard
+```
+
+**4. Ralph Loop Mode Section:**
+Same pattern as implement.md - customize based on ralph-loop plugin detection.
+
+**If ralph-loop IS detected:**
+```markdown
+## Ralph Loop Mode (Autonomous Planning)
+
+**Status**: ✓ Enabled (ralph-loop plugin detected)
+
+Use `--ralph` flag for autonomous plan generation:
+```
+/plan --ralph                    # Until all ADRs have status: accepted
+/plan --ralph --coverage 100     # Until 100% requirement coverage
+```
+
+### Exit Criteria
+- All PLANS categories at ✓ Complete status
+- All ADRs have status: accepted or rejected
+- Coverage target reached (if specified)
+- Hard limit: 20 iterations
+```
+
+**If ralph-loop NOT detected:**
+```markdown
+## Ralph Loop Mode (Autonomous Planning)
+
+**Status**: ✗ Disabled (ralph-loop plugin not installed)
+
+To enable autonomous planning mode, install the ralph-loop plugin:
+```
+/install-plugin ralph-loop
+```
+```
+
+---
+
+### tasks.md Customization
+
+The `tasks.md` template has five sections that must be customized:
+
+**1. Memory Directives Section:**
+Same as analyze.md - replace placeholder with detected tech-specific directive files.
+
+**2. SMART Strictness Level:**
+Select based on project criticality:
+
+| Level | Behavior | When to Use |
+|-------|----------|-------------|
+| Strict | Block until criterion rewritten | Critical tasks, security-related |
+| Standard | Flag for review, allow with warning | Default for most tasks |
+| Relaxed | Log finding only | Exploratory/research tasks |
+
+**Example customization:**
+```markdown
+**Selected for this project:** Standard
+```
+
+**3. Constitution Section Mapping:**
+Auto-populate based on detected constitution.md sections:
+
+| Task Type | Constitution Sections |
+|-----------|----------------------|
+| Setup/Init | §3 (Structure), §7 (Security) |
+| API/Backend | §4 (Error Handling), §5 (Performance) |
+| UI/Frontend | §6 (Accessibility), §8 (UX) |
+| Testing | §9 (Testing), §10 (Quality) |
+| Documentation | §11 (Documentation) |
+
+Read the actual constitution.md and map section numbers appropriately.
+
+**4. Task Template Level:**
+Select based on project complexity:
+
+| Level | Fields Included | When to Use |
+|-------|-----------------|-------------|
+| Lightweight | Status, Priority, Description, Criteria | Small projects, quick iterations |
+| Standard | + Phase, Group, Plan Reference, Dependencies | Default for most projects |
+| Detailed | + Constitution Sections, Memory Files, SMART validation | Complex/regulated projects |
+
+**Example customization:**
+```markdown
+**Selected for this project:** Standard
+```
+
+**5. Ralph Loop Mode Section:**
+Same pattern as implement.md - customize based on ralph-loop plugin detection.
+
+**If ralph-loop IS detected:**
+```markdown
+## Ralph Loop Mode (Autonomous Task Generation)
+
+**Status**: ✓ Enabled (ralph-loop plugin detected)
+
+Use `--ralph` flag for autonomous task refinement:
+```
+/tasks --ralph                    # Until 100% SMART compliance
+/tasks --ralph --smart-level strict   # Strict SMART validation
+```
+
+### Exit Criteria
+- All tasks have SMART-compliant acceptance criteria
+- 8-point validation passes
+- No blocking issues remain
+- Hard limit: 15 iterations
+```
+
+**If ralph-loop NOT detected:**
+```markdown
+## Ralph Loop Mode (Autonomous Task Generation)
+
+**Status**: ✗ Disabled (ralph-loop plugin not installed)
+
+To enable autonomous task generation mode, install the ralph-loop plugin:
+```
+/install-plugin ralph-loop
+```
+```
+
+---
+
 ### implement.md Customization (Ralph Loop Integration)
 
 The `implement.md` template has a "Ralph Loop Mode" section that must be customized based on plugin detection.

@@ -1,5 +1,5 @@
 ---
-description: "Create implementation plans from specification files"
+description: "PLANS-enhanced implementation planning with ADR-style architecture decisions"
 handoffs:
   - label: Analyze Plan
     agent: analyze
@@ -14,7 +14,7 @@ handoffs:
 
 # Plan
 
-Create implementation plans from specification files. Hierarchical for complex/multi-domain specs.
+PLANS-enhanced implementation planning with ADR-style architecture decisions and requirement coverage mapping.
 
 ## User Input
 
@@ -32,6 +32,113 @@ You **MUST** consider the user input before proceeding (if not empty).
 /plan                   # Plan from all specs
 /plan spec.md           # Plan from specific spec
 /plan --all             # Force regenerate all plans
+/plan --status          # Show coverage without generating
+```
+
+---
+
+## Memory Directives
+
+<!-- INIT: Replace this section with the actual directive files for this project -->
+
+Load these directive files for architecture decision guidance:
+
+**Always loaded:**
+- `constitution.md` - Global principles, quality gates
+- `security.md` - Security requirements for ADRs
+- `documentation.md` - Documentation standards
+
+**Project-specific:**
+<!-- INIT: List only the tech-specific files detected for this project -->
+- `[DETECTED_TECH_FILE].md` - [Description]
+
+<!-- INIT: Remove all HTML comments from final output -->
+
+---
+
+## PLANS Taxonomy (5 Categories)
+
+Systematic coverage scan for implementation planning:
+
+| Category | Focus | Detection Target |
+|----------|-------|------------------|
+| **P**hases | Implementation phases, milestones | Missing phases, unclear objectives |
+| **L**inkages | Inter-phase dependencies | Circular deps, undefined prerequisites |
+| **A**rchitecture | ADR-based decisions | Undocumented choices, missing rationale |
+| **N**otes | Task generation guidance | Vague notes, unclear scope indicators |
+| **S**cope | Requirement coverage mapping | Orphan requirements, coverage gaps |
+
+### PLANS Activation by Project Type
+
+<!-- INIT: Enable recommended categories based on project type -->
+
+| Project Type | Heavy Categories | Rationale |
+|--------------|------------------|-----------|
+| Greenfield | ARCHITECTURE | New decisions needed |
+| Migration | LINKAGES | Dependencies critical |
+| Refactoring | ARCHITECTURE, NOTES | Preserve + improve |
+| Feature Addition | SCOPE, NOTES | Fit into existing |
+
+**Active for this project:**
+<!-- INIT: Set based on detected project type -->
+- [x] **Phases**: Implementation phases, milestones
+- [x] **Linkages**: Inter-phase dependencies
+- [x] **Architecture**: ADR-based decisions
+- [x] **Notes**: Task generation guidance
+- [x] **Scope**: Requirement coverage mapping
+
+---
+
+## ADR Template Level
+
+<!-- INIT: Select based on project complexity -->
+
+| Level | When to Use | Required Fields |
+|-------|-------------|-----------------|
+| Lightweight | Simple decisions, single-option obvious | Status, Context, Decision, Consequences |
+| Standard | Multiple valid options | All except Confirmation |
+| Full | Critical/security decisions | All fields |
+
+**Selected for this project:** <!-- INIT: Lightweight | Standard | Full --> Standard
+
+### ADR Format
+
+```markdown
+### ADR-001: [Short title of solved problem and solution]
+
+**Status**: proposed | accepted | rejected | deprecated | superseded by ADR-XXX
+**Date**: YYYY-MM-DD
+**Decision-makers**: [list]
+
+#### Context and Problem Statement
+
+[Describe context and problem in 2-3 sentences or as a question]
+
+#### Decision Drivers
+
+* [driver 1, e.g., a force, concern]
+* [driver 2]
+
+#### Considered Options
+
+1. [option 1]
+2. [option 2]
+3. [option 3]
+
+#### Decision Outcome
+
+**Chosen option**: "[option 1]", because [justification].
+
+**Consequences**:
+* Good, because [positive consequence]
+* Bad, because [negative consequence]
+
+**Confirmation**: [How implementation/compliance will be confirmed]
+
+#### Traceability
+
+- **Requirements**: REQ-XXX
+- **Affects Tasks**: TASK-XXX (populated after /tasks)
 ```
 
 ---
@@ -40,8 +147,11 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 1. **Locate specs** - Find spec files in .claude/resources/
 2. **Assess complexity** - Single domain vs multi-domain
-3. **Generate plans** - Create plan.md (and domain plans if complex)
-4. **Validate** - Check plan completeness and consistency
+3. **PLANS coverage scan** - Evaluate all 5 categories
+4. **Generate plans** - Create plan.md (and domain plans if complex)
+5. **Create ADRs** - Document architecture decisions with rationale
+6. **Validate** - 7-point checklist before completion
+7. **Report** - Coverage summary with recommendations
 
 ## Output Structure
 
@@ -67,7 +177,7 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 Plans contain:
 - Requirements mapping (which spec sections covered)
-- Architecture decisions
+- Architecture decisions (ADR format)
 - Implementation approach (phases, NOT tasks)
 - Verification strategy
 - Notes for task generation
@@ -91,6 +201,23 @@ User can override detection.
 - Detects existing plans
 - Offers update or regenerate
 - Preserves manual edits with warning
+- ADRs with `accepted` status never auto-modified
+
+---
+
+## 7-Point Validation Checklist
+
+Before completing plan generation, verify ALL items:
+
+| # | Check | Status |
+|---|-------|--------|
+| 1 | Requirements mapping complete | [ ] |
+| 2 | Coverage status documented per PLANS category | [ ] |
+| 3 | ADRs have all required fields for their level | [ ] |
+| 4 | Phase sequencing valid (no circular deps) | [ ] |
+| 5 | Traceability established (REQ → Phase → ADR) | [ ] |
+| 6 | Task generation notes present for each phase | [ ] |
+| 7 | Markdown structure valid | [ ] |
 
 ---
 
@@ -103,6 +230,36 @@ User can override detection.
 
 ---
 
+## Ralph Loop Mode (Autonomous Planning)
+
+<!-- INIT: Customize based on ralph-loop plugin detection -->
+
+**Status**: <!-- INIT: ✓ Enabled | ✗ Disabled --> ✗ Disabled (ralph-loop plugin not installed)
+
+<!-- INIT: If ralph-loop NOT detected, include this section: -->
+To enable autonomous planning mode, install the ralph-loop plugin:
+```
+/install-plugin ralph-loop
+```
+
+<!-- INIT: If ralph-loop IS detected, include this section instead:
+**Status**: ✓ Enabled (ralph-loop plugin detected)
+
+Use `--ralph` flag for autonomous plan generation:
+```
+/plan --ralph                    # Until all ADRs have status: accepted
+/plan --ralph --coverage 100     # Until 100% requirement coverage
+```
+
+### Exit Criteria
+- All PLANS categories at ✓ Complete status
+- All ADRs have status: accepted or rejected
+- Coverage target reached (if specified)
+- Hard limit: 20 iterations
+-->
+
+---
+
 ## GATE: Required Before Proceeding
 
 **STOP after plan generation. DO NOT proceed to `/tasks` automatically.**
@@ -110,8 +267,9 @@ User can override detection.
 After generating plans, you MUST:
 
 1. **Present a plan summary** to the user showing:
+   - PLANS coverage summary (5 categories)
    - Number of plans created (master + domain plans if complex)
-   - Key architectural decisions made
+   - ADR count and decisions made
    - Any assumptions or open questions identified
 
 2. **Recommend next steps**:
@@ -126,16 +284,40 @@ After generating plans, you MUST:
 ```markdown
 ## Plan Generation Complete
 
+### PLANS Coverage Summary
+
+| Category | Status | Notes |
+|----------|--------|-------|
+| Phases | ✓ | 4 phases defined |
+| Linkages | ✓ | Dependencies validated |
+| Architecture | ✓ | 3 ADRs created |
+| Notes | ✓ | Task guidance complete |
+| Scope | ✓ | 12/12 requirements mapped |
+
 Created [N] plan(s):
 - plan.md (master plan)
 - plans/domain-a-plan.md
 - [etc.]
 
-### Key Decisions
-- [List major architectural/approach decisions]
+### Architecture Decisions
+
+| ADR | Decision | Status |
+|-----|----------|--------|
+| ADR-001 | OAuth 2.0 for authentication | accepted |
+| ADR-002 | PostgreSQL for persistence | accepted |
+| ADR-003 | Next.js API routes for backend | proposed |
 
 ### Open Questions
 - [Any [TBD] items or ambiguities found]
+
+### 7-Point Validation
+- [x] Requirements mapping complete
+- [x] Coverage documented
+- [x] ADRs complete
+- [x] Phase sequencing valid
+- [x] Traceability established
+- [x] Task notes present
+- [x] Markdown valid
 
 ### Recommended Next Steps
 1. Review the generated plan(s)

@@ -220,6 +220,79 @@ When you revert, SpecKit analyzes what went wrong:
 | SCOPE_CREEP | Too much at once | Decompose tasks |
 | KNOWLEDGE_GAP | Unfamiliar technology | Research first |
 
+## Plan Command (PLANS-Enhanced)
+
+The `/speckit.plan` command uses the PLANS taxonomy for systematic implementation planning with ADR-style architecture decisions.
+
+### PLANS Taxonomy
+
+| Category | Focus | Detection Target |
+|----------|-------|------------------|
+| **P**hases | Implementation phases, milestones | Missing phases, unclear objectives |
+| **L**inkages | Inter-phase dependencies | Circular deps, undefined prerequisites |
+| **A**rchitecture | ADR-based decisions | Undocumented choices, missing rationale |
+| **N**otes | Task generation guidance | Vague notes, unclear scope indicators |
+| **S**cope | Requirement coverage mapping | Orphan requirements, coverage gaps |
+
+### ADR Template Levels
+
+| Level | When to Use | Required Fields |
+|-------|-------------|-----------------|
+| Lightweight | Simple decisions, single-option obvious | Status, Context, Decision, Consequences |
+| Standard | Multiple valid options | All except Confirmation |
+| Full | Critical/security decisions | All fields |
+
+### 7-Point Validation
+
+1. Requirements mapping complete
+2. Coverage status documented per PLANS category
+3. ADRs have all required fields for their level
+4. Phase sequencing valid (no circular deps)
+5. Traceability established (REQ → Phase → ADR)
+6. Task generation notes present for each phase
+7. Markdown structure valid
+
+## Tasks Command (SMART-Enhanced)
+
+The `/speckit.tasks` command uses SMART validation for verifiable acceptance criteria.
+
+### SMART Acceptance Criteria
+
+| Element | Requirement | Fail Condition |
+|---------|-------------|----------------|
+| **S**pecific | Clear, concrete action | "properly", "correctly", "fully" |
+| **M**easurable | Objective verification | No command/metric/file check |
+| **A**chievable | Single task scope | Requires other tasks first |
+| **R**elevant | Ties to task purpose | No trace to plan/requirement |
+| **T**ime-bound | Immediate verification | Requires external delays |
+
+### Criterion Format
+
+```markdown
+- [ ] File `src/lib/auth.ts` exports `authenticate` function
+      Verification: `grep -q "export.*authenticate" src/lib/auth.ts`
+      SMART: S✓ M✓ A✓ R✓ T✓
+```
+
+### SMART Strictness Levels
+
+| Level | Behavior | When to Use |
+|-------|----------|-------------|
+| Strict | Block until criterion rewritten | Critical tasks, security-related |
+| Standard | Flag for review, allow with warning | Default for most tasks |
+| Relaxed | Log finding only | Exploratory/research tasks |
+
+### 8-Point Validation
+
+1. SMART criteria validated for all acceptance criteria
+2. Plan traceability established (TASK → PHASE → ADR)
+3. Constitution references valid
+4. Memory file references valid
+5. No circular dependencies
+6. Status-criteria consistency (COMPLETED ⟹ all [x])
+7. ID uniqueness verified
+8. Phase grouping correct
+
 ## Clarify Command (SEAMS-Enhanced)
 
 The `/speckit.clarify` command uses the SEAMS framework (Structure, Execution, Assumptions, Mismatches, Stakeholders) for systematic ambiguity detection.
@@ -333,7 +406,19 @@ Ensure you're running the full implement workflow. Post-implementation hooks onl
 
 ## Version History
 
-### v1.5.0 (Current)
+### v1.6.0 (Current)
+- Enhanced `/speckit.plan` with PLANS taxonomy (Phases, Linkages, Architecture, Notes, Scope)
+- Added ADR-style architecture decisions using MADR template format
+- ADR template levels: Lightweight, Standard, Full based on complexity
+- 7-point validation checklist for plan generation
+- Enhanced `/speckit.tasks` with SMART acceptance criteria validation
+- SMART strictness levels: Strict, Standard, Relaxed
+- 8-point validation checklist for task generation
+- Session-memory MCP integration via hooks (records plan/task events, creates checkpoints)
+- INIT customization for plan.md and tasks.md templates
+- Ralph Loop autonomous mode integration for plan and tasks commands
+
+### v1.5.0
 - Enhanced `/speckit.clarify` with SEAMS framework (Structure, Execution, Assumptions, Mismatches, Stakeholders)
 - Added 13-category taxonomy for comprehensive ambiguity detection
 - Sequential questioning loop with table-based options and recommendations
