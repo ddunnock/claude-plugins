@@ -150,8 +150,15 @@ To find this path, the plugin root is typically:
 
 1. **Identify plugin root** - Find where speckit-generator plugin is installed
 2. **Read source files** - From `${CLAUDE_PLUGIN_ROOT}/assets/memory/[filename].md`
-3. **Write to project** - To `.claude/memory/[filename].md`
-4. **Create MANIFEST.md** - List installed memory files with timestamps
+3. **Adapt to project context** - Customize template content for this specific project:
+   - Replace placeholder examples with project-specific equivalents
+   - Remove sections irrelevant to the detected tech stack
+   - Add project-specific conventions if known (from existing code patterns)
+   - Ensure file paths, package names, and tool references match the project
+4. **Write to project** - To `.claude/memory/[filename].md`
+5. **Create MANIFEST.md** - List installed memory files with timestamps
+
+**IMPORTANT**: Memory files should NOT be copied verbatim. Adapt each file's content to reflect the actual project structure, naming conventions, and patterns discovered during tech stack detection.
 
 ## Options
 
