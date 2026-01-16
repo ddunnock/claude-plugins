@@ -7,8 +7,11 @@ python-dotenv>=1.0.0
 # Optional - for semantic search (embeddings)
 openai>=1.0.0
 
-# Optional - for cloud sync
+# Optional - for cloud sync (D1)
 httpx>=0.25.0
+
+# Optional - for cloud sync (R2 object storage)
+boto3>=1.34.0
 
 # Optional - for document ingestion
 PyPDF2>=3.0.0

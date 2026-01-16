@@ -1,0 +1,182 @@
+[tool.poetry]
+name = "knowledge-mcp"
+version = "0.1.0"
+description = "MCP server for semantic search over technical reference documents (IEEE, INCOSE, NASA standards)"
+authors = ["David Dunnock <dunnoda@gmail.com>"]
+readme = "README.md"
+license = "MIT"
+packages = [{include = "knowledge_mcp", from = "src"}]
+keywords = [
+    "mcp",
+    "semantic-search",
+    "rag",
+    "embeddings",
+    "systems-engineering",
+    "ieee",
+    "incose",
+    "qdrant"
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.14"
+
+# MCP SDK
+mcp = ">=1.0.0"
+
+# OpenAI for embeddings
+openai = ">=1.0.0"
+
+# Qdrant Cloud (PRIMARY vector store)
+qdrant-client = ">=1.7.0"
+
+# PDF processing
+pymupdf4llm = ">=0.0.5"
+
+# DOCX processing
+python-docx = ">=1.1.0"
+mammoth = ">=1.8.0"
+
+# Tokenization
+tiktoken = ">=0.5.0"
+
+# Configuration
+python-dotenv = ">=1.0.0"
+
+# Utilities
+rich = ">=13.0.0"
+
+# Data validation
+pydantic = ">=2.0.0"
+
+[tool.poetry.group.dev.dependencies]
+# Testing
+pytest = "^8.0"
+pytest-cov = "^4.1"
+pytest-asyncio = "^0.23"
+
+# Linting and formatting
+ruff = "^0.4"
+
+# Type checking
+pyright = "^1.1"
+
+# Security scanning
+pip-audit = "^2.7"
+
+[tool.poetry.group.chromadb]
+optional = true
+
+[tool.poetry.group.chromadb.dependencies]
+# Local fallback vector store
+chromadb = ">=0.4.0"
+
+[tool.poetry.group.rerank]
+optional = true
+
+[tool.poetry.group.rerank.dependencies]
+# Optional reranking for better results
+cohere = ">=4.0.0"
+
+[tool.poetry.group.local]
+optional = true
+
+[tool.poetry.group.local.dependencies]
+# Local embedding models (offline use)
+sentence-transformers = ">=2.2.0"
+
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+sphinx = "^7.2"
+furo = "^2024.1"
+myst-parser = "^2.0"
+sphinx-design = "^0.5"
+sphinx-copybutton = "^0.5"
+sphinx-autobuild = "^2024.2"
+
+[tool.poetry.scripts]
+knowledge-mcp = "knowledge_mcp.__main__:cli"
+knowledge-ingest = "knowledge_mcp.cli.ingest:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+# =============================================================================
+# Ruff Configuration (per python.md §5.1)
+# =============================================================================
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "ARG",    # flake8-unused-arguments
+    "SIM",    # flake8-simplify
+    "TCH",    # flake8-type-checking
+    "PTH",    # flake8-use-pathlib
+    "ERA",    # eradicate
+    "PL",     # pylint
+    "RUF",    # Ruff-specific rules
+    "D",      # pydocstyle
+]
+ignore = ["D100", "D104"]  # Module docstrings optional for __init__.py
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = ["knowledge_mcp"]
+
+# =============================================================================
+# Pyright Configuration (per python.md §4.2)
+# =============================================================================
+[tool.pyright]
+pythonVersion = "3.11"
+typeCheckingMode = "strict"
+include = ["src"]
+exclude = ["**/tests/**"]
+reportMissingTypeStubs = "warning"
+reportUnusedImport = "error"
+reportUnusedVariable = "error"
+reportUnnecessaryTypeIgnoreComment = "error"
+
+# =============================================================================
+# pytest Configuration (per testing.md §2.1)
+# =============================================================================
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "--cov=src --cov-report=term-missing --cov-fail-under=80"
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
+omit = ["**/tests/**", "**/__pycache__/**"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]

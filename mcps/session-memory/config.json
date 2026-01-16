@@ -25,12 +25,15 @@
       "auto_suggest": true
     },
     "cloud_sync": {
-      "enabled": false,
+      "enabled": true,
       "provider": "cloudflare",
       "account_id_env": "CF_ACCOUNT_ID",
       "api_token_env": "CF_API_TOKEN",
-      "d1_database_id": null,
-      "r2_bucket": null,
+      "d1_database_id": "07385c98-49e6-4137-b3c5-9ae8fb87664d",
+      "r2_bucket": "session-memory-sync",
+      "r2_endpoint_url_env": "CF_R2_ENDPOINT_URL",
+      "r2_access_key_id_env": "CF_R2_ACCESS_KEY_ID",
+      "r2_secret_access_key_env": "CF_R2_SECRET_ACCESS_KEY",
       "auto_sync_on_checkpoint": false
     },
     "document_ingest": {

@@ -1,0 +1,11 @@
+{
+  "name": "streaming-output-mcp",
+  "description": "Stream structured content to persistent SQLite storage with automatic session break recovery. Supports multi-format export (Markdown, HTML, JSON, YAML, CSV, Text) and document templates. Core principle: The content IS the state.",
+  "version": "2.0.0",
+  "mcpServers": {
+    "streaming-output": {
+      "command": "python3",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/../../mcps/streaming-output/server.py"]
+    }
+  }
+}

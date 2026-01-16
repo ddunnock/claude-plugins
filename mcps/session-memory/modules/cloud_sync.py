@@ -4,6 +4,13 @@ This module provides optional cloud synchronization:
 - D1 (SQLite) for structured data (events, entities, learnings)
 - R2 (object storage) for checkpoints and large objects
 - Conflict resolution with local-first priority
+
+R2 Configuration:
+    R2 uses S3-compatible API and requires separate credentials:
+    - CF_R2_ACCESS_KEY_ID: R2 API token access key ID
+    - CF_R2_SECRET_ACCESS_KEY: R2 API token secret access key
+
+    Generate these at: Cloudflare Dashboard > R2 > Manage R2 API Tokens
 """
 
 import json
@@ -12,12 +19,19 @@ import sqlite3
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-# Optional dependency
+# Optional dependencies
 try:
     import httpx
     HTTPX_AVAILABLE = True
 except ImportError:
     HTTPX_AVAILABLE = False
+
+try:
+    import boto3
+    from botocore.config import Config as BotoConfig
+    BOTO3_AVAILABLE = True
+except ImportError:
+    BOTO3_AVAILABLE = False
 
 
 class CloudSyncService:
@@ -52,12 +66,40 @@ class CloudSyncService:
             os.environ.get("CF_R2_BUCKET")
         )
 
+        # R2 S3-compatible credentials (separate from API token)
+        self.r2_access_key_id = (
+            config.get("r2_access_key_id") or
+            os.environ.get(config.get("r2_access_key_id_env", ""), "") or
+            os.environ.get("CF_R2_ACCESS_KEY_ID")
+        )
+        self.r2_secret_access_key = (
+            config.get("r2_secret_access_key") or
+            os.environ.get(config.get("r2_secret_access_key_env", ""), "") or
+            os.environ.get("CF_R2_SECRET_ACCESS_KEY")
+        )
+        # R2 endpoint URL (can differ from main account_id)
+        self.r2_endpoint_url = (
+            config.get("r2_endpoint_url") or
+            os.environ.get(config.get("r2_endpoint_url_env", ""), "") or
+            os.environ.get("CF_R2_ENDPOINT_URL")
+        )
+
         # Check availability
         self.available = (
             HTTPX_AVAILABLE and
             self.enabled and
             self.account_id and
             self.api_token
+        )
+
+        # R2 availability (requires boto3, R2 credentials, and endpoint)
+        self.r2_available = (
+            BOTO3_AVAILABLE and
+            self.enabled and
+            self.r2_endpoint_url and
+            self.r2_bucket and
+            self.r2_access_key_id and
+            self.r2_secret_access_key
         )
 
         if self.available:
@@ -71,6 +113,22 @@ class CloudSyncService:
             )
         else:
             self.client = None
+
+        # Initialize R2 S3 client
+        if self.r2_available:
+            self.r2_client = boto3.client(
+                "s3",
+                endpoint_url=self.r2_endpoint_url,
+                aws_access_key_id=self.r2_access_key_id,
+                aws_secret_access_key=self.r2_secret_access_key,
+                config=BotoConfig(
+                    signature_version="s3v4",
+                    retries={"max_attempts": 3, "mode": "standard"}
+                ),
+                region_name="auto"  # R2 uses 'auto' region
+            )
+        else:
+            self.r2_client = None
 
     def _get_conn(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path)
@@ -120,11 +178,30 @@ class CloudSyncService:
                 "SELECT MAX(last_sync) FROM sync_state WHERE sync_status = 'synced'"
             ).fetchone()[0]
 
+            # Build R2 status
+            r2_status = {
+                "available": self.r2_available,
+                "bucket": self.r2_bucket,
+                "endpoint": self.r2_endpoint_url
+            }
+            if not self.r2_available:
+                r2_missing = []
+                if not BOTO3_AVAILABLE:
+                    r2_missing.append("boto3 library")
+                if not self.r2_endpoint_url:
+                    r2_missing.append("CF_R2_ENDPOINT_URL")
+                if not self.r2_access_key_id:
+                    r2_missing.append("CF_R2_ACCESS_KEY_ID")
+                if not self.r2_secret_access_key:
+                    r2_missing.append("CF_R2_SECRET_ACCESS_KEY")
+                if r2_missing:
+                    r2_status["missing"] = r2_missing
+
             return {
                 "enabled": True,
                 "available": True,
                 "d1_database_id": self.d1_database_id,
-                "r2_bucket": self.r2_bucket,
+                "r2": r2_status,
                 "pending_count": pending_count,
                 "conflict_count": conflict_count,
                 "synced_count": synced_count,
@@ -463,26 +540,164 @@ class CloudSyncService:
         finally:
             conn.close()
 
-    def upload_to_r2(self, key: str, data: bytes) -> bool:
-        """Upload an object to R2 bucket."""
-        if not self.available or not self.r2_bucket:
+    def upload_to_r2(
+        self,
+        key: str,
+        data: bytes,
+        content_type: str = "application/octet-stream",
+        metadata: Optional[Dict[str, str]] = None
+    ) -> bool:
+        """Upload an object to R2 bucket.
+
+        Args:
+            key: Object key (path) in the bucket
+            data: Bytes to upload
+            content_type: MIME type of the content
+            metadata: Optional metadata dict to attach to the object
+
+        Returns:
+            True if upload succeeded, False otherwise
+        """
+        if not self.r2_available or not self.r2_client:
             return False
 
         try:
-            # R2 uses S3-compatible API
-            # This would require boto3 or direct HTTP with AWS Signature V4
-            # For now, return False as R2 upload requires additional setup
-            return False
+            put_kwargs: Dict[str, Any] = {
+                "Bucket": self.r2_bucket,
+                "Key": key,
+                "Body": data,
+                "ContentType": content_type
+            }
+
+            if metadata:
+                put_kwargs["Metadata"] = metadata
+
+            self.r2_client.put_object(**put_kwargs)
+            return True
+
         except Exception:
             return False
 
     def download_from_r2(self, key: str) -> Optional[bytes]:
-        """Download an object from R2 bucket."""
-        if not self.available or not self.r2_bucket:
+        """Download an object from R2 bucket.
+
+        Args:
+            key: Object key (path) in the bucket
+
+        Returns:
+            Object bytes if found, None otherwise
+        """
+        if not self.r2_available or not self.r2_client:
             return None
 
         try:
-            # Similar to upload, requires S3-compatible API
+            response = self.r2_client.get_object(
+                Bucket=self.r2_bucket,
+                Key=key
+            )
+            return response["Body"].read()
+
+        except self.r2_client.exceptions.NoSuchKey:
             return None
         except Exception:
             return None
+
+    def delete_from_r2(self, key: str) -> bool:
+        """Delete an object from R2 bucket.
+
+        Args:
+            key: Object key (path) in the bucket
+
+        Returns:
+            True if deletion succeeded, False otherwise
+        """
+        if not self.r2_available or not self.r2_client:
+            return False
+
+        try:
+            self.r2_client.delete_object(
+                Bucket=self.r2_bucket,
+                Key=key
+            )
+            return True
+
+        except Exception:
+            return False
+
+    def list_r2_objects(
+        self,
+        prefix: str = "",
+        max_keys: int = 1000
+    ) -> Optional[List[Dict[str, Any]]]:
+        """List objects in R2 bucket.
+
+        Args:
+            prefix: Filter objects by key prefix
+            max_keys: Maximum number of objects to return
+
+        Returns:
+            List of object metadata dicts, or None on error
+        """
+        if not self.r2_available or not self.r2_client:
+            return None
+
+        try:
+            response = self.r2_client.list_objects_v2(
+                Bucket=self.r2_bucket,
+                Prefix=prefix,
+                MaxKeys=max_keys
+            )
+
+            objects = []
+            for obj in response.get("Contents", []):
+                objects.append({
+                    "key": obj["Key"],
+                    "size": obj["Size"],
+                    "last_modified": obj["LastModified"].isoformat(),
+                    "etag": obj.get("ETag", "").strip('"')
+                })
+
+            return objects
+
+        except Exception:
+            return None
+
+    def upload_checkpoint_to_r2(self, checkpoint_id: str, checkpoint_data: Dict[str, Any]) -> bool:
+        """Upload a checkpoint to R2 as JSON.
+
+        Args:
+            checkpoint_id: Checkpoint identifier
+            checkpoint_data: Checkpoint data dict
+
+        Returns:
+            True if upload succeeded
+        """
+        key = f"checkpoints/{checkpoint_id}.json"
+        data = json.dumps(checkpoint_data, indent=2).encode("utf-8")
+
+        return self.upload_to_r2(
+            key=key,
+            data=data,
+            content_type="application/json",
+            metadata={"checkpoint_id": checkpoint_id}
+        )
+
+    def download_checkpoint_from_r2(self, checkpoint_id: str) -> Optional[Dict[str, Any]]:
+        """Download a checkpoint from R2.
+
+        Args:
+            checkpoint_id: Checkpoint identifier
+
+        Returns:
+            Checkpoint data dict, or None if not found
+        """
+        key = f"checkpoints/{checkpoint_id}.json"
+        data = self.download_from_r2(key)
+
+        if data:
+            try:
+                return json.loads(data.decode("utf-8"))
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                return None
+
+        return None
