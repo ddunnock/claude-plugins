@@ -579,3 +579,151 @@ function validateInput<T>(schema: z.ZodSchema<T>, data: unknown): T {
   return result.data;
 }
 ```
+
+---
+
+## 10. Anti-Patterns to Avoid
+
+These patterns indicate inexperience and **MUST NOT** appear in code:
+
+### 10.1 The `any` Escape Hatch
+
+```typescript
+// ❌ MUST NOT: Liberal use of `any` defeats type safety
+function processData(data: any): any {
+  return data.results.map(item => item.value);
+}
+
+// ✅ MUST: Use specific types
+interface DataItem { value: string; }
+interface DataResponse { results: DataItem[]; }
+
+function processData(data: DataResponse): string[] {
+  return data.results.map(item => item.value);
+}
+```
+
+### 10.2 Type Assertion Abuse
+
+```typescript
+// ❌ MUST NOT: Force types without validation
+const userData = response as UserData;
+
+// ✅ MUST: Use type guards for runtime safety
+function isUserData(data: unknown): data is UserData {
+  return data !== null && typeof data === 'object' && 'id' in data && 'name' in data;
+}
+if (!isUserData(response)) throw new Error('Invalid user data');
+```
+
+### 10.3 Stringly-Typed Code (Primitive Obsession)
+
+```typescript
+// ❌ MUST NOT: Raw strings for domain concepts
+function processAction(userId: string, action: string, target: string) {}
+
+// ✅ MUST: Use enums/branded types for semantic meaning
+enum ActionType { Delete = 'delete', Archive = 'archive' }
+type UserId = string & { readonly brand: unique symbol };
+```
+
+### 10.4 Interface Duplication
+
+```typescript
+// ❌ MUST NOT: Copy-paste type definitions
+interface UserData { id: string; name: string; email: string; }
+interface AdminUserData { id: string; name: string; email: string; permissions: string[]; }
+
+// ✅ MUST: Use type composition
+interface AdminUserData extends UserData { permissions: string[]; }
+```
+
+### 10.5 Redundant Type Annotations
+
+```typescript
+// ❌ SHOULD NOT: Over-annotate obvious types
+const numbers: number[] = [1, 2, 3];
+const doubled: number[] = numbers.map((n: number): number => n * 2);
+
+// ✅ SHOULD: Trust type inference
+const numbers = [1, 2, 3];
+const doubled = numbers.map(n => n * 2);
+```
+
+### 10.6 Promise Chain Confusion
+
+```typescript
+// ❌ SHOULD NOT: Deep Promise chains with manual casting
+function fetchUser(id: string): Promise<User> {
+  return fetch(`/api/users/${id}`)
+    .then(r => r.json())
+    .then(d => d as User);
+}
+
+// ✅ SHOULD: async/await with validation
+async function fetchUser(id: string): Promise<User> {
+  const response = await fetch(`/api/users/${id}`);
+  const data: unknown = await response.json();
+  return userSchema.parse(data);
+}
+```
+
+### 10.7 Generic Over-Complexity
+
+```typescript
+// ❌ SHOULD NOT: Unnecessary generic complexity
+function getValue<T, K extends keyof T, V extends T[K]>(obj: T, key: K): V {
+  return obj[key] as V;
+}
+
+// ✅ SHOULD: Simplest generic that works
+function getValue<T, K extends keyof T>(obj: T, key: K): T[K] {
+  return obj[key];
+}
+```
+
+### 10.8 Inconsistent Nullability
+
+```typescript
+// ❌ MUST NOT: Mix nullability patterns
+interface User {
+  name: string | null;      // Required but nullable
+  email?: string;           // Optional
+  address: string | undefined; // Confusing!
+}
+
+// ✅ MUST: Consistent pattern
+interface User {
+  name: string | null;   // Required field, can be null
+  email?: string;        // Optional field, never null when present
+}
+```
+
+### 10.9 Compile-Time vs Runtime Confusion
+
+```typescript
+// ❌ MUST NOT: Assume types exist at runtime
+function isAdmin(user: User): boolean {
+  return user.role === 'admin'; // No runtime type check!
+}
+
+// ✅ MUST: Runtime validation for external data
+function isAdmin(user: unknown): user is Admin {
+  return typeof user === 'object' && user !== null &&
+         'role' in user && user.role === 'admin';
+}
+```
+
+### 10.10 Inconsistent Naming Style
+
+```typescript
+// ❌ MUST NOT: Mix naming conventions
+type userRole = 'admin' | 'user';     // camelCase type
+interface PRODUCT_DATA { Id: number; } // UPPER_CASE, PascalCase prop
+
+// ✅ MUST: Consistent TypeScript conventions
+type UserRole = 'admin' | 'user';      // PascalCase for types
+interface ProductData { id: number; }  // PascalCase interface, camelCase props
+```
+
+> **Reference**: See `typescript-antipatterns.md` for detailed explanations and detection patterns.

@@ -26,8 +26,8 @@
     {
       "name": "speckit-generator",
       "source": "./skills/speckit-generator",
-      "description": "Specification and task management with PLANS taxonomy, ADR-style decisions, SMART acceptance criteria, SEAMS clarification, /design command with tech-specific designer agents, git checkpoints, and session-memory hooks. Outputs to speckit/ directory.",
-      "version": "1.9.0"
+      "description": "Specification and task management with PLANS taxonomy, ADR-style decisions, SMART acceptance criteria, SEAMS clarification, /design command, anti-pattern detection (50 patterns across 5 tech stacks), /lint command, tech-specific designer agents, git checkpoints, and session-memory hooks. Outputs to speckit/ directory.",
+      "version": "2.0.0"
     },
     {
       "name": "streaming-output",

@@ -10,13 +10,16 @@ SpecKit Generator transforms specifications into executed implementations throug
 /speckit.init → /plan → /tasks → /design → /implement
                    ↑        ↑        ↑          ↓
                /analyze  /clarify /analyze   /revert
+                                     ↓
+                                  /lint
 ```
 
 ### Key Architecture
 
-- **Bootstrap Command**: `/speckit.init` is the only plugin-level command
-- **Project Commands**: 6 commands installed to `.claude/commands/` for project use
-- **Analysis Agents**: 5 specialized agents for deep analysis (reducing context pollution)
+- **Bootstrap Command**: `/speckit.init` is the only plugin-level command; `/speckit.lint` available for anti-pattern scanning
+- **Project Commands**: 7 commands installed to `.claude/commands/` for project use
+- **Analysis Agents**: 6 specialized agents for deep analysis (reducing context pollution)
+- **Anti-Pattern Detection**: 50 patterns across 5 tech stacks with severity levels and remediation
 
 ### Key Features
 
@@ -40,11 +43,12 @@ The skill is automatically available when the skill files are in the skills dire
 
 ## Commands
 
-### Plugin Command (Bootstrap)
+### Plugin Commands
 
 | Command | Purpose | When to Use |
 |---------|---------|-------------|
 | `/speckit.init` | Establish .claude/ foundation with git, install project commands | New projects or incomplete setup |
+| `/speckit.lint` | Scan code for anti-patterns with tech-specific detection | Before code review or after implementation |
 
 ### Project Commands (Installed by /speckit.init)
 
@@ -60,7 +64,7 @@ The skill is automatically available when the skill files are in the skills dire
 
 ## Analysis Agents
 
-SpecKit includes 5 specialized agents that handle deep analysis tasks, keeping the main conversation context clean.
+SpecKit includes 6 specialized agents that handle deep analysis tasks, keeping the main conversation context clean.
 
 | Agent | Purpose | Used By |
 |-------|---------|---------|
@@ -69,6 +73,7 @@ SpecKit includes 5 specialized agents that handle deep analysis tasks, keeping t
 | `coverage-mapper` | Map requirements → phases → tasks, identify gaps | /analyze, /tasks, /implement |
 | `smart-validator` | Validate acceptance criteria against SMART framework | /tasks |
 | `adr-validator` | Validate ADRs have required fields for their level | /plan |
+| `antipattern-detector` | Scan code for anti-patterns across 5 tech stacks | /lint, code review |
 
 ### Invoking Agents
 
@@ -202,6 +207,51 @@ SpecKit uses memory files to provide consistent guidelines across all commands.
 | `tailwind-shadcn.md` | tailwind.config.js |
 | `python.md` | setup.py, pyproject.toml, .py files |
 | `rust.md` | Cargo.toml, .rs files |
+
+## Anti-Pattern Detection
+
+SpecKit includes comprehensive anti-pattern detection across 5 tech stacks with 50 patterns total.
+
+### Pattern Categories
+
+| Tech Stack | Patterns | Examples |
+|------------|----------|----------|
+| TypeScript | AP-TS-01 to AP-TS-10 | `any` abuse, type assertion, stringly-typed |
+| Python | AP-PY-01 to AP-PY-10 | Mutable defaults, bare except, wildcard imports |
+| Rust | AP-RS-01 to AP-RS-10 | `.unwrap()` in library, blocking in async |
+| React/Next.js | AP-RN-01 to AP-RN-10 | Missing deps, prop drilling, index as key |
+| Tailwind/shadcn | AP-TW-01 to AP-TW-10 | Hardcoded colors, missing dark mode |
+
+### Severity Levels
+
+| Level | Description | Action |
+|-------|-------------|--------|
+| CRITICAL | Security vulnerability | Block merge |
+| HIGH | Significant bug risk | Require fix |
+| MEDIUM | Code smell | Recommend fix |
+| LOW | Style issue | Suggest fix |
+
+### Using /speckit.lint
+
+```bash
+# Scan all code
+/speckit.lint
+
+# Scan specific path with HIGH+ severity
+/speckit.lint src/ --severity=HIGH
+
+# Get detailed remediation guidance
+/speckit.lint src/api/ --fix
+```
+
+### Memory File Integration
+
+Each tech-specific memory file includes a compact anti-patterns section (~10-15 lines per pattern). Dedicated files in `assets/memory/antipatterns/` provide:
+
+- Detection patterns (regex/AST)
+- Detailed remediation steps
+- When exceptions are acceptable
+- Tool configuration (ESLint, Clippy, Ruff)
 
 ## Git Checkpoint System
 
@@ -453,7 +503,16 @@ Ensure you're running the full implement workflow. Post-implementation hooks onl
 
 ## Version History
 
-### v1.9.0 (Current)
+### v2.0.0 (Current)
+- **New**: Anti-pattern detection system with 50 patterns across 5 tech stacks
+- **New**: `/speckit.lint` command for code quality scanning
+- **New**: `antipattern-detector` agent for deep pattern analysis
+- Anti-pattern sections added to all tech-specific memory files
+- Dedicated anti-pattern reference files in `assets/memory/antipatterns/`
+- Severity levels (CRITICAL, HIGH, MEDIUM, LOW) with remediation guidance
+- Pattern codes (AP-TS, AP-PY, AP-RS, AP-RN, AP-TW) for tracking
+
+### v1.9.0
 - **New**: Added `/design` command for generating detailed task designs
 - `/design` invokes tech-specific designer agents (python-designer, typescript-designer, react-designer, rust-designer)
 - Updated workflow: `/plan → /tasks → /design → /implement`

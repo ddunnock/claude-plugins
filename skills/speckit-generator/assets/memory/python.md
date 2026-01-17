@@ -854,3 +854,147 @@ All Python code **MUST** align with these authoritative references:
 | PEP 484 | https://peps.python.org/pep-0484/ | Type hints |
 | Google Style Guide | https://google.github.io/styleguide/pyguide.html | Docstrings, naming |
 | OWASP Python Security | https://owasp.org/www-project-python-security/ | Security practices |
+
+---
+
+## 13. Anti-Patterns to Avoid
+
+These patterns indicate inexperience and **MUST NOT** appear in code:
+
+### 13.1 Mutable Default Arguments
+
+```python
+# ❌ MUST NOT: Mutable default is shared across calls
+def append_to_list(item, target=[]):
+    target.append(item)
+    return target
+
+# ✅ MUST: Use None sentinel
+def append_to_list(item, target=None):
+    if target is None:
+        target = []
+    target.append(item)
+    return target
+```
+
+### 13.2 Bare Except Clauses
+
+```python
+# ❌ MUST NOT: Catches SystemExit, KeyboardInterrupt
+try:
+    process_data()
+except:
+    pass
+
+# ✅ MUST: Catch specific exceptions
+try:
+    process_data()
+except (ValueError, TypeError) as e:
+    logger.warning(f"Invalid data: {e}")
+    raise
+```
+
+### 13.3 Using `type()` for Type Checking
+
+```python
+# ❌ SHOULD NOT: Doesn't handle inheritance
+if type(obj) == dict:
+    process_dict(obj)
+
+# ✅ SHOULD: Use isinstance for type checks
+if isinstance(obj, dict):
+    process_dict(obj)
+```
+
+### 13.4 String Concatenation in Loops
+
+```python
+# ❌ SHOULD NOT: O(n²) complexity
+result = ""
+for item in items:
+    result += str(item)
+
+# ✅ SHOULD: Use join for O(n) complexity
+result = "".join(str(item) for item in items)
+```
+
+### 13.5 Not Using Context Managers
+
+```python
+# ❌ MUST NOT: Resource leak on exception
+f = open("file.txt")
+data = f.read()
+f.close()
+
+# ✅ MUST: Context manager ensures cleanup
+with open("file.txt") as f:
+    data = f.read()
+```
+
+### 13.6 Wildcard Imports
+
+```python
+# ❌ MUST NOT: Pollutes namespace, hides dependencies
+from module import *
+
+# ✅ MUST: Explicit imports
+from module import specific_function, SpecificClass
+```
+
+### 13.7 Global State Mutation
+
+```python
+# ❌ MUST NOT: Hidden side effects
+_cache = {}
+def get_data(key):
+    if key not in _cache:
+        _cache[key] = fetch(key)  # Mutates global
+    return _cache[key]
+
+# ✅ MUST: Explicit dependency injection
+def get_data(key, cache: dict | None = None):
+    if cache is None:
+        return fetch(key)
+    if key not in cache:
+        cache[key] = fetch(key)
+    return cache[key]
+```
+
+### 13.8 Dynamic Code Evaluation
+
+**MUST NOT** use `eval()` or similar dynamic execution on untrusted input. Use `ast.literal_eval()` for safe literal parsing.
+
+### 13.9 Ignoring Return Values
+
+```python
+# ❌ SHOULD NOT: Silently ignores errors
+list.sort()  # Returns None, sorts in place
+sorted_list = list.sort()  # Bug: sorted_list is None
+
+# ✅ SHOULD: Understand mutating vs returning methods
+list.sort()  # Mutates in place
+sorted_list = sorted(list)  # Returns new sorted list
+```
+
+### 13.10 Deep Nesting
+
+```python
+# ❌ SHOULD NOT: Hard to follow logic
+def process(data):
+    if data:
+        if data.valid:
+            if data.items:
+                for item in data.items:
+                    if item.active:
+                        handle(item)
+
+# ✅ SHOULD: Early returns and extraction
+def process(data):
+    if not data or not data.valid or not data.items:
+        return
+    active_items = (item for item in data.items if item.active)
+    for item in active_items:
+        handle(item)
+```
+
+> **Reference**: See `python-antipatterns.md` for detailed explanations and detection patterns.

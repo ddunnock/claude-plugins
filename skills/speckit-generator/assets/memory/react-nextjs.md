@@ -724,3 +724,155 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 ```
+
+---
+
+## 11. Anti-Patterns to Avoid
+
+These patterns indicate inexperience and **MUST NOT** appear in code:
+
+### 11.1 Using `useEffect` for Derived State
+
+```tsx
+// ❌ MUST NOT: Effect for synchronous computation
+const [fullName, setFullName] = useState('');
+useEffect(() => {
+  setFullName(`${firstName} ${lastName}`);
+}, [firstName, lastName]);
+
+// ✅ MUST: Compute during render
+const fullName = `${firstName} ${lastName}`;
+// Or useMemo for expensive computations
+const fullName = useMemo(() => computeExpensive(firstName, lastName), [firstName, lastName]);
+```
+
+### 11.2 Missing Dependency Arrays
+
+```tsx
+// ❌ MUST NOT: Missing or incorrect dependencies
+useEffect(() => {
+  fetchUser(userId);
+}, []); // userId not in deps!
+
+// ✅ MUST: Include all dependencies
+useEffect(() => {
+  fetchUser(userId);
+}, [userId]);
+```
+
+### 11.3 Prop Drilling Through Many Layers
+
+```tsx
+// ❌ SHOULD NOT: Passing props through 5+ components
+<A user={user}><B user={user}><C user={user}><D user={user}><E user={user}/></D></C></B></A>
+
+// ✅ SHOULD: Use context or composition
+const UserContext = createContext<User | null>(null);
+// Or component composition
+<Layout><UserProfile /></Layout>
+```
+
+### 11.4 Inline Object/Array Props
+
+```tsx
+// ❌ SHOULD NOT: Creates new reference every render
+<Child style={{ color: 'red' }} items={[1, 2, 3]} />
+
+// ✅ SHOULD: Stable references
+const style = useMemo(() => ({ color: 'red' }), []);
+const items = useMemo(() => [1, 2, 3], []);
+<Child style={style} items={items} />
+```
+
+### 11.5 Not Using Server Components
+
+```tsx
+// ❌ SHOULD NOT: Client component for static content (Next.js 14+)
+'use client';
+export function StaticList({ items }) {
+  return <ul>{items.map(i => <li key={i.id}>{i.name}</li>)}</ul>;
+}
+
+// ✅ SHOULD: Server component by default
+export function StaticList({ items }) {
+  return <ul>{items.map(i => <li key={i.id}>{i.name}</li>)}</ul>;
+}
+```
+
+### 11.6 Fetching in `useEffect` (Next.js)
+
+```tsx
+// ❌ SHOULD NOT: Client-side fetch when server fetch works
+'use client';
+function ResourcePage({ id }) {
+  const [data, setData] = useState(null);
+  useEffect(() => { fetch(`/api/${id}`).then(r => r.json()).then(setData); }, [id]);
+}
+
+// ✅ SHOULD: Server component with direct data access
+async function ResourcePage({ params }) {
+  const data = await getResource(params.id);
+  return <ResourceView data={data} />;
+}
+```
+
+### 11.7 State for Form Inputs (Uncontrolled)
+
+```tsx
+// ❌ SHOULD NOT: Controlled when uncontrolled suffices
+const [name, setName] = useState('');
+<input value={name} onChange={e => setName(e.target.value)} />
+<button onClick={() => submit(name)}>Submit</button>
+
+// ✅ SHOULD: Uncontrolled with FormData
+<form action={submitAction}>
+  <input name="name" />
+  <button type="submit">Submit</button>
+</form>
+```
+
+### 11.8 Mutating State Directly
+
+```tsx
+// ❌ MUST NOT: Direct mutation
+const [items, setItems] = useState([1, 2, 3]);
+items.push(4); // Mutation!
+setItems(items);
+
+// ✅ MUST: Immutable updates
+setItems([...items, 4]);
+// Or with immer
+setItems(draft => { draft.push(4); });
+```
+
+### 11.9 Missing Keys or Using Index as Key
+
+```tsx
+// ❌ MUST NOT: Index as key for dynamic lists
+{items.map((item, index) => <Item key={index} {...item} />)}
+
+// ✅ MUST: Stable unique identifiers
+{items.map(item => <Item key={item.id} {...item} />)}
+```
+
+### 11.10 Business Logic in Components
+
+```tsx
+// ❌ SHOULD NOT: Complex logic mixed with UI
+function OrderForm() {
+  const calculateTotal = () => { /* 50 lines of business logic */ };
+  const validateOrder = () => { /* 30 lines */ };
+  return <form>...</form>;
+}
+
+// ✅ SHOULD: Separate concerns
+// lib/orders/calculateTotal.ts
+// lib/orders/validateOrder.ts
+function OrderForm() {
+  const total = calculateTotal(items);
+  const errors = validateOrder(order);
+  return <form>...</form>;
+}
+```
+
+> **Reference**: See `react-antipatterns.md` for detailed explanations and detection patterns.

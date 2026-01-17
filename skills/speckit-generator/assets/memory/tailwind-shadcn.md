@@ -872,3 +872,130 @@ export function ThemeToggle() {
   to { transform: translateY(0); opacity: 1; }
 }
 ```
+
+---
+
+## 14. Anti-Patterns to Avoid
+
+These patterns indicate inexperience and **MUST NOT** appear in code:
+
+### 14.1 Inline Styles Over Tailwind Classes
+
+```tsx
+// ❌ MUST NOT: Inline styles when Tailwind works
+<div style={{ marginTop: '16px', padding: '8px' }}>
+
+// ✅ MUST: Use Tailwind utilities
+<div className="mt-4 p-2">
+```
+
+### 14.2 Custom CSS for Common Patterns
+
+```css
+/* ❌ SHOULD NOT: Custom CSS for flex centering */
+.center-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+```
+
+```tsx
+// ✅ SHOULD: Use Tailwind utilities
+<div className="flex items-center justify-center">
+```
+
+### 14.3 Not Using Design Tokens
+
+```tsx
+// ❌ MUST NOT: Hardcoded colors
+<div className="bg-[#3b82f6] text-[#ffffff]">
+
+// ✅ MUST: Use semantic design tokens
+<div className="bg-primary text-primary-foreground">
+```
+
+### 14.4 Rebuilding shadcn Components
+
+```tsx
+// ❌ MUST NOT: Custom dialog from scratch
+function CustomDialog({ open, children }) {
+  return open ? <div className="fixed inset-0">{children}</div> : null;
+}
+
+// ✅ MUST: Use shadcn/ui primitives
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+<Dialog open={open}><DialogContent>{children}</DialogContent></Dialog>
+```
+
+### 14.5 Class String Concatenation
+
+```tsx
+// ❌ SHOULD NOT: Manual string concatenation
+<div className={"p-4 " + (isActive ? "bg-blue-500" : "bg-gray-500")}>
+
+// ✅ SHOULD: Use cn() utility
+import { cn } from "@/lib/utils";
+<div className={cn("p-4", isActive ? "bg-primary" : "bg-muted")}>
+```
+
+### 14.6 Desktop-First Responsive Design
+
+```tsx
+// ❌ SHOULD NOT: Desktop-first (override down)
+<div className="flex-row md:flex-col sm:flex-col">
+
+// ✅ SHOULD: Mobile-first (enhance up)
+<div className="flex-col md:flex-row">
+```
+
+### 14.7 Excessive Arbitrary Values
+
+```tsx
+// ❌ SHOULD NOT: Many arbitrary values indicate missing tokens
+<div className="w-[237px] h-[89px] mt-[13px] text-[17px]">
+
+// ✅ SHOULD: Use scale values or extend theme
+<div className="w-60 h-24 mt-3 text-lg">
+```
+
+### 14.8 Inconsistent Spacing
+
+```tsx
+// ❌ SHOULD NOT: Random spacing values
+<div className="p-3"><div className="p-5"><div className="p-7">
+
+// ✅ SHOULD: Consistent spacing scale
+<div className="p-4"><div className="p-4"><div className="p-4">
+```
+
+### 14.9 Not Using Component Variants
+
+```tsx
+// ❌ SHOULD NOT: Duplicating variant logic
+function Button({ variant }) {
+  return <button className={variant === 'primary' ? 'bg-blue-500' : 'bg-gray-500'} />
+}
+
+// ✅ SHOULD: Use cva for variants
+import { cva } from "class-variance-authority";
+const buttonVariants = cva("px-4 py-2 rounded", {
+  variants: {
+    variant: { primary: "bg-primary", secondary: "bg-secondary" }
+  }
+});
+```
+
+### 14.10 Ignoring Dark Mode
+
+```tsx
+// ❌ SHOULD NOT: Hardcoded light-only colors
+<div className="bg-white text-black">
+
+// ✅ SHOULD: Support dark mode
+<div className="bg-background text-foreground">
+// Or explicit dark variants
+<div className="bg-white dark:bg-gray-900 text-black dark:text-white">
+```
+
+> **Reference**: See `tailwind-antipatterns.md` for detailed explanations and detection patterns.

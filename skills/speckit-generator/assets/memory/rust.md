@@ -568,3 +568,135 @@ cargo test  # ts-rs generates on test run
 # Or explicitly:
 cargo run --bin generate-ts-bindings
 ```
+
+---
+
+## 9. Anti-Patterns to Avoid
+
+These patterns indicate inexperience and **MUST NOT** appear in code:
+
+### 9.1 Using `.unwrap()` in Library Code
+
+```rust
+// ❌ MUST NOT: Panics on None/Err
+let value = some_option.unwrap();
+let data = result.unwrap();
+
+// ✅ MUST: Propagate errors or handle explicitly
+let value = some_option.ok_or(MyError::MissingValue)?;
+let data = result.map_err(|e| MyError::from(e))?;
+```
+
+### 9.2 Ignoring Clippy Lints
+
+```rust
+// ❌ MUST NOT: Blanket allow without justification
+#[allow(clippy::all)]
+
+// ✅ MUST: Allow specific lints with justification
+#[allow(clippy::too_many_arguments)] // Builder pattern requires many params
+```
+
+### 9.3 `clone()` to Satisfy Borrow Checker
+
+```rust
+// ❌ SHOULD NOT: Cloning to avoid borrow issues
+let data = expensive_data.clone();
+process(&data);
+
+// ✅ SHOULD: Restructure to avoid unnecessary clones
+process(&expensive_data);
+// Or use Rc/Arc for shared ownership when needed
+```
+
+### 9.4 Using `String` When `&str` Suffices
+
+```rust
+// ❌ SHOULD NOT: Unnecessary allocation
+fn greet(name: String) { println!("Hello, {name}"); }
+
+// ✅ SHOULD: Accept borrowed data
+fn greet(name: &str) { println!("Hello, {name}"); }
+```
+
+### 9.5 Manual Error Type Definition
+
+```rust
+// ❌ SHOULD NOT: Manual From implementations
+enum MyError { Io(io::Error), Parse(ParseError) }
+impl From<io::Error> for MyError { ... }
+
+// ✅ SHOULD: Use thiserror for derive
+#[derive(Debug, thiserror::Error)]
+enum MyError {
+    #[error("IO error: {0}")]
+    Io(#[from] io::Error),
+    #[error("Parse error: {0}")]
+    Parse(#[from] ParseError),
+}
+```
+
+### 9.6 `Box<dyn Error>` Everywhere
+
+```rust
+// ❌ SHOULD NOT: Loses type information
+fn process() -> Result<(), Box<dyn Error>> { ... }
+
+// ✅ SHOULD: Concrete error types with anyhow for apps
+fn process() -> anyhow::Result<()> { ... }  // Application code
+fn process() -> Result<(), MyError> { ... } // Library code
+```
+
+### 9.7 Blocking in Async Context
+
+```rust
+// ❌ MUST NOT: Blocks the async runtime
+async fn read_file(path: &Path) -> String {
+    std::fs::read_to_string(path).unwrap()
+}
+
+// ✅ MUST: Use async equivalents
+async fn read_file(path: &Path) -> Result<String, io::Error> {
+    tokio::fs::read_to_string(path).await
+}
+```
+
+### 9.8 Not Using `?` Operator
+
+```rust
+// ❌ SHOULD NOT: Verbose match statements
+let value = match some_result {
+    Ok(v) => v,
+    Err(e) => return Err(e.into()),
+};
+
+// ✅ SHOULD: Use ? for error propagation
+let value = some_result?;
+```
+
+### 9.9 Mutable Global State
+
+```rust
+// ❌ MUST NOT: Global mutable state
+static mut COUNTER: i32 = 0;
+
+// ✅ MUST: Use proper synchronization
+use std::sync::atomic::{AtomicI32, Ordering};
+static COUNTER: AtomicI32 = AtomicI32::new(0);
+```
+
+### 9.10 Ignoring `must_use` Results
+
+```rust
+// ❌ MUST NOT: Ignoring important return values
+let _ = channel.send(message);  // Silent failure
+
+// ✅ MUST: Handle or explicitly acknowledge
+channel.send(message).expect("Channel closed");
+// Or log the error
+if let Err(e) = channel.send(message) {
+    tracing::warn!("Failed to send: {e}");
+}
+```
+
+> **Reference**: See `rust-antipatterns.md` for detailed explanations and detection patterns.
