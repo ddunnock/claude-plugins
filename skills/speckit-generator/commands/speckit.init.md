@@ -119,6 +119,7 @@ This will iterate until all Phase 1 tasks have verified acceptance criteria.
 ├── commands/           # Project commands (with hooks embedded)
 │   ├── plan.md         # Create implementation plans
 │   ├── tasks.md        # Generate tasks from plans
+│   ├── design.md       # Generate detailed task designs
 │   ├── analyze.md      # Read-only project audit
 │   ├── clarify.md      # Resolve spec ambiguities
 │   ├── implement.md    # Task execution with mandatory hooks
@@ -496,6 +497,50 @@ To enable autonomous task generation mode, install the ralph-loop plugin:
 
 ---
 
+### design.md Customization
+
+The `design.md` template has two sections that must be customized:
+
+**1. Memory Directives Section:**
+Same as analyze.md - replace placeholder with detected tech-specific directive files.
+
+**2. Tech Stack Detection Section:**
+Set the detected tech stack for designer agent selection:
+
+**Template placeholder:**
+```markdown
+**Detected for this project:** <!-- INIT: Python | TypeScript | React | Rust | Generic --> Generic
+```
+
+**Customized output based on detection:**
+
+| Detected Stack | Set Value |
+|----------------|-----------|
+| Python (.py files, requirements.txt, pyproject.toml) | Python |
+| TypeScript/JavaScript (tsconfig.json, package.json) | TypeScript |
+| React/Next.js (next.config.js, JSX/TSX imports) | React |
+| Rust (Cargo.toml, .rs files) | Rust |
+| None/Other | Generic |
+
+**Example for TypeScript + React project:**
+```markdown
+**Detected for this project:** React
+```
+
+**Example for Python project:**
+```markdown
+**Detected for this project:** Python
+```
+
+The tech stack value determines which designer agent is invoked:
+- `Python` → `python-designer` agent
+- `TypeScript` → `typescript-designer` agent
+- `React` → `react-designer` agent
+- `Rust` → `rust-designer` agent
+- `Generic` → `design-agent` (fallback)
+
+---
+
 ### implement.md Customization (Ralph Loop Integration)
 
 The `implement.md` template has a "Ralph Loop Mode" section that must be customized based on plugin detection.
@@ -714,11 +759,11 @@ speckit/              # Ready for specification artifacts
 
 ### Command Flow
 ```
-/plan → /tasks → /implement
-   ↓       ↓          ↓
-/analyze  /analyze   /revert
-   ↓                   ↓
-/clarify            /clarify
+/plan → /tasks → /design → /implement
+   ↓       ↓        ↓          ↓
+/analyze  /analyze /analyze   /revert
+   ↓                            ↓
+/clarify                     /clarify
 ```
 
 **Is this configuration correct, or would you like to adjust the memory files?**

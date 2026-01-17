@@ -4,12 +4,12 @@ Project-focused specification and task management system for Claude Code with gi
 
 ## Overview
 
-SpecKit Generator transforms specifications into executed implementations through a structured workflow. The plugin provides one bootstrap command (`/speckit.init`) that installs 6 project-local commands. Each command produces artifacts that require user review before proceeding, ensuring quality and alignment at every step.
+SpecKit Generator transforms specifications into executed implementations through a structured workflow. The plugin provides one bootstrap command (`/speckit.init`) that installs 7 project-local commands. Each command produces artifacts that require user review before proceeding, ensuring quality and alignment at every step.
 
 ```
-/speckit.init → /plan → /tasks → /implement
-                   ↑        ↑          ↓
-               /analyze  /clarify   /revert
+/speckit.init → /plan → /tasks → /design → /implement
+                   ↑        ↑        ↑          ↓
+               /analyze  /clarify /analyze   /revert
 ```
 
 ### Key Architecture
@@ -52,6 +52,7 @@ The skill is automatically available when the skill files are in the skills dire
 |---------|---------|-------------|
 | `/plan` | Create plans from specifications | After specs exist in speckit/ |
 | `/tasks` | Generate tasks from plans | After plans are approved |
+| `/design` | Generate detailed task designs | Before implementing complex tasks |
 | `/analyze` | Audit project consistency | Anytime for health check |
 | `/clarify` | SEAMS-enhanced ambiguity resolution | When specs have open questions |
 | `/implement` | Execute tasks with git checkpoint | When ready to implement |
@@ -90,7 +91,7 @@ This will:
 - Validate git is available (required for checkpoints)
 - Detect your tech stack
 - Create the `.claude/` directory structure
-- Install all 6 project commands (plan, tasks, analyze, clarify, implement, revert)
+- Install all 7 project commands (plan, tasks, design, analyze, clarify, implement, revert)
 - Install appropriate memory files
 - Set up `.gitignore` for speckit
 
@@ -118,7 +119,15 @@ Review the generated plan and approve before proceeding.
 
 Review the generated tasks with their acceptance criteria.
 
-### 5. Implement
+### 5. Design Complex Tasks (Optional)
+
+```bash
+/design "Task-001"
+```
+
+For complex tasks, generate detailed designs before implementing.
+
+### 6. Implement
 
 ```bash
 /implement "Phase 1"
@@ -130,7 +139,7 @@ This will:
 - Update task statuses with verification evidence
 - Update project-status.md with progress
 
-### 6. If Something Goes Wrong
+### 7. If Something Goes Wrong
 
 ```bash
 /revert
@@ -147,9 +156,10 @@ After initialization, your project will have:
 
 ```
 .claude/
-├── commands/              # Project-specific commands (all 6 installed)
+├── commands/              # Project-specific commands (all 7 installed)
 │   ├── plan.md            # Create implementation plans
 │   ├── tasks.md           # Generate tasks from plans
+│   ├── design.md          # Generate detailed task designs
 │   ├── analyze.md         # Read-only project audit
 │   ├── clarify.md         # Resolve spec ambiguities
 │   ├── implement.md       # Task execution with hooks
@@ -443,7 +453,13 @@ Ensure you're running the full implement workflow. Post-implementation hooks onl
 
 ## Version History
 
-### v1.8.0 (Current)
+### v1.9.0 (Current)
+- **New**: Added `/design` command for generating detailed task designs
+- `/design` invokes tech-specific designer agents (python-designer, typescript-designer, react-designer, rust-designer)
+- Updated workflow: `/plan → /tasks → /design → /implement`
+- 7 project commands now installed by `/speckit.init`
+
+### v1.8.0
 - **Breaking Change**: Specification artifacts now output to `speckit/` directory at project root instead of `.claude/resources/`
 - This avoids Claude Code's Edit tool restrictions on `.claude/` paths
 - New directory structure: `speckit/spec.md`, `speckit/plan.md`, `speckit/*-tasks.md`, `speckit/plans/`, `speckit/designs/`
@@ -491,7 +507,7 @@ Ensure you're running the full implement workflow. Post-implementation hooks onl
 - Tech-stack aware directive loading via INIT customization
 
 ### v1.4.0
-- `/speckit.init` now installs all 6 commands as project-local `/plan`, `/tasks`, `/analyze`, `/clarify`, `/implement`, `/revert`
+- `/speckit.init` now installs all commands as project-local `/plan`, `/tasks`, `/analyze`, `/clarify`, `/implement`, `/revert`
 - Added `handoffs` YAML frontmatter to all command templates for command flow navigation
 - Added `$ARGUMENTS` user input support to all command templates
 
