@@ -15,7 +15,7 @@ Establish the `.claude/` foundation and `speckit/` directory with appropriate me
 6. **Create structure** - Build .claude/ directory structure and speckit/ for specifications
 7. **Copy memory files** - Select and copy based on tech stack
 8. **Initialize project-status.md** - Create status tracking file
-9. **Install project commands** - Copy all 6 commands (plan, tasks, analyze, clarify, implement, revert) with customizations based on detected stack and plugins
+9. **Install project commands** - Copy all 7 commands (plan, tasks, design, analyze, clarify, implement, revert) with customizations based on detected stack and plugins
 10. **Ensure .gitignore** - Create or update .gitignore for project safety
 11. **Generate project context** - Create project-context.md
 
@@ -658,6 +658,7 @@ After initialization, you MUST:
 ├── commands/
 │   ├── plan.md
 │   ├── tasks.md
+│   ├── design.md
 │   ├── analyze.md
 │   ├── clarify.md
 │   ├── implement.md
@@ -696,10 +697,11 @@ speckit/              # Ready for specification artifacts
 | Command | Description | Handoffs To |
 |---------|-------------|-------------|
 | /plan | Create implementation plans | /analyze, /clarify, /tasks |
-| /tasks | Generate tasks from plans | /analyze, /implement |
+| /tasks | Generate tasks from plans | /analyze, /design, /implement |
+| /design | Generate detailed task designs | /implement, /analyze |
 | /analyze | Read-only project audit | /clarify, /plan |
 | /clarify | Resolve spec ambiguities | /analyze, /plan |
-| /implement | Task execution with checkpoints | /revert, /analyze |
+| /implement | Task execution with checkpoints | /revert, /analyze, /design |
 | /revert | Checkpoint revert with analysis | /clarify, /plan, /implement |
 
 ### Status Tracking
