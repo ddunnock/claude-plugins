@@ -3,7 +3,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Bash",
+        "matcher": {"tools": ["Bash"]},
         "hooks": [
           {
             "type": "command",
@@ -13,7 +13,7 @@
         ]
       },
       {
-        "matcher": "Read|Glob|Grep",
+        "matcher": {"tools": ["Read", "Glob", "Grep"]},
         "hooks": [
           {
             "type": "command",
@@ -23,7 +23,7 @@
         ]
       },
       {
-        "matcher": "Bash",
+        "matcher": {"tools": ["Bash"]},
         "hooks": [
           {
             "type": "command",
@@ -35,7 +35,7 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "Edit|Write",
+        "matcher": {"tools": ["Edit", "Write"]},
         "hooks": [
           {
             "type": "command",
@@ -47,7 +47,7 @@
     ],
     "Stop": [
       {
-        "matcher": "*",
+        "matcher": {},
         "hooks": [
           {
             "type": "prompt",
