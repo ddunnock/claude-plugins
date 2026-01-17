@@ -15,7 +15,7 @@ Establish the `.claude/` foundation and `speckit/` directory with appropriate me
 6. **Create structure** - Build .claude/ directory structure and speckit/ for specifications
 7. **Copy memory files** - Select and copy based on tech stack
 8. **Initialize project-status.md** - Create status tracking file
-9. **Install project commands** - Copy all 7 commands (plan, tasks, design, analyze, clarify, implement, revert) with customizations based on detected stack and plugins
+9. **Install project commands** - Copy all 8 commands (plan, tasks, design, analyze, clarify, implement, revert, lint) with customizations based on detected stack and plugins
 10. **Ensure .gitignore** - Create or update .gitignore for project safety
 11. **Generate project context** - Create project-context.md
 
@@ -123,7 +123,8 @@ This will iterate until all Phase 1 tasks have verified acceptance criteria.
 │   ├── analyze.md      # Read-only project audit
 │   ├── clarify.md      # Resolve spec ambiguities
 │   ├── implement.md    # Task execution with mandatory hooks
-│   └── revert.md       # Checkpoint revert with analysis
+│   ├── revert.md       # Checkpoint revert with analysis
+│   └── lint.md         # Anti-pattern detection and remediation
 ├── memory/             # constitution.md + tech-specific files
 │   ├── MANIFEST.md
 │   └── project-status.md  # Implementation progress tracking
@@ -607,6 +608,46 @@ Then re-run `/speckit.init` to update this command.
 
 ---
 
+### lint.md Customization
+
+The `lint.md` template has two sections that must be customized:
+
+**1. Memory Directives Section:**
+Same as analyze.md - replace placeholder with detected tech-specific directive files.
+
+**2. Tech Stack Detection Section:**
+Set the detected tech stack for pattern selection:
+
+**Template placeholder:**
+```markdown
+**Detected for this project:** <!-- INIT: TypeScript | Python | Rust | React | Tailwind | Multiple --> Generic
+```
+
+**Customized output based on detection:**
+
+| Detected Stack | Set Value |
+|----------------|-----------|
+| TypeScript/JavaScript only | TypeScript |
+| Python only | Python |
+| Rust only | Rust |
+| React/Next.js (with or without TypeScript) | React |
+| Multiple stacks detected | Multiple |
+| None/Other | Generic |
+
+**Example for TypeScript + React project:**
+```markdown
+**Detected for this project:** Multiple
+```
+
+**Example for Python-only project:**
+```markdown
+**Detected for this project:** Python
+```
+
+The tech stack value determines which anti-pattern categories are prioritized during scanning.
+
+---
+
 ## MANDATORY: .gitignore Setup (Step 10)
 
 ### Check and Create .gitignore
@@ -707,7 +748,8 @@ After initialization, you MUST:
 │   ├── analyze.md
 │   ├── clarify.md
 │   ├── implement.md
-│   └── revert.md
+│   ├── revert.md
+│   └── lint.md
 ├── memory/
 │   └── project-status.md (initialized)
 ├── templates/
@@ -746,8 +788,9 @@ speckit/              # Ready for specification artifacts
 | /design | Generate detailed task designs | /implement, /analyze |
 | /analyze | Read-only project audit | /clarify, /plan |
 | /clarify | Resolve spec ambiguities | /analyze, /plan |
-| /implement | Task execution with checkpoints | /revert, /analyze, /design |
+| /implement | Task execution with checkpoints | /revert, /analyze, /design, /lint |
 | /revert | Checkpoint revert with analysis | /clarify, /plan, /implement |
+| /lint | Anti-pattern detection | /implement |
 
 ### Status Tracking
 - project-status.md initialized and ready for /implement updates
@@ -761,9 +804,9 @@ speckit/              # Ready for specification artifacts
 ```
 /plan → /tasks → /design → /implement
    ↓       ↓        ↓          ↓
-/analyze  /analyze /analyze   /revert
+/analyze  /analyze /analyze   /lint
    ↓                            ↓
-/clarify                     /clarify
+/clarify                     /revert
 ```
 
 **Is this configuration correct, or would you like to adjust the memory files?**

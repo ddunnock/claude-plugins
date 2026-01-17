@@ -4,7 +4,7 @@ Project-focused specification and task management system for Claude Code with gi
 
 ## Overview
 
-SpecKit Generator transforms specifications into executed implementations through a structured workflow. The plugin provides one bootstrap command (`/speckit.init`) that installs 7 project-local commands. Each command produces artifacts that require user review before proceeding, ensuring quality and alignment at every step.
+SpecKit Generator transforms specifications into executed implementations through a structured workflow. The plugin provides one bootstrap command (`/speckit.init`) that installs 8 project-local commands. Each command produces artifacts that require user review before proceeding, ensuring quality and alignment at every step.
 
 ```
 /speckit.init → /plan → /tasks → /design → /implement
@@ -16,8 +16,8 @@ SpecKit Generator transforms specifications into executed implementations throug
 
 ### Key Architecture
 
-- **Bootstrap Command**: `/speckit.init` is the only plugin-level command; `/speckit.lint` available for anti-pattern scanning
-- **Project Commands**: 7 commands installed to `.claude/commands/` for project use
+- **Bootstrap Command**: `/speckit.init` is the only plugin-level command
+- **Project Commands**: 8 commands installed to `.claude/commands/` for project use (plan, tasks, design, analyze, clarify, implement, revert, lint)
 - **Analysis Agents**: 6 specialized agents for deep analysis (reducing context pollution)
 - **Anti-Pattern Detection**: 50 patterns across 5 tech stacks with severity levels and remediation
 
@@ -48,7 +48,6 @@ The skill is automatically available when the skill files are in the skills dire
 | Command | Purpose | When to Use |
 |---------|---------|-------------|
 | `/speckit.init` | Establish .claude/ foundation with git, install project commands | New projects or incomplete setup |
-| `/speckit.lint` | Scan code for anti-patterns with tech-specific detection | Before code review or after implementation |
 
 ### Project Commands (Installed by /speckit.init)
 
@@ -61,6 +60,7 @@ The skill is automatically available when the skill files are in the skills dire
 | `/clarify` | SEAMS-enhanced ambiguity resolution | When specs have open questions |
 | `/implement` | Execute tasks with git checkpoint | When ready to implement |
 | `/revert` | Revert to checkpoint with analysis | When implementation fails |
+| `/lint` | Scan code for anti-patterns | Before code review or after implementation |
 
 ## Analysis Agents
 
@@ -96,7 +96,7 @@ This will:
 - Validate git is available (required for checkpoints)
 - Detect your tech stack
 - Create the `.claude/` directory structure
-- Install all 7 project commands (plan, tasks, design, analyze, clarify, implement, revert)
+- Install all 8 project commands (plan, tasks, design, analyze, clarify, implement, revert, lint)
 - Install appropriate memory files
 - Set up `.gitignore` for speckit
 
@@ -161,14 +161,15 @@ After initialization, your project will have:
 
 ```
 .claude/
-├── commands/              # Project-specific commands (all 7 installed)
+├── commands/              # Project-specific commands (all 8 installed)
 │   ├── plan.md            # Create implementation plans
 │   ├── tasks.md           # Generate tasks from plans
 │   ├── design.md          # Generate detailed task designs
 │   ├── analyze.md         # Read-only project audit
 │   ├── clarify.md         # Resolve spec ambiguities
 │   ├── implement.md       # Task execution with hooks
-│   └── revert.md          # Checkpoint revert with analysis
+│   ├── revert.md          # Checkpoint revert with analysis
+│   └── lint.md            # Anti-pattern detection
 ├── memory/                # Constitution + tech-specific guidelines
 │   ├── constitution.md    # Core principles
 │   ├── MANIFEST.md        # Memory file index
@@ -231,17 +232,17 @@ SpecKit includes comprehensive anti-pattern detection across 5 tech stacks with 
 | MEDIUM | Code smell | Recommend fix |
 | LOW | Style issue | Suggest fix |
 
-### Using /speckit.lint
+### Using /lint
 
 ```bash
 # Scan all code
-/speckit.lint
+/lint
 
 # Scan specific path with HIGH+ severity
-/speckit.lint src/ --severity=HIGH
+/lint src/ --severity=HIGH
 
 # Get detailed remediation guidance
-/speckit.lint src/api/ --fix
+/lint src/api/ --fix
 ```
 
 ### Memory File Integration
@@ -503,7 +504,12 @@ Ensure you're running the full implement workflow. Post-implementation hooks onl
 
 ## Version History
 
-### v2.0.0 (Current)
+### v2.0.1 (Current)
+- **Changed**: `/lint` is now a project-local command (was `/speckit.lint` plugin command)
+- `/lint` template is copied and customized per project by `/speckit.init`
+- 8 project commands now installed (was 7)
+
+### v2.0.0
 - **New**: Anti-pattern detection system with 50 patterns across 5 tech stacks
 - **New**: `/speckit.lint` command for code quality scanning
 - **New**: `antipattern-detector` agent for deep pattern analysis

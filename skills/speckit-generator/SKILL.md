@@ -1,17 +1,17 @@
 ---
 name: speckit-generator
 description: >
-  Project-focused specification and task management system with 7 individual commands.
+  Project-focused specification and task management system. Run /speckit.init to install
+  8 project-local commands: /plan, /tasks, /design, /analyze, /clarify, /implement, /revert, /lint.
   Each command MUST be invoked separately and requires user approval before proceeding.
-  Commands: /speckit.init, /speckit.plan, /speckit.tasks, /speckit.analyze, /speckit.clarify,
-  /speckit.implement, /speckit.revert. NEVER chain commands automatically - each produces output
-  that requires user review. Use /speckit.plan when user wants to create plans from specs.
-  Use /speckit.tasks only AFTER user has approved plans. Git checkpoints enable safe revert.
+  NEVER chain commands automatically - each produces output that requires user review.
+  Use /plan when user wants to create plans from specs. Use /tasks only AFTER user has approved plans.
+  Git checkpoints enable safe revert.
 ---
 
 # SpecKit Generator
 
-Project-focused specification management with 7 commands that work together to transform specifications into executed implementations with git checkpoint safety.
+Project-focused specification management with 1 bootstrap command (/speckit.init) that installs 8 project-local commands to transform specifications into executed implementations with git checkpoint safety.
 
 ## Table of Contents
 - [Critical Workflow Rules](#critical-workflow-rules)
@@ -110,15 +110,24 @@ init → plan → tasks → implement
 
 ## Commands
 
+### Plugin Command (Global)
+
 | Command | Purpose | When to Use |
 |---------|---------|-------------|
-| `/speckit.init` | Establish .claude/ foundation with git | New projects or incomplete setup |
-| `/speckit.plan` | Create plans from specifications | After specs exist in resources/ |
-| `/speckit.tasks` | Generate tasks from plans | After plans are approved |
-| `/speckit.analyze` | Audit project consistency | Anytime for health check |
-| `/speckit.clarify` | Resolve ambiguities | When specs have open questions |
-| `/speckit.implement` | Execute tasks with git checkpoint | When ready to implement |
-| `/speckit.revert` | Revert to checkpoint with analysis | When implementation fails |
+| `/speckit.init` | Establish .claude/ foundation with git, install project commands | New projects or incomplete setup |
+
+### Project Commands (Installed by /speckit.init)
+
+| Command | Purpose | When to Use |
+|---------|---------|-------------|
+| `/plan` | Create plans from specifications | After specs exist in speckit/ |
+| `/tasks` | Generate tasks from plans | After plans are approved |
+| `/design` | Generate detailed task designs | Before implementing complex tasks |
+| `/analyze` | Audit project consistency | Anytime for health check |
+| `/clarify` | Resolve ambiguities | When specs have open questions |
+| `/implement` | Execute tasks with git checkpoint | When ready to implement |
+| `/revert` | Revert to checkpoint with analysis | When implementation fails |
+| `/lint` | Scan code for anti-patterns | Before code review or after implementation |
 
 ---
 

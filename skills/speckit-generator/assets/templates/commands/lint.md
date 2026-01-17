@@ -30,24 +30,45 @@ Scan code for anti-patterns that indicate inexperience or potential bugs, provid
 
 ```bash
 # Scan current directory for all anti-patterns
-/speckit.lint
+/lint
 
 # Scan src/ for HIGH severity only
-/speckit.lint src/ --severity=HIGH
+/lint src/ --severity=HIGH
 
 # Scan specific file with remediation guidance
-/speckit.lint src/api/handler.ts --fix
+/lint src/api/handler.ts --fix
 
 # Scan with specific tech stack
-/speckit.lint components/ --tech=react
+/lint components/ --tech=react
 
 # Quick summary only
-/speckit.lint --summary
+/lint --summary
 ```
 
 ---
 
+## Memory Directives
+
+<!-- INIT: Replace this section with the actual directive files for this project -->
+
+Load these directive files for anti-pattern context:
+
+**Always loaded:**
+- `constitution.md` - Core principles, design patterns
+- `testing.md` - Test coverage requirements
+- `security.md` - Security requirements
+
+**Project-specific:**
+<!-- INIT: List only the tech-specific files detected for this project -->
+- `[DETECTED_TECH_FILE].md` - [Description]
+
+<!-- INIT: Remove all HTML comments from final output -->
+
+---
+
 ## Tech Stack Detection
+
+<!-- INIT: Set detected tech stack based on project analysis -->
 
 | File Pattern | Tech Stack | Patterns |
 |--------------|------------|----------|
@@ -56,6 +77,8 @@ Scan code for anti-patterns that indicate inexperience or potential bugs, provid
 | `*.rs` | Rust | AP-RS-01 through AP-RS-10 |
 | `*.jsx`, `app/`, `pages/` | React/Next.js | AP-RN-01 through AP-RN-10 |
 | `tailwind.config.*` | Tailwind/shadcn | AP-TW-01 through AP-TW-10 |
+
+**Detected for this project:** <!-- INIT: TypeScript | Python | Rust | React | Tailwind | Multiple --> Generic
 
 **Note**: Multiple tech stacks can be detected for a project. Each file is scanned with relevant patterns.
 
@@ -231,7 +254,7 @@ function processData(data: DataResponse): string[] {
 }
 ```
 
-**Reference**: See `memory/antipatterns/typescript-antipatterns.md` §AP-TS-01
+**Reference**: See `.claude/memory/antipatterns/typescript-antipatterns.md` §AP-TS-01
 ```
 
 ---
@@ -270,11 +293,11 @@ except:
 
 ### With /implement
 
-Run `/speckit.lint` after completing implementation:
+Run `/lint` after completing implementation:
 
 ```bash
 /implement TASK-001
-/speckit.lint src/ --severity=HIGH
+/lint src/ --severity=HIGH
 ```
 
 ### With Code Review
@@ -282,17 +305,8 @@ Run `/speckit.lint` after completing implementation:
 Include anti-pattern scan in PR review process:
 
 ```bash
-/speckit.lint --summary  # Quick overview
-/speckit.lint --fix      # Detailed findings with fixes
-```
-
-### Automated Checks
-
-Add to CI pipeline:
-
-```yaml
-- name: Anti-pattern scan
-  run: claude /speckit.lint src/ --severity=HIGH
+/lint --summary  # Quick overview
+/lint --fix      # Detailed findings with fixes
 ```
 
 ---
@@ -301,20 +315,5 @@ Add to CI pipeline:
 
 | Command | Purpose |
 |---------|---------|
-| `/speckit.analyze` | Validate spec quality and SMART criteria |
-| `/speckit.implement` | Implement tasks with quality checks |
-
----
-
-## Antipattern Reference
-
-Full anti-pattern documentation available in:
-- `${CLAUDE_PLUGIN_ROOT}/skills/speckit-generator/assets/memory/antipatterns/`
-
-Each file contains:
-- Detection patterns (regex/AST)
-- Severity classification
-- Why the pattern is wrong
-- Multiple remediation approaches
-- When exceptions are acceptable
-- Tool configuration (ESLint, Clippy, Ruff)
+| `/analyze` | Validate spec quality and SMART criteria |
+| `/implement` | Implement tasks with quality checks |
