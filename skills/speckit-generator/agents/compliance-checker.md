@@ -135,6 +135,96 @@ Rules are extracted from memory files using these patterns:
 **Recommendation**: [Fix CRITICAL/HIGH before proceeding | Ready to proceed]
 ```
 
+## Wiring Verification
+
+Beyond checking that code exists, verify that components are actually **wired together** and functional. Wiring verification ensures implementations aren't just present but connected.
+
+### Wiring Verification Levels
+
+| Level | Check | Question |
+|-------|-------|----------|
+| 1. Exists | File/function present | Does the code exist? |
+| 2. Substantive | Real implementation | Is it more than a stub? |
+| 3. **Wired** | Connected to system | Is it called/imported? |
+| 4. Functional | Actually works | Does it pass tests? |
+
+### Wiring Patterns by Layer
+
+#### Component → API Wiring
+
+| Pattern | Verification | Command |
+|---------|--------------|---------|
+| Component calls API | Import statement + usage | `grep -l "import.*api" && grep "api\." src/components/` |
+| Fetch/axios usage | HTTP call in component | `grep -rn "fetch\|axios" src/components/` |
+| API client instantiation | Client created and used | `grep -A5 "createClient\|new.*Client"` |
+
+#### API → Database Wiring
+
+| Pattern | Verification | Command |
+|---------|--------------|---------|
+| Handler queries DB | DB call in route handler | `grep -rn "prisma\|db\.\|query(" src/api/` |
+| ORM model usage | Model import + method call | `grep -A10 "from.*models" src/api/` |
+| Transaction boundaries | Transaction wrapper present | `grep -rn "transaction\|beginTransaction"` |
+
+#### Form → Handler Wiring
+
+| Pattern | Verification | Command |
+|---------|--------------|---------|
+| onSubmit connected | Handler assigned to form | `grep -rn "onSubmit.*=" src/components/` |
+| Form action URL | Action points to valid endpoint | `grep -rn "action=\|formAction"` |
+| Validation wired | Validator called before submit | `grep -B5 "onSubmit" \| grep "validate"` |
+
+#### State → Render Wiring
+
+| Pattern | Verification | Command |
+|---------|--------------|---------|
+| State used in JSX | State variable in return | `grep -A20 "useState\|useReducer" \| grep "return"` |
+| Redux connected | mapStateToProps/useSelector | `grep -rn "useSelector\|mapStateToProps"` |
+| Context consumed | useContext with render | `grep -A10 "useContext" \| grep "return"` |
+
+### Wiring Verification Output
+
+```markdown
+## Wiring Verification Results
+
+**Scope**: [files/directories checked]
+**Total Connections Checked**: [N]
+
+### Connection Status
+
+| Source | Target | Status | Evidence |
+|--------|--------|--------|----------|
+| UserProfile.tsx | /api/user | ✓ Wired | `fetch('/api/user')` at L:45 |
+| /api/user | prisma.user | ✓ Wired | `prisma.user.findUnique` at L:12 |
+| LoginForm.tsx | handleLogin | ✓ Wired | `onSubmit={handleLogin}` at L:30 |
+| CartContext | CartPage | ✗ NOT WIRED | Context created but never consumed |
+
+### Unwired Components
+
+| Component | Expected Connection | Issue |
+|-----------|---------------------|-------|
+| NotificationBell.tsx | /api/notifications | No API call found |
+| SettingsForm.tsx | handleSettings | onSubmit handler empty |
+
+### Recommendations
+
+1. **CartContext** - Add `useContext(CartContext)` to CartPage.tsx
+2. **NotificationBell** - Implement fetch to /api/notifications
+3. **SettingsForm** - Wire handleSettings to onSubmit
+```
+
+### Wiring Anti-Patterns
+
+| Anti-Pattern | Detection | Severity |
+|--------------|-----------|----------|
+| Orphan component | Exported but never imported | MEDIUM |
+| Dead handler | Function defined but never called | MEDIUM |
+| Unconnected state | useState but value never rendered | HIGH |
+| API without consumer | Endpoint exists, no frontend call | HIGH |
+| Form without handler | Form element, no onSubmit | HIGH |
+
+---
+
 ## Integration Points
 
 - **analyze.md**: Run as part of Directive Alignment detection pass

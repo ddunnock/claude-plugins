@@ -326,3 +326,34 @@ For identical inputs, output must be identical:
 # Show only CRITICAL/HIGH
 /speckit.analyze --severity high
 ```
+
+---
+
+## Continuation Format
+
+After command completion, always present the next logical step using this standardized format:
+
+```markdown
+## ▶ Next Up
+**{command}: {name}** — {one-line description}
+`/{command}`
+<sub>`/clear` first → fresh context window</sub>
+```
+
+### Next Step Logic for /analyze
+
+| Completion State | Next Command | Description |
+|------------------|--------------|-------------|
+| No blocking issues | `/implement` | Proceed with implementation |
+| CRITICAL issues found | Fix issues, re-run `/analyze` | Resolve blockers first |
+| Ambiguities detected | `/clarify` | Resolve spec ambiguities |
+| Coverage gaps | `/tasks` | Generate missing tasks |
+
+### Example Output
+
+```markdown
+## ▶ Next Up
+**implement: Start Phase 1** — Execute tasks with verification and compliance checks
+`/implement "Phase 1"`
+<sub>`/clear` first → fresh context window</sub>
+```

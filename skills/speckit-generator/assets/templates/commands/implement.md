@@ -219,6 +219,69 @@ Before executing, present the plan:
 
 ---
 
+## Deviation Rules
+
+When unexpected work arises during implementation, follow these rules to decide whether to proceed autonomously or ask for approval.
+
+### The 4 Deviation Rules
+
+| Rule | Trigger | Action | Permission |
+|------|---------|--------|------------|
+| **Rule 1** | Bug discovered during implementation | Auto-fix immediately | No permission needed |
+| **Rule 2** | Missing critical functionality blocking task | Auto-add the minimum needed | No permission needed |
+| **Rule 3** | Blocking issue (test failure, lint error) | Auto-fix to unblock | No permission needed |
+| **Rule 4** | Architectural change required | **ASK** before proceeding | Requires approval |
+
+### Rule Priority
+
+**Rule 4 trumps Rules 1-3.** If a bug fix or blocking issue would require architectural changes, ask first.
+
+### What Counts as Architectural?
+
+| Architectural (Rule 4 - ASK) | Not Architectural (Rules 1-3 - AUTO) |
+|------------------------------|--------------------------------------|
+| New dependency added | Import reorganization |
+| Database schema change | Query optimization |
+| API contract change | Internal refactoring |
+| New service/component | Bug fix in existing code |
+| Authentication flow change | Missing null check |
+| State management restructure | Type annotation fix |
+
+### Deviation Documentation
+
+**Every deviation MUST be documented.** After applying Rules 1-3 or receiving approval for Rule 4, add an entry:
+
+```markdown
+### Deviation Log
+
+| Rule | Finding | Fix | Files | Verification |
+|------|---------|-----|-------|--------------|
+| R1 | Null pointer in user lookup | Added null check | src/user.ts:45 | Tests pass |
+| R2 | Missing validation for email | Added email validator | src/validate.ts | `npm test` ✓ |
+| R3 | Lint error blocking build | Fixed unused import | src/api.ts:12 | `npm run lint` ✓ |
+| R4 | Needed Redis for caching | Added Redis dependency | package.json, src/cache.ts | User approved |
+```
+
+### Deviation Summary Format
+
+At end of implementation session, include deviation summary:
+
+```markdown
+## Deviations This Session
+
+**Total**: [N] deviations
+- Rule 1 (bugs): [count]
+- Rule 2 (missing): [count]
+- Rule 3 (blocking): [count]
+- Rule 4 (architectural): [count]
+
+[If any Rule 4:]
+### Architectural Changes Made (Approved)
+- [Description of change and approval context]
+```
+
+---
+
 ## Workflow (After Pre-Hooks Pass)
 
 ### Phase 1: Execute Tasks
@@ -237,6 +300,83 @@ For each task:
    - Run test cases from design (if provided)
 
 3. **Update status**: PENDING → IN_PROGRESS → COMPLETED
+
+### Checkpoint Taxonomy
+
+Use checkpoints to pause execution for human involvement. **Core principle: If Claude CAN automate it, Claude MUST automate it.**
+
+#### Checkpoint Types
+
+| Type | Frequency | Purpose | Example |
+|------|-----------|---------|---------|
+| `checkpoint:human-verify` | ~90% | Claude automates, human confirms result | "Verify the UI looks correct" |
+| `checkpoint:decision` | ~9% | Human makes a choice that affects next steps | "Choose between approach A or B" |
+| `checkpoint:human-action` | ~1% | Truly unavoidable manual step | "Enter 2FA code", "Sign document" |
+
+#### When to Use Each Type
+
+**checkpoint:human-verify** (Most Common)
+- Visual confirmation (UI looks right, layout correct)
+- Functional testing (click through, test workflow)
+- External service verification (email received, webhook fired)
+
+**checkpoint:decision**
+- Architecture choices not in plan
+- Feature scope decisions
+- Priority conflicts between tasks
+
+**checkpoint:human-action** (Rare - Avoid If Possible)
+- Physical actions (hardware, signing)
+- Authentication requiring human presence (biometrics, 2FA)
+- Legal/compliance approvals
+
+#### Checkpoint Display Formats
+
+```markdown
+## ⏸️ checkpoint:human-verify
+
+**Task**: TASK-005 - User Profile Page
+**What Claude Did**: Implemented profile page with avatar, bio, and settings
+
+### Please Verify
+- [ ] Profile page renders correctly at `/profile`
+- [ ] Avatar upload works
+- [ ] Bio text saves properly
+
+Say "verified" or "looks good" to continue, or describe issues.
+```
+
+```markdown
+## 🤔 checkpoint:decision
+
+**Task**: TASK-007 - Caching Strategy
+**Context**: Plan didn't specify caching approach
+
+### Options
+| Option | Trade-off |
+|--------|-----------|
+| A. Redis | More setup, better for distributed |
+| B. In-memory | Simple, single-instance only |
+| C. None | Skip caching for now |
+
+Which approach? (A/B/C)
+```
+
+```markdown
+## 🔐 checkpoint:human-action
+
+**Task**: TASK-012 - Deploy to Production
+**Reason**: Requires 2FA approval in deployment dashboard
+
+### Required Action
+1. Go to https://deploy.example.com/approve
+2. Enter your 2FA code
+3. Click "Approve Deployment"
+
+Say "done" when complete.
+```
+
+---
 
 ### Phase 2: Gate at Boundaries
 
@@ -388,6 +528,81 @@ Update with:
 
 ---
 
+## Authentication Gates
+
+When a CLI command returns an authentication error, treat it as a **gate** (not a failure) and handle it dynamically.
+
+### Auth Error Detection Patterns
+
+| Pattern | Tool/Service | Example Error |
+|---------|--------------|---------------|
+| `401 Unauthorized` | REST APIs | HTTP status code |
+| `403 Forbidden` | Cloud APIs | Permission denied |
+| `not logged in` | CLI tools | `gh: not logged in` |
+| `authentication required` | Git/SSH | `git push` failures |
+| `token expired` | OAuth/JWT | Session timeout |
+| `EACCES` | File/Cloud | Permission errors |
+| `credentials not found` | AWS/GCP/Azure | Missing config |
+
+### Dynamic Checkpoint Creation
+
+When auth error detected:
+
+```markdown
+## 🔐 Authentication Gate
+
+**Task**: [CURRENT_TASK]
+**Command**: `[FAILED_COMMAND]`
+**Error**: [AUTH_ERROR_MESSAGE]
+
+### What Happened
+A command requires authentication that Claude cannot perform autonomously.
+
+### Required Action
+1. Run the following command manually:
+   ```
+   [AUTH_COMMAND]
+   ```
+2. Complete the authentication flow
+3. Say "done" or "authenticated" to continue
+
+### After Authentication
+Claude will:
+1. Verify auth works: `[VERIFY_COMMAND]`
+2. Retry original command
+3. Continue with task execution
+```
+
+### Auth Commands by Service
+
+| Service | Auth Command | Verify Command |
+|---------|--------------|----------------|
+| GitHub CLI | `gh auth login` | `gh auth status` |
+| AWS CLI | `aws configure` | `aws sts get-caller-identity` |
+| GCP | `gcloud auth login` | `gcloud auth list` |
+| Azure | `az login` | `az account show` |
+| npm | `npm login` | `npm whoami` |
+| Docker | `docker login` | `docker info` |
+| Vercel | `vercel login` | `vercel whoami` |
+
+### Retry Protocol
+
+After user confirms authentication:
+
+1. **Verify** - Run verify command to confirm auth works
+2. **Log** - Record auth gate in Recent Activity
+3. **Retry** - Re-run the original failed command
+4. **Continue** - Resume task execution from where it stopped
+
+### Auth Gate Behavior
+
+- Auth gates do NOT count as task failures
+- Auth gates are logged but do not reset task progress
+- Multiple auth gates in one session are normal (different services)
+- Auth gates pause execution but preserve all context
+
+---
+
 ## Ralph Loop Mode (Autonomous Execution)
 
 <!-- INIT: Customize this section based on ralph-loop plugin detection -->
@@ -451,6 +666,98 @@ Then re-run `/speckit.init` to update this command.
 -->
 
 <!-- INIT: Remove all HTML comments from final output -->
+
+---
+
+## Subagent Segmentation
+
+Route plan segments to optimal execution contexts for better context management and parallel execution.
+
+### Segmentation Rules
+
+| Checkpoint Pattern | Routing | Rationale |
+|-------------------|---------|-----------|
+| No checkpoints | Single subagent | Fresh 200k context, uninterrupted |
+| Verify-only checkpoints | Multiple subagents + orchestrator | Can run in parallel, orchestrator coordinates |
+| Decision checkpoints | Main context | Decision affects subsequent tasks |
+| Mixed | Hybrid | Segment at decision points |
+
+### Segment Analysis
+
+Before execution, analyze the task list:
+
+```markdown
+## Segment Analysis
+
+**Tasks**: TASK-001 through TASK-010
+**Checkpoints found**: 3
+
+### Segments
+
+| Segment | Tasks | Checkpoints | Routing |
+|---------|-------|-------------|---------|
+| Seg-1 | TASK-001..003 | verify | → Subagent A |
+| Seg-2 | TASK-004..005 | decision | → Main (wait for input) |
+| Seg-3 | TASK-006..010 | verify, verify | → Subagent B |
+
+### Execution Order
+
+1. Launch Subagent A for Seg-1
+2. Wait for Seg-1 verify checkpoint
+3. Execute Seg-2 in main context (decision needed)
+4. After decision, launch Subagent B for Seg-3
+```
+
+### Subagent Launch Format
+
+```markdown
+Launching segment execution...
+
+**Segment**: Seg-1 (TASK-001..003)
+**Agent ID**: [AGENT_ID]
+**Context**: Fresh 200k tokens
+**Checkpoints**: 1 (verify at end)
+
+Running in background. Will report at checkpoint.
+```
+
+### Agent Tracking
+
+Track launched agents for coordination and resume:
+
+```markdown
+### Active Agents
+
+| Agent ID | Segment | Tasks | Status | Last Update |
+|----------|---------|-------|--------|-------------|
+| agent-a1b2 | Seg-1 | TASK-001..003 | Running | [TIME] |
+| agent-c3d4 | Seg-3 | TASK-006..010 | Pending | — |
+
+### Completed Agents
+
+| Agent ID | Segment | Tasks | Duration | Result |
+|----------|---------|-------|----------|--------|
+| agent-x1y2 | Seg-0 | TASK-000 | 5m | ✓ All criteria passed |
+```
+
+### When to Use Segmentation
+
+| Scenario | Use Segmentation? | Reason |
+|----------|-------------------|--------|
+| 3+ tasks, no decisions | Yes | Fresh context improves quality |
+| Tasks with shared state | No | State must persist in main |
+| Long-running phase | Yes | Prevents context exhaustion |
+| Quick fixes (1-2 tasks) | No | Overhead not worth it |
+| Debugging session | No | Need full context history |
+
+### Segment Handoff Protocol
+
+When a subagent completes:
+
+1. **Report** - Subagent outputs completion summary
+2. **Verify** - Main context verifies checkpoint criteria
+3. **Integrate** - Update project-status.md with results
+4. **Continue** - Launch next segment or proceed in main
 
 ---
 

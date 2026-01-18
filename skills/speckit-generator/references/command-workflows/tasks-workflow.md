@@ -507,3 +507,34 @@ Tasks are analyzed for:
 - Dependency validity
 - Constitution compliance
 - SMART compliance percentage
+
+---
+
+## Continuation Format
+
+After command completion, always present the next logical step using this standardized format:
+
+```markdown
+## ▶ Next Up
+**{command}: {name}** — {one-line description}
+`/{command}`
+<sub>`/clear` first → fresh context window</sub>
+```
+
+### Next Step Logic for /tasks
+
+| Completion State | Next Command | Description |
+|------------------|--------------|-------------|
+| SMART compliant, no warnings | `/implement "Phase 1"` | Start implementation |
+| SMART failures exist | Fix criteria, re-run `/tasks` | Rewrite failed criteria |
+| Warnings only | `/implement "Phase 1"` | Can proceed with warnings |
+| Missing plan | `/plan` | Create plan first |
+
+### Example Output
+
+```markdown
+## ▶ Next Up
+**implement: Phase 1** — Execute foundation tasks with verification
+`/implement "Phase 1"`
+<sub>`/clear` first → fresh context window</sub>
+```

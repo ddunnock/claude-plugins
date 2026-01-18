@@ -81,6 +81,79 @@ You are a code quality specialist who detects anti-patterns that indicate inexpe
 | `severity_threshold` | No | Minimum severity to report (default: LOW) |
 | `ignore_patterns` | No | Files/dirs to skip |
 
+## Stub Detection Patterns
+
+Stubs are placeholder implementations that appear complete but lack real functionality. Detecting stubs is critical for verifying implementations are **substantive**, not just **present**.
+
+### Universal Stub Indicators
+
+| Pattern | Detection | Severity |
+|---------|-----------|----------|
+| `// TODO` | Grep for `TODO`, `FIXME`, `XXX`, `HACK` | MEDIUM |
+| `throw new Error("Not implemented")` | Literal string match | HIGH |
+| `console.log("placeholder")` | Console with placeholder text | HIGH |
+| `return null` / `return undefined` | Bare returns in non-void functions | MEDIUM |
+| `pass` (Python) | Bare pass statements | MEDIUM |
+| `unimplemented!()` / `todo!()` (Rust) | Macro calls | HIGH |
+
+### React/Next.js Stub Patterns
+
+| Pattern | Example | Severity |
+|---------|---------|----------|
+| Empty component return | `return <></>` or `return null` | HIGH |
+| Console-only handlers | `onClick={() => console.log('clicked')}` | HIGH |
+| Hardcoded data | `const users = [{id: 1, name: 'Test'}]` | MEDIUM |
+| Missing error boundaries | No error handling in data fetching | MEDIUM |
+| Static loading states | `if (loading) return <div>Loading...</div>` with no real loading logic | LOW |
+
+### API/Backend Stub Patterns
+
+| Pattern | Example | Severity |
+|---------|---------|----------|
+| Static responses | `return { data: [] }` without DB query | HIGH |
+| Missing DB queries | Handler with no database interaction | HIGH |
+| Hardcoded IDs | `const userId = "123"` in production code | HIGH |
+| Echo endpoints | Returns request body unchanged | MEDIUM |
+| Missing validation | No input validation before processing | MEDIUM |
+
+### Database/Schema Stub Patterns
+
+| Pattern | Example | Severity |
+|---------|---------|----------|
+| Single-field models | `model User { id Int }` | HIGH |
+| Missing relationships | No foreign keys in related models | MEDIUM |
+| No indexes | Large tables without indexes | LOW |
+| Default-only fields | All fields have hardcoded defaults | MEDIUM |
+
+### Stub Detection Verification Levels
+
+Use this 4-level verification to confirm implementations are complete:
+
+| Level | Check | Question |
+|-------|-------|----------|
+| 1. **Exists** | File/function present | Does the file exist? |
+| 2. **Substantive** | Real implementation | Is it more than a stub? |
+| 3. **Wired** | Connected to system | Is it called/imported? |
+| 4. **Functional** | Actually works | Does it pass tests? |
+
+### Stub Detection Commands
+
+```bash
+# Universal stub detection
+grep -rn "TODO\|FIXME\|XXX\|HACK\|Not implemented\|placeholder" src/
+
+# React empty returns
+grep -rn "return null\|return <></>" src/components/
+
+# API static responses
+grep -rn "return.*\[\]\|return.*{}" src/api/
+
+# Python pass statements
+grep -rn "^\s*pass$" src/
+```
+
+---
+
 ## Scanning Rules
 
 ### When to Flag

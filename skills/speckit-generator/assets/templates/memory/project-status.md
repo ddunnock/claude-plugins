@@ -23,6 +23,71 @@ Track overall project implementation progress, phase completion, and next action
 
 ---
 
+## Execution Metrics
+
+| Metric | Value |
+|--------|-------|
+| Sessions Completed | [COUNT] |
+| Tasks Completed | [COMPLETED_COUNT] |
+| Avg Tasks per Session | [AVG_PER_SESSION] |
+| Current Streak | [STREAK] tasks |
+
+### Per-Phase Breakdown
+
+| Phase | Tasks | Completed | Sessions | Avg per Session |
+|-------|-------|-----------|----------|-----------------|
+| Phase 1: [Name] | [N] | [M] | [S] | [AVG] |
+| Phase 2: [Name] | [N] | [M] | [S] | [AVG] |
+| Phase 3: [Name] | [N] | [M] | [S] | [AVG] |
+
+### Velocity Trend
+
+| Period | Tasks Completed | Trend |
+|--------|-----------------|-------|
+| Last Session | [N] | — |
+| Last 3 Sessions | [AVG] | [↑/→/↓] |
+| All Time | [AVG] | — |
+
+---
+
+## Session Continuity
+
+Track session state to enable seamless resume across Claude sessions.
+
+| Field | Value |
+|-------|-------|
+| Last Session | [ISO_TIMESTAMP] |
+| Session Duration | [DURATION] |
+| Stopped At | [DESCRIPTION] |
+| Stop Reason | [clean/interrupted/error] |
+| Resume Command | `[COMMAND]` |
+
+### Resume Context
+
+When resuming, Claude should:
+1. Read this file first
+2. Check "Stopped At" for context
+3. Run the Resume Command
+4. Continue from where the session ended
+
+### Session History (Last 5)
+
+| Date | Duration | Tasks | Stopped At | Reason |
+|------|----------|-------|------------|--------|
+| [DATE] | [DUR] | [N] | [DESCRIPTION] | [REASON] |
+
+### Quick Resume
+
+```bash
+# Resume from last session
+/implement --continue
+
+# Or run the specific resume command:
+[RESUME_COMMAND]
+```
+
+---
+
 ## Phase Progress
 
 | Phase | Status | Total Tasks | Completed | Remaining | Notes |

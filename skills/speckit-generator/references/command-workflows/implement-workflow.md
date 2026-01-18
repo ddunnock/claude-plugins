@@ -833,3 +833,35 @@ Manual action required:
 
 Hook 1 and Hook 3 completed successfully.
 ```
+
+---
+
+## Continuation Format
+
+After command completion, always present the next logical step using this standardized format:
+
+```markdown
+## ▶ Next Up
+**{command}: {name}** — {one-line description}
+`/{command}`
+<sub>`/clear` first → fresh context window</sub>
+```
+
+### Next Step Logic for /implement
+
+| Completion State | Next Command | Description |
+|------------------|--------------|-------------|
+| All criteria passed, more tasks | `/implement "Phase [N]"` | Continue remaining phase tasks |
+| Any criteria failed | `/implement TASK-XXX` | Retry failed task |
+| Phase complete | `/implement "Phase [N+1]"` | Start next phase |
+| All phases complete | `/analyze` | Run final consistency check |
+| Blocked by dependency | `/implement TASK-XXX` | Resolve blocking task first |
+
+### Example Output
+
+```markdown
+## ▶ Next Up
+**analyze: Consistency Check** — Verify implementation meets spec requirements
+`/analyze`
+<sub>`/clear` first → fresh context window</sub>
+```

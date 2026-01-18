@@ -316,3 +316,33 @@ Templates are loaded from (in order):
 1. `$SPECKIT_MEMORY_SOURCE` environment variable
 2. `../../_examples/memory/` relative to script
 3. `~/.claude/memory-templates/`
+
+---
+
+## Continuation Format
+
+After command completion, always present the next logical step using this standardized format:
+
+```markdown
+## ▶ Next Up
+**{command}: {name}** — {one-line description}
+`/{command}`
+<sub>`/clear` first → fresh context window</sub>
+```
+
+### Next Step Logic for /init
+
+| Completion State | Next Command | Description |
+|------------------|--------------|-------------|
+| Fresh initialization | Add spec to `speckit/` | Create specification file |
+| Spec already exists | `/clarify` | Resolve spec ambiguities |
+| Returning project | `/implement --continue` | Resume where you left off |
+
+### Example Output
+
+```markdown
+## ▶ Next Up
+**clarify: Resolve Ambiguities** — Interactive Q&A to clarify specification gaps
+`/clarify`
+<sub>`/clear` first → fresh context window</sub>
+```

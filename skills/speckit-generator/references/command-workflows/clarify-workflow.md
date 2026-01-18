@@ -581,3 +581,34 @@ Direct updates with traceability:
 # Show coverage without asking
 /speckit.clarify --status
 ```
+
+---
+
+## Continuation Format
+
+After command completion, always present the next logical step using this standardized format:
+
+```markdown
+## ▶ Next Up
+**{command}: {name}** — {one-line description}
+`/{command}`
+<sub>`/clear` first → fresh context window</sub>
+```
+
+### Next Step Logic for /clarify
+
+| Completion State | Next Command | Description |
+|------------------|--------------|-------------|
+| All CRITICAL resolved | `/plan` | Create implementation plan |
+| Outstanding HIGH items | `/clarify` (another session) | Continue clarification |
+| Deferred items only | `/plan` | Can proceed, revisit later |
+| No ambiguities | `/plan` | Spec is clear |
+
+### Example Output
+
+```markdown
+## ▶ Next Up
+**plan: Create Plan** — Generate implementation plan with ADRs from clarified spec
+`/plan`
+<sub>`/clear` first → fresh context window</sub>
+```

@@ -547,3 +547,34 @@ Plans provide:
 - Requirements for task traceability
 - ADRs for task context and SMART criteria
 - Notes for task generation guidance
+
+---
+
+## Continuation Format
+
+After command completion, always present the next logical step using this standardized format:
+
+```markdown
+## ▶ Next Up
+**{command}: {name}** — {one-line description}
+`/{command}`
+<sub>`/clear` first → fresh context window</sub>
+```
+
+### Next Step Logic for /plan
+
+| Completion State | Next Command | Description |
+|------------------|--------------|-------------|
+| All 7 checks pass | `/tasks` | Generate implementation tasks |
+| ADRs need review | Review ADRs, then `/tasks` | Get decisions approved first |
+| Blocking issues | Fix issues, re-run `/plan` | Address validation failures |
+| Clarifications needed | `/clarify` | Resolve ambiguities first |
+
+### Example Output
+
+```markdown
+## ▶ Next Up
+**tasks: Generate Tasks** — Create SMART-validated implementation tasks from plan
+`/tasks`
+<sub>`/clear` first → fresh context window</sub>
+```
