@@ -601,6 +601,57 @@ After user confirms authentication:
 - Multiple auth gates in one session are normal (different services)
 - Auth gates pause execution but preserve all context
 
+### Concrete Example: GitHub CLI Auth Gate
+
+**Scenario**: Task requires creating a PR, but `gh` is not authenticated.
+
+**CLI Output** (triggers auth gate detection):
+```
+$ gh pr create --title "Add user auth" --body "..."
+error: gh: not logged in. Run `gh auth login` to authenticate.
+```
+
+**Auth Gate Presented**:
+```markdown
+## 🔐 Authentication Gate
+
+**Task**: TASK-012 - Create Pull Request
+**Command**: `gh pr create --title "Add user auth" --body "..."`
+**Error**: gh: not logged in
+
+### What Happened
+The GitHub CLI requires authentication to create pull requests.
+
+### Required Action
+1. Run the following command manually:
+   ```
+   gh auth login
+   ```
+2. Select your preferred authentication method (browser, token, etc.)
+3. Say "done" or "authenticated" to continue
+
+### After Authentication
+Claude will:
+1. Verify auth works: `gh auth status`
+2. Retry original command: `gh pr create ...`
+3. Continue with task execution
+```
+
+**After User Says "done"**:
+```
+$ gh auth status
+github.com
+  ✓ Logged in to github.com as username (oauth_token)
+  ✓ Git operations for github.com configured to use https protocol.
+
+Auth verified. Retrying original command...
+
+$ gh pr create --title "Add user auth" --body "..."
+https://github.com/user/repo/pull/42
+
+✓ PR created successfully. Continuing task execution...
+```
+
 ---
 
 ## Ralph Loop Mode (Autonomous Execution)

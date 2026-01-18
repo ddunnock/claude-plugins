@@ -230,6 +230,12 @@ Beyond checking that code exists, verify that components are actually **wired to
 - **analyze.md**: Run as part of Directive Alignment detection pass
 - **implement.md**: Run post-implementation to verify compliance
 
+### Related Agents
+
+- **antipattern-detector**: Use for stub detection (is code more than a placeholder?) before wiring verification. The 4-level verification framework (Exists → Substantive → Wired → Functional) spans both agents:
+  - antipattern-detector: Levels 1-2 (Exists, Substantive via stub detection)
+  - compliance-checker: Levels 3-4 (Wired, Functional via wiring verification)
+
 ## Invocation Example
 
 ```

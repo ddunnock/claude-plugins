@@ -28,6 +28,9 @@ SpecKit Generator transforms specifications into executed implementations throug
 - **Mandatory Gates**: Each command requires explicit user approval before proceeding
 - **Intelligent Failure Analysis**: Revert command analyzes failures and recommends fixes
 - **Idempotent Operations**: All commands safe to run repeatedly
+- **Execution Orchestration**: Deviation rules, checkpoint taxonomy, and authentication gates
+- **4-Level Verification**: Exists → Substantive → Wired → Functional (spans two agents)
+- **Session Continuity**: Resume sessions with preserved context and progress metrics
 
 ## Installation
 
@@ -504,7 +507,22 @@ Ensure you're running the full implement workflow. Post-implementation hooks onl
 
 ## Version History
 
-### v2.0.1 (Current)
+### v2.1.0 (Current)
+- **New**: Execution orchestration patterns from get-shit-done plugin
+  - **Continuation format**: Standardized "Next Up" presentation after command completion
+  - **Deviation rules**: 4-rule system for handling unexpected work (auto-fix bugs, add missing functionality, fix blockers, ASK for architectural changes)
+  - **Checkpoint taxonomy**: 3-tier system (human-verify 90%, decision 9%, human-action 1%)
+  - **Authentication gates**: Dynamic checkpoint creation when CLI returns auth errors
+  - **Subagent segmentation**: Route plan segments to optimal execution contexts
+- **New**: 4-level verification framework spanning two agents
+  - Levels 1-2 (antipattern-detector): Exists, Substantive (stub detection)
+  - Levels 3-4 (compliance-checker): Wired, Functional (wiring verification)
+- **New**: Session continuity in project-status.md for resumable sessions
+- **New**: Performance metrics tracking (velocity, per-phase breakdown)
+- **Enhanced**: Cross-references between antipattern-detector and compliance-checker agents
+- **Refactored**: Continuation format extracted to shared reference file (DRY)
+
+### v2.0.1
 - **Changed**: `/lint` is now a project-local command (was `/speckit.lint` plugin command)
 - `/lint` template is copied and customized per project by `/speckit.init`
 - 8 project commands now installed (was 7)

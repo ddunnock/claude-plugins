@@ -277,6 +277,12 @@ See: tailwind-shadcn-antipatterns.md §AP-TW-02
 - **Code review**: Called during PR review for quality checks
 - **Post-implementation**: Called after /implement completes
 
+### Related Agents
+
+- **compliance-checker**: Use for wiring verification (is code connected to the system?) after stub detection confirms substantive implementations. The 4-level verification framework (Exists → Substantive → Wired → Functional) spans both agents:
+  - antipattern-detector: Levels 1-2 (Exists, Substantive via stub detection)
+  - compliance-checker: Levels 3-4 (Wired, Functional via wiring verification)
+
 ## Invocation Example
 
 ```

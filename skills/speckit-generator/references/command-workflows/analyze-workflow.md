@@ -331,14 +331,7 @@ For identical inputs, output must be identical:
 
 ## Continuation Format
 
-After command completion, always present the next logical step using this standardized format:
-
-```markdown
-## ▶ Next Up
-**{command}: {name}** — {one-line description}
-`/{command}`
-<sub>`/clear` first → fresh context window</sub>
-```
+See [continuation-format.md](../continuation-format.md) for the standard format template.
 
 ### Next Step Logic for /analyze
 
