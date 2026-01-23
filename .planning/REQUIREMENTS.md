@@ -134,5 +134,52 @@
 - [ ] `/lookup-standard` command works
 - [ ] Graceful degradation when MCP unavailable
 
+## Traceability
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| FR-1.1 | Phase 2 | Pending |
+| FR-1.2 | Phase 2 | Pending |
+| FR-1.3 | Phase 2 | Pending |
+| FR-1.4 | Phase 2 | Pending |
+| FR-1.5 | Phase 2 | Pending |
+| FR-1.6 | Phase 2 | Pending |
+| FR-2.1 | Phase 1 | Pending |
+| FR-2.2 | Phase 1 | Pending |
+| FR-2.3 | Phase 1 | Pending |
+| FR-2.4 | Phase 1 | Pending |
+| FR-2.5 | Phase 1 | Pending |
+| FR-3.1 | Phase 3 | Pending |
+| FR-3.2 | Phase 3 | Pending |
+| FR-3.3 | Phase 3 | Pending |
+| FR-3.4 | Phase 3 | Pending |
+| FR-3.5 | Phase 3 | Pending |
+| FR-3.6 | Phase 3 | Pending |
+| FR-4.1 | Phase 3 | Pending |
+| FR-4.2 | Phase 3 | Pending |
+| FR-4.3 | Phase 3 | Pending |
+| FR-4.4 | Phase 3 | Pending |
+| FR-4.5 | Phase 3 | Pending |
+| FR-5.1 | Phase 3 | Pending |
+| FR-5.2 | Phase 3 | Pending |
+| FR-5.3 | Phase 3 | Pending |
+| FR-5.4 | Phase 3 | Pending |
+| NFR-1.1 | Phase 1 | Pending |
+| NFR-1.2 | Phase 1 | Pending |
+| NFR-1.3 | Phase 1 | Pending |
+| NFR-2.1 | Phase 4 | Pending |
+| NFR-2.2 | Phase 4 | Pending |
+| NFR-2.3 | Phase 2 | Pending |
+| NFR-3.1 | Phase 1 | Pending |
+| NFR-3.2 | Phase 1 | Pending |
+| NFR-3.3 | Phase 1 | Pending |
+| NFR-4.1 | Phase 1 | Pending |
+| NFR-4.2 | Phase 2 | Pending |
+| NFR-4.3 | Phase 1 | Pending |
+| NFR-4.4 | Phase 2 | Pending |
+| NFR-5.1 | Phase 4 | Pending |
+| NFR-5.2 | Phase 4 | Pending |
+
 ---
 *Requirements derived from research: 2026-01-23*
+*Traceability added: 2026-01-23*
