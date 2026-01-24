@@ -1,0 +1,76 @@
+{
+  "schema_version": "v1",
+  "name": "knowledge-mcp",
+  "version": "0.1.0",
+  "description": "Semantic search over engineering standards (IEEE, INCOSE, ISO). Provides RAG capabilities for systems engineering knowledge.",
+  "author": {
+    "name": "David Dunnock",
+    "email": "dunnoda@gmail.com"
+  },
+  "homepage": "https://github.com/dunnock/claude-plugins/tree/main/mcps/knowledge-mcp",
+  "license": "MIT",
+  "server": {
+    "type": "python",
+    "module": "knowledge_mcp",
+    "python_version": ">=3.11",
+    "dependencies": [
+      "mcp>=1.25.0,<2",
+      "openai>=1.0.0",
+      "qdrant-client>=1.16.2",
+      "tiktoken>=0.5.0",
+      "python-dotenv>=1.0.0",
+      "tenacity>=8.0.0",
+      "pydantic>=2.0.0",
+      "rich>=13.0.0",
+      "diskcache>=5.6.0"
+    ]
+  },
+  "configuration": {
+    "required": [
+      {
+        "name": "OPENAI_API_KEY",
+        "description": "OpenAI API key for generating embeddings"
+      }
+    ],
+    "optional": [
+      {
+        "name": "QDRANT_URL",
+        "description": "Qdrant Cloud cluster URL (if using Qdrant)"
+      },
+      {
+        "name": "QDRANT_API_KEY",
+        "description": "Qdrant Cloud API key"
+      },
+      {
+        "name": "EMBEDDING_MODEL",
+        "description": "OpenAI embedding model (default: text-embedding-3-small)"
+      },
+      {
+        "name": "CHROMADB_PATH",
+        "description": "Path for local ChromaDB storage"
+      }
+    ]
+  },
+  "tools": [
+    {
+      "name": "knowledge_search",
+      "description": "Search engineering standards knowledge base for relevant content. Returns chunks with source citations."
+    },
+    {
+      "name": "knowledge_stats",
+      "description": "Get statistics about the knowledge base collections and document counts."
+    },
+    {
+      "name": "knowledge_ingest",
+      "description": "Ingest a new document into the knowledge base."
+    }
+  ],
+  "keywords": [
+    "systems-engineering",
+    "standards",
+    "ieee",
+    "incose",
+    "rag",
+    "semantic-search"
+  ]
+}
