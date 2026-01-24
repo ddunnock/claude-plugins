@@ -22,6 +22,8 @@ Example:
 
 from __future__ import annotations
 
+import asyncio
+import json
 import signal
 import sys
 from typing import TYPE_CHECKING, Any
@@ -190,15 +192,114 @@ Use this to verify the knowledge base is populated and accessible.""",
             Returns:
                 List of content items (TextContent, etc.)
             """
-            # Tool implementations will be added in Phase 5
-            from mcp.types import TextContent
+            try:
+                # Ensure dependencies are initialized
+                self._ensure_dependencies()
 
-            return [
-                TextContent(
-                    type="text",
-                    text=f"Tool '{name}' not yet implemented",
-                )
-            ]
+                if name == "knowledge_search":
+                    return await self._handle_knowledge_search(arguments)
+                elif name == "knowledge_stats":
+                    return await self._handle_knowledge_stats(arguments)
+                else:
+                    # Unknown tool - return error response
+                    return [
+                        TextContent(
+                            type="text",
+                            text=json.dumps({
+                                "error": f"Unknown tool: {name}",
+                                "isError": True
+                            }, indent=2)
+                        )
+                    ]
+            except Exception as e:
+                # Catch all exceptions and return structured error
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps({
+                            "error": str(e),
+                            "isError": True
+                        }, indent=2)
+                    )
+                ]
+
+    async def _handle_knowledge_search(self, arguments: dict[str, Any]) -> list[TextContent]:
+        """
+        Handle knowledge_search tool invocation.
+
+        Args:
+            arguments: Tool arguments with query, n_results, filter_dict, score_threshold.
+
+        Returns:
+            List containing formatted search results as TextContent.
+        """
+        # Extract arguments with defaults
+        query: str = arguments.get("query", "")
+        n_results: int = arguments.get("n_results", 10)
+        filter_dict: dict[str, Any] | None = arguments.get("filter_dict")
+        score_threshold: float = arguments.get("score_threshold", 0.0)
+
+        # Perform search
+        assert self._searcher is not None
+        results = await self._searcher.search(
+            query=query,
+            n_results=n_results,
+            filter_dict=filter_dict,
+            score_threshold=score_threshold,
+        )
+
+        # Format results for LLM consumption
+        formatted_results: list[dict[str, Any]] = []
+        for result in results:
+            result_dict: dict[str, Any] = {
+                "content": result.content,
+                "score": result.score,
+                "source": {
+                    "document_title": result.document_title,
+                    "document_type": result.document_type,
+                    "section_title": result.section_title,
+                    "section_hierarchy": result.section_hierarchy,
+                    "clause_number": result.clause_number,
+                    "page_numbers": result.page_numbers,
+                },
+                "metadata": {
+                    "chunk_type": result.chunk_type,
+                    "normative": result.normative,
+                }
+            }
+            formatted_results.append(result_dict)
+
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({
+                    "results": formatted_results,
+                    "query": query,
+                    "total_results": len(formatted_results),
+                }, indent=2)
+            )
+        ]
+
+    async def _handle_knowledge_stats(self, arguments: dict[str, Any]) -> list[TextContent]:
+        """
+        Handle knowledge_stats tool invocation.
+
+        Args:
+            arguments: Tool arguments (currently none required).
+
+        Returns:
+            List containing collection statistics as TextContent.
+        """
+        # Call store.get_stats() in thread pool (sync method)
+        assert self._store is not None
+        stats = await asyncio.to_thread(self._store.get_stats)
+
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(stats, indent=2)
+            )
+        ]
 
     async def run(self) -> None:
         """
