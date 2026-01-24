@@ -14,7 +14,7 @@ Migrate the finished knowledge-mcp RAG system from `../knowledge-mcp` into `mcps
 - Integer phases (1, 2, 3, 4): Planned milestone work
 - Decimal phases (e.g., 2.1): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: Migration** - Move code safely, update dependencies, verify nothing breaks
+- [x] **Phase 1: Migration** - Move code safely, update dependencies, verify nothing breaks ✅
 - [ ] **Phase 2: Document Ingestion** - Structure-aware chunking with clause preservation for standards
 - [ ] **Phase 3: Search & Integration** - MCP tools exposed, specification-refiner connected
 - [ ] **Phase 4: Production Readiness** - Evaluation framework, monitoring, quality gates
@@ -42,10 +42,10 @@ Migrate the finished knowledge-mcp RAG system from `../knowledge-mcp` into `mcps
 **Plans**: 4 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Git subtree migration and baseline test verification
-- [ ] 01-02-PLAN.md — Dependency updates (MCP SDK 1.25.x, qdrant-client 1.16.2+)
-- [ ] 01-03-PLAN.md — Collection versioning, embedding model metadata, validation
-- [ ] 01-04-PLAN.md — ChromaDB fallback verification and human sign-off
+- [x] 01-01-PLAN.md — Git subtree migration and baseline test verification
+- [x] 01-02-PLAN.md — Dependency updates (MCP SDK 1.25.x, qdrant-client 1.16.2+)
+- [x] 01-03-PLAN.md — Collection versioning, embedding model metadata, validation
+- [x] 01-04-PLAN.md — ChromaDB fallback verification and human sign-off
 
 ### Phase 2: Document Ingestion
 
@@ -101,7 +101,14 @@ Plans:
 4. Embedding cache prevents duplicate embedding of unchanged content
 5. Plugin packaged for marketplace distribution
 
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Add production dependencies (ragas, diskcache) and create package structure
+- [ ] 04-02-PLAN.md — Implement embedding cache with content hashing
+- [ ] 04-03-PLAN.md — Implement token tracking and cost monitoring with CLI
+- [ ] 04-04-PLAN.md — Create golden test set and RAG evaluation framework
+- [ ] 04-05-PLAN.md — MCPB packaging and documentation (checkpoint)
 
 ## Progress
 
@@ -109,10 +116,10 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Migration | 0/4 | Planned | - |
+| 1. Migration | 4/4 | ✅ Complete | 2026-01-23 |
 | 2. Document Ingestion | 0/TBD | Not started | - |
 | 3. Search & Integration | 0/TBD | Not started | - |
-| 4. Production Readiness | 0/TBD | Not started | - |
+| 4. Production Readiness | 0/5 | Planned | - |
 
 ## Requirement Coverage
 
@@ -166,4 +173,5 @@ All requirements mapped to exactly one phase:
 
 ---
 *Roadmap created: 2026-01-23*
-*Phase 1 planned: 2026-01-23*
+*Phase 1 completed: 2026-01-23*
+*Phase 4 planned: 2026-01-24*
