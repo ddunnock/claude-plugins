@@ -1,0 +1,6 @@
+{
+  "mode": "yolo",
+  "depth": "standard",
+  "parallelization": true,
+  "commit_docs": true
+}
