@@ -5,33 +5,35 @@
 See: .planning/PROJECT.md (updated 2026-01-23)
 
 **Core value:** Ground specification refinement in actual engineering standards via RAG
-**Current focus:** Phase 1 - Migration
+**Current focus:** Phase 2 - Document Ingestion
 
 ## Current Position
 
-Phase: 1 of 4 (Migration)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-01-23 - Roadmap created
+Phase: 4 of 5 (Production Readiness)
+Plan: 1 of TBD in current phase
+Status: In progress
+Last activity: 2026-01-24 - Completed 04-01-PLAN.md
 
-Progress: [----------] 0%
+Progress: [#####-----] 50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: -
-- Total execution time: 0 hours
+- Total plans completed: 6
+- Average duration: ~11 min/plan
+- Total execution time: ~1 hour 10 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 1. Migration | 4 | ~1 hour | ~15 min |
+| 2. Search Layer | 1 | ~5 min | ~5 min |
+| 4. Production Readiness | 1 | ~5 min | ~5 min |
 
 **Recent Trend:**
-- Last 5 plans: -
-- Trend: -
+- Last 5 plans: 01-02, 01-03, 01-04, 02-01, 04-01
+- Trend: Faster execution on foundational tasks
 
 *Updated after each plan completion*
 
@@ -42,24 +44,32 @@ Progress: [----------] 0%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- None yet (project just initialized)
+- Git subtree chosen over simple copy (preserves history)
+- Collection versioning format: `{base}_v1_{model_short}`
+- ChromaDB fallback implemented with automatic detection
+- Added datasets>=2.14.0 constraint for pyarrow compatibility (04-01)
+- Added pillow>=10.0.0 for ragas multimodal prompts (04-01)
 
 ### Pending Todos
 
-None yet.
+None - Phase 2 complete.
 
 ### Blockers/Concerns
 
-From research - critical risks to monitor:
-- Pitfall #1: Must test in new location BEFORE any code changes
-- Pitfall #6: ChromaDB fallback must be tested, not just implemented
-- Pitfall #7: Embedding model mismatch can corrupt search silently
+Risks mitigated in Phase 1:
+- ✅ Pitfall #1: Tests verified in new location BEFORE code changes
+- ✅ Pitfall #6: ChromaDB fallback tested (5 integration tests)
+- ✅ Pitfall #7: Embedding model stored in metadata, validation added
+
+Remaining risks for future phases:
+- Pitfall #3: Chunking destroys semantic coherence (Phase 2)
+- Pitfall #5: PDF parsing loses critical information (Phase 2)
 
 ## Session Continuity
 
-Last session: 2026-01-23
-Stopped at: Roadmap and state files created
+Last session: 2026-01-24
+Stopped at: Completed 04-01-PLAN.md
 Resume file: None
 
 ---
-*Next action: /gsd:plan-phase 1*
+*Next action: Continue with 04-02 or plan remaining Phase 4 tasks*
