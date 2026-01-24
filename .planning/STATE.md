@@ -12,30 +12,30 @@ See: .planning/PROJECT.md (updated 2026-01-23)
 Phase: 2 of 5 (Document Ingestion)
 Plan: 3 of 5 in current phase (complete)
 Status: In progress
-Last activity: 2026-01-24 - Completed 02-03-PLAN.md
+Last activity: 2026-01-24 - Completed 02-02-PLAN.md
 
-Progress: [##--------] 23%
+Progress: [###-------] 25%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
-- Average duration: ~6 min/plan
-- Total execution time: ~1 hour 51 min
+- Total plans completed: 15
+- Average duration: ~7 min/plan
+- Total execution time: ~2 hours 2 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Migration | 4 | ~1 hour | ~15 min |
-| 2. Document Ingestion | 2 | ~12 min | ~6 min |
+| 2. Document Ingestion | 3 | ~22 min | ~7 min |
 | 2. Search Layer | 1 | ~5 min | ~5 min |
 | 4. Production Readiness | 5 | ~25 min | ~5 min |
 | 5. Production Integration | 2 | ~9 min | ~4.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-05, 05-01, 05-02, 02-01, 02-03
-- Trend: Consistent fast execution on focused tasks (~5-7 min)
+- Last 5 plans: 05-01, 05-02, 02-01, 02-03, 02-02
+- Trend: Consistent fast execution on focused tasks (~5-10 min)
 
 *Updated after each plan completion*
 
@@ -88,6 +88,10 @@ Recent decisions affecting current work:
 - tiktoken cl100k_base for OpenAI-compatible token counting (02-01)
 - SHA-256 with whitespace/line ending normalization for content hashing (02-01)
 - RFC 2119 keyword detection (SHALL/SHOULD/MAY) for normative classification (02-01)
+- Base ingestor interface (BaseIngestor, ParsedDocument, ParsedElement) for extensibility (02-02)
+- Table extraction via export_to_dataframe() as list[list[str]] for structured data (02-02)
+- Section hierarchy as list[str] (e.g., ['4', '4.2', '4.2.3']) for clause-level citations (02-02)
+- DocumentMetadata with source_path per NFR-4.4 for provenance tracking (02-02)
 - 500 token target, 1000 max, 100 overlap (20%) for chunk configuration (02-03)
 - Structure-aware splitting by paragraphs to preserve semantic coherence (02-03)
 - Table row-level splitting with header preservation (never split mid-row) (02-03)
@@ -107,7 +111,7 @@ Risks mitigated in Phase 1:
 
 Remaining risks for future phases:
 - Pitfall #3: Chunking destroys semantic coherence - MITIGATED (02-03: structure-aware splitting)
-- Pitfall #5: PDF parsing loses critical information (Phase 2)
+- Pitfall #5: PDF parsing loses critical information - MITIGATED (02-02: Docling table extraction + hierarchy preservation)
 
 ## Phase 5 Completion Summary
 
@@ -135,18 +139,18 @@ Phase 5 executed both plans in wave 2:
 
 Phase 2 in progress:
 - Plan 02-01 (Foundation utilities): Complete - 3 tasks, 3 commits, 4m 40s
+- Plan 02-02 (PDF ingestor with Docling): Complete - 3 tasks, 3 commits, 10m 28s
 - Plan 02-03 (Hierarchical chunking): Complete - 3 tasks, 3 commits, 6m 59s
 
 **Next:**
-- Plan 02-02 (Document parser integration)
-- Plan 02-04 (PDF/DOCX ingestion)
+- Plan 02-04 (Ingestion pipeline integration)
 - Plan 02-05 (Ingestion CLI and verification)
 
 ## Session Continuity
 
 Last session: 2026-01-24
-Stopped at: Completed 02-03-PLAN.md (Hierarchical chunking)
+Stopped at: Completed 02-02-PLAN.md (PDF ingestor with Docling)
 Resume file: None
 
 ---
-*Status: Phase 2 in progress - Foundation and chunking complete*
+*Status: Phase 2 in progress - Foundation, PDF ingestion, and chunking complete*
