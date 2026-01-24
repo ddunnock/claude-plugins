@@ -31,10 +31,10 @@ def cli() -> int:
         asyncio.run(server_main())
         return 0
     except KeyboardInterrupt:
-        print("\nInterrupted by user", file=sys.stderr)
+        sys.stderr.write("\nInterrupted by user\n")
         return 130
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        sys.stderr.write(f"Error: {e}\n")
         return 1
 
 

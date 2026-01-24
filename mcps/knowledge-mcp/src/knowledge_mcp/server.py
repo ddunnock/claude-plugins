@@ -28,9 +28,15 @@ from typing import TYPE_CHECKING, Any
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
+from mcp.types import TextContent, Tool
+
+from knowledge_mcp.embed import BaseEmbedder, OpenAIEmbedder
+from knowledge_mcp.search import SemanticSearcher
+from knowledge_mcp.store import BaseStore, create_store
+from knowledge_mcp.utils.config import load_config
 
 if TYPE_CHECKING:
-    from mcp.types import TextContent, Tool
+    from knowledge_mcp.utils.config import KnowledgeConfig
 
 
 class KnowledgeMCPServer:
@@ -49,16 +55,50 @@ class KnowledgeMCPServer:
         >>> await server.run()
     """
 
-    def __init__(self, name: str = "knowledge-mcp") -> None:
+    def __init__(
+        self,
+        name: str = "knowledge-mcp",
+        embedder: BaseEmbedder | None = None,
+        store: BaseStore | None = None,
+    ) -> None:
         """
         Initialize the Knowledge MCP server.
 
         Args:
             name: Server name for identification in MCP protocol.
+            embedder: Optional embedder instance. If None, creates from config.
+            store: Optional store instance. If None, creates from config.
         """
         self.name = name
         self.server = Server(name)
+
+        # Lazy initialization: only create dependencies if not provided
+        self._config: KnowledgeConfig | None = None
+        self._embedder = embedder
+        self._store = store
+        self._searcher: SemanticSearcher | None = None
+
         self._setup_handlers()
+
+    def _ensure_dependencies(self) -> None:
+        """Initialize dependencies lazily when server runs (not in tests)."""
+        if self._searcher is not None:
+            return
+
+        # Load config if not using injected dependencies
+        if self._config is None:
+            self._config = load_config()
+
+        # Create embedder if not provided
+        if self._embedder is None:
+            self._embedder = OpenAIEmbedder(api_key=self._config.openai_api_key)
+
+        # Create store if not provided
+        if self._store is None:
+            self._store = create_store(self._config)
+
+        # Create searcher
+        self._searcher = SemanticSearcher(self._embedder, self._store)
 
     def _setup_handlers(self) -> None:
         """
@@ -72,8 +112,68 @@ class KnowledgeMCPServer:
         @self.server.list_tools()
         async def handle_list_tools() -> list[Tool]:  # pyright: ignore[reportUnusedFunction]
             """Return list of available tools."""
-            # Tools will be registered in TASK-024
-            return []
+            return [
+                Tool(
+                    name="knowledge_search",
+                    description="""Search the systems engineering knowledge base for relevant information.
+
+Use this to find:
+- Standards requirements (IEEE, ISO, INCOSE)
+- Best practices and guidance
+- Technical definitions
+- Process descriptions
+
+The search uses semantic similarity to find relevant content even when exact keywords don't match.
+
+Backend: Vector search with OpenAI embeddings (text-embedding-3-small).""",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "Natural language search query (e.g., 'system requirements review')"
+                            },
+                            "n_results": {
+                                "type": "integer",
+                                "description": "Maximum number of results to return (1-100)",
+                                "default": 10,
+                                "minimum": 1,
+                                "maximum": 100
+                            },
+                            "filter_dict": {
+                                "type": "object",
+                                "description": "Optional metadata filters (e.g., {'document_type': 'standard', 'normative': true})",
+                                "additionalProperties": True
+                            },
+                            "score_threshold": {
+                                "type": "number",
+                                "description": "Minimum similarity score (0-1) for results",
+                                "default": 0.0,
+                                "minimum": 0.0,
+                                "maximum": 1.0
+                            }
+                        },
+                        "required": ["query"]
+                    }
+                ),
+                Tool(
+                    name="knowledge_stats",
+                    description="""Get statistics about the knowledge base collection.
+
+Returns information about:
+- Total number of chunks stored
+- Collection name
+- Vector store configuration
+- Document count (if available)
+
+Use this to verify the knowledge base is populated and accessible.""",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {},
+                        "required": []
+                    }
+                ),
+            ]
 
         @self.server.call_tool()
         async def handle_call_tool(  # pyright: ignore[reportUnusedFunction]
