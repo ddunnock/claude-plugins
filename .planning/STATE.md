@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-23)
 ## Current Position
 
 Phase: 5 of 5 (Production Integration)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-01-24 - Completed 05-01-PLAN.md
+Plan: 2 of 2 complete (Phase complete)
+Status: Phase 5 complete
+Last activity: 2026-01-24 - Completed 05-02-PLAN.md
 
-Progress: [#######---] 65%
+Progress: [##########] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
-- Average duration: ~7 min/plan
-- Total execution time: ~1 hour 35 min
+- Total plans completed: 12
+- Average duration: ~6 min/plan
+- Total execution time: ~1 hour 39 min
 
 **By Phase:**
 
@@ -30,10 +30,10 @@ Progress: [#######---] 65%
 | 1. Migration | 4 | ~1 hour | ~15 min |
 | 2. Search Layer | 1 | ~5 min | ~5 min |
 | 4. Production Readiness | 5 | ~25 min | ~5 min |
-| 5. Production Integration | 1 | ~5 min | ~5 min |
+| 5. Production Integration | 2 | ~9 min | ~4.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-02, 04-03, 04-04, 04-05, 05-01
+- Last 5 plans: 04-03, 04-04, 04-05, 05-01, 05-02
 - Trend: Consistent fast execution on focused tasks
 
 *Updated after each plan completion*
@@ -81,10 +81,12 @@ Recent decisions affecting current work:
 - Constructor injection for cache/tracker in OpenAIEmbedder (05-01)
 - Per-text caching in embed_batch for optimal hit rate (05-01)
 - Backward compatibility via optional parameters (05-01)
+- Only create cache/tracker when embedder not injected (preserves testability) (05-02)
+- Mock vs real dependency separation between unit and integration tests (05-02)
 
 ### Pending Todos
 
-- 05-02: Factory integration to wire cache + tracker into embedder
+None - Phase 5 complete
 
 ### Blockers/Concerns
 
@@ -97,11 +99,33 @@ Remaining risks for future phases:
 - Pitfall #3: Chunking destroys semantic coherence (Phase 2)
 - Pitfall #5: PDF parsing loses critical information (Phase 2)
 
+## Phase 5 Completion Summary
+
+Phase 5 executed both plans in wave 2:
+- Wave 1: 05-01 (Cache and token tracking integration into OpenAIEmbedder)
+- Wave 2: 05-02 (Server dependency wiring + comprehensive tests)
+
+**Verification Result:** All success criteria met
+- ✓ OpenAIEmbedder checks EmbeddingCache before calling OpenAI API
+- ✓ Cache hits return immediately without API call
+- ✓ OpenAIEmbedder logs token counts via TokenTracker
+- ✓ Token data recorded in daily summary
+- ✓ All existing tests pass
+- ✓ New unit tests verify cache/tracker integration (9 tests)
+- ✓ New integration tests verify end-to-end behavior (5 tests)
+- ✓ Zero pyright errors
+
+**Production Ready:**
+- Cost optimization via embedding cache (LRU eviction, configurable limits)
+- Token usage monitoring with daily warnings
+- Comprehensive test coverage (unit + integration)
+- Backward compatible (optional cache/tracker parameters)
+
 ## Session Continuity
 
 Last session: 2026-01-24
-Stopped at: Completed 05-01-PLAN.md (Cache/tracker integration)
+Stopped at: Completed 05-02-PLAN.md (Server wiring + tests)
 Resume file: None
 
 ---
-*Next action: Execute 05-02-PLAN.md (Factory integration)*
+*Status: Phase 5 complete - Production integration successful*
