@@ -1,0 +1,291 @@
+# Golden Test Set for Knowledge MCP
+#
+# Query categories:
+# - verification: System verification and validation
+# - requirements: Requirements engineering
+# - architecture: System architecture
+# - safety: Functional safety
+# - process: Development processes
+# - definitions: Terminology lookups
+#
+# Difficulty levels:
+# - easy: Single-fact lookup
+# - medium: Cross-standard or multi-concept
+# - hard: Multi-hop reasoning or synthesis
+
+queries:
+  # ===== VERIFICATION (8 queries) =====
+  - query: "What are the requirements for system verification?"
+    expected_in_top_k:
+      - "verification"
+      - "requirements"
+    category: verification
+    difficulty: easy
+    sources: ["IEEE 15288", "ISO 15288"]
+
+  - query: "When should verification activities be performed?"
+    expected_in_top_k:
+      - "verification"
+      - "life cycle"
+    category: verification
+    difficulty: medium
+    sources: ["IEEE 15288"]
+
+  - query: "What is the difference between verification and validation?"
+    expected_in_top_k:
+      - "verification"
+      - "validation"
+    category: verification
+    difficulty: easy
+    sources: ["INCOSE Handbook"]
+
+  - query: "What test methods are recommended for verification?"
+    expected_in_top_k:
+      - "test"
+      - "verification"
+    category: verification
+    difficulty: medium
+    sources: ["IEEE 15288", "INCOSE"]
+
+  - query: "How do you verify non-functional requirements?"
+    expected_in_top_k:
+      - "non-functional"
+      - "verification"
+    category: verification
+    difficulty: hard
+    sources: ["INCOSE Handbook"]
+
+  - query: "What artifacts are produced by verification process?"
+    expected_in_top_k:
+      - "verification"
+      - "artifact"
+    category: verification
+    difficulty: medium
+    sources: ["IEEE 15288"]
+
+  - query: "Verification traceability requirements"
+    expected_in_top_k:
+      - "traceability"
+      - "verification"
+    category: verification
+    difficulty: medium
+    sources: ["IEEE 15288"]
+
+  - query: "Independent verification and validation requirements"
+    expected_in_top_k:
+      - "independent"
+      - "verification"
+    category: verification
+    difficulty: hard
+    sources: ["NASA", "IEEE"]
+
+  # ===== REQUIREMENTS (7 queries) =====
+  - query: "How should requirements be documented?"
+    expected_in_top_k:
+      - "requirements"
+      - "documentation"
+    category: requirements
+    difficulty: easy
+    sources: ["IEEE 29148"]
+
+  - query: "What makes a requirement well-formed?"
+    expected_in_top_k:
+      - "requirement"
+      - "shall"
+    category: requirements
+    difficulty: easy
+    sources: ["INCOSE Handbook"]
+
+  - query: "Requirements traceability matrix purpose"
+    expected_in_top_k:
+      - "traceability"
+      - "requirements"
+    category: requirements
+    difficulty: medium
+    sources: ["IEEE 29148"]
+
+  - query: "Functional vs non-functional requirements"
+    expected_in_top_k:
+      - "functional"
+      - "requirements"
+    category: requirements
+    difficulty: easy
+    sources: ["INCOSE Handbook"]
+
+  - query: "Requirements elicitation techniques"
+    expected_in_top_k:
+      - "elicitation"
+      - "requirements"
+    category: requirements
+    difficulty: medium
+    sources: ["INCOSE Handbook"]
+
+  - query: "How to manage requirements changes?"
+    expected_in_top_k:
+      - "change"
+      - "requirements"
+    category: requirements
+    difficulty: medium
+    sources: ["IEEE 15288"]
+
+  - query: "Stakeholder requirements definition process"
+    expected_in_top_k:
+      - "stakeholder"
+      - "requirements"
+    category: requirements
+    difficulty: medium
+    sources: ["IEEE 15288"]
+
+  # ===== ARCHITECTURE (6 queries) =====
+  - query: "What is system architecture?"
+    expected_in_top_k:
+      - "architecture"
+      - "system"
+    category: architecture
+    difficulty: easy
+    sources: ["INCOSE Handbook"]
+
+  - query: "Architecture design principles"
+    expected_in_top_k:
+      - "architecture"
+      - "design"
+    category: architecture
+    difficulty: medium
+    sources: ["INCOSE Handbook"]
+
+  - query: "How to document system architecture?"
+    expected_in_top_k:
+      - "architecture"
+      - "documentation"
+    category: architecture
+    difficulty: medium
+    sources: ["IEEE 42010"]
+
+  - query: "Architecture viewpoints and views"
+    expected_in_top_k:
+      - "viewpoint"
+      - "architecture"
+    category: architecture
+    difficulty: medium
+    sources: ["IEEE 42010"]
+
+  - query: "Interface definition in system architecture"
+    expected_in_top_k:
+      - "interface"
+      - "architecture"
+    category: architecture
+    difficulty: medium
+    sources: ["IEEE 15288"]
+
+  - query: "Architecture evaluation methods"
+    expected_in_top_k:
+      - "architecture"
+      - "evaluation"
+    category: architecture
+    difficulty: hard
+    sources: ["INCOSE Handbook"]
+
+  # ===== SAFETY (5 queries) =====
+  - query: "What is ASIL in functional safety?"
+    expected_in_top_k:
+      - "ASIL"
+      - "safety"
+    category: safety
+    difficulty: easy
+    sources: ["ISO 26262"]
+    notes: "Automotive Safety Integrity Level"
+
+  - query: "Hazard analysis methods"
+    expected_in_top_k:
+      - "hazard"
+      - "analysis"
+    category: safety
+    difficulty: medium
+    sources: ["ISO 26262", "INCOSE"]
+
+  - query: "Safety requirements derivation"
+    expected_in_top_k:
+      - "safety"
+      - "requirements"
+    category: safety
+    difficulty: medium
+    sources: ["ISO 26262"]
+
+  - query: "Fault tree analysis process"
+    expected_in_top_k:
+      - "fault tree"
+      - "analysis"
+    category: safety
+    difficulty: medium
+    sources: ["ISO 26262"]
+
+  - query: "Safety validation requirements"
+    expected_in_top_k:
+      - "safety"
+      - "validation"
+    category: safety
+    difficulty: hard
+    sources: ["ISO 26262"]
+
+  # ===== PROCESS (4 queries) =====
+  - query: "Systems engineering life cycle stages"
+    expected_in_top_k:
+      - "life cycle"
+      - "stage"
+    category: process
+    difficulty: easy
+    sources: ["IEEE 15288"]
+
+  - query: "What is configuration management?"
+    expected_in_top_k:
+      - "configuration"
+      - "management"
+    category: process
+    difficulty: easy
+    sources: ["IEEE 15288"]
+
+  - query: "Technical reviews in systems engineering"
+    expected_in_top_k:
+      - "review"
+      - "technical"
+    category: process
+    difficulty: medium
+    sources: ["IEEE 15288"]
+
+  - query: "Risk management process steps"
+    expected_in_top_k:
+      - "risk"
+      - "management"
+    category: process
+    difficulty: medium
+    sources: ["IEEE 15288", "INCOSE"]
+
+  # ===== DEFINITIONS (4 queries) =====
+  - query: "Define system of systems"
+    expected_in_top_k:
+      - "system of systems"
+    category: definitions
+    difficulty: easy
+    sources: ["INCOSE Handbook"]
+
+  - query: "What is a baseline in systems engineering?"
+    expected_in_top_k:
+      - "baseline"
+    category: definitions
+    difficulty: easy
+    sources: ["IEEE 15288"]
+
+  - query: "Definition of system element"
+    expected_in_top_k:
+      - "element"
+      - "system"
+    category: definitions
+    difficulty: easy
+    sources: ["IEEE 15288"]
+
+  - query: "What is technical debt?"
+    expected_in_top_k:
+      - "technical debt"
+    category: definitions
+    difficulty: medium
+    sources: ["INCOSE Handbook"]
