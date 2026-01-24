@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-01-20)
 
 **Core value:** The MCP server must actually work - when Claude calls the search tool, it gets real results from the knowledge base.
-**Current focus:** Phase 1 - Foundation Fixes
+**Current focus:** Phase 2 - Search Layer
 
 ## Current Position
 
-Phase: 1 of 5 (Foundation Fixes)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-01-20 - Roadmap created
+Phase: 2 of 5 (Search Layer)
+Plan: 0 of 1 in current phase
+Status: Ready to execute
+Last activity: 2026-01-23 - Research completed, plan created
 
-Progress: [----------] 0%
+Progress: [##--------] 20%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
+- Total plans completed: 0 (Phase 1 completed externally)
 - Average duration: -
 - Total execution time: 0 hours
 
@@ -27,7 +27,8 @@ Progress: [----------] 0%
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 1 | - | - | External |
+| 2 | 0/1 | - | - |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -45,22 +46,19 @@ Recent decisions affecting current work:
 - [Init]: Docling for unified document parsing (PDF, DOCX, PPTX, XLSX, HTML, images)
 - [Init]: Qdrant primary, ChromaDB fallback for vector storage
 - [Init]: OpenAI embeddings (text-embedding-3-small) as default
+- [Phase 1]: MCP SDK 1.25.0, qdrant-client 1.16.2 dependencies confirmed
+- [Phase 1]: 40 tests passing, zero pyright errors
 
 ### Pending Todos
 
-None yet.
+None - Phase 2 plan ready for execution.
 
 ### Blockers/Concerns
 
-From codebase analysis:
-
-- Test import mismatch: `IngestOutcome`, `IngestSection` classes referenced but don't exist
-- Test config mismatch: `chunk_size_min`, `chunk_overlap` fields don't exist in `KnowledgeConfig`
-- 55 pyright errors mostly from Qdrant/ChromaDB lacking complete type stubs
-- Store fallback logic catches generic `Exception`, masking config errors
+None - Phase 1 completed, foundations are solid.
 
 ## Session Continuity
 
-Last session: 2026-01-20
-Stopped at: Roadmap created, ready to plan Phase 1
-Resume file: None
+Last session: 2026-01-23
+Stopped at: Phase 2 plan created, ready to execute
+Resume file: .planning/phases/02-search-layer/02-01-PLAN.md
