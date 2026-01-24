@@ -10,32 +10,32 @@ See: .planning/PROJECT.md (updated 2026-01-23)
 ## Current Position
 
 Phase: 2 of 5 (Document Ingestion)
-Plan: 3 of 5 in current phase (complete)
+Plan: 4 of 5 in current phase (complete)
 Status: In progress
-Last activity: 2026-01-24 - Completed 02-02-PLAN.md
+Last activity: 2026-01-24 - Completed 02-04-PLAN.md
 
-Progress: [###-------] 25%
+Progress: [###-------] 27%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15
-- Average duration: ~7 min/plan
-- Total execution time: ~2 hours 2 min
+- Total plans completed: 16
+- Average duration: ~7.6 min/plan
+- Total execution time: ~2 hours 8 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Migration | 4 | ~1 hour | ~15 min |
-| 2. Document Ingestion | 3 | ~22 min | ~7 min |
+| 2. Document Ingestion | 4 | ~28 min | ~7 min |
 | 2. Search Layer | 1 | ~5 min | ~5 min |
 | 4. Production Readiness | 5 | ~25 min | ~5 min |
 | 5. Production Integration | 2 | ~9 min | ~4.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 05-01, 05-02, 02-01, 02-03, 02-02
-- Trend: Consistent fast execution on focused tasks (~5-10 min)
+- Last 5 plans: 05-02, 02-01, 02-03, 02-02, 02-04
+- Trend: Consistent fast execution on focused tasks (~6-10 min)
 
 *Updated after each plan completion*
 
@@ -97,6 +97,9 @@ Recent decisions affecting current work:
 - Table row-level splitting with header preservation (never split mid-row) (02-03)
 - 20% overlap between adjacent chunks for context continuity (02-03)
 - Small chunk merging (under 100 tokens) to avoid inefficient micro-chunks (02-03)
+- Same DocumentConverter for DOCX as PDF (Docling supports both natively) (02-04)
+- Pipeline converts between ingest.base and chunk.base ParsedElement types (02-04)
+- Enrichment in pipeline (UUID, hash, normative) not chunker (separation of concerns) (02-04)
 
 ### Pending Todos
 
@@ -141,15 +144,15 @@ Phase 2 in progress:
 - Plan 02-01 (Foundation utilities): Complete - 3 tasks, 3 commits, 4m 40s
 - Plan 02-02 (PDF ingestor with Docling): Complete - 3 tasks, 3 commits, 10m 28s
 - Plan 02-03 (Hierarchical chunking): Complete - 3 tasks, 3 commits, 6m 59s
+- Plan 02-04 (DOCX & pipeline): Complete - 3 tasks, 3 commits, 6m 5s
 
 **Next:**
-- Plan 02-04 (Ingestion pipeline integration)
 - Plan 02-05 (Ingestion CLI and verification)
 
 ## Session Continuity
 
 Last session: 2026-01-24
-Stopped at: Completed 02-02-PLAN.md (PDF ingestor with Docling)
+Stopped at: Completed 02-04-PLAN.md (DOCX ingestion and pipeline)
 Resume file: None
 
 ---
