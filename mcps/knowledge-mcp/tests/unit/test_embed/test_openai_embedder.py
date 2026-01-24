@@ -574,3 +574,212 @@ class TestOpenAIEmbedderHealthCheck:
 
         # Assert
         assert result is False
+
+
+class TestOpenAIEmbedderCacheIntegration:
+    """Tests for cache integration in OpenAIEmbedder."""
+
+    @pytest.fixture
+    def mock_cache(self) -> MagicMock:
+        """Create mock EmbeddingCache."""
+        cache = MagicMock()
+        cache.get.return_value = None  # Default: cache miss
+        return cache
+
+    @pytest.fixture
+    def mock_tracker(self) -> MagicMock:
+        """Create mock TokenTracker."""
+        tracker = MagicMock()
+        tracker.track_embedding.return_value = 10  # Token count
+        return tracker
+
+    @pytest.fixture
+    def embedder_with_cache(
+        self, mock_cache: MagicMock, mock_tracker: MagicMock
+    ) -> OpenAIEmbedder:
+        """Create embedder with mock cache and tracker."""
+        with patch("knowledge_mcp.embed.openai_embedder.AsyncOpenAI"):
+            embedder = OpenAIEmbedder(
+                api_key="sk-test-key",
+                cache=mock_cache,
+                token_tracker=mock_tracker,
+            )
+            # Mock the API call
+            embedder._client = MagicMock()
+            embedder._client.embeddings = MagicMock()
+            embedder._client.embeddings.create = AsyncMock(
+                return_value=MagicMock(
+                    data=[MagicMock(embedding=[0.1] * 1536)]
+                )
+            )
+            return embedder
+
+    @pytest.mark.asyncio
+    async def test_embed_checks_cache_first(
+        self,
+        embedder_with_cache: OpenAIEmbedder,
+        mock_cache: MagicMock,
+    ) -> None:
+        """Verify cache is checked before API call."""
+        await embedder_with_cache.embed("test text")
+        mock_cache.get.assert_called_once_with("test text")
+
+    @pytest.mark.asyncio
+    async def test_embed_returns_cached_value(
+        self,
+        embedder_with_cache: OpenAIEmbedder,
+        mock_cache: MagicMock,
+    ) -> None:
+        """Verify cached value is returned without API call."""
+        cached_embedding = [0.5] * 1536
+        mock_cache.get.return_value = cached_embedding
+
+        result = await embedder_with_cache.embed("cached text")
+
+        assert result == cached_embedding
+        # API should NOT be called
+        embedder_with_cache._client.embeddings.create.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_embed_stores_in_cache_on_miss(
+        self,
+        embedder_with_cache: OpenAIEmbedder,
+        mock_cache: MagicMock,
+    ) -> None:
+        """Verify API result is stored in cache."""
+        await embedder_with_cache.embed("new text")
+
+        # Cache.set should be called with text and embedding
+        mock_cache.set.assert_called_once()
+        call_args = mock_cache.set.call_args
+        assert call_args[0][0] == "new text"
+        assert len(call_args[0][1]) == 1536
+
+    @pytest.mark.asyncio
+    async def test_embed_tracks_cache_hit(
+        self,
+        embedder_with_cache: OpenAIEmbedder,
+        mock_cache: MagicMock,
+        mock_tracker: MagicMock,
+    ) -> None:
+        """Verify token tracker records cache hit."""
+        mock_cache.get.return_value = [0.5] * 1536
+
+        await embedder_with_cache.embed("cached text")
+
+        mock_tracker.track_embedding.assert_called_once_with(
+            "cached text", cache_hit=True
+        )
+
+    @pytest.mark.asyncio
+    async def test_embed_tracks_cache_miss(
+        self,
+        embedder_with_cache: OpenAIEmbedder,
+        mock_tracker: MagicMock,
+    ) -> None:
+        """Verify token tracker records cache miss with API call."""
+        await embedder_with_cache.embed("new text")
+
+        mock_tracker.track_embedding.assert_called_once_with(
+            "new text", cache_hit=False
+        )
+
+    @pytest.mark.asyncio
+    async def test_embed_works_without_cache(self) -> None:
+        """Verify embedder works when cache is None (backwards compat)."""
+        with patch("knowledge_mcp.embed.openai_embedder.AsyncOpenAI"):
+            embedder = OpenAIEmbedder(api_key="sk-test-key")
+            embedder._client = MagicMock()
+            embedder._client.embeddings = MagicMock()
+            embedder._client.embeddings.create = AsyncMock(
+                return_value=MagicMock(
+                    data=[MagicMock(embedding=[0.1] * 1536)]
+                )
+            )
+
+            result = await embedder.embed("test text")
+
+            assert len(result) == 1536
+
+    @pytest.mark.asyncio
+    async def test_embed_batch_uses_per_text_caching(
+        self,
+        embedder_with_cache: OpenAIEmbedder,
+        mock_cache: MagicMock,
+    ) -> None:
+        """Verify embed_batch checks cache for each text individually."""
+        texts = ["text 1", "text 2", "text 3"]
+
+        # Mock API to return embeddings for all texts
+        embeddings = [[0.1] * 1536, [0.2] * 1536, [0.3] * 1536]
+        mock_response = MagicMock()
+        mock_response.data = [MagicMock(embedding=e) for e in embeddings]
+        embedder_with_cache._client.embeddings.create = AsyncMock(
+            return_value=mock_response
+        )
+
+        await embedder_with_cache.embed_batch(texts)
+
+        # Should check cache for each text
+        assert mock_cache.get.call_count == 3
+        mock_cache.get.assert_any_call("text 1")
+        mock_cache.get.assert_any_call("text 2")
+        mock_cache.get.assert_any_call("text 3")
+
+    @pytest.mark.asyncio
+    async def test_embed_batch_skips_api_for_cached_texts(
+        self,
+        embedder_with_cache: OpenAIEmbedder,
+        mock_cache: MagicMock,
+    ) -> None:
+        """Verify embed_batch only calls API for uncached texts."""
+        texts = ["cached 1", "new text", "cached 2"]
+
+        # Set up cache to return values for texts 1 and 3
+        def cache_get_side_effect(text: str) -> list[float] | None:
+            if text == "cached 1":
+                return [0.1] * 1536
+            elif text == "cached 2":
+                return [0.3] * 1536
+            return None
+
+        mock_cache.get.side_effect = cache_get_side_effect
+
+        # Mock API to return embedding for the single uncached text
+        mock_response = MagicMock()
+        mock_response.data = [MagicMock(embedding=[0.2] * 1536)]
+        embedder_with_cache._client.embeddings.create = AsyncMock(
+            return_value=mock_response
+        )
+
+        result = await embedder_with_cache.embed_batch(texts)
+
+        # Should return 3 embeddings
+        assert len(result) == 3
+        assert result[0] == [0.1] * 1536  # From cache
+        assert result[2] == [0.3] * 1536  # From cache
+
+        # API should only be called once for the uncached text
+        embedder_with_cache._client.embeddings.create.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_embed_batch_stores_new_embeddings(
+        self,
+        embedder_with_cache: OpenAIEmbedder,
+        mock_cache: MagicMock,
+    ) -> None:
+        """Verify embed_batch stores new embeddings in cache."""
+        texts = ["new 1", "new 2"]
+
+        # Mock API to return embeddings
+        embeddings = [[0.1] * 1536, [0.2] * 1536]
+        mock_response = MagicMock()
+        mock_response.data = [MagicMock(embedding=e) for e in embeddings]
+        embedder_with_cache._client.embeddings.create = AsyncMock(
+            return_value=mock_response
+        )
+
+        await embedder_with_cache.embed_batch(texts)
+
+        # Should store both new embeddings
+        assert mock_cache.set.call_count == 2
