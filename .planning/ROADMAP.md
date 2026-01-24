@@ -34,12 +34,18 @@ Migrate the finished knowledge-mcp RAG system from `../knowledge-mcp` into `mcps
 
 **Success Criteria** (what must be TRUE):
 1. All existing tests pass when run from `mcps/knowledge-mcp/`
-2. Dependencies updated to MCP SDK 1.25.0, Qdrant 1.16.2, pymupdf4llm 0.2.9
+2. Dependencies updated to MCP SDK 1.25.0, Qdrant 1.16.2 (keep Docling 2.69.0)
 3. ChromaDB fallback works when Qdrant connection fails
-4. Collection names include embedding model version (e.g., `knowledge_v1_te3small`)
+4. Collection names include embedding model version (e.g., `se_knowledge_base_v1_te3small`)
 5. Health checks execute before vector store operations
 
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Git subtree migration and baseline test verification
+- [ ] 01-02-PLAN.md — Dependency updates (MCP SDK 1.25.x, qdrant-client 1.16.2+)
+- [ ] 01-03-PLAN.md — Collection versioning, embedding model metadata, validation
+- [ ] 01-04-PLAN.md — ChromaDB fallback verification and human sign-off
 
 ### Phase 2: Document Ingestion
 
@@ -103,7 +109,7 @@ Migrate the finished knowledge-mcp RAG system from `../knowledge-mcp` into `mcps
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Migration | 0/TBD | Not started | - |
+| 1. Migration | 0/4 | Planned | - |
 | 2. Document Ingestion | 0/TBD | Not started | - |
 | 3. Search & Integration | 0/TBD | Not started | - |
 | 4. Production Readiness | 0/TBD | Not started | - |
@@ -160,3 +166,4 @@ All requirements mapped to exactly one phase:
 
 ---
 *Roadmap created: 2026-01-23*
+*Phase 1 planned: 2026-01-23*
