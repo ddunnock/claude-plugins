@@ -14,6 +14,16 @@ Example:
 from __future__ import annotations
 
 from knowledge_mcp.ingest.base import BaseIngestor, ParsedDocument, ParsedElement
+from knowledge_mcp.ingest.docx_ingestor import DOCXIngestor
 from knowledge_mcp.ingest.pdf_ingestor import PDFIngestor
+from knowledge_mcp.ingest.pipeline import IngestionPipeline, ingest_document
 
-__all__: list[str] = ["BaseIngestor", "ParsedDocument", "ParsedElement", "PDFIngestor"]
+__all__: list[str] = [
+    "BaseIngestor",
+    "ParsedDocument",
+    "ParsedElement",
+    "PDFIngestor",
+    "DOCXIngestor",
+    "IngestionPipeline",
+    "ingest_document",
+]
