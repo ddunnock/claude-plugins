@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-20)
 
 **Core value:** The MCP server must actually work - when Claude calls the search tool, it gets real results from the knowledge base.
-**Current focus:** Phase 2 - Search Layer (Complete)
+**Current focus:** Phase 3 - MCP Tools (In Progress)
 
 ## Current Position
 
-Phase: 2 of 5 (Search Layer)
+Phase: 3 of 5 (MCP Tools)
 Plan: 1 of 1 in current phase
 Status: Phase complete
-Last activity: 2026-01-24 - Completed 02-01-PLAN.md
+Last activity: 2026-01-24 - Completed 03-01-PLAN.md
 
-Progress: [####------] 40%
+Progress: [######----] 60%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 5 min
-- Total execution time: 5 min
+- Total plans completed: 2
+- Average duration: 7.5 min
+- Total execution time: 15 min
 
 **By Phase:**
 
@@ -29,10 +29,11 @@ Progress: [####------] 40%
 |-------|-------|-------|----------|
 | 1 | - | - | External |
 | 2 | 1/1 | 5 min | 5 min |
+| 3 | 1/1 | 10 min | 10 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (5 min)
-- Trend: N/A (first tracked plan)
+- Last 5 plans: 02-01 (5 min), 03-01 (10 min)
+- Trend: Increasing (Phase 3 took longer due to MCP SDK API discovery)
 
 *Updated after each plan completion*
 
@@ -51,17 +52,21 @@ Recent decisions affecting current work:
 - [Phase 2]: Use BaseStore interface instead of Union for type safety
 - [Phase 2]: Return empty list on errors for graceful degradation
 - [Phase 2]: Use cast() for list conversions to satisfy pyright strict mode
+- [Phase 3]: Lazy dependency initialization via _ensure_dependencies() for test mocking
+- [Phase 3]: MCP request handlers accessed via request type classes as dict keys
+- [Phase 3]: Two-layer error handling (SemanticSearcher + MCP handler)
+- [Phase 3]: Fix print() to sys.stderr.write() for JSON-RPC compatibility
 
 ### Pending Todos
 
-None - Phase 2 complete, ready for Phase 3 planning.
+None - Phase 3 complete, MCP server is functional.
 
 ### Blockers/Concerns
 
-None - Search layer implemented and tested.
+None - All tools working, 65 tests passing, zero pyright errors.
 
 ## Session Continuity
 
 Last session: 2026-01-24
-Stopped at: Completed 02-01-PLAN.md
+Stopped at: Completed 03-01-PLAN.md
 Resume file: None (phase complete)
