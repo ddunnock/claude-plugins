@@ -10,32 +10,32 @@ See: .planning/PROJECT.md (updated 2026-01-23)
 ## Current Position
 
 Phase: 2 of 5 (Document Ingestion)
-Plan: 1 of 5 in current phase (complete)
+Plan: 3 of 5 in current phase (complete)
 Status: In progress
-Last activity: 2026-01-24 - Completed 02-01-PLAN.md
+Last activity: 2026-01-24 - Completed 02-03-PLAN.md
 
-Progress: [##--------] 21%
+Progress: [##--------] 23%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13
+- Total plans completed: 14
 - Average duration: ~6 min/plan
-- Total execution time: ~1 hour 44 min
+- Total execution time: ~1 hour 51 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Migration | 4 | ~1 hour | ~15 min |
-| 2. Document Ingestion | 1 | ~5 min | ~5 min |
+| 2. Document Ingestion | 2 | ~12 min | ~6 min |
 | 2. Search Layer | 1 | ~5 min | ~5 min |
 | 4. Production Readiness | 5 | ~25 min | ~5 min |
 | 5. Production Integration | 2 | ~9 min | ~4.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-04, 04-05, 05-01, 05-02, 02-01
-- Trend: Consistent fast execution on focused tasks
+- Last 5 plans: 04-05, 05-01, 05-02, 02-01, 02-03
+- Trend: Consistent fast execution on focused tasks (~5-7 min)
 
 *Updated after each plan completion*
 
@@ -88,6 +88,11 @@ Recent decisions affecting current work:
 - tiktoken cl100k_base for OpenAI-compatible token counting (02-01)
 - SHA-256 with whitespace/line ending normalization for content hashing (02-01)
 - RFC 2119 keyword detection (SHALL/SHOULD/MAY) for normative classification (02-01)
+- 500 token target, 1000 max, 100 overlap (20%) for chunk configuration (02-03)
+- Structure-aware splitting by paragraphs to preserve semantic coherence (02-03)
+- Table row-level splitting with header preservation (never split mid-row) (02-03)
+- 20% overlap between adjacent chunks for context continuity (02-03)
+- Small chunk merging (under 100 tokens) to avoid inefficient micro-chunks (02-03)
 
 ### Pending Todos
 
@@ -101,7 +106,7 @@ Risks mitigated in Phase 1:
 - ✅ Pitfall #7: Embedding model stored in metadata, validation added
 
 Remaining risks for future phases:
-- Pitfall #3: Chunking destroys semantic coherence (Phase 2)
+- Pitfall #3: Chunking destroys semantic coherence - MITIGATED (02-03: structure-aware splitting)
 - Pitfall #5: PDF parsing loses critical information (Phase 2)
 
 ## Phase 5 Completion Summary
@@ -128,20 +133,20 @@ Phase 5 executed both plans in wave 2:
 
 ## Phase 2 Progress
 
-Phase 2 started:
+Phase 2 in progress:
 - Plan 02-01 (Foundation utilities): Complete - 3 tasks, 3 commits, 4m 40s
+- Plan 02-03 (Hierarchical chunking): Complete - 3 tasks, 3 commits, 6m 59s
 
 **Next:**
-- Plan 02-02 (Document chunking strategies)
-- Plan 02-03 (Chunk ingestion and metadata)
+- Plan 02-02 (Document parser integration)
 - Plan 02-04 (PDF/DOCX ingestion)
 - Plan 02-05 (Ingestion CLI and verification)
 
 ## Session Continuity
 
 Last session: 2026-01-24
-Stopped at: Completed 02-01-PLAN.md (Document ingestion foundation)
+Stopped at: Completed 02-03-PLAN.md (Hierarchical chunking)
 Resume file: None
 
 ---
-*Status: Phase 2 in progress - Foundation utilities complete*
+*Status: Phase 2 in progress - Foundation and chunking complete*
