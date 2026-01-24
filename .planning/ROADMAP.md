@@ -14,10 +14,11 @@ Migrate the finished knowledge-mcp RAG system from `../knowledge-mcp` into `mcps
 - Integer phases (1, 2, 3, 4): Planned milestone work
 - Decimal phases (e.g., 2.1): Urgent insertions (marked with INSERTED)
 
-- [x] **Phase 1: Migration** - Move code safely, update dependencies, verify nothing breaks ✅
+- [x] **Phase 1: Migration** - Move code safely, update dependencies, verify nothing breaks
 - [ ] **Phase 2: Document Ingestion** - Structure-aware chunking with clause preservation for standards
 - [ ] **Phase 3: Search & Integration** - MCP tools exposed, specification-refiner connected
-- [ ] **Phase 4: Production Readiness** - Evaluation framework, monitoring, quality gates
+- [x] **Phase 4: Production Readiness** - Evaluation framework, monitoring, quality gates (partial - see gaps)
+- [ ] **Phase 5: Production Integration** - Wire cache and token tracking into embedder
 
 ## Phase Details
 
@@ -84,42 +85,69 @@ Plans:
 
 **Plans**: TBD
 
-### Phase 4: Production Readiness
+### Phase 4: Production Readiness (Partial)
 
 **Goal**: Quality gates and monitoring ensure sustained performance
 **Depends on**: Phase 3
-**Requirements**: NFR-2.1, NFR-2.2, NFR-5.1, NFR-5.2
+**Requirements**: NFR-2.1, NFR-2.2 (NFR-5.1, NFR-5.2 moved to Phase 5)
 **Risk Callouts**:
 - Pitfall #4: No systematic evaluation - build golden test set, run on every PR
 - Pitfall #10: No cost monitoring - log token counts, cache by hash
 - Pitfall #14: No document update strategy - version tracking for future audits
 
 **Success Criteria** (what must be TRUE):
-1. Golden test set exists (20-50 queries) with expected results
+1. Golden test set exists (20-50 queries) with expected results - 34 queries
 2. RAG Triad metrics tracked (context relevance, faithfulness, answer relevance)
-3. Token counts logged for cost visibility
-4. Embedding cache prevents duplicate embedding of unchanged content
+3. Token counts logged for cost visibility - **Infrastructure built, not wired (-> Phase 5)**
+4. Embedding cache prevents duplicate embedding of unchanged content - **Infrastructure built, not wired (-> Phase 5)**
 5. Plugin packaged for marketplace distribution
 
-**Plans**: 5 plans
+**Plans**: 5/5 complete
 
 Plans:
-- [ ] 04-01-PLAN.md — Add production dependencies (ragas, diskcache) and create package structure
-- [ ] 04-02-PLAN.md — Implement embedding cache with content hashing
-- [ ] 04-03-PLAN.md — Implement token tracking and cost monitoring with CLI
-- [ ] 04-04-PLAN.md — Create golden test set and RAG evaluation framework
-- [ ] 04-05-PLAN.md — MCPB packaging and documentation (checkpoint)
+- [x] 04-01-PLAN.md — Add production dependencies (ragas, diskcache) and create package structure
+- [x] 04-02-PLAN.md — Implement embedding cache with content hashing
+- [x] 04-03-PLAN.md — Implement token tracking and cost monitoring with CLI
+- [x] 04-04-PLAN.md — Create golden test set and RAG evaluation framework
+- [x] 04-05-PLAN.md — MCPB packaging and documentation (checkpoint)
+
+**Gaps (moved to Phase 5):**
+- EmbeddingCache class exists (100% coverage) but not wired to OpenAIEmbedder
+- TokenTracker class exists (97% coverage) but not wired to OpenAIEmbedder
+
+### Phase 5: Production Integration
+
+**Goal**: Wire cache and token tracking into embedding pipeline for actual cost savings and visibility
+**Depends on**: Phase 4
+**Requirements**: NFR-5.1, NFR-5.2
+**Risk Callouts**:
+- Avoid over-engineering - simple integration, no new abstractions
+- Maintain backwards compatibility - cache/tracking should be optional
+
+**Success Criteria** (what must be TRUE):
+1. OpenAIEmbedder checks EmbeddingCache before calling OpenAI API
+2. Cache hits return immediately without API call (measurable cost savings)
+3. OpenAIEmbedder logs token counts via TokenTracker on each request
+4. Token data visible in CLI token_summary command after embedding operations
+5. All existing tests pass, new integration tests verify wiring
+
+**Plans**: 2 plans in 2 waves
+
+Plans:
+- [ ] 05-01-PLAN.md — Extend KnowledgeConfig and integrate cache/tracker into OpenAIEmbedder
+- [ ] 05-02-PLAN.md — Wire dependencies in server, add unit and integration tests
 
 ## Progress
 
-**Execution Order:** 1 -> 2 -> 3 -> 4
+**Execution Order:** 1 -> 4 -> 5 -> 2 -> 3 (Phase 4-5 jumped ahead for foundation work)
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Migration | 4/4 | ✅ Complete | 2026-01-23 |
+| 1. Migration | 4/4 | Complete | 2026-01-23 |
+| 4. Production Readiness | 5/5 | Partial (gaps) | 2026-01-24 |
+| 5. Production Integration | 0/2 | Not started | - |
 | 2. Document Ingestion | 0/TBD | Not started | - |
 | 3. Search & Integration | 0/TBD | Not started | - |
-| 4. Production Readiness | 0/5 | Planned | - |
 
 ## Requirement Coverage
 
@@ -166,12 +194,14 @@ All requirements mapped to exactly one phase:
 | NFR-4.2 | 2 | Thin MCP wrappers (logic in components) |
 | NFR-4.3 | 1 | Environment variables for configuration |
 | NFR-4.4 | 2 | Store source document paths in chunk metadata |
-| NFR-5.1 | 4 | Log token counts for cost monitoring |
-| NFR-5.2 | 4 | Cache embeddings by content hash |
+| NFR-5.1 | 5 | Log token counts for cost monitoring (integration) |
+| NFR-5.2 | 5 | Cache embeddings by content hash (integration) |
 
 **Coverage:** 41/41 requirements mapped
 
 ---
 *Roadmap created: 2026-01-23*
 *Phase 1 completed: 2026-01-23*
-*Phase 4 planned: 2026-01-24*
+*Phase 4 partial: 2026-01-24 (infrastructure built, integration gaps moved to Phase 5)*
+*Phase 5 added: 2026-01-24*
+*Phase 5 planned: 2026-01-24 (2 plans in 2 waves)*
