@@ -59,7 +59,7 @@ class TokenTracker:
 
     def _load_stats(self) -> dict[str, dict[str, int]]:
         """Load existing token stats from JSON."""
-        if self.log_file.exists():
+        if self.log_file.exists() and self.log_file.stat().st_size > 0:
             with open(self.log_file, encoding="utf-8") as f:
                 return json.load(f)
         return {}
