@@ -14,7 +14,7 @@ Knowledge MCP must transform from a partially-implemented codebase (34% coverage
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: Foundation Fixes** - Fix broken tests, eliminate pyright errors, establish quality baseline
+- [x] **Phase 1: Foundation Fixes** - Fix broken tests, eliminate pyright errors, establish quality baseline
 - [ ] **Phase 2: Search Layer** - Implement semantic search connecting embedder and store
 - [ ] **Phase 3: MCP Tool Implementation** - Wire up functional MCP tools for knowledge search
 - [ ] **Phase 4: Test Coverage** - Achieve 80% coverage with comprehensive unit and integration tests
@@ -32,7 +32,7 @@ Knowledge MCP must transform from a partially-implemented codebase (34% coverage
   2. `poetry run pyright` reports zero errors in strict mode
   3. Test coverage baseline established (current state measured accurately)
   4. Docling version pinned exactly in pyproject.toml to prevent API breakage
-**Plans**: TBD
+**Plans**: Completed externally (40 tests passing, MCP SDK 1.25.0, qdrant-client 1.16.2)
 
 ### Phase 2: Search Layer
 **Goal**: Semantic search implementation connecting existing embedder and store components
@@ -44,7 +44,9 @@ Knowledge MCP must transform from a partially-implemented codebase (34% coverage
   2. Search results include content, score, and document metadata
   3. Results can be filtered by document_type and other metadata fields
   4. Empty query or no results returns empty list (not error)
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 02-01-PLAN.md — Implement SemanticSearcher class and SearchResult dataclass with unit tests
 
 ### Phase 3: MCP Tool Implementation
 **Goal**: Working MCP tools that actually search the knowledge base
@@ -121,8 +123,8 @@ Knowledge MCP must transform from a partially-implemented codebase (34% coverage
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation Fixes | 0/TBD | Not started | - |
-| 2. Search Layer | 0/TBD | Not started | - |
+| 1. Foundation Fixes | - | Complete (external) | 2026-01-23 |
+| 2. Search Layer | 0/1 | Planned | - |
 | 3. MCP Tool Implementation | 0/TBD | Not started | - |
 | 4. Test Coverage | 0/TBD | Not started | - |
 | 5. Extended Features | 0/TBD | Not started | - |
