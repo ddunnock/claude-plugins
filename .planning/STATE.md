@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-23)
 
 **Core value:** Ground specification refinement in actual engineering standards via RAG
-**Current focus:** Phase 2 - Document Ingestion
+**Current focus:** Phase 5 - Production Integration
 
 ## Current Position
 
-Phase: 4 of 5 (Production Readiness)
-Plan: 4 of TBD in current phase
+Phase: 5 of 5 (Production Integration)
+Plan: 1 of 2 in current phase
 Status: In progress
-Last activity: 2026-01-24 - Completed 04-04-PLAN.md
+Last activity: 2026-01-24 - Completed 05-01-PLAN.md
 
-Progress: [#####-----] 50%
+Progress: [#######---] 65%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
-- Average duration: ~9 min/plan
-- Total execution time: ~1 hour 22 min
+- Total plans completed: 11
+- Average duration: ~7 min/plan
+- Total execution time: ~1 hour 35 min
 
 **By Phase:**
 
@@ -29,13 +29,33 @@ Progress: [#####-----] 50%
 |-------|-------|-------|----------|
 | 1. Migration | 4 | ~1 hour | ~15 min |
 | 2. Search Layer | 1 | ~5 min | ~5 min |
-| 4. Production Readiness | 4 | ~17 min | ~4.3 min |
+| 4. Production Readiness | 5 | ~25 min | ~5 min |
+| 5. Production Integration | 1 | ~5 min | ~5 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01, 04-01, 04-02, 04-03, 04-04
+- Last 5 plans: 04-02, 04-03, 04-04, 04-05, 05-01
 - Trend: Consistent fast execution on focused tasks
 
 *Updated after each plan completion*
+
+## Phase 4 Completion Summary
+
+Phase 4 executed all 5 plans across 4 waves:
+- Wave 1: 04-01 (dependencies - ragas, diskcache, pytest-golden, python-json-logger)
+- Wave 2: 04-02 (EmbeddingCache), 04-03 (TokenTracker) - parallel
+- Wave 3: 04-04 (Golden tests + RAG evaluation)
+- Wave 4: 04-05 (MCPB packaging) - human checkpoint approved
+
+**Verification Result:** 3/5 criteria passed (60%)
+- ✓ Golden test set: 34 queries across 6 categories
+- ✓ RAG Triad metrics: RAGAS integration complete
+- ✗ Token tracking: Infrastructure exists but not wired to embedder
+- ✗ Embedding cache: Infrastructure exists but not wired to embedder
+- ✓ Plugin packaged: manifest.json + scripts + README
+
+**Gaps moved to Phase 5:**
+- EmbeddingCache (100% test coverage) not integrated with OpenAIEmbedder
+- TokenTracker (97% test coverage) not integrated with OpenAIEmbedder
 
 ## Accumulated Context
 
@@ -58,10 +78,13 @@ Recent decisions affecting current work:
 - Dual evaluation modes: lightweight recall@k (CI) + RAGAS RAG Triad (periodic) (04-04)
 - 34 golden queries across 6 categories with difficulty levels (04-04)
 - 80% recall threshold for golden test pass criteria (04-04)
+- Constructor injection for cache/tracker in OpenAIEmbedder (05-01)
+- Per-text caching in embed_batch for optimal hit rate (05-01)
+- Backward compatibility via optional parameters (05-01)
 
 ### Pending Todos
 
-None - Phase 2 complete.
+- 05-02: Factory integration to wire cache + tracker into embedder
 
 ### Blockers/Concerns
 
@@ -77,8 +100,8 @@ Remaining risks for future phases:
 ## Session Continuity
 
 Last session: 2026-01-24
-Stopped at: Completed 04-04-PLAN.md
+Stopped at: Completed 05-01-PLAN.md (Cache/tracker integration)
 Resume file: None
 
 ---
-*Next action: Continue with remaining Phase 4 tasks (packaging) or begin Phase 3 planning*
+*Next action: Execute 05-02-PLAN.md (Factory integration)*
