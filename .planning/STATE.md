@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-23)
 ## Current Position
 
 Phase: 4 of 5 (Production Readiness)
-Plan: 3 of TBD in current phase
+Plan: 4 of TBD in current phase
 Status: In progress
-Last activity: 2026-01-24 - Completed 04-03-PLAN.md
+Last activity: 2026-01-24 - Completed 04-04-PLAN.md
 
 Progress: [#####-----] 50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
+- Total plans completed: 9
 - Average duration: ~9 min/plan
-- Total execution time: ~1 hour 16 min
+- Total execution time: ~1 hour 22 min
 
 **By Phase:**
 
@@ -29,10 +29,10 @@ Progress: [#####-----] 50%
 |-------|-------|-------|----------|
 | 1. Migration | 4 | ~1 hour | ~15 min |
 | 2. Search Layer | 1 | ~5 min | ~5 min |
-| 4. Production Readiness | 3 | ~11 min | ~3.7 min |
+| 4. Production Readiness | 4 | ~17 min | ~4.3 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-04, 02-01, 04-01, 04-02, 04-03
+- Last 5 plans: 02-01, 04-01, 04-02, 04-03, 04-04
 - Trend: Consistent fast execution on focused tasks
 
 *Updated after each plan completion*
@@ -55,6 +55,9 @@ Recent decisions affecting current work:
 - tiktoken for accurate OpenAI token counting (matches API billing) (04-03)
 - Daily aggregation to JSON file for simple token stats persistence (04-03)
 - 1M token warning threshold per day (configurable) (04-03)
+- Dual evaluation modes: lightweight recall@k (CI) + RAGAS RAG Triad (periodic) (04-04)
+- 34 golden queries across 6 categories with difficulty levels (04-04)
+- 80% recall threshold for golden test pass criteria (04-04)
 
 ### Pending Todos
 
@@ -74,8 +77,8 @@ Remaining risks for future phases:
 ## Session Continuity
 
 Last session: 2026-01-24
-Stopped at: Completed 04-03-PLAN.md
+Stopped at: Completed 04-04-PLAN.md
 Resume file: None
 
 ---
-*Next action: Continue with remaining Phase 4 tasks or begin Phase 3 planning*
+*Next action: Continue with remaining Phase 4 tasks (packaging) or begin Phase 3 planning*
