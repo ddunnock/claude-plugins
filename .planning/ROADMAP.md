@@ -18,7 +18,7 @@ Migrate the finished knowledge-mcp RAG system from `../knowledge-mcp` into `mcps
 - [ ] **Phase 2: Document Ingestion** - Structure-aware chunking with clause preservation for standards
 - [ ] **Phase 3: Search & Integration** - MCP tools exposed, specification-refiner connected
 - [x] **Phase 4: Production Readiness** - Evaluation framework, monitoring, quality gates (partial - see gaps)
-- [ ] **Phase 5: Production Integration** - Wire cache and token tracking into embedder
+- [x] **Phase 5: Production Integration** - Wire cache and token tracking into embedder
 
 ## Phase Details
 
@@ -131,11 +131,11 @@ Plans:
 4. Token data visible in CLI token_summary command after embedding operations
 5. All existing tests pass, new integration tests verify wiring
 
-**Plans**: 2 plans in 2 waves
+**Plans**: 2/2 complete
 
 Plans:
-- [ ] 05-01-PLAN.md — Extend KnowledgeConfig and integrate cache/tracker into OpenAIEmbedder
-- [ ] 05-02-PLAN.md — Wire dependencies in server, add unit and integration tests
+- [x] 05-01-PLAN.md — Extend KnowledgeConfig and integrate cache/tracker into OpenAIEmbedder
+- [x] 05-02-PLAN.md — Wire dependencies in server, add unit and integration tests
 
 ## Progress
 
@@ -143,9 +143,9 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Migration | 4/4 | Complete | 2026-01-23 |
-| 4. Production Readiness | 5/5 | Partial (gaps) | 2026-01-24 |
-| 5. Production Integration | 0/2 | Not started | - |
+| 1. Migration | 4/4 | ✓ Complete | 2026-01-23 |
+| 4. Production Readiness | 5/5 | ✓ Complete | 2026-01-24 |
+| 5. Production Integration | 2/2 | ✓ Complete | 2026-01-24 |
 | 2. Document Ingestion | 0/TBD | Not started | - |
 | 3. Search & Integration | 0/TBD | Not started | - |
 
@@ -205,3 +205,4 @@ All requirements mapped to exactly one phase:
 *Phase 4 partial: 2026-01-24 (infrastructure built, integration gaps moved to Phase 5)*
 *Phase 5 added: 2026-01-24*
 *Phase 5 planned: 2026-01-24 (2 plans in 2 waves)*
+*Phase 5 completed: 2026-01-24 (cache and token tracking fully integrated)*
