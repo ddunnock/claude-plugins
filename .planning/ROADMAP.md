@@ -65,7 +65,14 @@ Plans:
 4. Chunks tagged as normative vs informative where identifiable
 5. At least 4 standards ingested (INCOSE, IEEE 15288, ISO 15288, ISO 26262)
 
-**Plans**: TBD
+**Plans**: 5 plans in 4 waves
+
+Plans:
+- [ ] 02-01-PLAN.md — Add Docling dependency, create tokenizer/hashing/normative utilities
+- [ ] 02-02-PLAN.md — Base ingestor interface and Docling-based PDF ingestor
+- [ ] 02-03-PLAN.md — Hierarchical chunker with table integrity and overlap
+- [ ] 02-04-PLAN.md — DOCX support and ingestion pipeline orchestrator
+- [ ] 02-05-PLAN.md — Integration tests and visual validation (human checkpoint)
 
 ### Phase 3: Search & Integration
 
@@ -146,7 +153,7 @@ Plans:
 | 1. Migration | 4/4 | ✓ Complete | 2026-01-23 |
 | 4. Production Readiness | 5/5 | ✓ Complete | 2026-01-24 |
 | 5. Production Integration | 2/2 | ✓ Complete | 2026-01-24 |
-| 2. Document Ingestion | 0/TBD | Not started | - |
+| 2. Document Ingestion | 0/5 | Planned | - |
 | 3. Search & Integration | 0/TBD | Not started | - |
 
 ## Requirement Coverage
@@ -206,3 +213,4 @@ All requirements mapped to exactly one phase:
 *Phase 5 added: 2026-01-24*
 *Phase 5 planned: 2026-01-24 (2 plans in 2 waves)*
 *Phase 5 completed: 2026-01-24 (cache and token tracking fully integrated)*
+*Phase 2 planned: 2026-01-24 (5 plans in 4 waves)*
