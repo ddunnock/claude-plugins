@@ -16,7 +16,7 @@ Knowledge MCP must transform from a partially-implemented codebase (34% coverage
 
 - [x] **Phase 1: Foundation Fixes** - Fix broken tests, eliminate pyright errors, establish quality baseline
 - [x] **Phase 2: Search Layer** - Implement semantic search connecting embedder and store
-- [ ] **Phase 3: MCP Tool Implementation** - Wire up functional MCP tools for knowledge search
+- [x] **Phase 3: MCP Tool Implementation** - Wire up functional MCP tools for knowledge search
 - [ ] **Phase 4: Test Coverage** - Achieve 80% coverage with comprehensive unit and integration tests
 - [ ] **Phase 5: Extended Features** - Add hybrid search, reranking, CLI, and remaining tools
 
@@ -60,7 +60,7 @@ Plans:
   4. Tool errors return structured error responses with `isError: true`
 **Plans**: 1 plan
 Plans:
-- [ ] 03-01-PLAN.md — Implement knowledge_search and knowledge_stats tool handlers with unit tests
+- [x] 03-01-PLAN.md — Implement knowledge_search and knowledge_stats tool handlers with unit tests
 
 ### Phase 4: Test Coverage
 **Goal**: Achieve 80% line coverage, 75% branch coverage as required by CLAUDE.md
@@ -127,6 +127,6 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Foundation Fixes | - | Complete (external) | 2026-01-23 |
 | 2. Search Layer | 1/1 | Complete | 2026-01-24 |
-| 3. MCP Tool Implementation | 0/1 | Not started | - |
+| 3. MCP Tool Implementation | 1/1 | Complete | 2026-01-24 |
 | 4. Test Coverage | 0/TBD | Not started | - |
 | 5. Extended Features | 0/TBD | Not started | - |
