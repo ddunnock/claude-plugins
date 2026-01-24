@@ -33,6 +33,8 @@ from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
 
 from knowledge_mcp.embed import BaseEmbedder, OpenAIEmbedder
+from knowledge_mcp.embed.cache import EmbeddingCache
+from knowledge_mcp.monitoring.token_tracker import TokenTracker
 from knowledge_mcp.search import SemanticSearcher
 from knowledge_mcp.store import BaseStore, create_store
 from knowledge_mcp.utils.config import load_config
@@ -93,7 +95,32 @@ class KnowledgeMCPServer:
 
         # Create embedder if not provided
         if self._embedder is None:
-            self._embedder = OpenAIEmbedder(api_key=self._config.openai_api_key)
+            # Create cache if enabled
+            cache: EmbeddingCache | None = None
+            if self._config.cache_enabled:
+                cache = EmbeddingCache(
+                    self._config.cache_dir,
+                    self._config.embedding_model,
+                    size_limit=self._config.cache_size_limit,
+                )
+
+            # Create tracker if enabled
+            tracker: TokenTracker | None = None
+            if self._config.token_tracking_enabled:
+                tracker = TokenTracker(
+                    self._config.token_log_file,
+                    self._config.embedding_model,
+                    daily_warning_threshold=self._config.daily_token_warning_threshold,
+                )
+
+            # Create embedder with cache and tracker
+            self._embedder = OpenAIEmbedder(
+                api_key=self._config.openai_api_key,
+                model=self._config.embedding_model,
+                dimensions=self._config.embedding_dimensions,
+                cache=cache,
+                token_tracker=tracker,
+            )
 
         # Create store if not provided
         if self._store is None:
