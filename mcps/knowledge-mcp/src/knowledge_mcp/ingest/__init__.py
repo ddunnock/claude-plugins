@@ -13,4 +13,7 @@ Example:
 
 from __future__ import annotations
 
-__all__: list[str] = []
+from knowledge_mcp.ingest.base import BaseIngestor, ParsedDocument, ParsedElement
+from knowledge_mcp.ingest.pdf_ingestor import PDFIngestor
+
+__all__: list[str] = ["BaseIngestor", "ParsedDocument", "ParsedElement", "PDFIngestor"]

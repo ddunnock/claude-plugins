@@ -209,6 +209,22 @@ class InternalError(KnowledgeMCPError):
     error_code: str = "internal_error"
 
 
+class IngestionError(KnowledgeMCPError):
+    """
+    Raised when document ingestion fails.
+
+    Use this exception when:
+    - Document cannot be parsed
+    - Unsupported document format encountered
+    - Document structure is corrupted
+
+    Example:
+        >>> raise IngestionError("Failed to parse PDF: corrupted document structure")
+    """
+
+    error_code: str = "ingestion_error"
+
+
 # Convenience tuple for catching all specific exception types
 ALL_EXCEPTIONS = (
     ConfigurationError,
@@ -219,4 +235,5 @@ ALL_EXCEPTIONS = (
     ValidationError,
     RateLimitError,
     InternalError,
+    IngestionError,
 )
