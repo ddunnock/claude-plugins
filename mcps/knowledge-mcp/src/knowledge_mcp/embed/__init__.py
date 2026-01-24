@@ -18,6 +18,7 @@ Available Embedders:
 from __future__ import annotations
 
 from knowledge_mcp.embed.base import BaseEmbedder
+from knowledge_mcp.embed.cache import EmbeddingCache
 from knowledge_mcp.embed.openai_embedder import OpenAIEmbedder
 
-__all__: list[str] = ["BaseEmbedder", "OpenAIEmbedder"]
+__all__: list[str] = ["BaseEmbedder", "EmbeddingCache", "OpenAIEmbedder"]
