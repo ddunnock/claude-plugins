@@ -9,4 +9,7 @@ This package provides:
 
 from __future__ import annotations
 
-__all__: list[str] = []
+from knowledge_mcp.monitoring.logger import setup_json_logger
+from knowledge_mcp.monitoring.token_tracker import TokenTracker
+
+__all__ = ["TokenTracker", "setup_json_logger"]
