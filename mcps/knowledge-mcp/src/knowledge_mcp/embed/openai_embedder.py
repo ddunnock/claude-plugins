@@ -42,6 +42,9 @@ from knowledge_mcp.exceptions import (
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from knowledge_mcp.embed.cache import EmbeddingCache
+    from knowledge_mcp.monitoring.token_tracker import TokenTracker
+
 
 # Default configuration per A-REQ-IF-002
 DEFAULT_MODEL = "text-embedding-3-small"
@@ -74,7 +77,7 @@ class OpenAIEmbedder(BaseEmbedder):
         in error messages.
     """
 
-    __slots__ = ("_client", "_model", "_dimensions")
+    __slots__ = ("_client", "_model", "_dimensions", "_cache", "_token_tracker")
 
     def __init__(
         self,
@@ -82,6 +85,8 @@ class OpenAIEmbedder(BaseEmbedder):
         *,
         model: str = DEFAULT_MODEL,
         dimensions: int = DEFAULT_DIMENSIONS,
+        cache: EmbeddingCache | None = None,
+        token_tracker: TokenTracker | None = None,
     ) -> None:
         """
         Initialize the OpenAI embedder.
@@ -90,12 +95,18 @@ class OpenAIEmbedder(BaseEmbedder):
             api_key: OpenAI API key. Must be valid and have embeddings access.
             model: Model name. Defaults to "text-embedding-3-small".
             dimensions: Expected embedding dimensions. Defaults to 1536.
+            cache: Optional embedding cache for cost savings.
+            token_tracker: Optional token usage tracker for monitoring.
 
         Raises:
             ValidationError: If api_key is empty.
 
         Example:
             >>> embedder = OpenAIEmbedder(api_key="sk-proj-...")
+            >>> # With cache and tracking:
+            >>> cache = EmbeddingCache(Path("data/cache"), "text-embedding-3-small")
+            >>> tracker = TokenTracker(Path("data/tokens.json"))
+            >>> embedder = OpenAIEmbedder(api_key="sk-...", cache=cache, token_tracker=tracker)
         """
         if not api_key:
             raise ValidationError("OpenAI API key is required")
@@ -103,6 +114,8 @@ class OpenAIEmbedder(BaseEmbedder):
         self._client = AsyncOpenAI(api_key=api_key)
         self._model = model
         self._dimensions = dimensions
+        self._cache = cache
+        self._token_tracker = token_tracker
 
     @property
     def dimensions(self) -> int:
@@ -148,6 +161,9 @@ class OpenAIEmbedder(BaseEmbedder):
         """
         Generate an embedding vector for a single text.
 
+        Checks cache before calling API. Stores result in cache and tracks
+        token usage when configured.
+
         Args:
             text: The input text to embed. Must be non-empty.
 
@@ -169,6 +185,16 @@ class OpenAIEmbedder(BaseEmbedder):
         if not text or not text.strip():
             raise ValidationError("Text cannot be empty")
 
+        # Check cache first (if configured)
+        if self._cache is not None:
+            cached = self._cache.get(text)
+            if cached is not None:
+                # Track cache hit (if tracker configured)
+                if self._token_tracker is not None:
+                    self._token_tracker.track_embedding(text, cache_hit=True)
+                return cached
+
+        # Cache miss - call OpenAI API
         try:
             result = await self._call_embedding_api([text])
             embedding = result[0]
@@ -179,6 +205,14 @@ class OpenAIEmbedder(BaseEmbedder):
                     f"Embedding dimension mismatch: expected {self._dimensions}, "
                     f"got {len(embedding)}"
                 )
+
+            # Store in cache (if configured)
+            if self._cache is not None:
+                self._cache.set(text, embedding)
+
+            # Track API usage (if tracker configured)
+            if self._token_tracker is not None:
+                self._token_tracker.track_embedding(text, cache_hit=False)
 
             return embedding
 
@@ -225,6 +259,7 @@ class OpenAIEmbedder(BaseEmbedder):
         Generate embedding vectors for multiple texts.
 
         Processes texts in batches to optimize API calls.
+        Uses per-text caching for optimal cache hit rate.
         Maximum batch size is 100 per OpenAI limits.
 
         Args:
@@ -256,56 +291,80 @@ class OpenAIEmbedder(BaseEmbedder):
             if not text or not text.strip():
                 raise ValidationError(f"Text at index {i} cannot be empty")
 
-        # Clamp batch size to maximum
-        effective_batch_size = min(batch_size, MAX_BATCH_SIZE)
-
-        # Process in batches
-        all_embeddings: list[list[float]] = []
         texts_list = list(texts)  # Ensure we can slice
 
-        for i in range(0, len(texts_list), effective_batch_size):
-            batch = texts_list[i : i + effective_batch_size]
+        # Separate cached vs uncached texts
+        result_embeddings: dict[int, list[float]] = {}
+        texts_to_embed: list[tuple[int, str]] = []
 
-            try:
-                batch_embeddings = await self._call_embedding_api(batch)
+        for i, text in enumerate(texts_list):
+            if self._cache is not None:
+                cached = self._cache.get(text)
+                if cached is not None:
+                    result_embeddings[i] = cached
+                    if self._token_tracker is not None:
+                        self._token_tracker.track_embedding(text, cache_hit=True)
+                    continue
+            texts_to_embed.append((i, text))
 
-                # Validate dimensions for each embedding
-                for j, embedding in enumerate(batch_embeddings):
-                    if len(embedding) != self._dimensions:
-                        raise ValidationError(
-                            f"Embedding dimension mismatch at batch index {j}: "
-                            f"expected {self._dimensions}, got {len(embedding)}"
-                        )
+        # Process uncached texts in batches
+        if texts_to_embed:
+            # Clamp batch size to maximum
+            effective_batch_size = min(batch_size, MAX_BATCH_SIZE)
 
-                all_embeddings.extend(batch_embeddings)
+            for batch_start in range(0, len(texts_to_embed), effective_batch_size):
+                batch_items = texts_to_embed[batch_start : batch_start + effective_batch_size]
+                batch_texts = [text for _, text in batch_items]
 
-            except APITimeoutError as e:
-                raise TimeoutError(
-                    "OpenAI embedding batch request timed out"
-                ) from e
+                try:
+                    batch_embeddings = await self._call_embedding_api(batch_texts)
 
-            except APIConnectionError as e:
-                raise ConnectionError(
-                    "Failed to connect to OpenAI embedding service"
-                ) from e
+                    # Validate dimensions and store results
+                    for (original_idx, text), embedding in zip(batch_items, batch_embeddings):
+                        if len(embedding) != self._dimensions:
+                            raise ValidationError(
+                                f"Embedding dimension mismatch at index {original_idx}: "
+                                f"expected {self._dimensions}, got {len(embedding)}"
+                            )
 
-            except RateLimitError as e:
-                raise KMCPRateLimitError(
-                    "OpenAI rate limit exceeded during batch processing"
-                ) from e
+                        # Store in cache (if configured)
+                        if self._cache is not None:
+                            self._cache.set(text, embedding)
 
-            except ValidationError:
-                # Let validation errors propagate unchanged
-                raise
+                        # Track API usage (if tracker configured)
+                        if self._token_tracker is not None:
+                            self._token_tracker.track_embedding(text, cache_hit=False)
 
-            except Exception as e:
-                error_msg = str(e).lower()
-                if "invalid api key" in error_msg or "unauthorized" in error_msg:
-                    raise AuthenticationError(
-                        "Invalid or expired OpenAI API key"
+                        result_embeddings[original_idx] = embedding
+
+                except APITimeoutError as e:
+                    raise TimeoutError(
+                        "OpenAI embedding batch request timed out"
                     ) from e
-                raise ConnectionError(
-                    "Batch embedding generation failed"
-                ) from e
 
-        return all_embeddings
+                except APIConnectionError as e:
+                    raise ConnectionError(
+                        "Failed to connect to OpenAI embedding service"
+                    ) from e
+
+                except RateLimitError as e:
+                    raise KMCPRateLimitError(
+                        "OpenAI rate limit exceeded during batch processing"
+                    ) from e
+
+                except ValidationError:
+                    # Let validation errors propagate unchanged
+                    raise
+
+                except Exception as e:
+                    error_msg = str(e).lower()
+                    if "invalid api key" in error_msg or "unauthorized" in error_msg:
+                        raise AuthenticationError(
+                            "Invalid or expired OpenAI API key"
+                        ) from e
+                    raise ConnectionError(
+                        "Batch embedding generation failed"
+                    ) from e
+
+        # Reassemble results in original order
+        return [result_embeddings[i] for i in range(len(texts_list))]
