@@ -5,35 +5,36 @@
 See: .planning/PROJECT.md (updated 2026-01-23)
 
 **Core value:** Ground specification refinement in actual engineering standards via RAG
-**Current focus:** Phase 5 - Production Integration
+**Current focus:** Phase 2 - Document Ingestion
 
 ## Current Position
 
-Phase: 5 of 5 (Production Integration)
-Plan: 2 of 2 complete (Phase complete)
-Status: Phase 5 complete
-Last activity: 2026-01-24 - Completed 05-02-PLAN.md
+Phase: 2 of 5 (Document Ingestion)
+Plan: 1 of 5 in current phase (complete)
+Status: In progress
+Last activity: 2026-01-24 - Completed 02-01-PLAN.md
 
-Progress: [##########] 100%
+Progress: [##--------] 21%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12
+- Total plans completed: 13
 - Average duration: ~6 min/plan
-- Total execution time: ~1 hour 39 min
+- Total execution time: ~1 hour 44 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Migration | 4 | ~1 hour | ~15 min |
+| 2. Document Ingestion | 1 | ~5 min | ~5 min |
 | 2. Search Layer | 1 | ~5 min | ~5 min |
 | 4. Production Readiness | 5 | ~25 min | ~5 min |
 | 5. Production Integration | 2 | ~9 min | ~4.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-03, 04-04, 04-05, 05-01, 05-02
+- Last 5 plans: 04-04, 04-05, 05-01, 05-02, 02-01
 - Trend: Consistent fast execution on focused tasks
 
 *Updated after each plan completion*
@@ -83,6 +84,10 @@ Recent decisions affecting current work:
 - Backward compatibility via optional parameters (05-01)
 - Only create cache/tracker when embedder not injected (preserves testability) (05-02)
 - Mock vs real dependency separation between unit and integration tests (05-02)
+- Docling 2.70.0 for unified document parsing (PDF, DOCX, PPTX, XLSX, HTML, images) (02-01)
+- tiktoken cl100k_base for OpenAI-compatible token counting (02-01)
+- SHA-256 with whitespace/line ending normalization for content hashing (02-01)
+- RFC 2119 keyword detection (SHALL/SHOULD/MAY) for normative classification (02-01)
 
 ### Pending Todos
 
@@ -121,11 +126,22 @@ Phase 5 executed both plans in wave 2:
 - Comprehensive test coverage (unit + integration)
 - Backward compatible (optional cache/tracker parameters)
 
+## Phase 2 Progress
+
+Phase 2 started:
+- Plan 02-01 (Foundation utilities): Complete - 3 tasks, 3 commits, 4m 40s
+
+**Next:**
+- Plan 02-02 (Document chunking strategies)
+- Plan 02-03 (Chunk ingestion and metadata)
+- Plan 02-04 (PDF/DOCX ingestion)
+- Plan 02-05 (Ingestion CLI and verification)
+
 ## Session Continuity
 
 Last session: 2026-01-24
-Stopped at: Completed 05-02-PLAN.md (Server wiring + tests)
+Stopped at: Completed 02-01-PLAN.md (Document ingestion foundation)
 Resume file: None
 
 ---
-*Status: Phase 5 complete - Production integration successful*
+*Status: Phase 2 in progress - Foundation utilities complete*
