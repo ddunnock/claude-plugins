@@ -1,0 +1,30 @@
+{
+  "name": "knowledge-mcp",
+  "description": "Semantic search over systems engineering standards (IEEE, INCOSE, ISO). Provides RAG capabilities for grounding specifications in engineering knowledge.",
+  "version": "0.1.0",
+  "author": {
+    "name": "David Dunnock"
+  },
+  "license": "MIT",
+  "keywords": [
+    "systems-engineering",
+    "standards",
+    "rag",
+    "semantic-search",
+    "ieee",
+    "incose"
+  ],
+  "mcpServers": {
+    "knowledge-mcp": {
+      "command": "python3",
+      "args": ["-m", "knowledge_mcp"],
+      "cwd": "${CLAUDE_PLUGIN_ROOT}",
+      "env": {
+        "PYTHONPATH": "${CLAUDE_PLUGIN_ROOT}/src",
+        "OPENAI_API_KEY": "${OPENAI_API_KEY}",
+        "QDRANT_URL": "${QDRANT_URL}",
+        "QDRANT_API_KEY": "${QDRANT_API_KEY}"
+      }
+    }
+  }
+}

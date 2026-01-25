@@ -1,8 +1,6 @@
 # Knowledge MCP
 
-Semantic search over engineering standards (IEEE, INCOSE, ISO, NASA) for systems engineering RAG workflows.
-
-**Standards Compliance**: This project adheres to `_references/claude-standards/` (see [CLAUDE.md](./CLAUDE.md) for details).
+Semantic search over systems engineering standards (IEEE, INCOSE, ISO, NASA) for RAG-grounded specification workflows.
 
 ## Features
 
@@ -10,81 +8,98 @@ Semantic search over engineering standards (IEEE, INCOSE, ISO, NASA) for systems
 - **Source Citations**: Results include standard name, clause number, and page references
 - **Hybrid Storage**: Qdrant Cloud (primary) with ChromaDB fallback for offline use
 - **Evaluation Framework**: Golden test set with RAG metrics for quality monitoring
-- **Cost Tracking**: Token usage monitoring with daily aggregation
+- **Cost Tracking**: Token usage monitoring with daily aggregation and embedding cache
 
 ## Installation
 
-### Claude Desktop (Recommended)
+### Claude Desktop / LLM Clients
 
-1. Download the latest `.mcpb` bundle from releases
-2. Double-click to install, or drag to Claude Desktop
-3. Configure environment variables when prompted:
-   - `OPENAI_API_KEY` (required): Your OpenAI API key
+Add to your MCP configuration (e.g., `claude_desktop_config.json`):
 
-### Manual Installation
+```json
+{
+  "mcpServers": {
+    "knowledge-mcp": {
+      "command": "python3",
+      "args": ["-m", "knowledge_mcp"],
+      "cwd": "/path/to/claude-plugins/mcps/knowledge-mcp",
+      "env": {
+        "PYTHONPATH": "/path/to/claude-plugins/mcps/knowledge-mcp/src",
+        "OPENAI_API_KEY": "sk-...",
+        "QDRANT_URL": "https://your-cluster.qdrant.io",
+        "QDRANT_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+### Claude Code Plugin
+
+The plugin is automatically discovered when the repository is cloned:
 
 ```bash
-# Clone the repository
-git clone https://github.com/dunnock/claude-plugins.git
-cd claude-plugins/mcps/knowledge-mcp
+# Check plugin is recognized
+claude plugins list
+```
+
+Environment variables can be set in your shell or `.env` file.
+
+### Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `OPENAI_API_KEY` | Yes | - | OpenAI API key for embeddings |
+| `QDRANT_URL` | No | - | Qdrant Cloud cluster URL |
+| `QDRANT_API_KEY` | No | - | Qdrant Cloud API key |
+| `EMBEDDING_MODEL` | No | `text-embedding-3-small` | OpenAI embedding model |
+| `CHROMADB_PATH` | No | `./data/chromadb` | Local ChromaDB storage path |
+| `COLLECTION_NAME` | No | `se_knowledge_base` | Vector collection name |
+
+If Qdrant credentials are not provided, the server automatically falls back to local ChromaDB storage.
+
+### Development Setup
+
+```bash
+cd mcps/knowledge-mcp
 
 # Install dependencies
 poetry install --with dev,chromadb
 
-# Configure environment
+# Copy environment template
 cp .env.example .env
 # Edit .env with your API keys
 
-# Run the server
+# Run the MCP server directly
 poetry run python -m knowledge_mcp
 ```
 
-## Configuration
+## MCP Tools
 
-### Required
+Once configured, the following tools are available in Claude:
 
-| Variable | Description |
-|----------|-------------|
-| `OPENAI_API_KEY` | OpenAI API key for embedding generation |
+### knowledge_search
 
-### Optional
+Search the knowledge base for relevant content.
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `QDRANT_URL` | - | Qdrant Cloud cluster URL |
-| `QDRANT_API_KEY` | - | Qdrant Cloud API key |
-| `EMBEDDING_MODEL` | `text-embedding-3-small` | OpenAI embedding model |
-| `CHROMADB_PATH` | `./data/chromadb` | Local ChromaDB storage path |
-| `COLLECTION_NAME` | `se_knowledge_base` | Vector collection name |
-
-## Usage
-
-### MCP Tools
-
-Once installed, the following tools are available in Claude:
-
-**knowledge_search**
 ```
-Search for: "system verification requirements"
+Query: "system verification requirements"
+→ Returns relevant chunks with source citations (e.g., "IEEE 15288 Clause 6.4.7")
 ```
-Returns relevant chunks with source citations (e.g., "IEEE 15288 Clause 6.4.7").
 
-**knowledge_stats**
-```
-Show knowledge base statistics
-```
-Returns collection counts and storage information.
+### knowledge_stats
 
-### CLI Commands
+Get statistics about the knowledge base collections and document counts.
+
+## CLI Commands
 
 ```bash
-# Token usage summary
+# Token usage summary (last 7 days)
 poetry run python -m knowledge_mcp.cli.token_summary --days 7
 
 # Run golden tests
 poetry run pytest tests/evaluation/ -v
 ```
-
 
 ## Development
 
@@ -104,7 +119,7 @@ poetry run pytest tests/evaluation/ -v
 ### Quality Checks
 
 ```bash
-# Type checking
+# Type checking (zero errors required)
 poetry run pyright
 
 # Linting
@@ -112,30 +127,29 @@ poetry run ruff check src tests
 poetry run ruff format src tests
 ```
 
-### Building Package
-
-```bash
-# Create MCPB bundle
-./scripts/package_mcpb.sh
-```
-
 ## Architecture
 
 ```
-knowledge-mcp/
+mcps/knowledge-mcp/
+├── .claude-plugin/
+│   └── plugin.json        # Claude Code plugin manifest
 ├── src/knowledge_mcp/
 │   ├── server.py          # MCP server entry point
 │   ├── search/            # Semantic search implementation
 │   ├── embed/             # Embedding generation + cache
 │   ├── store/             # Vector storage (Qdrant, ChromaDB)
+│   ├── ingest/            # Document ingestion (PDF, DOCX)
+│   ├── chunk/             # Hierarchical chunking
 │   ├── evaluation/        # Golden tests + RAG metrics
 │   └── monitoring/        # Token tracking + logging
 ├── data/
-│   ├── golden_queries.yml # Evaluation test set
-│   └── embedding_cache/   # Cached embeddings
+│   └── embedding_cache/   # Cached embeddings (LRU, 10GB limit)
 └── tests/
+    ├── unit/
+    ├── integration/
+    └── evaluation/
 ```
 
 ## License
 
-MIT License - see [LICENSE](./LICENSE) file for details.
+MIT License

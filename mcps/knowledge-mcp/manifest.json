@@ -2,7 +2,7 @@
   "schema_version": "v1",
   "name": "knowledge-mcp",
   "version": "0.1.0",
-  "description": "Semantic search over engineering standards (IEEE, INCOSE, ISO). Provides RAG capabilities for systems engineering knowledge.",
+  "description": "Semantic search over systems engineering standards (IEEE, INCOSE, ISO, NASA). Provides RAG capabilities for grounding specifications in engineering knowledge.",
   "author": {
     "name": "David Dunnock",
     "email": "dunnoda@gmail.com"
@@ -13,6 +13,7 @@
     "type": "python",
     "module": "knowledge_mcp",
     "python_version": ">=3.11",
+    "source_directory": "src",
     "dependencies": [
       "mcp>=1.25.0,<2",
       "openai>=1.0.0",
@@ -59,10 +60,6 @@
     {
       "name": "knowledge_stats",
       "description": "Get statistics about the knowledge base collections and document counts."
-    },
-    {
-      "name": "knowledge_ingest",
-      "description": "Ingest a new document into the knowledge base."
     }
   ],
   "keywords": [
@@ -70,6 +67,8 @@
     "standards",
     "ieee",
     "incose",
+    "iso",
+    "nasa",
     "rag",
     "semantic-search"
   ]
