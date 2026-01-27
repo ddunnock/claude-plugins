@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-20)
 
 **Core value:** The MCP server must actually work - when Claude calls the search tool, it gets real results from the knowledge base.
-**Current focus:** Phase 4 - Test Coverage (Complete)
+**Current focus:** Phase 5 - Extended Features (In Progress)
 
 ## Current Position
 
-Phase: 4 of 5 (Test Coverage) - Complete
-Plan: 05 of 5 complete (04-01, 04-02, 04-03, 04-04, 04-05 done)
-Status: Phase 4 complete - 86% coverage verified
-Last activity: 2026-01-27 - Completed 04-04-PLAN.md (coverage verification)
+Phase: 5 of 5 (Extended Features)
+Plan: 1 of 3 (CLI Framework)
+Status: In progress
+Last activity: 2026-01-27 - Completed 05-01-PLAN.md (Typer CLI)
 
-Progress: [##########] 100%
+Progress: [###       ] 33%
 
 ## Performance Metrics
 
@@ -34,8 +34,8 @@ Progress: [##########] 100%
 | 4 | 5/5 | 15 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-03, 04-05, 04-02, 04-01, 04-04
-- Trend: Test coverage plans executing quickly (verification-only plans)
+- Last 5 plans: 05-01, 04-03, 04-05, 04-02, 04-01
+- Trend: Phase 5 plans executing smoothly
 
 *Updated after each plan completion*
 
@@ -68,14 +68,22 @@ Recent decisions affecting current work:
 - [Phase 4]: Mock only embedder (not store) for MCP tool integration tests
 - [Phase 4]: Patch asyncio.run directly for CLI tests (import inside function)
 - [Phase 4]: 86% line coverage verified, exceeds 80% threshold
+- [Phase 5]: Hybrid search deferred to v2 (multi-collection design)
+- [Phase 5]: CLI uses subcommand pattern (`knowledge ingest docs`) for v2 extensibility
+- [Phase 5]: New MCP tools deferred to v2 (15-tool consolidated design)
+- [Phase 5]: Local embeddings only - offline sync deferred to v2 OfflineManager
+- [Phase 5]: Reranking included (not in v2 spec, no conflict)
+- [05-01]: CLI uses Typer subcommand groups for extensibility
+- [05-01]: Entry point: `knowledge = "knowledge_mcp.cli.main:cli"`
 
 ### Pending Todos
 
-- None - Phase 4 complete
+- Execute 05-02-PLAN.md (Local Embeddings)
+- Execute 05-03-PLAN.md (Reranking)
 
 ### Blockers/Concerns
 
-None - Phase 4 complete. 357 tests passing, 86% coverage.
+None. Phase 5 scope refined for v2 compatibility.
 
 ### Known Limitations (non-blocking)
 
@@ -88,6 +96,6 @@ None - Phase 4 complete. 357 tests passing, 86% coverage.
 ## Session Continuity
 
 Last session: 2026-01-27
-Stopped at: Completed 04-04-PLAN.md (coverage verification)
-Resume file: None (phase complete)
-Next: Phase 5 (Production Readiness) or deployment
+Stopped at: Completed 05-01-PLAN.md
+Resume file: .planning/phases/05-extended-features/05-01-SUMMARY.md
+Next: Execute 05-02-PLAN.md or 05-03-PLAN.md
