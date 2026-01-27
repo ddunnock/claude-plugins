@@ -54,6 +54,7 @@ python-dotenv = ">=1.0.0"
 # Utilities
 rich = ">=13.0.0"
 tenacity = ">=8.0.0"
+typer = ">=0.12.0"
 
 # Data validation
 pydantic = ">=2.0.0"
@@ -103,8 +104,8 @@ chromadb = ">=0.4.0"
 optional = true
 
 [tool.poetry.group.rerank.dependencies]
-# Optional reranking for better results
-cohere = ">=4.0.0"
+# Optional reranking for better results (v2 API requires >=5.11.0)
+cohere = ">=5.11.0"
 
 [tool.poetry.group.local]
 optional = true
@@ -125,6 +126,7 @@ sphinx-copybutton = "^0.5"
 sphinx-autobuild = "^2024.2"
 
 [tool.poetry.scripts]
+knowledge = "knowledge_mcp.cli.main:cli"
 knowledge-mcp = "knowledge_mcp.__main__:cli"
 knowledge-ingest = "knowledge_mcp.cli.ingest:main"
 

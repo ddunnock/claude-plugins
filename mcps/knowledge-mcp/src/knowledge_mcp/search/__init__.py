@@ -1,9 +1,8 @@
 # src/knowledge_mcp/search/__init__.py
-"""
-Search and retrieval module for Knowledge MCP.
+"""Search and retrieval module for Knowledge MCP.
 
 This module provides search functionality including semantic search,
-hybrid search, and metadata filtering for the knowledge base.
+hybrid search, reranking, and metadata filtering for the knowledge base.
 
 Example:
     >>> from knowledge_mcp.search import SemanticSearcher, SearchResult
@@ -14,6 +13,11 @@ Example:
     >>> store = QdrantStore(config)
     >>> searcher = SemanticSearcher(embedder, store)
     >>> results = await searcher.search("system requirements", n_results=10)
+
+For reranking support (requires optional dependencies):
+    >>> from knowledge_mcp.search import Reranker
+    >>> reranker = Reranker(provider="local")
+    >>> reranked = await reranker.rerank("query", results, top_n=5)
 """
 
 from __future__ import annotations
@@ -25,3 +29,12 @@ __all__: list[str] = [
     "SearchResult",
     "SemanticSearcher",
 ]
+
+# Optional reranker import (requires 'rerank' or 'local' extras)
+try:
+    from knowledge_mcp.search.reranker import Reranker
+
+    __all__.append("Reranker")
+except ImportError:
+    # Reranker not available - cohere or sentence-transformers not installed
+    pass
