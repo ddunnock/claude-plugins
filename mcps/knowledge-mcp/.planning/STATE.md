@@ -2,107 +2,93 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-01-20)
+See: .planning/PROJECT.md (updated 2026-01-27)
 
-**Core value:** The MCP server must actually work - when Claude calls the search tool, it gets real results from the knowledge base.
-**Current focus:** Milestone v1.0 Complete ✓
+**Core value:** The system learns from experience — when Claude uses a template and provides feedback, future recommendations improve based on what actually worked.
+**Current focus:** Milestone v2.0 - Phase 1 Planning
 
 ## Current Position
 
-Phase: 5 of 5 (Extended Features) - COMPLETE
-Plan: 4 of 4 (All plans complete)
-Status: **Milestone v1.0 - Spec Compliance COMPLETE**
-Last activity: 2026-01-27 - All Phase 5 plans executed
+Phase: 1 of 4 (Core + Acquisition)
+Plan: 2 of 7 in phase
+Status: **In Progress - Executing Phase 1 Plans**
+Last activity: 2026-01-27 - Completed 01-02-PLAN.md (Web Content Ingestion)
 
-Progress: [##########] 100%
+Progress: [██░░░░░░░░] 14% (1/7 plans complete in phase)
 
 ## Performance Metrics
 
-**Velocity:**
+**v1.0 Velocity (for reference):**
 - Total plans completed: 12
 - Average duration: 4.8 min
 - Total execution time: ~58 min
 
-**By Phase:**
+**v2.0 Estimated Scope:**
+- Phase 1: Core + Acquisition (~6 new MCP tools, PostgreSQL, Crawl4AI)
+- Phase 2: Workflow Support (~4 workflow tools, project capture)
+- Phase 3: Feedback + Scoring (~1 tool, scoring system)
+- Phase 4: Advanced Features (~2 tools, relationship graph)
+- Total: 13 new MCP tools across 4 phases
 
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 1 | - | - | External |
-| 2 | 1/1 | 5 min | 5 min |
-| 3 | 1/1 | 10 min | 10 min |
-| Doc Ingest | 5/5 | ~60 min | 12 min |
-| 4 | 5/5 | 15 min | 3 min |
-| 5 | 4/4 | ~15 min | ~4 min |
-
-**Recent Trend:**
-- Last 5 plans: 05-04, 05-03, 05-02, 05-01, 04-05
-- Trend: Phase 5 plans executed in parallel (Wave 1: 05-01, 05-02, 05-03; Wave 2: 05-04)
-
-*Updated after each plan completion*
+*Updated after roadmap creation*
 
 ## Accumulated Context
 
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
+Decisions logged in PROJECT.md Key Decisions table.
+Decisions from v2 specification validated by research:
 
-- [Init]: Docling for unified document parsing (PDF, DOCX, PPTX, XLSX, HTML, images)
-- [Init]: Qdrant primary, ChromaDB fallback for vector storage
-- [Init]: OpenAI embeddings (text-embedding-3-small) as default
-- [Phase 1]: MCP SDK 1.25.0, qdrant-client 1.16.2 dependencies confirmed
-- [Phase 1]: 40 tests passing, zero pyright errors
-- [Phase 2]: Use BaseStore interface instead of Union for type safety
-- [Phase 2]: Return empty list on errors for graceful degradation
-- [Phase 2]: Use cast() for list conversions to satisfy pyright strict mode
-- [Phase 3]: Lazy dependency initialization via _ensure_dependencies() for test mocking
-- [Phase 3]: MCP request handlers accessed via request type classes as dict keys
-- [Phase 3]: Two-layer error handling (SemanticSearcher + MCP handler)
-- [Phase 3]: Fix print() to sys.stderr.write() for JSON-RPC compatibility
-- [Doc Ingest]: Docling 2.70.0 for PDF parsing with table extraction
-- [Doc Ingest]: Hierarchical chunking with 500 token target, 1000 max, 100 overlap
-- [Doc Ingest]: Small chunks (<100 tokens) merged with adjacent chunks
-- [Doc Ingest]: Three-state normative: True (SHALL/MUST), False (MAY/NOTE), None (unknown)
-- [Doc Ingest]: Section markers "(normative)"/"(informative)" take priority over keywords
-- [Phase 4]: Test run() with asyncio.wait_for timeout to avoid blocking
-- [Phase 4]: Test signal handlers by patching loop.add_signal_handler
-- [Phase 4]: Mock only embedder (not store) for MCP tool integration tests
-- [Phase 4]: Patch asyncio.run directly for CLI tests (import inside function)
-- [Phase 4]: 86% line coverage verified, exceeds 80% threshold
-- [Phase 5]: Hybrid search deferred to v2 (multi-collection design)
-- [Phase 5]: CLI uses subcommand pattern (`knowledge ingest docs`) for v2 extensibility
-- [Phase 5]: New MCP tools deferred to v2 (15-tool consolidated design)
-- [Phase 5]: Local embeddings only - offline sync deferred to v2 OfflineManager
-- [Phase 5]: Reranking included (not in v2 spec, no conflict)
-- [05-01]: CLI uses Typer subcommand groups for extensibility
-- [05-01]: Entry point: `knowledge = "knowledge_mcp.cli.main:cli"`
-- [05-02]: normalize_embeddings=True default for correct cosine similarity
-- [05-02]: ThreadPoolExecutor(max_workers=1) to prevent model contention
-- [05-02]: Conditional LocalEmbedder export based on sentence-transformers availability
-- [05-03]: dataclasses.replace() for immutable SearchResult updates
-- [05-03]: cast() for pyright strict mode with Cohere API response
-- [05-04]: Verify command uses existing store.get_stats() API
-- [05-04]: Verify defaults to versioned_collection_name from config
+- [Validated]: PostgreSQL for relational data (ACID, RLS path to multi-tenancy)
+- [Validated]: SQLAlchemy 2.0 async with type hints
+- [Validated]: Hybrid architecture (PostgreSQL + Qdrant) for v2
+- [Validated]: 15 consolidated MCP tools (13 new + 2 existing)
+- [Validated]: Three-tier feedback collection
+- [Validated]: Project state machine for lifecycle
+- [Validated]: Score-boosted ranking (semantic * 0.7 + effectiveness * 0.3)
+- [Validated]: Crawl4AI for web ingestion (v0.7.8+, async native)
+
+**Phase 1 Execution Decisions:**
+
+| Decision | Plan | Choice | Rationale |
+|----------|------|--------|-----------|
+| Crawl4AI version | 01-02 | Pin to ^0.7.8 instead of 0.8.0 | 0.7.8 is proven stable; 0.8.0 too new |
+| Rate limiting | 01-02 | Sequential crawling in batch | Simple; Crawl4AI handles internal limits |
+| Title extraction | 01-02 | Regex-based vs BeautifulSoup | Reduces dependencies; sufficient for <title> |
+
+### Completed This Session
+
+- [x] Read v2 specification files (main + addendum)
+- [x] Gap analysis: v1.0 codebase vs v2.0 requirements
+- [x] Crawl4AI research: API patterns, rate limiting, robots.txt
+- [x] Created REQUIREMENTS.md with 22 functional requirements
+- [x] Created ROADMAP.md with 4 phases and success criteria
+- [x] Executed 01-02-PLAN.md (Web Content Ingestion)
 
 ### Pending Todos
 
-None - Milestone v1.0 complete.
+- [ ] Execute remaining Phase 1 plans (01-03 through 01-07)
+- [ ] Phase 2-4 execution
 
 ### Blockers/Concerns
 
-None. All Phase 5 work is v2-compatible.
+- **Resolved**: Crawl4AI integration patterns documented
+- **Pending research during Phase 1 planning**: SQLAlchemy 2.0 async session management
+- **Pending research during Phase 1 planning**: Alembic async migration patterns
+- **Risk**: PostgreSQL connection complexity (mitigate with connection pooling)
 
-### Known Limitations (non-blocking)
+### Known Limitations (from v1.0)
 
 - Docling GLYPH encoding issues with some PDF fonts
 - Section hierarchy accumulates all headings (very long)
 - Docling deprecation warning for TableItem.export_to_dataframe()
 - Pre-existing pyright errors (113) from missing type stubs for external libraries
 - Pre-existing ruff errors (468) primarily docstring formatting (D212)
+- **New**: Crawl4AI lacks type stubs (causes pyright warnings, not errors)
 
 ## Session Continuity
 
-Last session: 2026-01-27
-Stopped at: Milestone v1.0 Complete
-Resume file: .planning/ROADMAP.md
-Next: Consider v2 migration or new milestone
+Last session: 2026-01-27 20:50 UTC
+Stopped at: Completed 01-02-PLAN.md (Web Content Ingestion)
+Resume file: .planning/phases/01-core-acquisition/01-02-SUMMARY.md
+Next: Execute plan 01-03 (PostgreSQL Migration) or continue Phase 1 execution
