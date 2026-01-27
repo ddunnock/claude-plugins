@@ -73,7 +73,12 @@ Plans:
   3. All MCP tool handlers have integration tests
   4. Search layer has comprehensive unit tests (edge cases: empty results, score thresholds)
   5. Store fallback logic tested with categorized exceptions
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+- [ ] 04-01-PLAN.md — QdrantStore and ChromaDBStore unit tests with mocked clients
+- [ ] 04-02-PLAN.md — Logging utilities and CLI entry point tests
+- [ ] 04-03-PLAN.md — Server initialization and lifecycle tests
+- [ ] 04-04-PLAN.md — Coverage verification and gap filling
 
 ### Phase 5: Extended Features
 **Goal**: Add hybrid search, reranking, CLI commands, and remaining MCP tools
@@ -128,5 +133,5 @@ Plans:
 | 1. Foundation Fixes | - | Complete (external) | 2026-01-23 |
 | 2. Search Layer | 1/1 | Complete | 2026-01-24 |
 | 3. MCP Tool Implementation | 1/1 | Complete | 2026-01-24 |
-| 4. Test Coverage | 0/TBD | Not started | - |
+| 4. Test Coverage | 0/4 | Planned | - |
 | 5. Extended Features | 0/TBD | Not started | - |
