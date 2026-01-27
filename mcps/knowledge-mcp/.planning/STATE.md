@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 ## Current Position
 
 Phase: 1 of 4 (Core + Acquisition)
-Plan: 2 of 7 in phase
+Plan: 1 of 7 in phase
 Status: **In Progress - Executing Phase 1 Plans**
-Last activity: 2026-01-27 - Completed 01-02-PLAN.md (Web Content Ingestion)
+Last activity: 2026-01-27 - Completed 01-01-PLAN.md (PostgreSQL Async Foundation)
 
 Progress: [██░░░░░░░░] 14% (1/7 plans complete in phase)
 
@@ -52,6 +52,9 @@ Decisions from v2 specification validated by research:
 
 | Decision | Plan | Choice | Rationale |
 |----------|------|--------|-----------|
+| expire_on_commit | 01-01 | False (async safety) | Prevents lazy loading errors after commit in async context |
+| pool_pre_ping | 01-01 | True (connection verification) | Prevents stale connection errors (Pitfall #3 from research) |
+| Data access pattern | 01-01 | Repository pattern | Encapsulates queries, enforces session-per-operation |
 | Crawl4AI version | 01-02 | Pin to ^0.7.8 instead of 0.8.0 | 0.7.8 is proven stable; 0.8.0 too new |
 | Rate limiting | 01-02 | Sequential crawling in batch | Simple; Crawl4AI handles internal limits |
 | Title extraction | 01-02 | Regex-based vs BeautifulSoup | Reduces dependencies; sufficient for <title> |
@@ -63,6 +66,7 @@ Decisions from v2 specification validated by research:
 - [x] Crawl4AI research: API patterns, rate limiting, robots.txt
 - [x] Created REQUIREMENTS.md with 22 functional requirements
 - [x] Created ROADMAP.md with 4 phases and success criteria
+- [x] Executed 01-01-PLAN.md (PostgreSQL Async Foundation)
 - [x] Executed 01-02-PLAN.md (Web Content Ingestion)
 
 ### Pending Todos
@@ -73,9 +77,9 @@ Decisions from v2 specification validated by research:
 ### Blockers/Concerns
 
 - **Resolved**: Crawl4AI integration patterns documented
-- **Pending research during Phase 1 planning**: SQLAlchemy 2.0 async session management
+- **Resolved**: SQLAlchemy 2.0 async session management (01-01 complete)
 - **Pending research during Phase 1 planning**: Alembic async migration patterns
-- **Risk**: PostgreSQL connection complexity (mitigate with connection pooling)
+- **Resolved**: PostgreSQL connection complexity (mitigated with pool_pre_ping and pool_recycle)
 
 ### Known Limitations (from v1.0)
 
@@ -88,7 +92,7 @@ Decisions from v2 specification validated by research:
 
 ## Session Continuity
 
-Last session: 2026-01-27 20:50 UTC
-Stopped at: Completed 01-02-PLAN.md (Web Content Ingestion)
-Resume file: .planning/phases/01-core-acquisition/01-02-SUMMARY.md
-Next: Execute plan 01-03 (PostgreSQL Migration) or continue Phase 1 execution
+Last session: 2026-01-27 20:51 UTC
+Stopped at: Completed 01-01-PLAN.md (PostgreSQL Async Foundation)
+Resume file: .planning/phases/01-core-acquisition/01-01-SUMMARY.md
+Next: Execute plan 01-02 (Web Content Ingestion) or continue Phase 1 execution
