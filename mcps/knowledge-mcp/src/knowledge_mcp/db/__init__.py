@@ -25,8 +25,24 @@ Example:
 from __future__ import annotations
 
 from knowledge_mcp.db.engine import create_engine_and_session_factory, get_session
+from knowledge_mcp.db.models import (
+    AcquisitionRequest,
+    AcquisitionRequestStatus,
+    AuthorityTier,
+    Base,
+    Source,
+    SourceStatus,
+    SourceType,
+)
 
 __all__ = [
     "create_engine_and_session_factory",
     "get_session",
+    "Base",
+    "Source",
+    "AcquisitionRequest",
+    "SourceType",
+    "SourceStatus",
+    "AuthorityTier",
+    "AcquisitionRequestStatus",
 ]
