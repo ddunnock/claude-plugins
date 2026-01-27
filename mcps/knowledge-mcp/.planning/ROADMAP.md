@@ -18,7 +18,7 @@ Knowledge MCP must transform from a partially-implemented codebase (34% coverage
 - [x] **Phase 2: Search Layer** - Implement semantic search connecting embedder and store
 - [x] **Phase 3: MCP Tool Implementation** - Wire up functional MCP tools for knowledge search
 - [x] **Phase 4: Test Coverage** - Achieve 80% coverage with comprehensive unit and integration tests
-- [ ] **Phase 5: Extended Features** - Add hybrid search, reranking, CLI, and remaining tools
+- [ ] **Phase 5: Extended Features** - Add CLI commands, local embeddings, and reranking
 
 ## Phase Details
 
@@ -82,18 +82,25 @@ Plans:
 - [x] 04-05-PLAN.md — MCP tool integration tests with real ChromaDB store
 
 ### Phase 5: Extended Features
-**Goal**: Add hybrid search, reranking, CLI commands, and remaining MCP tools
+**Goal**: Add CLI commands, local embeddings, and reranking (v2-compatible scope)
 **Depends on**: Phase 4
-**Requirements**: REQ-02 (local embeddings), REQ-04 (hybrid search), REQ-05 (reranking), REQ-06 (hierarchical chunking), REQ-07 (semantic chunking), REQ-08 (standards chunking), REQ-09 (CLI ingest), REQ-10 (CLI verify)
-**Research flag**: needs-research (Cohere API, hybrid search configuration)
+**Requirements**: REQ-02 (local embeddings), REQ-05 (reranking), REQ-09 (CLI ingest), REQ-10 (CLI verify)
+**Research flag**: standard-patterns (Cohere API documented, sentence-transformers well-known)
 **Success Criteria** (what must be TRUE):
-  1. `knowledge-ingest` CLI command ingests documents into the knowledge base
-  2. `knowledge-mcp --verify` validates embeddings and collection health
-  3. Hybrid search combines dense and sparse retrieval (when Qdrant backend)
-  4. Reranking improves result quality (Cohere or local cross-encoder)
-  5. Local embedding option works without OpenAI API key (sentence-transformers)
-  6. `knowledge_keyword_search` and `knowledge_lookup` tools are functional
-**Plans**: TBD
+  1. `knowledge ingest docs <path>` CLI command ingests documents into the knowledge base
+  2. `knowledge verify` validates embeddings and collection health
+  3. Reranking improves result quality (Cohere or local cross-encoder)
+  4. Local embedding option works without OpenAI API key (sentence-transformers)
+  5. All Phase 5 code compatible with v2 architecture (no blocking changes)
+**Deferred to v2** (per 05-CONTEXT.md decisions):
+  - REQ-04: Hybrid search (v2 has multi-collection design)
+  - `knowledge_keyword_search` and `knowledge_lookup` tools (v2 tool consolidation)
+  - REQ-06/07/08: Chunking strategies (already complete or v2)
+**Plans**: 3 plans
+Plans:
+- [ ] 05-01-PLAN.md — Typer CLI framework with `knowledge ingest docs` command
+- [ ] 05-02-PLAN.md — LocalEmbedder with sentence-transformers
+- [ ] 05-03-PLAN.md — Reranker (Cohere + local) and `knowledge verify` command
 
 ## Phase Ordering Rationale
 
@@ -109,23 +116,23 @@ Plans:
 
 ## Requirement Coverage
 
-| Requirement | Description | Phase |
-|-------------|-------------|-------|
-| REQ-01 | Working MCP tool handlers | Phase 3 |
-| REQ-02 | Local embedding support | Phase 5 |
-| REQ-03 | Semantic search implementation | Phase 2 |
-| REQ-04 | Hybrid search implementation | Phase 5 |
-| REQ-05 | Result reranking | Phase 5 |
-| REQ-06 | Hierarchical chunking strategy | Phase 5 |
-| REQ-07 | Semantic chunking strategy | Phase 5 |
-| REQ-08 | Standards-aware chunking strategy | Phase 5 |
-| REQ-09 | CLI for document ingestion | Phase 5 |
-| REQ-10 | CLI for embedding verification | Phase 5 |
-| REQ-11 | 80% test coverage | Phase 1 (types), Phase 4 (coverage) |
-| REQ-12 | Zero pyright errors | Phase 1 |
-| REQ-13 | Verified Docling integration | Phase 1 |
+| Requirement | Description | Phase | Status |
+|-------------|-------------|-------|--------|
+| REQ-01 | Working MCP tool handlers | Phase 3 | Complete |
+| REQ-02 | Local embedding support | Phase 5 | Pending |
+| REQ-03 | Semantic search implementation | Phase 2 | Complete |
+| REQ-04 | Hybrid search implementation | v2 | Deferred |
+| REQ-05 | Result reranking | Phase 5 | Pending |
+| REQ-06 | Hierarchical chunking strategy | Doc Ingest | Complete |
+| REQ-07 | Semantic chunking strategy | v2+ | Deferred |
+| REQ-08 | Standards-aware chunking strategy | Doc Ingest | Complete |
+| REQ-09 | CLI for document ingestion | Phase 5 | Pending |
+| REQ-10 | CLI for embedding verification | Phase 5 | Pending |
+| REQ-11 | 80% test coverage | Phase 4 | Complete |
+| REQ-12 | Zero pyright errors | Phase 1 | Complete |
+| REQ-13 | Verified Docling integration | Phase 1 | Complete |
 
-**Coverage**: 13/13 requirements mapped
+**Coverage**: 13/13 requirements mapped (2 deferred to v2)
 
 ## Progress
 
@@ -135,4 +142,4 @@ Plans:
 | 2. Search Layer | 1/1 | Complete | 2026-01-24 |
 | 3. MCP Tool Implementation | 1/1 | Complete | 2026-01-24 |
 | 4. Test Coverage | 5/5 | Complete | 2026-01-27 |
-| 5. Extended Features | 0/TBD | Not started | - |
+| 5. Extended Features | 0/3 | Planned | - |
