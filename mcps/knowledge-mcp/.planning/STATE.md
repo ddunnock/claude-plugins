@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-20)
 ## Current Position
 
 Phase: 4 of 5 (Test Coverage) - In Progress
-Plan: 03 of 5 complete
-Status: Plan 04-03 (server tests) complete
-Last activity: 2026-01-27 - Completed 04-03-PLAN.md (server tests)
+Plan: 04 of 5 complete (04-03, 04-05 done)
+Status: Plan 04-05 (MCP tool integration tests) complete
+Last activity: 2026-01-27 - Completed 04-05-PLAN.md (MCP tool integration tests)
 
-Progress: [#######---] 70%
+Progress: [########--] 75%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
-- Average duration: 6.5 min
-- Total execution time: 26 min
+- Total plans completed: 5
+- Average duration: 5.6 min
+- Total execution time: 28 min
 
 **By Phase:**
 
@@ -31,10 +31,10 @@ Progress: [#######---] 70%
 | 2 | 1/1 | 5 min | 5 min |
 | 3 | 1/1 | 10 min | 10 min |
 | Doc Ingest | 5/5 | ~60 min | 12 min |
-| 4 | 1/5 | 2 min | 2 min |
+| 4 | 2/5 | 4 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-01, Doc-01-05, 04-03
+- Last 5 plans: 03-01, Doc-01-05, 04-03, 04-05
 - Trend: Test coverage plans executing quickly
 
 *Updated after each plan completion*
@@ -65,14 +65,15 @@ Recent decisions affecting current work:
 - [Doc Ingest]: Section markers "(normative)"/"(informative)" take priority over keywords
 - [Phase 4]: Test run() with asyncio.wait_for timeout to avoid blocking
 - [Phase 4]: Test signal handlers by patching loop.add_signal_handler
+- [Phase 4]: Mock only embedder (not store) for MCP tool integration tests
 
 ### Pending Todos
 
-- Complete remaining Phase 4 plans (04-01, 04-02, 04-04, 04-05)
+- Complete remaining Phase 4 plans (04-01, 04-02, 04-04)
 
 ### Blockers/Concerns
 
-None - All tools working, 25 server tests passing, zero pyright errors.
+None - All tools working, 36 total tests (25 unit + 11 integration) for server, zero pyright errors.
 
 ### Known Limitations (non-blocking)
 
@@ -83,6 +84,6 @@ None - All tools working, 25 server tests passing, zero pyright errors.
 ## Session Continuity
 
 Last session: 2026-01-27
-Stopped at: Completed 04-03-PLAN.md (server tests)
+Stopped at: Completed 04-05-PLAN.md (MCP tool integration tests)
 Resume file: None (plan complete)
-Next: Continue Phase 4 (plans 04-01, 04-02, 04-04, 04-05)
+Next: Continue Phase 4 (plans 04-01, 04-02, 04-04)
