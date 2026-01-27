@@ -14,7 +14,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import replace
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     from knowledge_mcp.search.models import SearchResult
@@ -139,9 +139,11 @@ class Reranker:
         # Map back to SearchResult objects with updated scores using dataclasses.replace
         reranked: list[SearchResult] = []
         for item in response.results:
-            original = results[item.index]
+            idx = cast(int, item.index)
+            relevance = cast(float, item.relevance_score)
+            original = results[idx]
             # Use dataclasses.replace for immutable update - only change score
-            reranked.append(replace(original, score=item.relevance_score))
+            reranked.append(replace(original, score=relevance))
 
         return reranked
 

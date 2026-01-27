@@ -62,6 +62,16 @@ class KnowledgeConfig(BaseModel):
         description="Vector dimensions",
     )
 
+    # Embedding Provider Selection
+    embedding_provider: Literal["openai", "local"] = Field(
+        default="openai",
+        description="Embedding provider: openai or local (sentence-transformers)",
+    )
+    local_embedding_model: str = Field(
+        default="all-MiniLM-L6-v2",
+        description="Local embedding model (sentence-transformers)",
+    )
+
     # Vector Store Selection
     vector_store: Literal["qdrant", "chromadb"] = Field(
         default="qdrant",
@@ -181,13 +191,17 @@ class KnowledgeConfig(BaseModel):
         """
         Validate configuration completeness.
 
+        Only requires OPENAI_API_KEY when embedding_provider is "openai".
+        Local embeddings work without any API keys.
+
         Returns:
             List of validation error messages. Empty if valid.
         """
         errors: list[str] = []
 
-        if not self.openai_api_key:
-            errors.append("OPENAI_API_KEY is required")
+        # Only require OpenAI API key when using OpenAI embeddings
+        if self.embedding_provider == "openai" and not self.openai_api_key:
+            errors.append("OPENAI_API_KEY is required when embedding_provider=openai")
 
         if self.vector_store == "qdrant":
             if not self.qdrant_url:
@@ -233,6 +247,8 @@ def load_config() -> KnowledgeConfig:
         openai_api_key=os.getenv("OPENAI_API_KEY", ""),
         embedding_model=os.getenv("EMBEDDING_MODEL", "text-embedding-3-small"),
         embedding_dimensions=int(os.getenv("EMBEDDING_DIMENSIONS", "1536")),
+        embedding_provider=os.getenv("EMBEDDING_PROVIDER", "openai"),  # type: ignore[arg-type]
+        local_embedding_model=os.getenv("LOCAL_EMBEDDING_MODEL", "all-MiniLM-L6-v2"),
         vector_store=os.getenv("VECTOR_STORE", "qdrant"),  # type: ignore[arg-type]
         qdrant_url=os.getenv("QDRANT_URL", ""),
         qdrant_api_key=os.getenv("QDRANT_API_KEY", ""),
