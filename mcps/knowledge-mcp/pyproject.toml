@@ -59,9 +59,17 @@ typer = ">=0.12.0"
 # Data validation
 pydantic = ">=2.0.0"
 
+# Database (PostgreSQL with SQLAlchemy 2.0 async)
+sqlalchemy = "^2.0.25"
+asyncpg = "^0.29.0"
+alembic = "^1.13.1"
+
 # Persistent embedding cache
 diskcache = ">=5.6.0"
 docling = ">=2.70.0"
+
+# Web content ingestion
+crawl4ai = "^0.7.8"
 
 [tool.poetry.group.dev.dependencies]
 # Testing
