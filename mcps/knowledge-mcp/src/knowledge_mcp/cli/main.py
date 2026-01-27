@@ -15,6 +15,7 @@ from __future__ import annotations
 import typer
 
 from knowledge_mcp.cli.ingest import ingest_app
+from knowledge_mcp.cli.verify import verify_command
 
 app = typer.Typer(
     name="knowledge",
@@ -24,6 +25,9 @@ app = typer.Typer(
 
 # Register ingest subcommand group
 app.add_typer(ingest_app, name="ingest")
+
+# Register verify command
+app.command("verify")(verify_command)
 
 
 def cli() -> None:
