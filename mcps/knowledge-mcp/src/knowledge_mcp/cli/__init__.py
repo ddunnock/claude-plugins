@@ -6,10 +6,12 @@ This module provides CLI commands for document ingestion,
 server management, and configuration validation.
 
 Example:
-    >>> from knowledge_mcp.cli import main
-    >>> main()  # Runs the CLI application
+    >>> from knowledge_mcp.cli import cli
+    >>> cli()  # Runs the CLI application
 """
 
 from __future__ import annotations
 
-__all__: list[str] = []
+from knowledge_mcp.cli.main import app, cli
+
+__all__: list[str] = ["app", "cli"]

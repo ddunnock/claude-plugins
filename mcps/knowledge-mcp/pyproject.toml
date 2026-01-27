@@ -112,7 +112,7 @@ optional = true
 
 [tool.poetry.group.local.dependencies]
 # Local embedding models (offline use)
-sentence-transformers = ">=2.2.0"
+sentence-transformers = ">=3.0.0"
 
 [tool.poetry.group.docs]
 optional = true

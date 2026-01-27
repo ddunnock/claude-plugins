@@ -7,8 +7,7 @@ Usage:
 
 Examples:
     python -m knowledge_mcp --help
-    python -m knowledge_mcp serve
-    python -m knowledge_mcp ingest --source ./data/sources
+    python -m knowledge_mcp ingest docs ./data/sources
 """
 
 from __future__ import annotations
@@ -16,27 +15,16 @@ from __future__ import annotations
 import sys
 
 
-def cli() -> int:
+def cli() -> None:
     """
     Command-line interface entry point.
 
-    Returns:
-        Exit code (0 for success, non-zero for errors).
+    Delegates to the Typer CLI application.
     """
-    import asyncio
+    from knowledge_mcp.cli.main import cli as typer_cli
 
-    from knowledge_mcp.server import main as server_main
-
-    try:
-        asyncio.run(server_main())
-        return 0
-    except KeyboardInterrupt:
-        sys.stderr.write("\nInterrupted by user\n")
-        return 130
-    except Exception as e:
-        sys.stderr.write(f"Error: {e}\n")
-        return 1
+    typer_cli()
 
 
 if __name__ == "__main__":
-    sys.exit(cli())
+    cli()
