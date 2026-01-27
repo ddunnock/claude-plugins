@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 ## Current Position
 
 Phase: 1 of 4 (Core + Acquisition)
-Plan: 5 of 7 in phase
+Plan: 6 of 7 in phase
 Status: **In Progress - Executing Phase 1 Plans**
-Last activity: 2026-01-27 - Completed 01-05-PLAN.md (Coverage Assessment Algorithm)
+Last activity: 2026-01-27 - Completed 01-04-PLAN.md (Offline Sync Manager)
 
-Progress: [███████░░░] 71% (5/7 plans complete in phase)
+Progress: [████████░░] 86% (6/7 plans complete in phase)
 
 ## Performance Metrics
 
@@ -64,6 +64,10 @@ Decisions from v2 specification validated by research:
 | Entropy weighting | 01-05 | 30% entropy in confidence | Balances similarity (50%), entropy (30%), count (20%) |
 | Priority thresholds | 01-05 | HIGH: <0.3 sim OR >0.7 conf | Empirical thresholds for gap urgency classification |
 | Type factory functions | 01-05 | _default_gaps()/_default_covered() | Resolve pyright type inference for dataclass fields |
+| Offline sync scope | 01-04 | Metadata-only to ChromaDB | ChromaDB optimized for vectors, not relational data |
+| Sync collection | 01-04 | Separate sources_metadata collection | Isolated from vector chunk storage |
+| Client initialization | 01-04 | Lazy-load ChromaDB client | Avoids cost when PostgreSQL is online |
+| Timestamp handling | 01-04 | datetime.now(UTC) vs utcnow() | Use timezone-aware timestamps (utcnow deprecated) |
 
 ### Completed This Session
 
@@ -75,11 +79,12 @@ Decisions from v2 specification validated by research:
 - [x] Executed 01-01-PLAN.md (PostgreSQL Async Foundation)
 - [x] Executed 01-02-PLAN.md (Web Content Ingestion)
 - [x] Executed 01-03-PLAN.md (Alembic Async Migrations)
+- [x] Executed 01-04-PLAN.md (Offline Sync Manager)
 - [x] Executed 01-05-PLAN.md (Coverage Assessment Algorithm)
 
 ### Pending Todos
 
-- [ ] Execute remaining Phase 1 plans (01-04, 01-06, 01-07)
+- [ ] Execute remaining Phase 1 plans (01-06, 01-07)
 - [ ] Phase 2-4 execution
 
 ### Blockers/Concerns
@@ -100,7 +105,7 @@ Decisions from v2 specification validated by research:
 
 ## Session Continuity
 
-Last session: 2026-01-27 20:58 UTC
-Stopped at: Completed 01-05-PLAN.md (Coverage Assessment Algorithm)
-Resume file: .planning/phases/01-core-acquisition/01-03-SUMMARY.md
-Next: Execute remaining Phase 1 plans (01-04 through 01-07)
+Last session: 2026-01-27 21:01 UTC
+Stopped at: Completed 01-04-PLAN.md (Offline Sync Manager)
+Resume file: .planning/phases/01-core-acquisition/01-04-SUMMARY.md
+Next: Execute remaining Phase 1 plans (01-06 through 01-07)
