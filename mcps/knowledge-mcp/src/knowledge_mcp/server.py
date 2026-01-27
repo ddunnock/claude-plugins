@@ -32,14 +32,25 @@ from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
 
+from knowledge_mcp.db.engine import create_engine_and_session_factory, get_session
 from knowledge_mcp.embed import BaseEmbedder, OpenAIEmbedder
 from knowledge_mcp.embed.cache import EmbeddingCache
 from knowledge_mcp.monitoring.token_tracker import TokenTracker
 from knowledge_mcp.search import SemanticSearcher
 from knowledge_mcp.store import BaseStore, create_store
+from knowledge_mcp.tools.acquisition import (
+    handle_acquire,
+    handle_assess,
+    handle_ingest,
+    handle_preflight,
+    handle_request,
+    handle_sources,
+)
 from knowledge_mcp.utils.config import load_config
 
 if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
+
     from knowledge_mcp.utils.config import KnowledgeConfig
 
 
@@ -81,6 +92,8 @@ class KnowledgeMCPServer:
         self._embedder = embedder
         self._store = store
         self._searcher: SemanticSearcher | None = None
+        self._engine: AsyncEngine | None = None
+        self._session_factory: async_sessionmaker | None = None
 
         self._setup_handlers()
 
@@ -92,6 +105,16 @@ class KnowledgeMCPServer:
         # Load config if not using injected dependencies
         if self._config is None:
             self._config = load_config()
+
+        # Create database engine and session factory if not in offline mode
+        if (
+            self._engine is None
+            and not self._config.offline_mode
+            and self._config.database_url
+        ):
+            self._engine, self._session_factory = create_engine_and_session_factory(
+                self._config
+            )
 
         # Create embedder if not provided
         if self._embedder is None:
@@ -142,7 +165,7 @@ class KnowledgeMCPServer:
         async def handle_list_tools() -> list[Tool]:  # pyright: ignore[reportUnusedFunction]
             """Return list of available tools."""
             return [
-                Tool(
+                Tool(  # noqa: E501
                     name="knowledge_search",
                     description="""Search the systems engineering knowledge base for relevant information.
 
@@ -158,7 +181,7 @@ Backend: Vector search with OpenAI embeddings (text-embedding-3-small).""",
                     inputSchema={
                         "type": "object",
                         "properties": {
-                            "query": {
+                            "query": {  # noqa: E501
                                 "type": "string",
                                 "description": "Natural language search query (e.g., 'system requirements review')"
                             },
@@ -169,7 +192,7 @@ Backend: Vector search with OpenAI embeddings (text-embedding-3-small).""",
                                 "minimum": 1,
                                 "maximum": 100
                             },
-                            "filter_dict": {
+                            "filter_dict": {  # noqa: E501
                                 "type": "object",
                                 "description": "Optional metadata filters (e.g., {'document_type': 'standard', 'normative': true})",
                                 "additionalProperties": True
@@ -202,10 +225,230 @@ Use this to verify the knowledge base is populated and accessible.""",
                         "required": []
                     }
                 ),
+                Tool(  # noqa: E501
+                    name="knowledge_ingest",
+                    description="""Trigger ingestion of a document or web URL into the knowledge base.
+
+Use this to add new content sources. For web URLs, content is crawled and ingested immediately.
+For documents (PDF, DOCX), creates a source record for CLI ingestion.
+
+Parameters:
+- url (required): URL or file path to ingest
+- source_type: "document", "web", or "standard" (default: "web")
+- authority_tier: "tier1" (standards), "tier2" (handbooks), "tier3" (articles) (default: "tier3")
+- title: Optional title override
+
+Returns source_id, status, and ingestion details.""",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "url": {
+                                "type": "string",
+                                "description": "URL or file path to ingest"
+                            },
+                            "source_type": {
+                                "type": "string",
+                                "description": "Type of source: document, web, or standard",
+                                "enum": ["document", "web", "standard"],
+                                "default": "web"
+                            },
+                            "authority_tier": {
+                                "type": "string",
+                                "description": "Authority tier for ranking",
+                                "enum": ["tier1", "tier2", "tier3"],
+                                "default": "tier3"
+                            },
+                            "title": {
+                                "type": "string",
+                                "description": "Optional title override"
+                            }
+                        },
+                        "required": ["url"]
+                    }
+                ),
+                Tool(
+                    name="knowledge_sources",
+                    description="""List and filter knowledge sources in the database.
+
+Returns sources with their status, type, and metadata.
+Use filters to find specific types of content.
+
+Optional filters:
+- source_type: Filter by type (document, web, standard)
+- status: Filter by status (pending, ingesting, complete, failed)
+- authority_tier: Filter by authority (tier1, tier2, tier3)
+- limit: Maximum results (default: 50)""",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "source_type": {
+                                "type": "string",
+                                "description": "Filter by source type",
+                                "enum": ["document", "web", "standard"]
+                            },
+                            "status": {
+                                "type": "string",
+                                "description": "Filter by status",
+                                "enum": ["pending", "ingesting", "complete", "failed"]
+                            },
+                            "authority_tier": {
+                                "type": "string",
+                                "description": "Filter by authority tier",
+                                "enum": ["tier1", "tier2", "tier3"]
+                            },
+                            "limit": {
+                                "type": "integer",
+                                "description": "Maximum number of results",
+                                "default": 50,
+                                "minimum": 1,
+                                "maximum": 1000
+                            }
+                        },
+                        "required": []
+                    }
+                ),
+                Tool(
+                    name="knowledge_assess",
+                    description="""Assess knowledge coverage for specified topics.
+
+Identifies gaps where the knowledge base has low or no coverage.
+Returns priority rankings and suggested queries for acquisition.
+
+Use this to identify areas needing more documentation before starting work.
+
+Parameters:
+- areas (required): List of knowledge areas/topics to assess
+- threshold: Similarity threshold for coverage (default: 0.5)
+
+Returns coverage report with gaps and covered areas.""",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "areas": {
+                                "type": "array",
+                                "description": "Knowledge areas to assess",
+                                "items": {"type": "string"},
+                                "minItems": 1
+                            },
+                            "threshold": {
+                                "type": "number",
+                                "description": "Similarity threshold for coverage",
+                                "default": 0.5,
+                                "minimum": 0.0,
+                                "maximum": 1.0
+                            }
+                        },
+                        "required": ["areas"]
+                    }
+                ),
+                Tool(
+                    name="knowledge_preflight",
+                    description="""Check if a URL is accessible before acquisition.
+
+Verifies the URL can be reached and has valid format.
+Use before knowledge_acquire to validate URLs.
+
+Parameters:
+- url (required): URL to check
+- check_robots: Whether to check robots.txt (default: true)
+
+Returns accessibility status and any errors.""",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "url": {
+                                "type": "string",
+                                "description": "URL to check"
+                            },
+                            "check_robots": {
+                                "type": "boolean",
+                                "description": "Whether to check robots.txt compliance",
+                                "default": True
+                            }
+                        },
+                        "required": ["url"]
+                    }
+                ),
+                Tool(
+                    name="knowledge_acquire",
+                    description="""Acquire web content: preflight, create source, and ingest.
+
+Complete workflow for adding web content. Checks accessibility,
+creates source record, and ingests content.
+
+This is a convenience tool that combines preflight + ingest.
+
+Parameters:
+- url (required): URL to acquire
+- authority_tier: Authority level (default: tier3)
+- title: Optional title override
+- reason: Why this content is needed
+
+Returns acquisition result with source_id and ingestion details.""",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "url": {
+                                "type": "string",
+                                "description": "URL to acquire"
+                            },
+                            "authority_tier": {
+                                "type": "string",
+                                "description": "Authority tier for ranking",
+                                "enum": ["tier1", "tier2", "tier3"],
+                                "default": "tier3"
+                            },
+                            "title": {
+                                "type": "string",
+                                "description": "Optional title override"
+                            },
+                            "reason": {
+                                "type": "string",
+                                "description": "Why this content is needed"
+                            }
+                        },
+                        "required": ["url"]
+                    }
+                ),
+                Tool(
+                    name="knowledge_request",
+                    description="""Create an acquisition request for content to be added later.
+
+Use when content cannot be acquired immediately (auth required,
+manual review needed, etc.). Tracks pending acquisitions.
+
+Parameters:
+- url (required): URL to request
+- reason: Why this content is needed
+- priority: Priority level (1=highest, 5=lowest, default: 3)
+
+Returns request ID and details.""",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "url": {
+                                "type": "string",
+                                "description": "URL to request"
+                            },
+                            "reason": {
+                                "type": "string",
+                                "description": "Why this content is needed"
+                            },
+                            "priority": {
+                                "type": "integer",
+                                "description": "Priority level (1=highest, 5=lowest)",
+                                "default": 3,
+                                "minimum": 1,
+                                "maximum": 5
+                            }
+                        },
+                        "required": ["url"]
+                    }
+                ),
             ]
 
         @self.server.call_tool()
-        async def handle_call_tool(  # pyright: ignore[reportUnusedFunction]
+        async def handle_call_tool(  # noqa: PLR0911  # pyright: ignore[reportUnusedFunction]
             name: str,
             arguments: dict[str, Any],
         ) -> list[TextContent]:
@@ -227,6 +470,18 @@ Use this to verify the knowledge base is populated and accessible.""",
                     return await self._handle_knowledge_search(arguments)
                 elif name == "knowledge_stats":
                     return await self._handle_knowledge_stats(arguments)
+                elif name == "knowledge_ingest":
+                    return await self._handle_knowledge_ingest(arguments)
+                elif name == "knowledge_sources":
+                    return await self._handle_knowledge_sources(arguments)
+                elif name == "knowledge_assess":
+                    return await self._handle_knowledge_assess(arguments)
+                elif name == "knowledge_preflight":
+                    return await self._handle_knowledge_preflight(arguments)
+                elif name == "knowledge_acquire":
+                    return await self._handle_knowledge_acquire(arguments)
+                elif name == "knowledge_request":
+                    return await self._handle_knowledge_request(arguments)
                 else:
                     # Unknown tool - return error response
                     return [
@@ -307,7 +562,9 @@ Use this to verify the knowledge base is populated and accessible.""",
             )
         ]
 
-    async def _handle_knowledge_stats(self, arguments: dict[str, Any]) -> list[TextContent]:
+    async def _handle_knowledge_stats(
+        self, arguments: dict[str, Any]  # noqa: ARG002
+    ) -> list[TextContent]:
         """
         Handle knowledge_stats tool invocation.
 
@@ -327,6 +584,163 @@ Use this to verify the knowledge base is populated and accessible.""",
                 text=json.dumps(stats, indent=2)
             )
         ]
+
+    async def _handle_knowledge_ingest(self, arguments: dict[str, Any]) -> list[TextContent]:
+        """Handle knowledge_ingest tool invocation.
+
+        Args:
+            arguments: Tool arguments with url, source_type, authority_tier, title.
+
+        Returns:
+            List containing ingestion result as TextContent.
+        """
+        if self._session_factory is None:
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps({
+                        "error": "Database not available (offline mode or not configured)",
+                        "isError": True
+                    }, indent=2)
+                )
+            ]
+
+        async with get_session(self._session_factory) as session:
+            result = await handle_ingest(
+                session=session,
+                url=arguments.get("url", ""),
+                source_type=arguments.get("source_type", "web"),
+                authority_tier=arguments.get("authority_tier", "tier3"),
+                title=arguments.get("title"),
+            )
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    async def _handle_knowledge_sources(self, arguments: dict[str, Any]) -> list[TextContent]:
+        """Handle knowledge_sources tool invocation.
+
+        Args:
+            arguments: Tool arguments with optional filters.
+
+        Returns:
+            List containing sources list as TextContent.
+        """
+        if self._session_factory is None:
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps({
+                        "error": "Database not available (offline mode or not configured)",
+                        "isError": True
+                    }, indent=2)
+                )
+            ]
+
+        async with get_session(self._session_factory) as session:
+            result = await handle_sources(
+                session=session,
+                source_type=arguments.get("source_type"),
+                status=arguments.get("status"),
+                authority_tier=arguments.get("authority_tier"),
+                limit=arguments.get("limit", 50),
+            )
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    async def _handle_knowledge_assess(self, arguments: dict[str, Any]) -> list[TextContent]:
+        """Handle knowledge_assess tool invocation.
+
+        Args:
+            arguments: Tool arguments with areas and threshold.
+
+        Returns:
+            List containing coverage report as TextContent.
+        """
+        assert self._searcher is not None
+        result = await handle_assess(
+            searcher=self._searcher,
+            areas=arguments.get("areas", []),
+            threshold=arguments.get("threshold", 0.5),
+        )
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    async def _handle_knowledge_preflight(self, arguments: dict[str, Any]) -> list[TextContent]:
+        """Handle knowledge_preflight tool invocation.
+
+        Args:
+            arguments: Tool arguments with url and check_robots.
+
+        Returns:
+            List containing preflight result as TextContent.
+        """
+        result = await handle_preflight(
+            url=arguments.get("url", ""),
+            check_robots=arguments.get("check_robots", True),
+        )
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    async def _handle_knowledge_acquire(self, arguments: dict[str, Any]) -> list[TextContent]:
+        """Handle knowledge_acquire tool invocation.
+
+        Args:
+            arguments: Tool arguments with url, authority_tier, title, reason.
+
+        Returns:
+            List containing acquisition result as TextContent.
+        """
+        if self._session_factory is None:
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps({
+                        "error": "Database not available (offline mode or not configured)",
+                        "isError": True
+                    }, indent=2)
+                )
+            ]
+
+        async with get_session(self._session_factory) as session:
+            result = await handle_acquire(
+                session=session,
+                url=arguments.get("url", ""),
+                authority_tier=arguments.get("authority_tier", "tier3"),
+                title=arguments.get("title"),
+                reason=arguments.get("reason"),
+            )
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    async def _handle_knowledge_request(self, arguments: dict[str, Any]) -> list[TextContent]:
+        """Handle knowledge_request tool invocation.
+
+        Args:
+            arguments: Tool arguments with url, reason, priority.
+
+        Returns:
+            List containing request details as TextContent.
+        """
+        if self._session_factory is None:
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps({
+                        "error": "Database not available (offline mode or not configured)",
+                        "isError": True
+                    }, indent=2)
+                )
+            ]
+
+        async with get_session(self._session_factory) as session:
+            result = await handle_request(
+                session=session,
+                url=arguments.get("url", ""),
+                reason=arguments.get("reason"),
+                priority=arguments.get("priority", 3),
+            )
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
     async def run(self) -> None:
         """
