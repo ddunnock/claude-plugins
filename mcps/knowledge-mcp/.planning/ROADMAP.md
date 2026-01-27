@@ -17,7 +17,7 @@ Knowledge MCP must transform from a partially-implemented codebase (34% coverage
 - [x] **Phase 1: Foundation Fixes** - Fix broken tests, eliminate pyright errors, establish quality baseline
 - [x] **Phase 2: Search Layer** - Implement semantic search connecting embedder and store
 - [x] **Phase 3: MCP Tool Implementation** - Wire up functional MCP tools for knowledge search
-- [ ] **Phase 4: Test Coverage** - Achieve 80% coverage with comprehensive unit and integration tests
+- [x] **Phase 4: Test Coverage** - Achieve 80% coverage with comprehensive unit and integration tests
 - [ ] **Phase 5: Extended Features** - Add hybrid search, reranking, CLI, and remaining tools
 
 ## Phase Details
@@ -75,11 +75,11 @@ Plans:
   5. Store fallback logic tested with categorized exceptions
 **Plans**: 5 plans
 Plans:
-- [ ] 04-01-PLAN.md — QdrantStore and ChromaDBStore unit tests with mocked clients, plus categorized exception fallback tests
-- [ ] 04-02-PLAN.md — Logging utilities and CLI entry point tests
-- [ ] 04-03-PLAN.md — Server initialization and lifecycle tests
-- [ ] 04-04-PLAN.md — Coverage verification and gap filling
-- [ ] 04-05-PLAN.md — MCP tool integration tests with real ChromaDB store
+- [x] 04-01-PLAN.md — QdrantStore and ChromaDBStore unit tests with mocked clients, plus categorized exception fallback tests
+- [x] 04-02-PLAN.md — Logging utilities and CLI entry point tests
+- [x] 04-03-PLAN.md — Server initialization and lifecycle tests
+- [x] 04-04-PLAN.md — Coverage verification and gap filling
+- [x] 04-05-PLAN.md — MCP tool integration tests with real ChromaDB store
 
 ### Phase 5: Extended Features
 **Goal**: Add hybrid search, reranking, CLI commands, and remaining MCP tools
@@ -134,5 +134,5 @@ Plans:
 | 1. Foundation Fixes | - | Complete (external) | 2026-01-23 |
 | 2. Search Layer | 1/1 | Complete | 2026-01-24 |
 | 3. MCP Tool Implementation | 1/1 | Complete | 2026-01-24 |
-| 4. Test Coverage | 0/5 | Planned | - |
+| 4. Test Coverage | 5/5 | Complete | 2026-01-27 |
 | 5. Extended Features | 0/TBD | Not started | - |
