@@ -47,6 +47,11 @@ class KnowledgeConfig(BaseModel):
         chunk_size_min: Minimum chunk size in tokens.
         chunk_size_max: Maximum chunk size in tokens.
         chunk_overlap: Overlap between chunks in tokens.
+        database_url: PostgreSQL connection string (postgresql+asyncpg://...).
+        database_pool_size: Database connection pool size.
+        database_max_overflow: Maximum overflow connections.
+        database_echo: Enable SQL statement logging.
+        offline_mode: Force ChromaDB fallback without PostgreSQL.
     """
 
     # OpenAI Configuration
@@ -150,6 +155,32 @@ class KnowledgeConfig(BaseModel):
         description="Chunk overlap in tokens",
     )
 
+    # PostgreSQL Database Configuration (v2.0)
+    database_url: str = Field(
+        default="",
+        description="PostgreSQL connection string (postgresql+asyncpg://...)",
+    )
+    database_pool_size: int = Field(
+        default=15,
+        ge=1,
+        le=100,
+        description="Database connection pool size",
+    )
+    database_max_overflow: int = Field(
+        default=10,
+        ge=0,
+        le=50,
+        description="Maximum overflow connections",
+    )
+    database_echo: bool = Field(
+        default=False,
+        description="Enable SQL statement logging",
+    )
+    offline_mode: bool = Field(
+        default=False,
+        description="Force ChromaDB fallback without PostgreSQL",
+    )
+
     @field_validator("chunk_overlap")
     @classmethod
     def validate_overlap(cls, v: int, info) -> int:
@@ -209,6 +240,15 @@ class KnowledgeConfig(BaseModel):
             if not self.qdrant_api_key:
                 errors.append("QDRANT_API_KEY is required for Qdrant Cloud")
 
+        # Database validation (v2.0)
+        if not self.offline_mode:
+            if not self.database_url:
+                errors.append("DATABASE_URL is required when offline_mode=False")
+            elif not self.database_url.startswith("postgresql+asyncpg://"):
+                errors.append(
+                    "DATABASE_URL must start with 'postgresql+asyncpg://' for async support"
+                )
+
         return errors
 
 
@@ -264,7 +304,14 @@ def load_config() -> KnowledgeConfig:
         token_log_file=Path(os.getenv("TOKEN_LOG_FILE", "./data/token_usage.json")),
         token_tracking_enabled=os.getenv("TOKEN_TRACKING_ENABLED", "true").lower() == "true",
         daily_token_warning_threshold=int(os.getenv("DAILY_TOKEN_WARNING_THRESHOLD", "1000000")),
+        # Chunking configuration
         chunk_size_min=int(os.getenv("CHUNK_SIZE_MIN", "200")),
         chunk_size_max=int(os.getenv("CHUNK_SIZE_MAX", "800")),
         chunk_overlap=int(os.getenv("CHUNK_OVERLAP", "100")),
+        # Database configuration (v2.0)
+        database_url=os.getenv("DATABASE_URL", ""),
+        database_pool_size=int(os.getenv("DATABASE_POOL_SIZE", "15")),
+        database_max_overflow=int(os.getenv("DATABASE_MAX_OVERFLOW", "10")),
+        database_echo=os.getenv("DATABASE_ECHO", "false").lower() == "true",
+        offline_mode=os.getenv("OFFLINE_MODE", "false").lower() == "true",
     )
