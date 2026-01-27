@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-20)
 
 **Core value:** The MCP server must actually work - when Claude calls the search tool, it gets real results from the knowledge base.
-**Current focus:** Phase 4 - Test Coverage (In Progress)
+**Current focus:** Phase 4 - Test Coverage (Complete)
 
 ## Current Position
 
-Phase: 4 of 5 (Test Coverage) - In Progress
-Plan: 03 of 5 complete (04-02, 04-03, 04-05 done)
-Status: Plan 04-02 (logging & CLI tests) complete
-Last activity: 2026-01-27 - Completed 04-02-PLAN.md (logging & CLI tests)
+Phase: 4 of 5 (Test Coverage) - Complete
+Plan: 05 of 5 complete (04-01, 04-02, 04-03, 04-04, 04-05 done)
+Status: Phase 4 complete - 86% coverage verified
+Last activity: 2026-01-27 - Completed 04-04-PLAN.md (coverage verification)
 
-Progress: [########--] 80%
+Progress: [##########] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
-- Average duration: 5.7 min
-- Total execution time: 36 min
+- Total plans completed: 7
+- Average duration: 5.3 min
+- Total execution time: 39 min
 
 **By Phase:**
 
@@ -31,11 +31,11 @@ Progress: [########--] 80%
 | 2 | 1/1 | 5 min | 5 min |
 | 3 | 1/1 | 10 min | 10 min |
 | Doc Ingest | 5/5 | ~60 min | 12 min |
-| 4 | 3/5 | 12 min | 4 min |
+| 4 | 5/5 | 15 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: Doc-01-05, 04-03, 04-05, 04-02
-- Trend: Test coverage plans executing quickly
+- Last 5 plans: 04-03, 04-05, 04-02, 04-01, 04-04
+- Trend: Test coverage plans executing quickly (verification-only plans)
 
 *Updated after each plan completion*
 
@@ -67,24 +67,27 @@ Recent decisions affecting current work:
 - [Phase 4]: Test signal handlers by patching loop.add_signal_handler
 - [Phase 4]: Mock only embedder (not store) for MCP tool integration tests
 - [Phase 4]: Patch asyncio.run directly for CLI tests (import inside function)
+- [Phase 4]: 86% line coverage verified, exceeds 80% threshold
 
 ### Pending Todos
 
-- Complete remaining Phase 4 plans (04-01, 04-04)
+- None - Phase 4 complete
 
 ### Blockers/Concerns
 
-None - All tools working, 44 tests passing for logging/CLI, zero pyright errors.
+None - Phase 4 complete. 357 tests passing, 86% coverage.
 
 ### Known Limitations (non-blocking)
 
 - Docling GLYPH encoding issues with some PDF fonts
 - Section hierarchy accumulates all headings (very long)
 - Docling deprecation warning for TableItem.export_to_dataframe()
+- Pre-existing pyright errors (113) from missing type stubs for external libraries
+- Pre-existing ruff errors (468) primarily docstring formatting (D212)
 
 ## Session Continuity
 
 Last session: 2026-01-27
-Stopped at: Completed 04-02-PLAN.md (logging & CLI tests)
-Resume file: None (plan complete)
-Next: Continue Phase 4 (plans 04-01, 04-04)
+Stopped at: Completed 04-04-PLAN.md (coverage verification)
+Resume file: None (phase complete)
+Next: Phase 5 (Production Readiness) or deployment
