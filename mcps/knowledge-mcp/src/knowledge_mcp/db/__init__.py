@@ -34,6 +34,7 @@ from knowledge_mcp.db.models import (
     SourceStatus,
     SourceType,
 )
+from knowledge_mcp.db.repositories import AcquisitionRequestRepository, SourceRepository
 
 __all__ = [
     "create_engine_and_session_factory",
@@ -45,4 +46,6 @@ __all__ = [
     "SourceStatus",
     "AuthorityTier",
     "AcquisitionRequestStatus",
+    "SourceRepository",
+    "AcquisitionRequestRepository",
 ]
