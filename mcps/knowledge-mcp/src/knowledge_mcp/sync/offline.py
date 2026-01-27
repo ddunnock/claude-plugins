@@ -1,5 +1,4 @@
-"""
-Offline sync manager for Knowledge MCP.
+"""Offline sync manager for Knowledge MCP.
 
 Syncs PostgreSQL source metadata to ChromaDB for offline operation.
 Enables graceful degradation when database is unavailable.
@@ -19,10 +18,10 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -44,9 +43,9 @@ class SyncState:
     """Current sync state."""
 
     status: SyncStatus
-    last_sync: Optional[datetime] = None
+    last_sync: datetime | None = None
     sources_synced: int = 0
-    error_message: Optional[str] = None
+    error_message: str | None = None
     is_online: bool = True
 
 
@@ -61,8 +60,7 @@ class OfflineSyncConfig:
 
 
 class OfflineSyncManager:
-    """
-    Manages synchronization between PostgreSQL and ChromaDB.
+    """Manages synchronization between PostgreSQL and ChromaDB.
 
     Provides:
     - Source metadata sync to ChromaDB
@@ -70,16 +68,15 @@ class OfflineSyncManager:
     - Graceful degradation when database unavailable
     """
 
-    def __init__(self, config: Optional[OfflineSyncConfig] = None):
-        """
-        Initialize sync manager.
+    def __init__(self, config: OfflineSyncConfig | None = None):
+        """Initialize sync manager.
 
         Args:
             config: Sync configuration. Uses defaults if None.
         """
         self.config = config or OfflineSyncConfig()
         self._state = SyncState(status=SyncStatus.PENDING)
-        self._chroma_client: Optional[Any] = None
+        self._chroma_client: Any | None = None
 
     def _get_chroma_client(self) -> Any:
         """Lazy-load ChromaDB client."""
@@ -97,8 +94,7 @@ class OfflineSyncManager:
         )
 
     async def check_database_connection(self, session_factory: Any) -> bool:
-        """
-        Check if PostgreSQL is accessible.
+        """Check if PostgreSQL is accessible.
 
         Args:
             session_factory: Async session factory from db/engine.py
@@ -117,8 +113,7 @@ class OfflineSyncManager:
             return False
 
     async def sync_sources(self, session: AsyncSession) -> SyncState:
-        """
-        Sync source metadata from PostgreSQL to ChromaDB.
+        """Sync source metadata from PostgreSQL to ChromaDB.
 
         Args:
             session: Active database session.
@@ -155,7 +150,7 @@ class OfflineSyncManager:
                         "source_type": s.source_type.value if s.source_type else "",
                         "status": s.status.value if s.status else "",
                         "authority_tier": s.authority_tier.value if s.authority_tier else "",
-                        "synced_at": datetime.utcnow().isoformat(),
+                        "synced_at": datetime.now(UTC).isoformat(),
                     }
                     for s in batch
                 ]
@@ -170,7 +165,7 @@ class OfflineSyncManager:
 
             self._state = SyncState(
                 status=SyncStatus.SYNCED,
-                last_sync=datetime.utcnow(),
+                last_sync=datetime.now(UTC),
                 sources_synced=synced,
                 is_online=True,
             )
@@ -188,12 +183,11 @@ class OfflineSyncManager:
 
     def get_offline_sources(
         self,
-        source_type: Optional[str] = None,
-        authority_tier: Optional[str] = None,
+        source_type: str | None = None,
+        authority_tier: str | None = None,
         limit: int = 100,
     ) -> list[dict[str, Any]]:
-        """
-        Query sources from ChromaDB offline store.
+        """Query sources from ChromaDB offline store.
 
         Args:
             source_type: Filter by source type.
@@ -220,19 +214,19 @@ class OfflineSyncManager:
         )
 
         # Format results
-        sources = []
+        sources: list[dict[str, Any]] = []
         if results and results.get("metadatas"):
-            for i, metadata in enumerate(results["metadatas"]):
-                sources.append(
-                    {
-                        "id": metadata.get("source_id"),
-                        "url": metadata.get("url"),
-                        "title": metadata.get("title"),
-                        "source_type": metadata.get("source_type"),
-                        "status": metadata.get("status"),
-                        "authority_tier": metadata.get("authority_tier"),
-                    }
-                )
+            metadatas = results["metadatas"]
+            for metadata in metadatas:
+                source_dict: dict[str, Any] = {
+                    "id": metadata.get("source_id"),
+                    "url": metadata.get("url"),
+                    "title": metadata.get("title"),
+                    "source_type": metadata.get("source_type"),
+                    "status": metadata.get("status"),
+                    "authority_tier": metadata.get("authority_tier"),
+                }
+                sources.append(source_dict)
 
         return sources
 
