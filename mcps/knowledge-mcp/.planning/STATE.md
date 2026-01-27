@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 ## Current Position
 
 Phase: 1 of 4 (Core + Acquisition)
-Plan: 7 of 7 in phase
-Status: **Phase 1 Complete**
-Last activity: 2026-01-27 - Completed 01-07-PLAN.md (Database Tests and Coverage)
+Plan: 6 of 7 in phase
+Status: **In Progress - Executing Phase 1 Plans**
+Last activity: 2026-01-27 - Completed 01-06-PLAN.md (MCP Tools Implementation)
 
-Progress: [██████████] 100% (7/7 plans complete in phase)
+Progress: [█████████░] 86% (6/7 plans complete in phase)
 
 ## Performance Metrics
 
@@ -68,9 +68,9 @@ Decisions from v2 specification validated by research:
 | Sync collection | 01-04 | Separate sources_metadata collection | Isolated from vector chunk storage |
 | Client initialization | 01-04 | Lazy-load ChromaDB client | Avoids cost when PostgreSQL is online |
 | Timestamp handling | 01-04 | datetime.now(UTC) vs utcnow() | Use timezone-aware timestamps (utcnow deprecated) |
-| Test session mocking | 01-07 | AsyncMock for async sessions | Enables repository unit tests without database |
-| Integration test skip | 01-07 | pytestmark with DATABASE_URL check | Tests skip gracefully when database unavailable |
-| Enum testing strategy | 01-07 | Test all enum values comprehensively | Catches schema drift between code and migrations |
+| Session per invocation | 01-06 | Create session for each tool call | Ensures proper lifecycle and prevents connection leaks |
+| Offline mode errors | 01-06 | Return JSON errors when DB unavailable | Tools fail gracefully with clear error messages |
+| check_robots parameter | 01-06 | Keep for API compatibility | Future enhancement, currently only URL validation |
 
 ### Completed This Session
 
@@ -84,13 +84,12 @@ Decisions from v2 specification validated by research:
 - [x] Executed 01-03-PLAN.md (Alembic Async Migrations)
 - [x] Executed 01-04-PLAN.md (Offline Sync Manager)
 - [x] Executed 01-05-PLAN.md (Coverage Assessment Algorithm)
-- [x] Executed 01-06-PLAN.md (MCP Acquisition Tools)
-- [x] Executed 01-07-PLAN.md (Database Tests and Coverage)
+- [x] Executed 01-06-PLAN.md (MCP Tools Implementation)
 
 ### Pending Todos
 
-- [ ] Phase 2-4 planning and execution
-- [ ] Phase 1 verification and integration testing
+- [ ] Execute remaining Phase 1 plans (01-07)
+- [ ] Phase 2-4 execution
 
 ### Blockers/Concerns
 
@@ -110,7 +109,7 @@ Decisions from v2 specification validated by research:
 
 ## Session Continuity
 
-Last session: 2026-01-27 22:29 UTC
-Stopped at: Completed 01-07-PLAN.md (Database Tests and Coverage)
-Resume file: .planning/phases/01-core-acquisition/01-07-SUMMARY.md
-Next: Phase 1 complete - ready for Phase 2 planning or integration verification
+Last session: 2026-01-27 21:10 UTC
+Stopped at: Completed 01-06-PLAN.md (MCP Tools Implementation)
+Resume file: .planning/phases/01-core-acquisition/01-06-SUMMARY.md
+Next: Execute remaining Phase 1 plan (01-07 - Database Tests and Coverage)
