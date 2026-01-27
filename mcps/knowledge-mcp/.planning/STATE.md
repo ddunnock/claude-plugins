@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-20)
 
 **Core value:** The MCP server must actually work - when Claude calls the search tool, it gets real results from the knowledge base.
-**Current focus:** Phase 5 - Extended Features (In Progress)
+**Current focus:** Milestone v1.0 Complete ✓
 
 ## Current Position
 
-Phase: 5 of 5 (Extended Features)
-Plan: 4 of 4 (Verify CLI)
-Status: In progress
-Last activity: 2026-01-27 - Completed 05-04-PLAN.md (Verify CLI)
+Phase: 5 of 5 (Extended Features) - COMPLETE
+Plan: 4 of 4 (All plans complete)
+Status: **Milestone v1.0 - Spec Compliance COMPLETE**
+Last activity: 2026-01-27 - All Phase 5 plans executed
 
-Progress: [########  ] 80%
+Progress: [##########] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
-- Average duration: 4.9 min
-- Total execution time: 46 min
+- Total plans completed: 12
+- Average duration: 4.8 min
+- Total execution time: ~58 min
 
 **By Phase:**
 
@@ -32,11 +32,11 @@ Progress: [########  ] 80%
 | 3 | 1/1 | 10 min | 10 min |
 | Doc Ingest | 5/5 | ~60 min | 12 min |
 | 4 | 5/5 | 15 min | 3 min |
-| 5 | 3/4 | 12 min | 4 min |
+| 5 | 4/4 | ~15 min | ~4 min |
 
 **Recent Trend:**
-- Last 5 plans: 05-04, 05-02, 05-01, 04-04, 04-03
-- Trend: Phase 5 plans executing smoothly
+- Last 5 plans: 05-04, 05-03, 05-02, 05-01, 04-05
+- Trend: Phase 5 plans executed in parallel (Wave 1: 05-01, 05-02, 05-03; Wave 2: 05-04)
 
 *Updated after each plan completion*
 
@@ -79,17 +79,18 @@ Recent decisions affecting current work:
 - [05-02]: normalize_embeddings=True default for correct cosine similarity
 - [05-02]: ThreadPoolExecutor(max_workers=1) to prevent model contention
 - [05-02]: Conditional LocalEmbedder export based on sentence-transformers availability
+- [05-03]: dataclasses.replace() for immutable SearchResult updates
+- [05-03]: cast() for pyright strict mode with Cohere API response
 - [05-04]: Verify command uses existing store.get_stats() API
 - [05-04]: Verify defaults to versioned_collection_name from config
 
 ### Pending Todos
 
-- Execute 05-03-PLAN.md (Reranking) - may already be complete based on commit history
-- Review Phase 5 completion status
+None - Milestone v1.0 complete.
 
 ### Blockers/Concerns
 
-None. Phase 5 scope refined for v2 compatibility.
+None. All Phase 5 work is v2-compatible.
 
 ### Known Limitations (non-blocking)
 
@@ -102,6 +103,6 @@ None. Phase 5 scope refined for v2 compatibility.
 ## Session Continuity
 
 Last session: 2026-01-27
-Stopped at: Completed 05-04-PLAN.md
-Resume file: .planning/phases/05-extended-features/05-04-SUMMARY.md
-Next: Execute 05-03-PLAN.md (Reranking) or verify Phase 5 completion
+Stopped at: Milestone v1.0 Complete
+Resume file: .planning/ROADMAP.md
+Next: Consider v2 migration or new milestone

@@ -18,7 +18,7 @@ Knowledge MCP must transform from a partially-implemented codebase (34% coverage
 - [x] **Phase 2: Search Layer** - Implement semantic search connecting embedder and store
 - [x] **Phase 3: MCP Tool Implementation** - Wire up functional MCP tools for knowledge search
 - [x] **Phase 4: Test Coverage** - Achieve 80% coverage with comprehensive unit and integration tests
-- [ ] **Phase 5: Extended Features** - Add CLI commands, local embeddings, and reranking
+- [x] **Phase 5: Extended Features** - Add CLI commands, local embeddings, and reranking
 
 ## Phase Details
 
@@ -96,11 +96,12 @@ Plans:
   - REQ-04: Hybrid search (v2 has multi-collection design)
   - `knowledge_keyword_search` and `knowledge_lookup` tools (v2 tool consolidation)
   - REQ-06/07/08: Chunking strategies (already complete or v2)
-**Plans**: 3 plans
+**Plans**: 4 plans
 Plans:
-- [ ] 05-01-PLAN.md — Typer CLI framework with `knowledge ingest docs` command
-- [ ] 05-02-PLAN.md — LocalEmbedder with sentence-transformers
-- [ ] 05-03-PLAN.md — Reranker (Cohere + local) and `knowledge verify` command
+- [x] 05-01-PLAN.md — Typer CLI framework with `knowledge ingest docs` command
+- [x] 05-02-PLAN.md — LocalEmbedder with sentence-transformers
+- [x] 05-03-PLAN.md — Reranker (Cohere + local cross-encoder)
+- [x] 05-04-PLAN.md — `knowledge verify` CLI command
 
 ## Phase Ordering Rationale
 
@@ -119,20 +120,20 @@ Plans:
 | Requirement | Description | Phase | Status |
 |-------------|-------------|-------|--------|
 | REQ-01 | Working MCP tool handlers | Phase 3 | Complete |
-| REQ-02 | Local embedding support | Phase 5 | Pending |
+| REQ-02 | Local embedding support | Phase 5 | Complete |
 | REQ-03 | Semantic search implementation | Phase 2 | Complete |
 | REQ-04 | Hybrid search implementation | v2 | Deferred |
-| REQ-05 | Result reranking | Phase 5 | Pending |
+| REQ-05 | Result reranking | Phase 5 | Complete |
 | REQ-06 | Hierarchical chunking strategy | Doc Ingest | Complete |
 | REQ-07 | Semantic chunking strategy | v2+ | Deferred |
 | REQ-08 | Standards-aware chunking strategy | Doc Ingest | Complete |
-| REQ-09 | CLI for document ingestion | Phase 5 | Pending |
-| REQ-10 | CLI for embedding verification | Phase 5 | Pending |
+| REQ-09 | CLI for document ingestion | Phase 5 | Complete |
+| REQ-10 | CLI for embedding verification | Phase 5 | Complete |
 | REQ-11 | 80% test coverage | Phase 4 | Complete |
 | REQ-12 | Zero pyright errors | Phase 1 | Complete |
 | REQ-13 | Verified Docling integration | Phase 1 | Complete |
 
-**Coverage**: 13/13 requirements mapped (2 deferred to v2)
+**Coverage**: 13/13 requirements mapped (2 deferred to v2, 11 complete)
 
 ## Progress
 
@@ -142,4 +143,13 @@ Plans:
 | 2. Search Layer | 1/1 | Complete | 2026-01-24 |
 | 3. MCP Tool Implementation | 1/1 | Complete | 2026-01-24 |
 | 4. Test Coverage | 5/5 | Complete | 2026-01-27 |
-| 5. Extended Features | 0/3 | Planned | - |
+| 5. Extended Features | 4/4 | Complete | 2026-01-27 |
+
+## Milestone Complete: v1.0 - Spec Compliance ✓
+
+All 5 phases complete. Knowledge MCP now has:
+- Working MCP server with `knowledge_search` and `knowledge_stats` tools
+- 86% test coverage (exceeds 80% threshold)
+- Typer CLI with `knowledge ingest docs` and `knowledge verify` commands
+- Local embeddings via sentence-transformers (no OpenAI API key required)
+- Result reranking (Cohere API + local cross-encoder fallback)
