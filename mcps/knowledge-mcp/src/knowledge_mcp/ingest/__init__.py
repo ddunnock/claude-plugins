@@ -1,6 +1,5 @@
 # src/knowledge_mcp/ingest/__init__.py
-"""
-Document ingestion module for Knowledge MCP.
+"""Document ingestion module for Knowledge MCP.
 
 This module provides ingestors for parsing various document formats
 (PDF, DOCX, Markdown) and extracting structured content for chunking.
@@ -17,6 +16,12 @@ from knowledge_mcp.ingest.base import BaseIngestor, ParsedDocument, ParsedElemen
 from knowledge_mcp.ingest.docx_ingestor import DOCXIngestor
 from knowledge_mcp.ingest.pdf_ingestor import PDFIngestor
 from knowledge_mcp.ingest.pipeline import IngestionPipeline, ingest_document
+from knowledge_mcp.ingest.web_ingestor import (
+    WebIngestionResult,
+    WebIngestor,
+    WebIngestorConfig,
+    check_url_accessible,
+)
 
 __all__: list[str] = [
     "BaseIngestor",
@@ -26,4 +31,8 @@ __all__: list[str] = [
     "DOCXIngestor",
     "IngestionPipeline",
     "ingest_document",
+    "WebIngestor",
+    "WebIngestionResult",
+    "WebIngestorConfig",
+    "check_url_accessible",
 ]
