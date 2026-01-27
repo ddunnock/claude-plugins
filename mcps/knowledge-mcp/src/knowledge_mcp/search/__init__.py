@@ -22,12 +22,28 @@ For reranking support (requires optional dependencies):
 
 from __future__ import annotations
 
+from knowledge_mcp.search.coverage import (
+    CoverageAssessor,
+    CoverageConfig,
+    CoverageGap,
+    CoveragePriority,
+    CoverageReport,
+    CoveredArea,
+    assess_knowledge_coverage,
+)
 from knowledge_mcp.search.models import SearchResult
 from knowledge_mcp.search.semantic_search import SemanticSearcher
 
 __all__: list[str] = [
     "SearchResult",
     "SemanticSearcher",
+    "CoverageAssessor",
+    "CoverageConfig",
+    "CoverageGap",
+    "CoveragePriority",
+    "CoverageReport",
+    "CoveredArea",
+    "assess_knowledge_coverage",
 ]
 
 # Optional reranker import (requires 'rerank' or 'local' extras)
