@@ -88,6 +88,10 @@ Decisions from v2 specification validated by research:
 | Facet ranking boosts | 02-05 | Type-specific (20%/15%/10%/10%) | Prioritize diverse content for exploration workflows |
 | Uncategorized default | 02-05 | Default to best_practices facet | Ensures all results categorized in output |
 | Type-safe facets | 02-05 | isinstance() + cast() pattern | Pass pyright strict mode with runtime validation |
+| Project primary keys | 02-06 | UUID | Consistent with Project model from 02-01, distributed-safe |
+| list_active filter | 02-06 | PLANNING and ACTIVE only | Most common use case, simple and efficient |
+| Planning categories | 02-06 | 4 fixed categories (templates/risks/lessons_learned/precedents) | Covers planning needs, simpler than dynamic |
+| Uncategorized planning results | 02-06 | Default to templates | Planning content often template-like, better UX than "other" |
 
 ### Completed This Session
 
@@ -107,10 +111,15 @@ Decisions from v2 specification validated by research:
   - Implemented RCCAStrategy for failure analysis workflow
   - RCCA metadata extraction (symptoms, root_cause, contributing_factors, resolution)
   - 18 unit and integration tests, 98% coverage for rcca.py
+- [x] Executed 02-06-PLAN.md (Plan Strategy + ProjectRepository)
+  - Implemented ProjectRepository with 6 async CRUD methods
+  - Implemented PlanStrategy with 4 planning categories
+  - 27 unit tests (13 for ProjectRepository, 14 for PlanStrategy)
+  - Category-based result organization for planning workflows
 
 ### Pending Todos
 
-- [ ] Execute remaining Phase 2 plans (02-04 through 02-07)
+- [ ] Execute remaining Phase 2 plans (02-04, 02-07)
 - [ ] Phase 3-4 execution
 
 ### Blockers/Concerns
@@ -132,6 +141,6 @@ Decisions from v2 specification validated by research:
 ## Session Continuity
 
 Last session: 2026-01-28 13:37 UTC
-Stopped at: Completed 02-05-PLAN.md (Explore Strategy Implementation)
-Resume file: .planning/phases/02-workflow-support/02-05-SUMMARY.md
-Next: Execute remaining Phase 2 plans
+Stopped at: Completed 02-06-PLAN.md (Plan Strategy + ProjectRepository)
+Resume file: .planning/phases/02-workflow-support/02-06-SUMMARY.md
+Next: Execute remaining Phase 2 plans (02-04 Trade Study, 02-07 MCP Tools)
