@@ -1,0 +1,175 @@
+{
+  "title": "Kepner-Tregoe Analysis Template",
+  "analysis_type": "FULL",
+  "created_at": "2024-01-15T09:00:00Z",
+  "analyst": "",
+  "team_members": [],
+  
+  "situation_appraisal": {
+    "concerns": [
+      {
+        "description": "",
+        "evidence": "",
+        "seriousness": "",
+        "urgency": "",
+        "impact_trend": "",
+        "assigned_process": "",
+        "priority_rank": null
+      }
+    ],
+    "notes": ""
+  },
+  
+  "problem_analysis": {
+    "object": "",
+    "deviation": "",
+    "deviation_statement": "",
+    
+    "specification": [
+      {
+        "dimension": "WHAT - Object",
+        "is": "",
+        "is_not": "",
+        "distinction": ""
+      },
+      {
+        "dimension": "WHAT - Defect",
+        "is": "",
+        "is_not": "",
+        "distinction": ""
+      },
+      {
+        "dimension": "WHERE - Location",
+        "is": "",
+        "is_not": "",
+        "distinction": ""
+      },
+      {
+        "dimension": "WHERE - On Object",
+        "is": "",
+        "is_not": "",
+        "distinction": ""
+      },
+      {
+        "dimension": "WHEN - First Observed",
+        "is": "",
+        "is_not": "",
+        "distinction": ""
+      },
+      {
+        "dimension": "WHEN - Pattern",
+        "is": "",
+        "is_not": "",
+        "distinction": ""
+      },
+      {
+        "dimension": "EXTENT - Quantity",
+        "is": "",
+        "is_not": "",
+        "distinction": ""
+      },
+      {
+        "dimension": "EXTENT - Trend",
+        "is": "",
+        "is_not": "",
+        "distinction": ""
+      }
+    ],
+    
+    "possible_causes": [
+      {
+        "cause": "",
+        "source_distinction": "",
+        "test_results": {
+          "what_is": "",
+          "what_is_not": "",
+          "where_is": "",
+          "where_is_not": "",
+          "when_is": "",
+          "when_is_not": "",
+          "extent_is": "",
+          "extent_is_not": ""
+        },
+        "score": 0,
+        "max_score": 8,
+        "notes": ""
+      }
+    ],
+    
+    "most_probable_cause": "",
+    "verification_plan": [],
+    "verification_results": "",
+    "confirmed_root_cause": ""
+  },
+  
+  "decision_analysis": {
+    "decision_statement": "",
+    
+    "musts": [
+      {
+        "name": "",
+        "measurement": ""
+      }
+    ],
+    
+    "wants": [
+      {
+        "name": "",
+        "direction": "higher_better",
+        "weight": 1
+      }
+    ],
+    
+    "alternatives": [
+      {
+        "name": "",
+        "must_results": {},
+        "want_scores": {}
+      }
+    ],
+    
+    "risks": {
+      "alternative_name": [
+        {
+          "consequence": "",
+          "probability": "",
+          "seriousness": "",
+          "combined": ""
+        }
+      ]
+    },
+    
+    "selected_alternative": "",
+    "selection_rationale": ""
+  },
+  
+  "potential_problem_analysis": {
+    "plan_statement": "",
+    "critical_steps": [],
+    
+    "potential_problems": [
+      {
+        "step": "",
+        "problem": "",
+        "probability": "",
+        "seriousness": "",
+        "combined_risk": "",
+        "preventive_action": "",
+        "preventive_owner": "",
+        "preventive_deadline": "",
+        "contingent_action": "",
+        "contingent_owner": "",
+        "trigger": ""
+      }
+    ],
+    
+    "go_nogo_criteria": {
+      "go_conditions": [],
+      "nogo_conditions": []
+    }
+  },
+  
+  "notes": "",
+  "attachments": [],
+  "revision_history": []
+}

@@ -1,0 +1,19 @@
+{
+  "problem_statement": "Identify defect types causing greatest impact to prioritize improvement efforts",
+  "measurement_type": "frequency",
+  "data_period": "Q4 2024",
+  "data_source": "Quality Management System",
+  "threshold": 80,
+  "data": [
+    {"category": "Solder Bridges", "value": 142},
+    {"category": "Cold Solder Joints", "value": 98},
+    {"category": "Missing Components", "value": 67},
+    {"category": "Wrong Components", "value": 45},
+    {"category": "Damaged PCB", "value": 32},
+    {"category": "ESD Damage", "value": 28},
+    {"category": "Contamination", "value": 22},
+    {"category": "Other", "value": 16}
+  ],
+  "notes": "Data collected from incoming inspection and in-process testing",
+  "analyst": ""
+}

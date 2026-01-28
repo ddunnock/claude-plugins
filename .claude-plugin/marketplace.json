@@ -4,7 +4,7 @@
     "name": "dunnock"
   },
   "metadata": {
-    "description": "A collection of plugins that extend Claude's capabilities"
+    "description": "A collection of plugins that extend Claude's capabilities with engineering analysis, documentation, and specification tools"
   },
   "plugins": [
     {
@@ -43,6 +43,70 @@
       "name": "session-memory",
       "source": "./mcps/session-memory",
       "description": "Persistent session memory with searchable storage and checkpoints"
+    },
+    {
+      "name": "rcca-master",
+      "source": "./skills/rcca-master",
+      "description": "Orchestrate complete 8D investigations with integrated tool selection and domain-specific team formation guidance. Use for RCCA, root cause analysis, corrective action, failure investigation, nonconformance analysis, quality problems, or customer complaints.",
+      "version": "1.0.0",
+      "category": "quality-engineering",
+      "tags": ["rcca", "8d", "root-cause", "corrective-action", "quality"]
+    },
+    {
+      "name": "problem-definition",
+      "source": "./skills/problem-definition",
+      "description": "Guide RCCA/8D problem definition using 5W2H and IS/IS NOT analysis. Transforms failure data into precise, measurable problem statements without embedded cause or solution.",
+      "version": "1.0.0",
+      "category": "quality-engineering",
+      "tags": ["problem-definition", "5w2h", "is-is-not", "rcca", "8d"]
+    },
+    {
+      "name": "five-whys-analysis",
+      "source": "./skills/five-whys-analysis",
+      "description": "Conduct rigorous 5 Whys root cause analysis with guided questioning, quality scoring, and professional report generation. Includes validation tests and countermeasure development.",
+      "version": "1.0.0",
+      "category": "quality-engineering",
+      "tags": ["5-whys", "root-cause", "rca", "quality"]
+    },
+    {
+      "name": "fishbone-diagram",
+      "source": "./skills/fishbone-diagram",
+      "description": "Create Fishbone (Ishikawa/Cause-and-Effect) diagrams for structured root cause brainstorming with 6Ms, 8Ps, 4Ss, or custom categories. Generates SVG diagrams and HTML reports.",
+      "version": "1.0.0",
+      "category": "quality-engineering",
+      "tags": ["fishbone", "ishikawa", "cause-effect", "brainstorming", "quality"]
+    },
+    {
+      "name": "pareto-analysis",
+      "source": "./skills/pareto-analysis",
+      "description": "Conduct Pareto Analysis (80/20 Rule) to identify vital few causes driving majority of problems. Generates Pareto charts and prioritization reports.",
+      "version": "1.0.0",
+      "category": "quality-engineering",
+      "tags": ["pareto", "80-20", "prioritization", "quality"]
+    },
+    {
+      "name": "kepner-tregoe-analysis",
+      "source": "./skills/kepner-tregoe-analysis",
+      "description": "Conduct Kepner-Tregoe (KT) PSDM analysis using Situation Appraisal, Problem Analysis (IS/IS NOT), Decision Analysis (MUSTS/WANTS), and Potential Problem Analysis.",
+      "version": "1.0.0",
+      "category": "quality-engineering",
+      "tags": ["kepner-tregoe", "kt", "is-is-not", "decision-analysis", "psdm"]
+    },
+    {
+      "name": "fault-tree-analysis",
+      "source": "./skills/fault-tree-analysis",
+      "description": "Conduct Fault Tree Analysis (FTA) for system failure analysis using Boolean logic gates. Identifies minimal cut sets, single points of failure, and failure probabilities.",
+      "version": "1.0.0",
+      "category": "quality-engineering",
+      "tags": ["fta", "fault-tree", "safety", "reliability", "failure-analysis"]
+    },
+    {
+      "name": "fmea-analysis",
+      "source": "./skills/fmea-analysis",
+      "description": "Conduct FMEA for systematic failure mode identification using AIAG-VDA 7-step methodology. Supports DFMEA, PFMEA, and FMEA-MSR with Action Priority risk assessment.",
+      "version": "1.0.0",
+      "category": "quality-engineering",
+      "tags": ["fmea", "dfmea", "pfmea", "risk-assessment", "aiag-vda"]
     }
   ]
 }

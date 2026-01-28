@@ -1,0 +1,139 @@
+{
+  "analysis_id": "RCA-YYYY-NNN",
+  "analysis_date": "YYYY-MM-DD",
+  "analyst": "Lead Analyst Name",
+  "team_members": ["Team Member 1", "Team Member 2"],
+  
+  "problem_what": "Description of what the problem/defect/deviation is",
+  "problem_where": "Location, equipment, process step where problem occurs",
+  "problem_when": "Date/time first observed, when it occurs",
+  "problem_extent": "How many, how much, how often affected",
+  "problem_expected": "What should have happened / specification",
+  "problem_actual": "What actually happened / measured value",
+  "problem_statement": "Complete, specific problem statement combining above elements",
+  
+  "why_steps": [
+    {
+      "level": 1,
+      "question": "Why did [problem] occur?",
+      "answer": "First answer - direct cause",
+      "evidence": "Data, document, or observation supporting this answer",
+      "evidence_type": "data",
+      "is_branch": false,
+      "branch_id": ""
+    },
+    {
+      "level": 2,
+      "question": "Why did [answer 1] occur?",
+      "answer": "Second answer",
+      "evidence": "Supporting evidence",
+      "evidence_type": "document",
+      "is_branch": false,
+      "branch_id": ""
+    },
+    {
+      "level": 3,
+      "question": "Why did [answer 2] occur?",
+      "answer": "Third answer",
+      "evidence": "Supporting evidence",
+      "evidence_type": "observation",
+      "is_branch": false,
+      "branch_id": ""
+    },
+    {
+      "level": 4,
+      "question": "Why did [answer 3] occur?",
+      "answer": "Fourth answer",
+      "evidence": "Supporting evidence",
+      "evidence_type": "document",
+      "is_branch": false,
+      "branch_id": ""
+    },
+    {
+      "level": 5,
+      "question": "Why did [answer 4] occur?",
+      "answer": "Fifth answer - root cause",
+      "evidence": "Supporting evidence",
+      "evidence_type": "data",
+      "is_branch": false,
+      "branch_id": ""
+    }
+  ],
+  
+  "root_causes": [
+    "Primary root cause statement - systemic/process issue"
+  ],
+  
+  "verification_tests": [
+    {
+      "test_name": "Reversal Test",
+      "passed": true,
+      "notes": "Chain passes 'therefore' test in both directions"
+    },
+    {
+      "test_name": "Prevention Test",
+      "passed": true,
+      "notes": "Fixing this cause would prevent recurrence"
+    },
+    {
+      "test_name": "Control Test",
+      "passed": true,
+      "notes": "Cause is within our control to address"
+    },
+    {
+      "test_name": "Evidence Test",
+      "passed": true,
+      "notes": "All answers supported by documented evidence"
+    },
+    {
+      "test_name": "Recurrence Test",
+      "passed": true,
+      "notes": "Notes on whether similar problems occurred before"
+    }
+  ],
+  
+  "countermeasures": [
+    {
+      "action": "Immediate corrective action description",
+      "owner": "Owner Name",
+      "due_date": "YYYY-MM-DD",
+      "success_criteria": "How we know this action worked",
+      "status": "Planned"
+    },
+    {
+      "action": "Permanent corrective action description",
+      "owner": "Owner Name",
+      "due_date": "YYYY-MM-DD",
+      "success_criteria": "Measurable success criteria",
+      "status": "Planned"
+    },
+    {
+      "action": "Verification action description",
+      "owner": "Owner Name",
+      "due_date": "YYYY-MM-DD",
+      "success_criteria": "Verification criteria",
+      "status": "Planned"
+    },
+    {
+      "action": "Sustainability/standardization action",
+      "owner": "Owner Name",
+      "due_date": "Ongoing",
+      "success_criteria": "Ongoing monitoring criteria",
+      "status": "Planned"
+    }
+  ],
+  
+  "scores": {
+    "problem_definition": 4,
+    "causal_chain_logic": 4,
+    "evidence_basis": 4,
+    "root_cause_depth": 4,
+    "actionability": 4,
+    "countermeasures": 4
+  },
+  "overall_score": 80.0,
+  "rating": "Good",
+  
+  "lessons_learned": "Key insights and learnings from this analysis",
+  "related_analyses": ["RCA-YYYY-NNN", "RCA-YYYY-NNN"]
+}

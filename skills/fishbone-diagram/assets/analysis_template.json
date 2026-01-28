@@ -1,0 +1,85 @@
+{
+  "analysis_id": "FB-YYYY-MMDD-NNN",
+  "problem": "Clear, specific, measurable problem statement. Include: WHAT happened, WHERE it occurred, WHEN it started, and HOW MUCH (frequency, quantity, impact).",
+  "categories": [
+    {
+      "name": "Man (People)",
+      "causes": [
+        {
+          "text": "Cause description",
+          "evidence": "Data or observation supporting this cause",
+          "subcauses": [
+            {
+              "text": "Sub-cause (ask: why might this happen?)",
+              "subcauses": [
+                {
+                  "text": "Root-level cause (actionable)",
+                  "subcauses": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Machine (Equipment)",
+      "causes": []
+    },
+    {
+      "name": "Method (Process)",
+      "causes": []
+    },
+    {
+      "name": "Material (Inputs)",
+      "causes": []
+    },
+    {
+      "name": "Measurement (Data)",
+      "causes": []
+    },
+    {
+      "name": "Mother Nature (Environment)",
+      "causes": []
+    }
+  ],
+  "prioritized_causes": [
+    {
+      "rank": 1,
+      "cause": "Top prioritized cause from analysis",
+      "category": "Category name",
+      "votes": 0,
+      "verification_method": "How will this cause be verified? (data, observation, experiment)",
+      "owner": "Person/team responsible for investigation",
+      "status": "Pending",
+      "due_date": "YYYY-MM-DD"
+    }
+  ],
+  "scores": {
+    "problem_clarity": 3,
+    "category_coverage": 3,
+    "cause_depth": 3,
+    "cause_quality": 3,
+    "prioritization": 3,
+    "documentation": 3
+  },
+  "next_steps": [
+    "Immediate action item",
+    "Follow-up investigation",
+    "Apply 5 Whys to prioritized cause"
+  ],
+  "metadata": {
+    "title": "Analysis Title",
+    "date": "YYYY-MM-DD",
+    "team": "Team or department name",
+    "facilitator": "Session facilitator",
+    "participants": [
+      "Name (Role)",
+      "Name (Role)"
+    ],
+    "framework": "6Ms",
+    "session_duration": "Duration in minutes",
+    "related_analyses": []
+  },
+  "notes": "Additional context, observations, or decisions made during the session."
+}

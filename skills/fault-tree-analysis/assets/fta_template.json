@@ -1,0 +1,89 @@
+{
+  "top_event": {
+    "id": "TOP",
+    "name": "Cooling System Fails to Maintain Temperature Below 150°F"
+  },
+  "gates": [
+    {
+      "id": "TOP",
+      "name": "Cooling System Fails to Maintain Temperature Below 150°F",
+      "gate_type": "OR",
+      "inputs": ["G1", "G2", "E7"]
+    },
+    {
+      "id": "G1",
+      "name": "Cooling Water Supply Failure",
+      "gate_type": "AND",
+      "inputs": ["G3", "G4"]
+    },
+    {
+      "id": "G2",
+      "name": "Heat Exchanger Failure",
+      "gate_type": "OR",
+      "inputs": ["E5", "E6"]
+    },
+    {
+      "id": "G3",
+      "name": "Pump A Fails",
+      "gate_type": "OR",
+      "inputs": ["E1", "E2"]
+    },
+    {
+      "id": "G4",
+      "name": "Pump B Fails",
+      "gate_type": "OR",
+      "inputs": ["E3", "E4"]
+    }
+  ],
+  "basic_events": [
+    {
+      "id": "E1",
+      "name": "Pump A Motor Failure",
+      "probability": 0.02,
+      "data_source": "Manufacturer MTBF data"
+    },
+    {
+      "id": "E2",
+      "name": "Pump A Mechanical Failure",
+      "probability": 0.015,
+      "data_source": "Plant maintenance records"
+    },
+    {
+      "id": "E3",
+      "name": "Pump B Motor Failure",
+      "probability": 0.02,
+      "data_source": "Manufacturer MTBF data"
+    },
+    {
+      "id": "E4",
+      "name": "Pump B Mechanical Failure",
+      "probability": 0.015,
+      "data_source": "Plant maintenance records"
+    },
+    {
+      "id": "E5",
+      "name": "Heat Exchanger Tube Leak",
+      "probability": 0.005,
+      "data_source": "Industry handbook"
+    },
+    {
+      "id": "E6",
+      "name": "Heat Exchanger Fouling",
+      "probability": 0.03,
+      "data_source": "Plant inspection records"
+    },
+    {
+      "id": "E7",
+      "name": "Control Valve Fails Closed",
+      "probability": 0.008,
+      "data_source": "Valve manufacturer data"
+    }
+  ],
+  "metadata": {
+    "system": "Process Area 1 Cooling System",
+    "operating_mode": "Normal continuous operation",
+    "mission_time_hours": 8760,
+    "analysis_date": "2024-01-15",
+    "analyst": "Engineering Team"
+  }
+}
