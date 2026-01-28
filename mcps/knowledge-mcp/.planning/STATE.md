@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 
 ## Current Position
 
-Phase: 1 of 4 (Core + Acquisition)
-Plan: 6 of 7 in phase
-Status: **In Progress - Executing Phase 1 Plans**
-Last activity: 2026-01-27 - Completed 01-06-PLAN.md (MCP Tools Implementation)
+Phase: 2 of 4 (Workflow Support)
+Plan: 1 of 7 in phase
+Status: **In Progress - Executing Phase 2 Plans**
+Last activity: 2026-01-28 - Completed 02-01-PLAN.md (Project Capture Models)
 
-Progress: [█████████░] 86% (6/7 plans complete in phase)
+Progress: [███████░░░] 70% (7/10 plans complete total)
 
 ## Performance Metrics
 
@@ -72,24 +72,26 @@ Decisions from v2 specification validated by research:
 | Offline mode errors | 01-06 | Return JSON errors when DB unavailable | Tools fail gracefully with clear error messages |
 | check_robots parameter | 01-06 | Keep for API compatibility | Future enhancement, currently only URL validation |
 
+**Phase 2 Execution Decisions:**
+
+| Decision | Plan | Choice | Rationale |
+|----------|------|--------|-----------|
+| State machine pattern | 02-01 | STATE_TRANSITIONS dict + methods | Explicit valid transitions, prevents invalid state changes |
+| Default status handling | 02-01 | insert_default + __init__ | Both SQLAlchemy INSERT and Python object creation need defaults |
+| UUID primary keys | 02-01 | UUID for all project tables | Distributed system design, prevents ID collision |
+| Cascade delete | 02-01 | ON DELETE CASCADE | Automatic cleanup of related records when project deleted |
+
 ### Completed This Session
 
-- [x] Read v2 specification files (main + addendum)
-- [x] Gap analysis: v1.0 codebase vs v2.0 requirements
-- [x] Crawl4AI research: API patterns, rate limiting, robots.txt
-- [x] Created REQUIREMENTS.md with 22 functional requirements
-- [x] Created ROADMAP.md with 4 phases and success criteria
-- [x] Executed 01-01-PLAN.md (PostgreSQL Async Foundation)
-- [x] Executed 01-02-PLAN.md (Web Content Ingestion)
-- [x] Executed 01-03-PLAN.md (Alembic Async Migrations)
-- [x] Executed 01-04-PLAN.md (Offline Sync Manager)
-- [x] Executed 01-05-PLAN.md (Coverage Assessment Algorithm)
-- [x] Executed 01-06-PLAN.md (MCP Tools Implementation)
+- [x] Executed 02-01-PLAN.md (Project Capture Models)
+  - Added Project, QueryHistory, Decision, DecisionSource models
+  - Created migration 002 with CASCADE delete
+  - 9 unit tests covering state machine behavior
 
 ### Pending Todos
 
-- [ ] Execute remaining Phase 1 plans (01-07)
-- [ ] Phase 2-4 execution
+- [ ] Execute remaining Phase 2 plans (02-02 through 02-07)
+- [ ] Phase 3-4 execution
 
 ### Blockers/Concerns
 
@@ -109,7 +111,7 @@ Decisions from v2 specification validated by research:
 
 ## Session Continuity
 
-Last session: 2026-01-27 21:10 UTC
-Stopped at: Completed 01-06-PLAN.md (MCP Tools Implementation)
-Resume file: .planning/phases/01-core-acquisition/01-06-SUMMARY.md
-Next: Execute remaining Phase 1 plan (01-07 - Database Tests and Coverage)
+Last session: 2026-01-28 13:23 UTC
+Stopped at: Completed 02-01-PLAN.md (Project Capture Models)
+Resume file: .planning/phases/02-workflow-support/02-01-SUMMARY.md
+Next: Execute next Phase 2 plan (02-02 - Project Management Tools)
