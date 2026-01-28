@@ -157,19 +157,19 @@ Knowledge MCP transforms from a semantic search tool (v1.0) into a **Learning Kn
 
 | Requirement | Description | Phase | Status |
 |-------------|-------------|-------|--------|
-| FR-1.1 | Semantic search with score boosting | 1 | Pending |
+| FR-1.1 | Semantic search with score boosting | 1 | Complete |
 | FR-1.2 | Collection statistics | v1.0 | Complete |
-| FR-1.3 | Source listing and filtering | 1 | Pending |
-| FR-2.1 | Web content ingestion | 1 | Pending |
-| FR-2.2 | Preflight URL checking | 1 | Pending |
+| FR-1.3 | Source listing and filtering | 1 | Complete |
+| FR-2.1 | Web content ingestion | 1 | Complete |
+| FR-2.2 | Preflight URL checking | 1 | Complete |
 | FR-2.3 | Document ingestion | v1.0 | Complete |
-| FR-2.4 | Coverage assessment | 1 | Pending |
-| FR-2.5 | Acquisition request tracking | 1 | Pending |
-| FR-3.1 | RCCA workflow support | 2 | Pending |
-| FR-3.2 | Trade study support | 2 | Pending |
-| FR-3.3 | Exploration support | 2 | Pending |
-| FR-3.4 | Planning support | 2 | Pending |
-| FR-3.5 | Project capture | 2 | Pending |
+| FR-2.4 | Coverage assessment | 1 | Complete |
+| FR-2.5 | Acquisition request tracking | 1 | Complete |
+| FR-3.1 | RCCA workflow support | 2 | Complete |
+| FR-3.2 | Trade study support | 2 | Complete |
+| FR-3.3 | Exploration support | 2 | Complete |
+| FR-3.4 | Planning support | 2 | Complete |
+| FR-3.5 | Project capture | 2 | Complete |
 | FR-4.1 | Implicit feedback | 3 | Pending |
 | FR-4.2 | Quick feedback | 3 | Pending |
 | FR-4.3 | Detailed feedback | 3 | Pending |
@@ -186,8 +186,8 @@ Knowledge MCP transforms from a semantic search tool (v1.0) into a **Learning Kn
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Core + Acquisition | 0/7 | Planning Complete | - |
-| 2. Workflow Support | 0/7 | Planning Complete | - |
+| 1. Core + Acquisition | 7/7 | Complete | 2026-01-28 |
+| 2. Workflow Support | 7/7 | Complete | 2026-01-28 |
 | 3. Feedback + Scoring | 0/TBD | Not Started | - |
 | 4. Advanced Features | 0/TBD | Not Started | - |
 
