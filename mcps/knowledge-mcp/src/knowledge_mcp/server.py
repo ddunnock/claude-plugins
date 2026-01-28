@@ -46,6 +46,12 @@ from knowledge_mcp.tools.acquisition import (
     handle_request,
     handle_sources,
 )
+from knowledge_mcp.tools.workflows import (
+    handle_explore,
+    handle_plan,
+    handle_rcca,
+    handle_trade,
+)
 from knowledge_mcp.utils.config import load_config
 
 if TYPE_CHECKING:
@@ -445,6 +451,222 @@ Returns request ID and details.""",
                         "required": ["url"]
                     }
                 ),
+                Tool(
+                    name="knowledge_rcca",
+                    description="""Search knowledge base for RCCA (Root Cause Corrective Action) analysis.
+
+Specialized for failure analysis workflows. Retrieves information about:
+- Failure symptoms and anomalies
+- Root causes and contributing factors
+- Investigation methods
+- Corrective actions and resolutions
+
+Results are structured with RCCA-specific metadata extraction.
+
+Parameters:
+- query (required): Failure symptom or issue description
+- n_results: Maximum results (default: 10)
+- score_threshold: Minimum similarity score (default: 0.0)
+- project_id: Optional project ID for query capture
+
+Returns RCCA-structured results with symptom/cause/resolution categorization.""",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "Failure symptom or issue description"
+                            },
+                            "n_results": {
+                                "type": "integer",
+                                "description": "Maximum number of results",
+                                "default": 10,
+                                "minimum": 1,
+                                "maximum": 100
+                            },
+                            "score_threshold": {
+                                "type": "number",
+                                "description": "Minimum similarity score (0-1)",
+                                "default": 0.0,
+                                "minimum": 0.0,
+                                "maximum": 1.0
+                            },
+                            "project_id": {
+                                "type": "string",
+                                "description": "Optional project ID for query capture"
+                            }
+                        },
+                        "required": ["query"]
+                    }
+                ),
+                Tool(
+                    name="knowledge_trade",
+                    description="""Search knowledge base for trade study comparison.
+
+Specialized for decision support workflows. Retrieves information about:
+- Alternative approaches and technologies
+- Evaluation criteria (performance, cost, risk, etc.)
+- Quantitative comparisons
+- Evidence for decision making
+
+Results are grouped by alternatives with criteria-specific evidence.
+
+Parameters:
+- query (required): Decision context or problem statement
+- alternatives: List of alternatives to compare
+- criteria: List of evaluation criteria
+- n_results: Maximum results (default: 20)
+- score_threshold: Minimum similarity score (default: 0.0)
+- project_id: Optional project ID for query capture
+
+Returns alternatives grouped by criteria with evidence and quantitative data.""",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "Decision context or problem statement"
+                            },
+                            "alternatives": {
+                                "type": "array",
+                                "description": "List of alternatives to compare",
+                                "items": {"type": "string"}
+                            },
+                            "criteria": {
+                                "type": "array",
+                                "description": "List of evaluation criteria",
+                                "items": {"type": "string"}
+                            },
+                            "n_results": {
+                                "type": "integer",
+                                "description": "Maximum number of results",
+                                "default": 20,
+                                "minimum": 1,
+                                "maximum": 100
+                            },
+                            "score_threshold": {
+                                "type": "number",
+                                "description": "Minimum similarity score (0-1)",
+                                "default": 0.0,
+                                "minimum": 0.0,
+                                "maximum": 1.0
+                            },
+                            "project_id": {
+                                "type": "string",
+                                "description": "Optional project ID for query capture"
+                            }
+                        },
+                        "required": ["query"]
+                    }
+                ),
+                Tool(
+                    name="knowledge_explore",
+                    description="""Search knowledge base for multi-facet topic exploration.
+
+Specialized for comprehensive understanding workflows. Retrieves information from:
+- Definitions and terminology
+- Examples and use cases
+- Standards and requirements
+- Best practices and guidance
+
+Results are organized by facets for diverse perspectives on a topic.
+
+Parameters:
+- query (required): Topic or concept to explore
+- facets: Specific facets to search (overrides defaults)
+- n_results: Maximum results (default: 20)
+- score_threshold: Minimum similarity score (default: 0.0)
+- project_id: Optional project ID for query capture
+
+Returns results organized by facets (definitions, examples, standards, best_practices).""",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "Topic or concept to explore"
+                            },
+                            "facets": {
+                                "type": "array",
+                                "description": "Specific facets to search (overrides defaults)",
+                                "items": {"type": "string"}
+                            },
+                            "n_results": {
+                                "type": "integer",
+                                "description": "Maximum number of results",
+                                "default": 20,
+                                "minimum": 1,
+                                "maximum": 100
+                            },
+                            "score_threshold": {
+                                "type": "number",
+                                "description": "Minimum similarity score (0-1)",
+                                "default": 0.0,
+                                "minimum": 0.0,
+                                "maximum": 1.0
+                            },
+                            "project_id": {
+                                "type": "string",
+                                "description": "Optional project ID for query capture"
+                            }
+                        },
+                        "required": ["query"]
+                    }
+                ),
+                Tool(
+                    name="knowledge_plan",
+                    description="""Search knowledge base for project planning support.
+
+Specialized for planning workflows. Retrieves information about:
+- Templates and frameworks
+- Risk identification and mitigation
+- Lessons learned from past projects
+- Precedents and case studies
+
+Results are organized by planning categories for structured planning support.
+
+Parameters:
+- query (required): Planning question or topic
+- categories: Specific categories to search (overrides defaults)
+- n_results: Maximum results (default: 20)
+- score_threshold: Minimum similarity score (default: 0.0)
+- project_id: Optional project ID for query capture
+
+Returns results organized by categories (templates, risks, lessons_learned, precedents).""",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "Planning question or topic"
+                            },
+                            "categories": {
+                                "type": "array",
+                                "description": "Specific categories to search (overrides defaults)",
+                                "items": {"type": "string"}
+                            },
+                            "n_results": {
+                                "type": "integer",
+                                "description": "Maximum number of results",
+                                "default": 20,
+                                "minimum": 1,
+                                "maximum": 100
+                            },
+                            "score_threshold": {
+                                "type": "number",
+                                "description": "Minimum similarity score (0-1)",
+                                "default": 0.0,
+                                "minimum": 0.0,
+                                "maximum": 1.0
+                            },
+                            "project_id": {
+                                "type": "string",
+                                "description": "Optional project ID for query capture"
+                            }
+                        },
+                        "required": ["query"]
+                    }
+                ),
             ]
 
         @self.server.call_tool()
@@ -482,6 +704,14 @@ Returns request ID and details.""",
                     return await self._handle_knowledge_acquire(arguments)
                 elif name == "knowledge_request":
                     return await self._handle_knowledge_request(arguments)
+                elif name == "knowledge_rcca":
+                    return await self._handle_knowledge_rcca(arguments)
+                elif name == "knowledge_trade":
+                    return await self._handle_knowledge_trade(arguments)
+                elif name == "knowledge_explore":
+                    return await self._handle_knowledge_explore(arguments)
+                elif name == "knowledge_plan":
+                    return await self._handle_knowledge_plan(arguments)
                 else:
                     # Unknown tool - return error response
                     return [
@@ -739,6 +969,90 @@ Returns request ID and details.""",
                 reason=arguments.get("reason"),
                 priority=arguments.get("priority", 3),
             )
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    async def _handle_knowledge_rcca(self, arguments: dict[str, Any]) -> list[TextContent]:
+        """Handle knowledge_rcca tool invocation.
+
+        Args:
+            arguments: Tool arguments with query, n_results, score_threshold, project_id.
+
+        Returns:
+            List containing RCCA-structured results as TextContent.
+        """
+        assert self._searcher is not None
+        result = await handle_rcca(
+            searcher=self._searcher,
+            query=arguments.get("query", ""),
+            n_results=arguments.get("n_results", 10),
+            score_threshold=arguments.get("score_threshold", 0.0),
+            project_id=arguments.get("project_id"),
+        )
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    async def _handle_knowledge_trade(self, arguments: dict[str, Any]) -> list[TextContent]:
+        """Handle knowledge_trade tool invocation.
+
+        Args:
+            arguments: Tool arguments with query, alternatives, criteria, n_results, etc.
+
+        Returns:
+            List containing trade study results as TextContent.
+        """
+        assert self._searcher is not None
+        result = await handle_trade(
+            searcher=self._searcher,
+            query=arguments.get("query", ""),
+            alternatives=arguments.get("alternatives"),
+            criteria=arguments.get("criteria"),
+            n_results=arguments.get("n_results", 20),
+            score_threshold=arguments.get("score_threshold", 0.0),
+            project_id=arguments.get("project_id"),
+        )
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    async def _handle_knowledge_explore(self, arguments: dict[str, Any]) -> list[TextContent]:
+        """Handle knowledge_explore tool invocation.
+
+        Args:
+            arguments: Tool arguments with query, facets, n_results, score_threshold, project_id.
+
+        Returns:
+            List containing exploration results as TextContent.
+        """
+        assert self._searcher is not None
+        result = await handle_explore(
+            searcher=self._searcher,
+            query=arguments.get("query", ""),
+            facets=arguments.get("facets"),
+            n_results=arguments.get("n_results", 20),
+            score_threshold=arguments.get("score_threshold", 0.0),
+            project_id=arguments.get("project_id"),
+        )
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    async def _handle_knowledge_plan(self, arguments: dict[str, Any]) -> list[TextContent]:
+        """Handle knowledge_plan tool invocation.
+
+        Args:
+            arguments: Tool arguments with query, categories, n_results, score_threshold, project_id.
+
+        Returns:
+            List containing planning results as TextContent.
+        """
+        assert self._searcher is not None
+        result = await handle_plan(
+            searcher=self._searcher,
+            query=arguments.get("query", ""),
+            categories=arguments.get("categories"),
+            n_results=arguments.get("n_results", 20),
+            score_threshold=arguments.get("score_threshold", 0.0),
+            project_id=arguments.get("project_id"),
+        )
 
         return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
