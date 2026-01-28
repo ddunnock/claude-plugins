@@ -1,0 +1,9 @@
+{
+  "name": "plugin-creator",
+  "description": "Automatically generate Claude plugins from user prompts. Supports plugin creation, documentation, and testing. Use when needing to create a new plugin or when user mentions \"plugin\", \"Claude plugin\", \"plugin creation\", or \"plugin development\".",
+  "version": "1.0.0",
+  "author": {
+    "name": "dunnock"
+  },
+  "keywords": ["plugin", "claude", "development", "generator"]
+}

@@ -107,6 +107,14 @@
       "version": "1.0.0",
       "category": "quality-engineering",
       "tags": ["fmea", "dfmea", "pfmea", "risk-assessment", "aiag-vda"]
+    },
+    {
+      "name": "plugin-creator",
+      "source": "./skills/plugin-creator",
+      "description": "Automatically generate Claude plugins from user prompts. Supports plugin creation, documentation, and testing.",
+      "version": "",
+      "category": "development",
+      "tags": ["plugin", "claude", "development", "generator"]
     }
   ]
 }
