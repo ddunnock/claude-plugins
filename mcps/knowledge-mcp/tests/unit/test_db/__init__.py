@@ -1,1 +1,1 @@
-"""Unit tests for database layer."""
+"""Unit tests for database models."""
