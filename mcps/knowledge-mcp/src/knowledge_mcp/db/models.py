@@ -211,7 +211,10 @@ class Project(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     domain: Mapped[str | None] = mapped_column(String(255), nullable=True)
     status: Mapped[ProjectStatus] = mapped_column(
-        Enum(ProjectStatus, native_enum=False), default=ProjectStatus.PLANNING, nullable=False
+        Enum(ProjectStatus, native_enum=False),
+        default=ProjectStatus.PLANNING,
+        server_default="planning",
+        nullable=False
     )
     applicable_standards: Mapped[list[str] | None] = mapped_column(
         ARRAY(String), nullable=True

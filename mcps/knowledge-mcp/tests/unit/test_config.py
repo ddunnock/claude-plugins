@@ -15,12 +15,25 @@ class TestKnowledgeConfig:
     """Tests for KnowledgeConfig validation."""
 
     def test_validate_missing_openai_key(self) -> None:
-        """Test validation fails when OpenAI key is missing."""
-        config = KnowledgeConfig(openai_api_key="")
+        """Test validation fails when OpenAI key is missing with OpenAI provider."""
+        config = KnowledgeConfig(openai_api_key="", embedding_provider="openai")
 
         errors = config.validate()
 
-        assert "OPENAI_API_KEY is required" in errors
+        assert "OPENAI_API_KEY is required when embedding_provider=openai" in errors
+
+    def test_validate_local_provider_no_openai_key_required(self) -> None:
+        """Test validation passes when using local embeddings without OpenAI key."""
+        config = KnowledgeConfig(
+            openai_api_key="",
+            embedding_provider="local",
+            vector_store="chromadb",  # Don't require Qdrant credentials
+        )
+
+        errors = config.validate()
+
+        # Should not complain about OpenAI key
+        assert not any("OPENAI_API_KEY" in e for e in errors)
 
     def test_validate_qdrant_missing_url(self) -> None:
         """Test validation fails when Qdrant URL is missing."""
@@ -41,11 +54,26 @@ class TestKnowledgeConfig:
             vector_store="qdrant",
             qdrant_url="https://test.qdrant.io",
             qdrant_api_key="test-key",
+            offline_mode=True,  # Skip DATABASE_URL requirement for unit test
         )
 
         errors = config.validate()
 
         assert errors == []
+
+    def test_validate_requires_database_url_when_online(self) -> None:
+        """Test validation requires DATABASE_URL when offline_mode=False."""
+        config = KnowledgeConfig(
+            openai_api_key="sk-test",
+            vector_store="qdrant",
+            qdrant_url="https://test.qdrant.io",
+            qdrant_api_key="test-key",
+            offline_mode=False,
+        )
+
+        errors = config.validate()
+
+        assert "DATABASE_URL is required when offline_mode=False" in errors
 
     def test_chunk_overlap_validation(self) -> None:
         """Test that overlap cannot exceed minimum chunk size."""

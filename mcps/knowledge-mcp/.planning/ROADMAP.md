@@ -92,7 +92,14 @@ Knowledge MCP transforms from a semantic search tool (v1.0) into a **Learning Kn
   - `knowledge_trade` - Trade study support
   - `knowledge_explore` - Exploration support
   - `knowledge_plan` - Planning + capture
-**Plans**: TBD
+**Plans**: 7 plans in 4 waves
+  - [ ] 02-01-PLAN.md — Database models + migration (Project, QueryHistory, Decision)
+  - [ ] 02-02-PLAN.md — Strategy pattern base (SearchStrategy ABC, WorkflowSearcher)
+  - [ ] 02-03-PLAN.md — RCCA strategy implementation
+  - [ ] 02-04-PLAN.md — Trade study strategy implementation
+  - [ ] 02-05-PLAN.md — Explore strategy implementation
+  - [ ] 02-06-PLAN.md — Plan strategy + ProjectRepository
+  - [ ] 02-07-PLAN.md — MCP tools registration (4 new tools)
 
 ### Phase 3: Feedback + Scoring
 **Goal**: Three-tier feedback collection, simple effectiveness scoring, score-boosted search
@@ -180,7 +187,7 @@ Knowledge MCP transforms from a semantic search tool (v1.0) into a **Learning Kn
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Core + Acquisition | 0/7 | Planning Complete | - |
-| 2. Workflow Support | 0/TBD | Not Started | - |
+| 2. Workflow Support | 0/7 | Planning Complete | - |
 | 3. Feedback + Scoring | 0/TBD | Not Started | - |
 | 4. Advanced Features | 0/TBD | Not Started | - |
 
@@ -224,4 +231,4 @@ All 5 phases complete. Knowledge MCP v1.0 has:
 
 ---
 
-*Roadmap updated 2026-01-27 with Phase 1 plans.*
+*Roadmap updated 2026-01-27 with Phase 1 and Phase 2 plans.*

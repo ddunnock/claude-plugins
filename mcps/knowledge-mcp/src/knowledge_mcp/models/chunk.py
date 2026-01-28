@@ -72,7 +72,7 @@ class KnowledgeChunk:
 
     # Classification
     chunk_type: str = "content"
-    normative: bool = False
+    normative: Optional[bool] = None  # True=normative, False=informative, None=unknown
 
     # Location
     page_numbers: list[int] = field(default_factory=list)

@@ -78,7 +78,8 @@ class QdrantStore:
             timeout=60,
         )
 
-        self.collection = config.qdrant_collection
+        # Use versioned collection name to prevent model mixing (Pitfall #7)
+        self.collection = config.versioned_collection_name
         self.hybrid_enabled = config.qdrant_hybrid_search
 
         self._ensure_collection()
@@ -192,6 +193,9 @@ class QdrantStore:
                     "content_hash": chunk.content_hash,
                     "parent_chunk_id": chunk.parent_chunk_id or "",
                     "created_at": chunk.created_at,
+                    # Embedding model metadata (FR-2.4)
+                    "embedding_model": chunk.embedding_model,
+                    "embedding_dimensions": len(chunk.embedding) if chunk.embedding else 0,
                 },
             )
             points.append(point)
@@ -304,3 +308,61 @@ class QdrantStore:
                 "hybrid_enabled": self.hybrid_enabled,
             },
         }
+
+    def validate_embedding_model(self, expected_model: str) -> bool:
+        """Verify collection uses expected embedding model.
+
+        Args:
+            expected_model: The embedding model name to validate against.
+
+        Returns:
+            True if model matches or collection is empty.
+
+        Raises:
+            ValueError: If collection has data with different embedding model.
+        """
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        try:
+            # Sample one point to check metadata
+            results = self.client.scroll(
+                collection_name=self.collection,
+                limit=1,
+            )
+            if not results[0]:  # Empty collection
+                return True
+
+            point = results[0][0]
+            stored_model = point.payload.get("embedding_model") if point.payload else None
+            if stored_model and stored_model != expected_model:
+                raise ValueError(
+                    f"Collection '{self.collection}' uses {stored_model}, "
+                    f"but config specifies {expected_model}. "
+                    f"Use different collection name or recreate collection."
+                )
+            return True
+        except ValueError:
+            raise
+        except Exception as e:
+            logger.warning("Model validation failed: %s", e)
+            return False
+
+    def health_check(self) -> bool:
+        """Check if the Qdrant store is healthy and accessible.
+
+        Returns:
+            True if the store is accessible, False otherwise.
+        """
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        try:
+            # Try to get collection info to verify connectivity
+            self.client.get_collection(self.collection)
+            return True
+        except Exception as e:
+            logger.warning("Health check failed for Qdrant: %s", e)
+            return False

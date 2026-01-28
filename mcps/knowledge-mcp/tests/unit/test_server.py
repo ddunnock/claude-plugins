@@ -33,8 +33,8 @@ class TestListTools:
         )
 
     @pytest.mark.asyncio
-    async def test_list_tools_returns_two_tools(self, server: KnowledgeMCPServer) -> None:
-        """Test that list_tools returns knowledge_search and knowledge_stats."""
+    async def test_list_tools_returns_all_tools(self, server: KnowledgeMCPServer) -> None:
+        """Test that list_tools returns all 8 knowledge tools (2 original + 6 Phase 1)."""
         # Arrange
         request = ListToolsRequest()
 
@@ -42,10 +42,18 @@ class TestListTools:
         response = await server.server.request_handlers[ListToolsRequest](request)
 
         # Assert
-        assert len(response.root.tools) == 2
+        assert len(response.root.tools) == 8
         tool_names = [tool.name for tool in response.root.tools]
+        # Original tools (v1.0)
         assert "knowledge_search" in tool_names
         assert "knowledge_stats" in tool_names
+        # Phase 1 acquisition tools (v2.0)
+        assert "knowledge_ingest" in tool_names
+        assert "knowledge_sources" in tool_names
+        assert "knowledge_assess" in tool_names
+        assert "knowledge_preflight" in tool_names
+        assert "knowledge_acquire" in tool_names
+        assert "knowledge_request" in tool_names
 
     @pytest.mark.asyncio
     async def test_knowledge_search_tool_has_required_schema(

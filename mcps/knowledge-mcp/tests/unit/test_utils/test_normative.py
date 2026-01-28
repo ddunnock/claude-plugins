@@ -174,19 +174,19 @@ class TestDetectNormative:
         assert result == NormativeIndicator.UNKNOWN
 
     def test_no_indicators_body_content(self) -> None:
-        """Test that body content without indicators is NORMATIVE by default."""
+        """Test that body content without indicators is UNKNOWN."""
         text = "This section describes the authentication process."
         result = detect_normative(text)
-        # Default for body content is NORMATIVE (conservative approach)
-        assert result == NormativeIndicator.NORMATIVE
+        # Default for body content without markers is UNKNOWN
+        assert result == NormativeIndicator.UNKNOWN
 
     def test_keyword_as_part_of_word(self) -> None:
         """Test that keywords must be whole words."""
         # "shall" as part of "marshall" should not match
         text = "The marshall handles the data."
         result = detect_normative(text)
-        # Should be NORMATIVE (default body content), not matched as SHALL keyword
-        assert result == NormativeIndicator.NORMATIVE
+        # Should be UNKNOWN (not matched as SHALL keyword, no explicit markers)
+        assert result == NormativeIndicator.UNKNOWN
 
     def test_multiple_keywords_same_type(self) -> None:
         """Test text with multiple keywords of same type."""

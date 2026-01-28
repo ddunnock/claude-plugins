@@ -98,9 +98,6 @@ def detect_normative(text: str, section_path: str = "") -> NormativeIndicator:
     if _INFORMATIVE_KEYWORDS.search(text):
         return NormativeIndicator.INFORMATIVE
 
-    # Default for body content: assume normative unless clearly informative
-    # This is conservative - standards body content is typically normative
-    if text.strip():
-        return NormativeIndicator.NORMATIVE
-
+    # Default: UNKNOWN if no explicit markers found
+    # Only mark as normative/informative when there's clear evidence
     return NormativeIndicator.UNKNOWN

@@ -446,6 +446,9 @@ class HierarchicalChunker(BaseChunker):
         """
         Merge chunks under 100 tokens with adjacent chunks.
 
+        Tries merging forward first, then backward as fallback.
+        Makes multiple passes until no more merges are possible.
+
         Args:
             chunks: List of chunks to merge.
 
@@ -456,44 +459,81 @@ class HierarchicalChunker(BaseChunker):
             return chunks
 
         min_chunk_size = 100
-        merged: list[ChunkResult] = []
-        i = 0
 
-        while i < len(chunks):
-            chunk = chunks[i]
+        # Make multiple passes until stable
+        merged = list(chunks)
+        changed = True
+        max_passes = 5  # Prevent infinite loops
+        passes = 0
 
-            # If chunk is large enough, keep it
-            if chunk.token_count >= min_chunk_size:
-                merged.append(chunk)
-                i += 1
-                continue
+        while changed and passes < max_passes:
+            changed = False
+            passes += 1
+            new_merged: list[ChunkResult] = []
+            i = 0
 
-            # Try to merge with next chunk
-            if i + 1 < len(chunks):
-                next_chunk = chunks[i + 1]
-                combined_content = f"{chunk.content}\n\n{next_chunk.content}"
-                combined_tokens = self._count_tokens(combined_content)
+            while i < len(merged):
+                chunk = merged[i]
 
-                # Only merge if combined doesn't exceed max
-                if combined_tokens <= self.config.max_tokens:
-                    merged.append(
-                        ChunkResult(
-                            content=combined_content,
-                            token_count=combined_tokens,
-                            section_hierarchy=chunk.section_hierarchy,
-                            clause_number=chunk.clause_number,
-                            page_numbers=chunk.page_numbers,
-                            chunk_type=chunk.chunk_type,
-                            has_overlap=chunk.has_overlap,
-                            metadata=chunk.metadata,
-                        )
-                    )
-                    i += 2  # Skip next chunk since we merged it
+                # If chunk is large enough, keep it
+                if chunk.token_count >= min_chunk_size:
+                    new_merged.append(chunk)
+                    i += 1
                     continue
 
-            # Couldn't merge, keep small chunk
-            merged.append(chunk)
-            i += 1
+                # Try to merge with next chunk first
+                merged_forward = False
+                if i + 1 < len(merged):
+                    next_chunk = merged[i + 1]
+                    combined_content = f"{chunk.content}\n\n{next_chunk.content}"
+                    combined_tokens = self._count_tokens(combined_content)
+
+                    # Only merge if combined doesn't exceed max
+                    if combined_tokens <= self.config.max_tokens:
+                        new_merged.append(
+                            ChunkResult(
+                                content=combined_content,
+                                token_count=combined_tokens,
+                                section_hierarchy=chunk.section_hierarchy,
+                                clause_number=chunk.clause_number or next_chunk.clause_number,
+                                page_numbers=list(set(chunk.page_numbers + next_chunk.page_numbers)),
+                                chunk_type=chunk.chunk_type,
+                                has_overlap=chunk.has_overlap,
+                                metadata=chunk.metadata,
+                            )
+                        )
+                        i += 2  # Skip next chunk since we merged it
+                        merged_forward = True
+                        changed = True
+                        continue
+
+                # Try to merge with previous chunk if forward didn't work
+                if not merged_forward and new_merged:
+                    prev_chunk = new_merged[-1]
+                    combined_content = f"{prev_chunk.content}\n\n{chunk.content}"
+                    combined_tokens = self._count_tokens(combined_content)
+
+                    # Only merge if combined doesn't exceed max
+                    if combined_tokens <= self.config.max_tokens:
+                        new_merged[-1] = ChunkResult(
+                            content=combined_content,
+                            token_count=combined_tokens,
+                            section_hierarchy=prev_chunk.section_hierarchy,
+                            clause_number=prev_chunk.clause_number or chunk.clause_number,
+                            page_numbers=list(set(prev_chunk.page_numbers + chunk.page_numbers)),
+                            chunk_type=prev_chunk.chunk_type,
+                            has_overlap=prev_chunk.has_overlap,
+                            metadata=prev_chunk.metadata,
+                        )
+                        i += 1
+                        changed = True
+                        continue
+
+                # Couldn't merge in either direction, keep small chunk
+                new_merged.append(chunk)
+                i += 1
+
+            merged = new_merged
 
         return merged
 

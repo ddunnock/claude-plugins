@@ -1,76 +1,148 @@
-# Knowledge MCP - Spec Compliance
+# Knowledge MCP - v2.0 Learning Knowledge Management System
 
 ## What This Is
 
-An MCP server providing semantic search over technical reference documents (IEEE standards, INCOSE guides, NASA handbooks) for RAG workflows. Enables AI assistants to query systems engineering knowledge with structured context.
+An MCP server that transforms from a semantic search tool into a **learning knowledge management system**. It provides:
+1. Unified document and web content ingestion
+2. Coverage assessment and knowledge acquisition
+3. Workflow-specific retrieval (RCCA, Trade Studies, Exploration, Planning)
+4. Project capture and outcome tracking
+5. Feedback-driven learning that improves recommendations over time
 
 ## Core Value
 
-The MCP server must actually work — when Claude calls the search tool, it gets real results from the knowledge base.
+The system learns from experience — when Claude uses a template and provides feedback on the outcome, future recommendations improve based on what actually worked.
+
+## Milestone: v2.0 - Learning Knowledge Management
+
+### Phase 1: Core + Acquisition
+- Unified ingestion (PDF, DOCX, Web via Crawl4AI)
+- Coverage assessment and gap detection
+- Web content acquisition with relevance scoring
+- Offline mode with ChromaDB sync
+
+### Phase 2a: Workflow + Capture
+- RCCA workflow support (similar failures, causal chains)
+- Trade study support (criteria, alternatives, precedents)
+- Exploration support (anti-patterns, gap analysis)
+- Planning support (templates, precedents, risks)
+- Project capture and outcome tracking
+
+### Phase 2b: Feedback + Basic Scoring
+- Three-tier feedback collection (implicit, quick, detailed)
+- Simple effectiveness scoring
+- Score-boosted search rankings
+
+### Phase 3: Advanced + Admin
+- Multi-factor scoring with propagation
+- Relationship graph (causal, contradictory, supporting)
+- Admin tools (health reports, analytics, refresh)
 
 ## Requirements
 
-### Validated
+### From v1.0 (Complete)
+- ✓ MCP server infrastructure (stdio transport, handlers)
+- ✓ Docling document ingestion (PDF, DOCX, PPTX, XLSX, HTML)
+- ✓ Hierarchical chunking with section awareness
+- ✓ OpenAI embedding generation (text-embedding-3-small)
+- ✓ Local embeddings (sentence-transformers)
+- ✓ Qdrant vector storage with Qdrant Cloud
+- ✓ ChromaDB fallback storage
+- ✓ Semantic search with reranking
+- ✓ CLI for document ingestion and verification
+- ✓ 86% test coverage
+- ✓ Pyright strict mode compliance
 
-- ✓ MCP server infrastructure (stdio transport, handlers) — existing
-- ✓ Docling document ingestion (PDF, DOCX, PPTX, XLSX, HTML, images) — existing
-- ✓ Docling-based chunking with HybridChunker — existing
-- ✓ OpenAI embedding generation (text-embedding-3-small) — existing
-- ✓ Qdrant vector storage with hybrid search support — existing
-- ✓ ChromaDB fallback storage — existing
-- ✓ Pydantic configuration with environment validation — existing
-- ✓ Structured exception hierarchy with MCP error codes — existing
-- ✓ Logging with sensitive data filtering — existing
+### v2.0 Active
 
-### Active
+**Phase 1 - Core + Acquisition**
+- [ ] PostgreSQL integration (SQLAlchemy 2.0 async)
+- [ ] Web ingestion via Crawl4AI
+- [ ] Coverage assessment with gap detection
+- [ ] Knowledge acquisition workflow
+- [ ] Offline sync manager
+- [ ] 8 MCP tools (search, stats, ingest, sources, assess, preflight, acquire, request)
 
-- [ ] Working MCP tool handlers (currently return "not implemented")
-- [ ] Local embedding support (offline/cost-free operation)
-- [ ] Semantic search implementation
-- [ ] Hybrid search implementation
-- [ ] Result reranking
-- [ ] Hierarchical chunking strategy
-- [ ] Semantic chunking strategy
-- [ ] Standards-aware chunking strategy
-- [ ] CLI for document ingestion
-- [ ] CLI for embedding verification
-- [ ] 80% test coverage (currently 34%)
-- [ ] Zero pyright errors (currently 55)
-- [ ] Verified Docling integration with real documents
+**Phase 2a - Workflow + Capture**
+- [ ] Project/Template data models with lifecycle
+- [ ] RCCA workflow support tool
+- [ ] Trade study support tool
+- [ ] Exploration support tool
+- [ ] Planning support tool (with capture operations)
+- [ ] Pattern library for anti-pattern matching
 
-### Out of Scope
+**Phase 2b - Feedback + Scoring**
+- [ ] Feedback collection (3-tier system)
+- [ ] Simple effectiveness scoring
+- [ ] Score-boosted search ranking
+- [ ] Feedback MCP tool
 
-- GUI/web interface — MCP protocol is the interface
-- Multi-tenant support — single knowledge base per deployment
-- Real-time document updates — batch ingestion workflow
-- Custom training/fine-tuning — uses pre-trained models only
+**Phase 3 - Advanced + Admin**
+- [ ] Multi-factor scoring with confidence
+- [ ] Score propagation to templates
+- [ ] Relationship graph storage
+- [ ] Admin MCP tool
+- [ ] Relationship MCP tool
+
+### Out of Scope (v2.0)
+- Multi-user access control — v3
+- Real-time collaboration — v3
+- Automated standard updates — v3
+- Non-English content — v2.1
+- External PM tool sync — v2.1
 
 ## Context
 
-**Recent changes:** Docling integration is a recent refactor replacing custom document parsing code. The integration is functional but needs verification with real documents and comprehensive test coverage.
+**v1.0 Complete:** Milestone v1.0 (Spec Compliance) completed 2026-01-27 with:
+- Working MCP server with `knowledge_search` and `knowledge_stats` tools
+- 86% test coverage (exceeds 80% threshold)
+- Typer CLI with `knowledge ingest docs` and `knowledge verify` commands
+- Local embeddings via sentence-transformers
+- Result reranking (Cohere API + local cross-encoder)
 
-**Codebase state:** Core pipeline exists but many modules are stubs or missing. The architecture is sound (layered with abstract base classes) but implementation is incomplete vs. the specification in CLAUDE.md.
+**v2.0 Architecture Evolution:**
+- v1: Qdrant/ChromaDB only (vectors)
+- v2: Hybrid PostgreSQL + Qdrant (relational + vectors)
+- v3 (future): Consolidated pgvector
 
-**Quality gaps:** 34% test coverage (80% required), 55 pyright errors (0 required), several test files reference non-existent code.
-
-**Codebase map:** Full analysis available in `.planning/codebase/`
+**New Dependencies for v2:**
+- PostgreSQL 16+
+- SQLAlchemy 2.0 with asyncpg
+- Alembic for migrations
+- Crawl4AI for web ingestion
 
 ## Constraints
 
 - **Python version**: ≥3.11,<3.14 — per CLAUDE.md specification
-- **Type safety**: Pyright strict mode with zero errors — per CLAUDE.md
-- **Test coverage**: ≥80% — per CLAUDE.md
-- **API compatibility**: Existing base class interfaces must be preserved
-- **Dependency budget**: Prefer existing pyproject.toml dependencies
+- **Type safety**: Pyright strict mode with zero errors
+- **Test coverage**: ≥80% line coverage
+- **API compatibility**: v1.0 tools must continue working
+- **MCP Protocol**: v1.x compatibility
 
 ## Key Decisions
 
-| Decision | Rationale | Outcome |
-|----------|-----------|---------|
-| Docling for parsing | Unified parser for multiple formats, IBM-backed | — Pending verification |
-| Qdrant primary, ChromaDB fallback | Cloud scalability + local dev flexibility | ✓ Good |
-| OpenAI embeddings | Best quality, widely available | ✓ Good |
-| Abstract base classes | Enable provider switching | ✓ Good |
+| Decision | Rationale | Status |
+|----------|-----------|--------|
+| PostgreSQL for relational data | ACID compliance, RLS for multi-tenancy path | Pending |
+| SQLAlchemy 2.0 async | Modern async ORM with type hints | Pending |
+| Hybrid architecture (v2) | Incremental migration, proven components | Pending |
+| 15 consolidated tools | Balance capability vs. agent complexity | Pending |
+| Three-tier feedback | Maximize collection, minimize friction | Pending |
+| Project state machine | Prevent invalid lifecycle states | Pending |
+| Score-boosted ranking | Combined semantic + effectiveness scoring | Pending |
+
+## Success Criteria
+
+| Criterion | Target | Phase |
+|-----------|--------|-------|
+| Web ingestion reliability | 100% | 1 |
+| Coverage assessment accuracy | >0.75 correlation | 1 |
+| Offline mode functional | 100% | 1 |
+| Similar failure recall@5 | >0.70 | 2a |
+| Project capture adoption | >5/month | 2a |
+| Feedback collection rate | >60% per project | 2b |
+| Score prediction accuracy | >0.6 correlation | 3 |
+| Test coverage | ≥80% | All |
 
 ---
-*Last updated: 2026-01-20 after initialization*
+*Last updated: 2026-01-27 - Milestone v2.0 initiated*

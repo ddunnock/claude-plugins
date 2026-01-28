@@ -213,13 +213,18 @@ class IngestionPipeline:
             # Compute content hash
             content_hash = compute_content_hash(chunk_result.content)
 
-            # Detect normative status
+            # Detect normative status (True/False/None for unknown)
             section_path = " > ".join(chunk_result.section_hierarchy)
             normative_indicator = detect_normative(
                 chunk_result.content,
                 section_path=section_path,
             )
-            is_normative = normative_indicator == NormativeIndicator.NORMATIVE
+            normative_value: bool | None = None
+            if normative_indicator == NormativeIndicator.NORMATIVE:
+                normative_value = True
+            elif normative_indicator == NormativeIndicator.INFORMATIVE:
+                normative_value = False
+            # UNKNOWN stays as None
 
             # Extract section title (last item in hierarchy)
             section_title = (
@@ -242,7 +247,7 @@ class IngestionPipeline:
                 clause_number=chunk_result.clause_number,
                 page_numbers=chunk_result.page_numbers,
                 chunk_type=chunk_result.chunk_type,
-                normative=is_normative,
+                normative=normative_value,
             )
 
             chunks.append(chunk)
