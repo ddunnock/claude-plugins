@@ -432,3 +432,236 @@ class TestAcquisitionRequestRepository:
         )
 
         assert result is None
+
+
+class TestProjectRepository:
+    """Tests for ProjectRepository."""
+
+    @pytest.fixture
+    def mock_session(self) -> MagicMock:
+        """Create mock async session."""
+        session = MagicMock()
+        session.add = MagicMock()
+        session.flush = AsyncMock()
+        session.execute = AsyncMock()
+        session.get = AsyncMock()
+        return session
+
+    @pytest.fixture
+    def repo(self, mock_session: MagicMock) -> ProjectRepository:
+        """Create repository with mock session."""
+        return ProjectRepository(mock_session)
+
+    @pytest.mark.asyncio
+    async def test_create_project(
+        self, repo: ProjectRepository, mock_session: MagicMock
+    ) -> None:
+        """Test creating a new project."""
+        project = await repo.create(
+            name="Test Project",
+            domain="aerospace",
+            applicable_standards=["IEEE 15288"],
+            description="Test description",
+        )
+
+        assert project.name == "Test Project"
+        assert project.domain == "aerospace"
+        assert project.applicable_standards == ["IEEE 15288"]
+        assert project.description == "Test description"
+        assert project.status == ProjectStatus.PLANNING
+        mock_session.add.assert_called_once()
+        mock_session.flush.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_create_project_minimal(
+        self, repo: ProjectRepository, mock_session: MagicMock
+    ) -> None:
+        """Test creating project with only required fields."""
+        project = await repo.create(name="Minimal Project")
+
+        assert project.name == "Minimal Project"
+        assert project.domain is None
+        assert project.applicable_standards is None
+        assert project.description is None
+        assert project.status == ProjectStatus.PLANNING
+        mock_session.add.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_get_by_id_found(
+        self, repo: ProjectRepository, mock_session: MagicMock
+    ) -> None:
+        """Test getting project by ID when it exists."""
+        project_id = uuid4()
+        mock_project = Project(
+            id=project_id,
+            name="Test Project",
+        )
+        mock_session.get.return_value = mock_project
+
+        project = await repo.get_by_id(project_id)
+
+        assert project is not None
+        assert project.id == project_id
+        mock_session.get.assert_awaited_once_with(Project, project_id)
+
+    @pytest.mark.asyncio
+    async def test_get_by_id_not_found(
+        self, repo: ProjectRepository, mock_session: MagicMock
+    ) -> None:
+        """Test getting project by ID when it doesn't exist."""
+        project_id = uuid4()
+        mock_session.get.return_value = None
+
+        project = await repo.get_by_id(project_id)
+
+        assert project is None
+        mock_session.get.assert_awaited_once_with(Project, project_id)
+
+    @pytest.mark.asyncio
+    async def test_get_by_name_found(
+        self, repo: ProjectRepository, mock_session: MagicMock
+    ) -> None:
+        """Test getting project by name when it exists."""
+        mock_project = Project(
+            id=uuid4(),
+            name="Test Project",
+        )
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = mock_project
+        mock_session.execute.return_value = mock_result
+
+        project = await repo.get_by_name("Test Project")
+
+        assert project is not None
+        assert project.name == "Test Project"
+        mock_session.execute.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_get_by_name_not_found(
+        self, repo: ProjectRepository, mock_session: MagicMock
+    ) -> None:
+        """Test getting project by name when it doesn't exist."""
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = None
+        mock_session.execute.return_value = mock_result
+
+        project = await repo.get_by_name("Nonexistent")
+
+        assert project is None
+
+    @pytest.mark.asyncio
+    async def test_list_active_filters_correctly(
+        self, repo: ProjectRepository, mock_session: MagicMock
+    ) -> None:
+        """Test list_active returns only planning and active projects."""
+        mock_projects = [
+            Project(id=uuid4(), name="Planning Project", status=ProjectStatus.PLANNING),
+            Project(id=uuid4(), name="Active Project", status=ProjectStatus.ACTIVE),
+        ]
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = mock_projects
+        mock_session.execute.return_value = mock_result
+
+        projects = await repo.list_active()
+
+        assert len(projects) == 2
+        assert all(
+            p.status in [ProjectStatus.PLANNING, ProjectStatus.ACTIVE] for p in projects
+        )
+        mock_session.execute.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_list_active_empty(
+        self, repo: ProjectRepository, mock_session: MagicMock
+    ) -> None:
+        """Test list_active when no active projects exist."""
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = []
+        mock_session.execute.return_value = mock_result
+
+        projects = await repo.list_active()
+
+        assert len(projects) == 0
+
+    @pytest.mark.asyncio
+    async def test_update_project(
+        self, repo: ProjectRepository, mock_session: MagicMock
+    ) -> None:
+        """Test updating a project."""
+        project = Project(
+            id=uuid4(),
+            name="Original Name",
+            domain="aerospace",
+        )
+        project.name = "Updated Name"
+        project.domain = "medical"
+
+        result = await repo.update(project)
+
+        assert result.name == "Updated Name"
+        assert result.domain == "medical"
+        mock_session.flush.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_transition_state_valid(
+        self, repo: ProjectRepository, mock_session: MagicMock
+    ) -> None:
+        """Test valid state transition from PLANNING to ACTIVE."""
+        project_id = uuid4()
+        mock_project = Project(
+            id=project_id,
+            name="Test Project",
+            status=ProjectStatus.PLANNING,
+        )
+        mock_session.get.return_value = mock_project
+
+        result = await repo.transition_state(project_id, ProjectStatus.ACTIVE)
+
+        assert result.status == ProjectStatus.ACTIVE
+        mock_session.flush.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_transition_state_to_completed(
+        self, repo: ProjectRepository, mock_session: MagicMock
+    ) -> None:
+        """Test transition to COMPLETED sets completed_at."""
+        project_id = uuid4()
+        mock_project = Project(
+            id=project_id,
+            name="Test Project",
+            status=ProjectStatus.ACTIVE,
+        )
+        mock_session.get.return_value = mock_project
+
+        result = await repo.transition_state(project_id, ProjectStatus.COMPLETED)
+
+        assert result.status == ProjectStatus.COMPLETED
+        assert result.completed_at is not None
+        mock_session.flush.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_transition_state_invalid(
+        self, repo: ProjectRepository, mock_session: MagicMock
+    ) -> None:
+        """Test invalid state transition raises ValueError."""
+        project_id = uuid4()
+        mock_project = Project(
+            id=project_id,
+            name="Test Project",
+            status=ProjectStatus.COMPLETED,
+        )
+        mock_session.get.return_value = mock_project
+
+        with pytest.raises(ValueError, match="Invalid transition"):
+            await repo.transition_state(project_id, ProjectStatus.ACTIVE)
+
+    @pytest.mark.asyncio
+    async def test_transition_state_project_not_found(
+        self, repo: ProjectRepository, mock_session: MagicMock
+    ) -> None:
+        """Test transition_state with non-existent project raises ValueError."""
+        project_id = uuid4()
+        mock_session.get.return_value = None
+
+        with pytest.raises(ValueError, match="not found"):
+            await repo.transition_state(project_id, ProjectStatus.ACTIVE)
