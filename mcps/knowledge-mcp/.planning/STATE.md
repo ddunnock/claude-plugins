@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-27)
 ## Current Position
 
 Phase: 2 of 4 (Workflow Support)
-Plan: 1 of 7 in phase
+Plan: 2 of 7 in phase
 Status: **In Progress - Executing Phase 2 Plans**
-Last activity: 2026-01-28 - Completed 02-01-PLAN.md (Project Capture Models)
+Last activity: 2026-01-28 - Completed 02-02-PLAN.md (Strategy Pattern Foundation)
 
-Progress: [███████░░░] 70% (7/10 plans complete total)
+Progress: [████████░░] 80% (8/10 plans complete total)
 
 ## Performance Metrics
 
@@ -80,6 +80,10 @@ Decisions from v2 specification validated by research:
 | Default status handling | 02-01 | insert_default + __init__ | Both SQLAlchemy INSERT and Python object creation need defaults |
 | UUID primary keys | 02-01 | UUID for all project tables | Distributed system design, prevents ID collision |
 | Cascade delete | 02-01 | ON DELETE CASCADE | Automatic cleanup of related records when project deleted |
+| Strategy customization | 02-02 | Three methods: preprocess/rank/format | Separates concerns, enables focused workflow customization |
+| Async preprocess | 02-02 | preprocess_query is async | Future-proofs for LLM-based query expansion |
+| Composition pattern | 02-02 | WorkflowSearcher composes SemanticSearcher | Better separation, easier testing than inheritance |
+| Error dict structure | 02-02 | {"error", "result_type": "error"} | MCP tools need JSON-serializable error responses |
 
 ### Completed This Session
 
@@ -87,10 +91,14 @@ Decisions from v2 specification validated by research:
   - Added Project, QueryHistory, Decision, DecisionSource models
   - Created migration 002 with CASCADE delete
   - 9 unit tests covering state machine behavior
+- [x] Executed 02-02-PLAN.md (Strategy Pattern Foundation)
+  - Created SearchStrategy ABC with three abstract methods
+  - Built WorkflowSearcher orchestrator with template method pattern
+  - 10 unit tests verifying strategy execution order
 
 ### Pending Todos
 
-- [ ] Execute remaining Phase 2 plans (02-02 through 02-07)
+- [ ] Execute remaining Phase 2 plans (02-03 through 02-07)
 - [ ] Phase 3-4 execution
 
 ### Blockers/Concerns
@@ -111,7 +119,7 @@ Decisions from v2 specification validated by research:
 
 ## Session Continuity
 
-Last session: 2026-01-28 13:23 UTC
-Stopped at: Completed 02-01-PLAN.md (Project Capture Models)
-Resume file: .planning/phases/02-workflow-support/02-01-SUMMARY.md
-Next: Execute next Phase 2 plan (02-02 - Project Management Tools)
+Last session: 2026-01-28 13:31 UTC
+Stopped at: Completed 02-02-PLAN.md (Strategy Pattern Foundation)
+Resume file: .planning/phases/02-workflow-support/02-02-SUMMARY.md
+Next: Execute next Phase 2 plan (02-03 - Concrete workflow strategies)
