@@ -254,10 +254,11 @@ class RCCAStrategy(SearchStrategy):
             if not metadata["root_cause"]:
                 if any(kw in sentence_lower for kw in self.CAUSE_KEYWORDS):
                     metadata["root_cause"] = sentence.strip()
-                elif "contributing" in sentence_lower:
-                    # Contributing factors if no root cause yet
-                    if sentence.strip() not in metadata["contributing_factors"]:
-                        metadata["contributing_factors"].append(sentence.strip())
+
+            # Extract contributing factors (separate from root cause)
+            if "contributing" in sentence_lower and "factor" in sentence_lower:
+                if sentence.strip() not in metadata["contributing_factors"]:
+                    metadata["contributing_factors"].append(sentence.strip())
 
             # Extract resolution (take first match)
             if not metadata["resolution"]:
