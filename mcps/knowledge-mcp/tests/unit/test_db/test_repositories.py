@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock
+from uuid import uuid4
 
 import pytest
 
@@ -9,12 +10,15 @@ from knowledge_mcp.db.models import (
     AcquisitionRequest,
     AcquisitionRequestStatus,
     AuthorityTier,
+    Project,
+    ProjectStatus,
     Source,
     SourceStatus,
     SourceType,
 )
 from knowledge_mcp.db.repositories import (
     AcquisitionRequestRepository,
+    ProjectRepository,
     SourceRepository,
 )
 
