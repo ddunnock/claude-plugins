@@ -212,7 +212,7 @@ class Project(Base):
     domain: Mapped[str | None] = mapped_column(String(255), nullable=True)
     status: Mapped[ProjectStatus] = mapped_column(
         Enum(ProjectStatus, native_enum=False),
-        default=ProjectStatus.PLANNING,
+        insert_default=ProjectStatus.PLANNING,
         server_default="planning",
         nullable=False
     )
@@ -239,6 +239,12 @@ class Project(Base):
     decisions: Mapped[list["Decision"]] = relationship(
         "Decision", back_populates="project"
     )
+
+    def __init__(self, **kwargs):
+        """Initialize Project with default status if not provided."""
+        if "status" not in kwargs:
+            kwargs["status"] = ProjectStatus.PLANNING
+        super().__init__(**kwargs)
 
     def can_transition_to(self, new_status: ProjectStatus) -> bool:
         """Check if transition to new status is valid.
