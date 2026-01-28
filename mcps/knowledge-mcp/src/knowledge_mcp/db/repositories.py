@@ -20,6 +20,8 @@ from sqlalchemy import select
 from knowledge_mcp.db.models import (
     AcquisitionRequest,
     AcquisitionRequestStatus,
+    Project,
+    ProjectStatus,
     Source,
     SourceStatus,
     SourceType,
@@ -27,6 +29,7 @@ from knowledge_mcp.db.models import (
 
 if TYPE_CHECKING:
     from datetime import datetime
+    from uuid import UUID
 
     from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -271,3 +274,148 @@ class AcquisitionRequestRepository:
                 request.processed_at = processed_at
             await self.session.flush()
         return request
+
+
+class ProjectRepository:
+    """Repository for Project model operations.
+
+    Provides data access methods for Project entities with async CRUD
+    and state machine validation.
+
+    Args:
+        session: AsyncSession for database operations.
+
+    Example:
+        >>> async with get_session(session_factory) as session:
+        ...     repo = ProjectRepository(session)
+        ...     project = await repo.create(name="My Project", domain="aerospace")
+    """
+
+    def __init__(self, session: AsyncSession) -> None:
+        """Initialize repository with database session.
+
+        Args:
+            session: AsyncSession for database operations.
+        """
+        self.session = session
+
+    async def create(
+        self,
+        name: str,
+        domain: str | None = None,
+        applicable_standards: list[str] | None = None,
+        description: str | None = None,
+    ) -> Project:
+        """Create a new project.
+
+        Args:
+            name: Project name.
+            domain: Optional domain (e.g., "aerospace", "medical").
+            applicable_standards: List of applicable standards.
+            description: Optional project description.
+
+        Returns:
+            Created Project instance with PLANNING status.
+
+        Example:
+            >>> project = await repo.create(
+            ...     name="Satellite Comm System",
+            ...     domain="aerospace",
+            ...     applicable_standards=["IEEE 15288", "DO-178C"],
+            ... )
+        """
+        project = Project(
+            name=name,
+            domain=domain,
+            applicable_standards=applicable_standards,
+            description=description,
+        )
+        self.session.add(project)
+        await self.session.flush()
+        return project
+
+    async def get_by_id(self, project_id: UUID) -> Project | None:
+        """Get project by ID.
+
+        Args:
+            project_id: Project UUID.
+
+        Returns:
+            Project instance or None if not found.
+        """
+        return await self.session.get(Project, project_id)
+
+    async def get_by_name(self, name: str) -> Project | None:
+        """Get project by name.
+
+        Args:
+            name: Project name.
+
+        Returns:
+            Project instance or None if not found.
+        """
+        stmt = select(Project).where(Project.name == name)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def list_active(self) -> list[Project]:
+        """List active projects.
+
+        Returns only projects in PLANNING or ACTIVE status (not completed/abandoned).
+
+        Returns:
+            List of active Project instances.
+        """
+        stmt = select(Project).where(
+            Project.status.in_([ProjectStatus.PLANNING, ProjectStatus.ACTIVE])
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def update(self, project: Project) -> Project:
+        """Update an existing project.
+
+        Args:
+            project: Project instance with modified fields.
+
+        Returns:
+            Updated Project instance.
+
+        Note:
+            Caller must modify the project fields before calling this method.
+            The session will track changes automatically.
+        """
+        await self.session.flush()
+        return project
+
+    async def transition_state(
+        self,
+        project_id: UUID,
+        new_state: ProjectStatus,
+    ) -> Project:
+        """Transition project to a new state with validation.
+
+        Args:
+            project_id: Project UUID.
+            new_state: Target status to transition to.
+
+        Returns:
+            Updated Project instance.
+
+        Raises:
+            ValueError: If project not found or transition is invalid.
+
+        Example:
+            >>> project = await repo.transition_state(
+            ...     project_id=uuid4(),
+            ...     new_state=ProjectStatus.ACTIVE,
+            ... )
+        """
+        project = await self.get_by_id(project_id)
+        if not project:
+            raise ValueError(f"Project {project_id} not found")
+
+        # Use model's state machine validation
+        project.transition_to(new_state)
+        await self.session.flush()
+        return project

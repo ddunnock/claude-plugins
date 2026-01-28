@@ -30,11 +30,17 @@ from knowledge_mcp.db.models import (
     AcquisitionRequestStatus,
     AuthorityTier,
     Base,
+    Project,
+    ProjectStatus,
     Source,
     SourceStatus,
     SourceType,
 )
-from knowledge_mcp.db.repositories import AcquisitionRequestRepository, SourceRepository
+from knowledge_mcp.db.repositories import (
+    AcquisitionRequestRepository,
+    ProjectRepository,
+    SourceRepository,
+)
 
 __all__ = [
     "create_engine_and_session_factory",
@@ -42,10 +48,13 @@ __all__ = [
     "Base",
     "Source",
     "AcquisitionRequest",
+    "Project",
     "SourceType",
     "SourceStatus",
     "AuthorityTier",
     "AcquisitionRequestStatus",
+    "ProjectStatus",
     "SourceRepository",
     "AcquisitionRequestRepository",
+    "ProjectRepository",
 ]
