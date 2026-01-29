@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import signal
 import sys
 from typing import TYPE_CHECKING, Any
@@ -58,6 +59,8 @@ if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
     from knowledge_mcp.utils.config import KnowledgeConfig
+
+logger = logging.getLogger(__name__)
 
 
 class KnowledgeMCPServer:
@@ -667,6 +670,23 @@ Returns results organized by categories (templates, risks, lessons_learned, prec
                         "required": ["query"]
                     }
                 ),
+                Tool(
+                    name="list_collections",
+                    description="""List available knowledge base collections.
+
+Returns:
+- Collection names
+- Document counts per collection
+- Embedding model used
+- Total chunks stored
+
+Use this to discover what content is available before searching.""",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {},
+                        "required": []
+                    }
+                ),
             ]
 
         @self.server.call_tool()
@@ -712,6 +732,8 @@ Returns results organized by categories (templates, risks, lessons_learned, prec
                     return await self._handle_knowledge_explore(arguments)
                 elif name == "knowledge_plan":
                     return await self._handle_knowledge_plan(arguments)
+                elif name == "list_collections":
+                    return await self._handle_list_collections(arguments)
                 else:
                     # Unknown tool - return error response
                     return [
@@ -745,52 +767,75 @@ Returns results organized by categories (templates, risks, lessons_learned, prec
         Returns:
             List containing formatted search results as TextContent.
         """
-        # Extract arguments with defaults
-        query: str = arguments.get("query", "")
-        n_results: int = arguments.get("n_results", 10)
-        filter_dict: dict[str, Any] | None = arguments.get("filter_dict")
-        score_threshold: float = arguments.get("score_threshold", 0.0)
+        try:
+            # Extract arguments with defaults
+            query: str = arguments.get("query", "")
+            n_results: int = arguments.get("n_results", 10)
+            filter_dict: dict[str, Any] | None = arguments.get("filter_dict")
+            score_threshold: float = arguments.get("score_threshold", 0.0)
 
-        # Perform search
-        assert self._searcher is not None
-        results = await self._searcher.search(
-            query=query,
-            n_results=n_results,
-            filter_dict=filter_dict,
-            score_threshold=score_threshold,
-        )
-
-        # Format results for LLM consumption
-        formatted_results: list[dict[str, Any]] = []
-        for result in results:
-            result_dict: dict[str, Any] = {
-                "content": result.content,
-                "score": result.score,
-                "source": {
-                    "document_title": result.document_title,
-                    "document_type": result.document_type,
-                    "section_title": result.section_title,
-                    "section_hierarchy": result.section_hierarchy,
-                    "clause_number": result.clause_number,
-                    "page_numbers": result.page_numbers,
-                },
-                "metadata": {
-                    "chunk_type": result.chunk_type,
-                    "normative": result.normative,
-                }
-            }
-            formatted_results.append(result_dict)
-
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({
-                    "results": formatted_results,
-                    "query": query,
-                    "total_results": len(formatted_results),
-                }, indent=2)
+            # Perform search
+            assert self._searcher is not None
+            results = await self._searcher.search(
+                query=query,
+                n_results=n_results,
+                filter_dict=filter_dict,
+                score_threshold=score_threshold,
             )
-        ]
+
+            # Format results with citations (FR-3.4, FR-4.4)
+            formatted_results: list[dict[str, Any]] = []
+            for result in results:
+                result_dict: dict[str, Any] = {
+                    "citation": result.citation,  # Use citation property (FR-3.4)
+                    "content": result.content,
+                    "relevance": f"{int(result.score * 100)}%",  # Display as percentage
+                    "metadata": {
+                        "document_id": result.document_id,
+                        "clause_number": result.clause_number,
+                        "normative": result.normative,
+                        "page_numbers": result.page_numbers,
+                    }
+                }
+                formatted_results.append(result_dict)
+
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps({
+                        "query": query,
+                        "results": formatted_results,
+                        "count": len(formatted_results),
+                    }, indent=2)
+                )
+            ]
+
+        except ConnectionError as e:
+            logger.error(f"Vector store connection failed: {e}")
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps({
+                        "error": "Knowledge base temporarily unavailable",
+                        "message": "The vector store could not be reached. Please try again.",
+                        "retryable": True,
+                        "results": []  # Explicit empty results - no hallucination
+                    }, indent=2)
+                )
+            ]
+        except Exception as e:
+            logger.exception("Unexpected search error")
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps({
+                        "error": "Search failed",
+                        "message": str(e),
+                        "retryable": False,
+                        "results": []  # Explicit empty results - no hallucination
+                    }, indent=2)
+                )
+            ]
 
     async def _handle_knowledge_stats(
         self, arguments: dict[str, Any]  # noqa: ARG002
@@ -1055,6 +1100,59 @@ Returns results organized by categories (templates, risks, lessons_learned, prec
         )
 
         return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    async def _handle_list_collections(
+        self, arguments: dict[str, Any]  # noqa: ARG002
+    ) -> list[TextContent]:
+        """Handle list_collections tool invocation.
+
+        Args:
+            arguments: Tool arguments (currently none required).
+
+        Returns:
+            List containing collections info as TextContent.
+        """
+        try:
+            assert self._store is not None
+            collections_info = await self._get_collections_info()
+            return [TextContent(type="text", text=json.dumps(collections_info, indent=2))]
+        except Exception as e:
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps({
+                        "error": "Failed to list collections",
+                        "retryable": True,
+                        "details": str(e)
+                    }, indent=2)
+                )
+            ]
+
+    async def _get_collections_info(self) -> dict[str, Any]:
+        """Get information about available collections.
+
+        Returns:
+            Dict with collection metadata including names, counts, and embedding model.
+        """
+        assert self._store is not None
+
+        # Get stats from store (runs in thread pool since get_stats is sync)
+        stats = await asyncio.to_thread(self._store.get_stats)
+
+        # Format collections info
+        collections_info: dict[str, Any] = {
+            "collections": [
+                {
+                    "name": stats.get("collection_name", "unknown"),
+                    "total_chunks": stats.get("total_chunks", 0),
+                    "vectors_count": stats.get("vectors_count", 0),
+                    "embedding_model": stats.get("embedding_model", "unknown"),
+                }
+            ],
+            "total_chunks": stats.get("total_chunks", 0),
+        }
+
+        return collections_info
 
     async def run(self) -> None:
         """

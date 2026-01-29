@@ -34,15 +34,14 @@ class TestListTools:
 
     @pytest.mark.asyncio
     async def test_list_tools_returns_all_tools(self, server: KnowledgeMCPServer) -> None:
-        """Test that list_tools returns all 8 knowledge tools (2 original + 6 Phase 1)."""
+        """Test that list_tools returns all knowledge tools."""
         # Arrange
         request = ListToolsRequest()
 
         # Act
         response = await server.server.request_handlers[ListToolsRequest](request)
 
-        # Assert
-        assert len(response.root.tools) == 8
+        # Assert - Should have original + Phase 1 + Phase 2 workflow + list_collections
         tool_names = [tool.name for tool in response.root.tools]
         # Original tools (v1.0)
         assert "knowledge_search" in tool_names
@@ -54,6 +53,13 @@ class TestListTools:
         assert "knowledge_preflight" in tool_names
         assert "knowledge_acquire" in tool_names
         assert "knowledge_request" in tool_names
+        # Phase 2 workflow tools (v2.0)
+        assert "knowledge_rcca" in tool_names
+        assert "knowledge_trade" in tool_names
+        assert "knowledge_explore" in tool_names
+        assert "knowledge_plan" in tool_names
+        # Phase 3 collection discovery (v3.0)
+        assert "list_collections" in tool_names
 
     @pytest.mark.asyncio
     async def test_knowledge_search_tool_has_required_schema(
@@ -145,7 +151,7 @@ class TestKnowledgeSearch:
         self,
         server: KnowledgeMCPServer,
     ) -> None:
-        """Test that search returns properly formatted results."""
+        """Test that search returns properly formatted results with citations."""
         # Arrange
         request = CallToolRequest(
             params={"name": "knowledge_search", "arguments": {"query": "system requirements review"}}
@@ -161,17 +167,21 @@ class TestKnowledgeSearch:
         import json
         data = json.loads(response.root.content[0].text)
         assert "results" in data
-        assert data["total_results"] == 1
+        assert "count" in data
+        assert data["count"] == 1
         assert data["query"] == "system requirements review"
         assert data["results"][0]["content"] == "Test content about system requirements review"
-        assert data["results"][0]["score"] == 0.95
+        # Check citation field is present (FR-3.4)
+        assert "citation" in data["results"][0]
+        # Check relevance as percentage (FR-5.4)
+        assert data["results"][0]["relevance"] == "95%"
 
     @pytest.mark.asyncio
     async def test_search_includes_source_citations(
         self,
         server: KnowledgeMCPServer,
     ) -> None:
-        """Test that search results include source citations."""
+        """Test that search results include formatted citations."""
         # Arrange
         request = CallToolRequest(
             params={"name": "knowledge_search", "arguments": {"query": "test query"}}
@@ -183,13 +193,18 @@ class TestKnowledgeSearch:
         # Assert
         import json
         data = json.loads(response.root.content[0].text)
-        source = data["results"][0]["source"]
+        result = data["results"][0]
 
-        assert source["document_title"] == "IEEE 15288.2"
-        assert source["section_title"] == "System Requirements Review"
-        assert source["section_hierarchy"] == ["5", "5.3"]
-        assert source["clause_number"] == "5.3.1"
-        assert source["page_numbers"] == [42, 43]
+        # Check citation field is present (FR-3.4)
+        assert "citation" in result
+        # Citation should be formatted: "DOCUMENT, Clause X.Y.Z, p.N"
+        assert "IEEE 15288.2" in result["citation"]
+        assert "Clause 5.3.1" in result["citation"]
+
+        # Check metadata still available
+        assert result["metadata"]["clause_number"] == "5.3.1"
+        assert result["metadata"]["page_numbers"] == [42, 43]
+        assert result["metadata"]["normative"] is True
 
     @pytest.mark.asyncio
     async def test_search_passes_all_arguments(
@@ -238,7 +253,7 @@ class TestKnowledgeSearch:
         # Assert
         import json
         data = json.loads(response.root.content[0].text)
-        assert data["total_results"] == 0
+        assert data["count"] == 0
         assert data["results"] == []
 
 
@@ -362,26 +377,117 @@ class TestErrorHandling:
         assert "Unknown tool: unknown_tool" in data["error"]
 
     @pytest.mark.asyncio
-    async def test_search_error_returns_empty_results_gracefully(
+    async def test_search_connection_error_returns_structured_error(
         self,
         server: KnowledgeMCPServer,
-        mock_embedder: AsyncMock,
     ) -> None:
-        """Test that search errors are handled gracefully by SemanticSearcher."""
+        """Test that ConnectionError returns structured error with empty results."""
         # Arrange
-        mock_embedder.embed.side_effect = Exception("Embedding failed")
+        from unittest.mock import patch
+
         request = CallToolRequest(
             params={"name": "knowledge_search", "arguments": {"query": "test query"}}
         )
 
-        # Act
-        response = await server.server.request_handlers[CallToolRequest](request)
+        # Mock searcher to raise ConnectionError
+        with patch.object(server, "_searcher") as mock_searcher:
+            mock_searcher.search.side_effect = ConnectionError("Vector store unreachable")
 
-        # Assert - SemanticSearcher returns empty list on error
+            # Act
+            response = await server.server.request_handlers[CallToolRequest](request)
+
+        # Assert - FR-4.5: Graceful degradation with explicit empty results
         import json
         data = json.loads(response.root.content[0].text)
-        assert data["total_results"] == 0
-        assert data["results"] == []
+        assert "error" in data
+        assert data["error"] == "Knowledge base temporarily unavailable"
+        assert data["retryable"] is True
+        assert data["results"] == []  # Explicit empty results - no hallucination
+
+    @pytest.mark.asyncio
+    async def test_search_generic_error_returns_structured_error(
+        self,
+        server: KnowledgeMCPServer,
+    ) -> None:
+        """Test that generic Exception returns structured error with empty results."""
+        # Arrange
+        from unittest.mock import patch
+
+        request = CallToolRequest(
+            params={"name": "knowledge_search", "arguments": {"query": "test query"}}
+        )
+
+        # Mock searcher to raise generic Exception
+        with patch.object(server, "_searcher") as mock_searcher:
+            mock_searcher.search.side_effect = Exception("Unexpected error")
+
+            # Act
+            response = await server.server.request_handlers[CallToolRequest](request)
+
+        # Assert - FR-4.5: Graceful degradation with explicit empty results
+        import json
+        data = json.loads(response.root.content[0].text)
+        assert "error" in data
+        assert data["error"] == "Search failed"
+        assert data["retryable"] is False
+        assert data["results"] == []  # Explicit empty results - no hallucination
+
+    @pytest.mark.asyncio
+    async def test_search_error_response_has_required_fields(
+        self,
+        server: KnowledgeMCPServer,
+    ) -> None:
+        """Test that error responses have all required fields."""
+        # Arrange
+        from unittest.mock import patch
+
+        request = CallToolRequest(
+            params={"name": "knowledge_search", "arguments": {"query": "test query"}}
+        )
+
+        # Mock searcher to raise ConnectionError
+        with patch.object(server, "_searcher") as mock_searcher:
+            mock_searcher.search.side_effect = ConnectionError("Store down")
+
+            # Act
+            response = await server.server.request_handlers[CallToolRequest](request)
+
+        # Assert - Error response structure
+        import json
+        data = json.loads(response.root.content[0].text)
+        assert "error" in data
+        assert "message" in data
+        assert "retryable" in data
+        assert "results" in data
+        assert isinstance(data["results"], list)
+        assert len(data["results"]) == 0
+
+    @pytest.mark.asyncio
+    async def test_search_error_logs_appropriately(
+        self,
+        server: KnowledgeMCPServer,
+    ) -> None:
+        """Test that errors are logged before returning."""
+        # Arrange
+        from unittest.mock import patch
+        import logging
+
+        request = CallToolRequest(
+            params={"name": "knowledge_search", "arguments": {"query": "test query"}}
+        )
+
+        # Mock searcher and logger
+        with patch.object(server, "_searcher") as mock_searcher:
+            mock_searcher.search.side_effect = ConnectionError("Store unreachable")
+
+            with patch("knowledge_mcp.server.logger") as mock_logger:
+                # Act
+                await server.server.request_handlers[CallToolRequest](request)
+
+                # Assert - Logger was called with error
+                mock_logger.error.assert_called_once()
+                error_call = mock_logger.error.call_args[0][0]
+                assert "Vector store connection failed" in error_call
 
     @pytest.mark.asyncio
     async def test_stats_error_returns_structured_error(
