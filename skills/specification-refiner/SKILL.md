@@ -30,6 +30,76 @@ Each phase ends with a **full summary gate** requiring user confirmation before 
 
 ---
 
+## Standards Integration
+
+This skill integrates with knowledge-mcp to ground analysis in engineering standards (IEEE, ISO, INCOSE).
+
+### Auto-Query Behavior
+
+During Phase 2 (ANALYZE), the skill automatically queries knowledge-mcp for relevant standards:
+
+1. **Before SEAMS Analysis**: Query "requirements engineering best practices [domain]"
+2. **Before Critical Path**: Query "dependency analysis systems engineering"
+3. **For each finding**: Query specific topics to validate against standards
+
+Inline citations appear in findings:
+> "Per ISO/IEC/IEEE 12207:2017, Clause 6.4.2, requirements SHALL include verification criteria."
+
+### MCP Availability Check
+
+Before querying, check MCP availability:
+- If knowledge_search tool available: proceed with standards lookup
+- If unavailable: warn user and continue without standards context
+
+**Never hallucinate citations.** If MCP unavailable, state clearly:
+> "Note: Knowledge base unavailable. Analysis proceeds without standards context."
+
+### Graceful Degradation
+
+If knowledge-mcp fails mid-analysis:
+1. Log the failure
+2. Continue analysis without standards
+3. Note in findings: "Standards citation unavailable for this finding"
+
+---
+
+## Manual Commands
+
+### /lookup-standard
+
+Query the knowledge base for specific standards information.
+
+**Syntax**: `/lookup-standard [natural language query]`
+
+**Examples**:
+- `/lookup-standard what does ISO say about traceability`
+- `/lookup-standard IEEE 15288 verification methods`
+- `/lookup-standard INCOSE requirements attributes`
+
+**Response Format**:
+```
+## Standards Lookup: [query]
+
+### Result 1 (87% relevant)
+**Source**: ISO/IEC/IEEE 12207:2017, Clause 6.4.2, p.23
+
+[Content excerpt]
+
+### Result 2 (74% relevant)
+**Source**: INCOSE SE Handbook, Section 4.2, pp.45-47
+
+[Content excerpt]
+
+---
+Showing 5 of 12 results. Say "show more" for additional results.
+```
+
+**No Results**:
+> No direct matches found for "[query]".
+> Did you mean: [suggested related topics]?
+
+---
+
 ## Phase 0: ASSESS
 
 On receiving a specification document, first assess complexity to determine the appropriate mode.
@@ -103,14 +173,23 @@ Present full summary including: document info, sections identified, key entities
 
 Run analysis frameworks based on mode AND build the coverage map for clarification.
 
+**Standards Integration**: Before beginning analysis, check if knowledge_search tool is available. If available, automatically query relevant standards during analysis to ground findings in engineering best practices.
+
 ### SIMPLE Mode
 Run SEAMS Analysis only (see `references/seams-framework.md`).
+
+**Auto-query pattern**:
+1. Before SEAMS: Query "requirements engineering best practices [domain]"
+2. For each lens finding: Query specific topics for standards validation
+3. Include inline citations in findings when relevant standards found
 
 ### COMPLEX Mode
 Run BOTH frameworks in parallel:
 
 #### Framework A: SEAMS Analysis
 **S**tructure → **E**xecution → **A**ssumptions → **M**ismatches → **S**takeholders
+
+**Auto-query before SEAMS**: Query "requirements engineering best practices [domain]"
 
 | Lens | Questions to Answer |
 |------|---------------------|
@@ -120,14 +199,20 @@ Run BOTH frameworks in parallel:
 | **Mismatches** | Requirements ↔ Design aligned? Design ↔ Implementation consistent? |
 | **Stakeholders** | Operator view? Security view? Integrator view? End-user view? |
 
+**For each finding**: Query relevant standards topic to validate and cite authoritative sources. Include inline citations in finding descriptions when standards support the observation.
+
 #### Framework B: Critical Path Analysis
 See `references/critical-path-analysis.md` for detailed methods.
+
+**Auto-query before Critical Path**: Query "dependency analysis systems engineering"
 
 1. **Dependency Mapping**: Build N² matrix
 2. **Critical Path Identification**: Find longest/riskiest chains
 3. **Single Points of Failure**: Cascade risk components
 4. **Bottleneck Detection**: Throughput limiters
 5. **Temporal Analysis**: Sequencing issues
+
+**For each critical finding**: Query standards for validation and citation.
 
 ### Coverage Map Generation
 
