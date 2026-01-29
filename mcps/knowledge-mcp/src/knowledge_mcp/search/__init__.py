@@ -22,6 +22,7 @@ For reranking support (requires optional dependencies):
 
 from __future__ import annotations
 
+from knowledge_mcp.search.bm25 import BM25Searcher
 from knowledge_mcp.search.citation import CitationFormatter, format_citation
 from knowledge_mcp.search.coverage import (
     CoverageAssessor,
@@ -32,12 +33,16 @@ from knowledge_mcp.search.coverage import (
     CoveredArea,
     assess_knowledge_coverage,
 )
+from knowledge_mcp.search.hybrid import HybridSearcher, reciprocal_rank_fusion
 from knowledge_mcp.search.models import SearchResult
 from knowledge_mcp.search.semantic_search import SemanticSearcher
 
 __all__: list[str] = [
     "SearchResult",
     "SemanticSearcher",
+    "BM25Searcher",
+    "HybridSearcher",
+    "reciprocal_rank_fusion",
     "format_citation",
     "CitationFormatter",
     "CoverageAssessor",
