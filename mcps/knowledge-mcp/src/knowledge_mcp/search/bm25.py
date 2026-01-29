@@ -135,11 +135,14 @@ class BM25Searcher:
         # Tokenize query
         query_tokens = query.lower().split()
 
+        # Cap k at corpus size to avoid bm25s ValueError
+        k = min(n_results, self.document_count)
+
         # Retrieve top-k results
         # bm25s.retrieve expects a list of tokenized queries (batch)
         # Returns (scores, indices) as numpy arrays with shape (batch_size, k)
         assert self._index is not None  # Already checked via is_indexed
-        scores, indices = self._index.retrieve([query_tokens], k=n_results)
+        scores, indices = self._index.retrieve([query_tokens], k=k)
 
         # Convert to result dicts
         results: list[dict[str, Any]] = []
