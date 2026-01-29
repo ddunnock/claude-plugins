@@ -71,6 +71,9 @@ docling = ">=2.70.0"
 # Web content ingestion
 crawl4ai = "^0.7.8"
 
+# BM25 lexical search (FR-3.2)
+bm25s = ">=0.1.0"
+
 [tool.poetry.group.dev.dependencies]
 # Testing
 pytest = "^8.0"

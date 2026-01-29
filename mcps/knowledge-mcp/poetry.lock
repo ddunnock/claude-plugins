@@ -550,6 +550,31 @@ html5lib = ["html5lib"]
 lxml = ["lxml"]
 
 [[package]]
+name = "bm25s"
+version = "0.2.14"
+description = "An ultra-fast implementation of BM25 based on sparse matrices."
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "bm25s-0.2.14-py3-none-any.whl", hash = "sha256:76cdb70ae40747941b150a1ec16a9c20c576d6534d0a3c3eebb303c779b3cf65"},
+    {file = "bm25s-0.2.14.tar.gz", hash = "sha256:7b6717770fffbdb3b962e5fe8ef1e6eac7f285d0fbc14484b321e136df837139"},
+]
+
+[package.dependencies]
+numpy = "*"
+scipy = "*"
+
+[package.extras]
+core = ["PyStemmer", "numba", "orjson", "tqdm"]
+dev = ["black"]
+evaluation = ["pytrec-eval"]
+full = ["PyStemmer", "black", "huggingface-hub", "jax[cpu]", "numba", "orjson", "pytrec-eval", "tqdm"]
+hf = ["huggingface-hub"]
+selection = ["jax[cpu]"]
+stem = ["PyStemmer"]
+
+[[package]]
 name = "boolean-py"
 version = "5.0"
 description = "Define boolean algebras, create and parse boolean expressions and create custom boolean DSL."
@@ -9709,4 +9734,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.14"
-content-hash = "c63b77c7f710f24412dc4377a20cdde70f471f99a0f1d60a1f71b7dc31f8d8c8"
+content-hash = "1f10139ef8e2398e48a647444192f3634951ce18b0af8f4d6d9484656480f793"
