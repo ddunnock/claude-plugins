@@ -76,3 +76,62 @@ class SearchResult:
     normative: bool = False
     clause_number: str | None = None
     page_numbers: list[int] = field(default_factory=lambda: [])
+
+    @property
+    def citation(self) -> str:
+        """
+        Get formatted citation for this result.
+
+        Returns standards-compliant citation in the format:
+        "DOCUMENT, Clause X.Y.Z, p.N"
+
+        Missing metadata is gracefully omitted. Uses format_citation
+        utility to generate consistent academic-style citations.
+
+        Returns:
+            Formatted citation string.
+
+        Example:
+            >>> result = SearchResult(
+            ...     id="chunk-1",
+            ...     content="...",
+            ...     score=0.95,
+            ...     document_title="ISO/IEC/IEEE 12207:2017",
+            ...     clause_number="6.4.2",
+            ...     page_numbers=[23],
+            ... )
+            >>> print(result.citation)
+            ISO/IEC/IEEE 12207:2017, Clause 6.4.2, p.23
+        """
+        from knowledge_mcp.search.citation import format_citation
+
+        return format_citation(
+            document_title=self.document_title,
+            clause_number=self.clause_number,
+            page_numbers=self.page_numbers if self.page_numbers else None,
+            section_title=self.section_title if self.section_title else None,
+        )
+
+    @property
+    def citation_with_relevance(self) -> str:
+        """
+        Get formatted citation with relevance score.
+
+        Appends relevance percentage to the base citation for displaying
+        search result quality to users (FR-3.5).
+
+        Returns:
+            Citation with relevance percentage appended.
+
+        Example:
+            >>> result = SearchResult(
+            ...     id="chunk-1",
+            ...     content="...",
+            ...     score=0.87,
+            ...     document_title="ISO 12207:2017",
+            ... )
+            >>> print(result.citation_with_relevance)
+            ISO 12207:2017 (87% relevant)
+        """
+        relevance_pct = int(self.score * 100)
+        return f"{self.citation} ({relevance_pct}% relevant)"
