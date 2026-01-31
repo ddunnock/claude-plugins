@@ -1,6 +1,11 @@
 ---
 name: five-whys-analysis
 description: Conduct rigorous 5 Whys root cause analysis with guided questioning, quality scoring, and professional report generation. Use when performing root cause analysis, investigating problems, conducting 5 Whys sessions, troubleshooting recurring issues, or when user mentions "5 whys", "root cause", "why did this happen", "find the cause", or needs to identify underlying causes of defects, failures, or process problems. Includes validation tests, scoring rubric, and countermeasure development.
+tools: Read, Bash
+model: sonnet
+color: green
+field: quality
+expertise: intermediate
 ---
 
 # 5 Whys Root Cause Analysis

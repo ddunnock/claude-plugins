@@ -9,21 +9,31 @@ A collection of plugins that extend Claude's capabilities. Supports two plugin t
 
 ```
 claude-plugins/
-├── skills/                 # Skill plugins
+├── skills/                 # Skill plugins (16 skills)
 │   ├── documentation-architect/
+│   ├── fault-tree-analysis/
+│   ├── fishbone-diagram/
+│   ├── five-whys-analysis/
+│   ├── fmea-analysis/
+│   ├── kepner-tregoe-analysis/
+│   ├── pareto-analysis/
+│   ├── plugin-creator/
+│   ├── problem-definition/
+│   ├── rcca-master/
 │   ├── research-opportunity-investigator/
 │   ├── specification-refiner/
 │   ├── speckit-generator/
 │   ├── streaming-output/
+│   ├── streaming-output-mcp/
 │   └── trade-study-analysis/
 ├── mcps/                   # MCP server plugins
+│   ├── knowledge-mcp/
 │   └── session-memory/
 ├── tools/                  # Packaging utilities
 │   ├── init_plugin.py      # Create new plugins
 │   ├── validate_plugin.py  # Validate plugins
 │   ├── package_plugin.py   # Package for distribution
 │   └── install_mcp.py      # Install MCPs to ~/.claude/
-├── plugin-creator/         # Skill for creating plugins
 └── dist/                   # Packaged .plugin files (gitignored)
 ```
 
@@ -42,7 +52,7 @@ Skills provide workflows, procedures, and domain knowledge that Claude loads bas
 
 MCPs provide tools that are always available in Claude Desktop. Each MCP has:
 
-- **MCP.md**: Manifest with frontmatter (name, description, type, entry_point)
+- **.claude-plugin/plugin.json**: Manifest with name, description, and server configuration
 - **server.py**: MCP server implementation
 - **config.json**: Optional configuration
 
@@ -92,20 +102,53 @@ Then add to Claude Desktop config (`~/.config/claude/claude_desktop_config.json`
 
 ### Skills
 
+#### Root Cause Analysis & Quality (8 skills)
+
 | Skill | Description |
 |-------|-------------|
-| documentation-architect | Transform documentation using Diátaxis framework |
+| rcca-master | Orchestrate RCCA investigations using 8D methodology with integrated tool selection |
+| problem-definition | 5W2H and IS/IS NOT analysis for precise problem statements |
+| five-whys-analysis | Root cause analysis with guided questioning and quality scoring |
+| fishbone-diagram | Ishikawa cause-and-effect diagrams with 6Ms/8Ps/4Ss categories |
+| pareto-analysis | 80/20 Rule analysis for prioritizing vital few causes |
+| kepner-tregoe-analysis | KT Problem Solving and Decision Making (Situation/Problem/Decision/Potential Problem Analysis) |
+| fault-tree-analysis | Boolean logic analysis for system failure pathways and minimal cut sets |
+| fmea-analysis | Failure Mode and Effects Analysis (DFMEA/PFMEA) using AIAG-VDA methodology |
+
+#### Specification & Documentation (4 skills)
+
+| Skill | Description |
+|-------|-------------|
+| speckit-generator | Project specification and task management with PLANS taxonomy, ADR decisions, SMART criteria, anti-pattern detection |
+| specification-refiner | SEAMS framework analysis with sequential clarification and multi-phase workflow |
+| documentation-architect | Transform documentation using the Diátaxis framework |
 | research-opportunity-investigator | Research and opportunity investigation for protocols |
-| specification-refiner | Refine and improve specifications |
-| speckit-generator | Generate automation packages from requirements |
-| streaming-output | Handle streaming output patterns |
-| trade-study-analysis | Systematic trade study using DAU 9-Step Process |
+
+#### Decision Support (1 skill)
+
+| Skill | Description |
+|-------|-------------|
+| trade-study-analysis | Systematic trade study using DAU 9-Step Process with sensitivity analysis |
+
+#### Output & Streaming (2 skills)
+
+| Skill | Description |
+|-------|-------------|
+| streaming-output | Stream long-form content to markdown files with resume capability |
+| streaming-output-mcp | Stream structured content to SQLite with multi-format export (Markdown, HTML, JSON, YAML, CSV) |
+
+#### Development (1 skill)
+
+| Skill | Description |
+|-------|-------------|
+| plugin-creator | Generate Claude plugins from user prompts with documentation and testing |
 
 ### MCPs
 
 | MCP | Description |
 |-----|-------------|
-| session-memory | Persistent session memory with searchable storage and checkpoints |
+| session-memory | Persistent session memory with searchable storage, checkpoints, semantic search, and cloud sync |
+| knowledge-mcp | Semantic search over systems engineering standards (IEEE, INCOSE, ISO) with RAG capabilities |
 
 ## Requirements
 

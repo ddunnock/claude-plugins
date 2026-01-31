@@ -1,6 +1,11 @@
 ---
 name: rcca-master
 description: Orchestrate complete Root Cause and Corrective Action (RCCA) investigations using the 8D methodology. Guides team formation (D1) with domain-specific recommendations, problem definition (D2), containment (D3), root cause analysis (D4) with integrated tool selection (5 Whys, Fishbone, Pareto, Kepner-Tregoe, FTA), corrective action (D5-D6), prevention (D7), and closure (D8). Use when conducting RCCA, 8D, root cause analysis, corrective action, failure investigation, nonconformance analysis, quality problems, or customer complaints.
+tools: Read, Task
+model: sonnet
+color: purple
+field: quality
+expertise: expert
 ---
 
 # RCCA Master Skill
