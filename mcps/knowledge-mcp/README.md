@@ -2,6 +2,40 @@
 
 Semantic search over systems engineering standards (IEEE, INCOSE, ISO, NASA) for RAG-grounded specification workflows.
 
+## Important: Standards Not Included
+
+**This MCP ships empty.** You must acquire and ingest your own standards documents.
+
+This design enables:
+- Marketplace distribution without copyright concerns
+- Flexibility to use your organization's licensed standards
+- Support for domain-specific standards (automotive, aerospace, defense)
+
+### Quick Start: Ingest Standards
+
+```bash
+cd mcps/knowledge-mcp
+
+# Ingest a standards PDF with validation
+poetry run python -m knowledge_mcp.cli.ingest docs ./standards/your-standard.pdf \
+  --collection rcca_standards \
+  --document-id your-standard-id \
+  --validate
+
+# Validate the collection
+poetry run python -m knowledge_mcp.cli.validate collection rcca_standards
+```
+
+### Recommended Standards for RCCA
+
+| Standard | Purpose | Acquisition |
+|----------|---------|-------------|
+| AIAG-VDA FMEA 2019 | Action Priority tables | [Guide](docs/standards-acquisition/aiag-vda-2019.md) |
+| MIL-STD-882E | Severity categories (FREE) | [Guide](docs/standards-acquisition/mil-std-882e.md) |
+| ISO 9001:2015 | CAPA requirements | [Guide](docs/standards-acquisition/iso-9001-2015.md) |
+
+See [How to Ingest Standards](docs/how-to/ingest-standards.md) for complete instructions.
+
 ## Features
 
 - **Semantic Search**: Find relevant standards content using natural language queries
@@ -94,6 +128,15 @@ Get statistics about the knowledge base collections and document counts.
 ## CLI Commands
 
 ```bash
+# Ingest a standards document
+poetry run python -m knowledge_mcp.cli.ingest docs ./path/to/standard.pdf \
+  --collection rcca_standards \
+  --document-id standard-id \
+  --validate
+
+# Validate a collection for RCCA readiness
+poetry run python -m knowledge_mcp.cli.validate collection rcca_standards --verbose
+
 # Token usage summary (last 7 days)
 poetry run python -m knowledge_mcp.cli.token_summary --days 7
 
@@ -140,8 +183,12 @@ mcps/knowledge-mcp/
 │   ├── store/             # Vector storage (Qdrant, ChromaDB)
 │   ├── ingest/            # Document ingestion (PDF, DOCX)
 │   ├── chunk/             # Hierarchical chunking
+│   ├── validation/        # Table validation for critical RCCA tables
 │   ├── evaluation/        # Golden tests + RAG metrics
 │   └── monitoring/        # Token tracking + logging
+├── docs/
+│   ├── standards-acquisition/  # Guides for acquiring RCCA standards
+│   └── how-to/                 # Step-by-step guides
 ├── data/
 │   └── embedding_cache/   # Cached embeddings (LRU, 10GB limit)
 └── tests/
