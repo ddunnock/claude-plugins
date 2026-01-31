@@ -10,6 +10,7 @@ ready for embedding and storage.
 from __future__ import annotations
 
 import logging
+import re
 import uuid
 from pathlib import Path
 from typing import Any
@@ -183,6 +184,127 @@ class IngestionPipeline:
             logger.error(f"Failed to process {file_path}: {e}")
             raise IngestionError(f"Failed to process document: {e}") from e
 
+    # RCCA metadata extraction patterns (Phase 6)
+    _STANDARD_PATTERNS: dict[str, str] = {
+        r"aiag[-_]?vda[-_]?fmea[-_]?(\d{4})": "AIAG-VDA FMEA {0}",
+        r"aiag[-_]?fmea[-_]?(\d)[-_]?(\d{4})": "AIAG FMEA-{0} {1}",
+        r"mil[-_]?std[-_]?882([a-z]?)": "MIL-STD-882{0}",
+        r"iso[-_]?(\d+)[-_]?(\d{4})": "ISO {0}:{1}",
+        r"iec[-_]?(\d+)[-_]?(\d{4})": "IEC {0}:{1}",
+        r"sae[-_]?j(\d+)": "SAE J{0}",
+        r"iso[-_]?26262": "ISO 26262",
+        r"iatf[-_]?16949": "IATF 16949",
+        r"as[-_]?9100": "AS9100",
+    }
+
+    _DOMAIN_PATTERNS: dict[str, str] = {
+        r"(aiag|vda|fmea|sae[-_]?j1739)": "fmea",
+        r"(mil[-_]?std[-_]?882|iec[-_]?61508|iso[-_]?26262)": "safety",
+        r"(iso[-_]?9001|iatf[-_]?16949|as[-_]?9100)": "quality",
+        r"(iso[-_]?31000|fmeca)": "reliability",
+    }
+
+    _FAMILY_MAP: dict[str, str] = {
+        "fmea": "fmea_methodology",
+        "safety": "safety",
+        "quality": "quality",
+        "reliability": "reliability",
+    }
+
+    def _extract_standard_name(self, document_id: str) -> str | None:
+        """
+        Extract standard name from document_id.
+
+        Matches document_id patterns to known standards and formats the name.
+
+        Args:
+            document_id: Document identifier (e.g., "aiag-vda-fmea-2019").
+
+        Returns:
+            Formatted standard name (e.g., "AIAG-VDA FMEA 2019") or None if unrecognized.
+
+        Example:
+            >>> pipeline._extract_standard_name("aiag-vda-fmea-2019")
+            "AIAG-VDA FMEA 2019"
+        """
+        doc_lower = document_id.lower()
+        for pattern, template in self._STANDARD_PATTERNS.items():
+            match = re.search(pattern, doc_lower)
+            if match:
+                groups = match.groups()
+                # Format template with captured groups (uppercase letters)
+                formatted = template.format(*[g.upper() if g else "" for g in groups])
+                return formatted.strip()
+        return None
+
+    def _extract_domain(self, document_id: str) -> str | None:
+        """
+        Extract domain from document_id.
+
+        Maps document_id patterns to domain categories.
+
+        Args:
+            document_id: Document identifier.
+
+        Returns:
+            Domain category ("fmea", "safety", "quality", "reliability") or None.
+
+        Example:
+            >>> pipeline._extract_domain("aiag-vda-fmea-2019")
+            "fmea"
+        """
+        doc_lower = document_id.lower()
+        for pattern, domain in self._DOMAIN_PATTERNS.items():
+            if re.search(pattern, doc_lower):
+                return domain
+        return None
+
+    def _extract_version(self, document_id: str) -> str | None:
+        """
+        Extract version from document_id.
+
+        Extracts year or version string from document_id.
+
+        Args:
+            document_id: Document identifier.
+
+        Returns:
+            Version string (e.g., "2019", "2015") or None.
+
+        Example:
+            >>> pipeline._extract_version("aiag-vda-fmea-2019")
+            "2019"
+        """
+        # Match 4-digit year (1990-2099)
+        year_match = re.search(r"(19|20)\d{2}", document_id)
+        if year_match:
+            return year_match.group(0)
+
+        # Match version letter suffix (e.g., 882E -> "E")
+        letter_match = re.search(r"[-_](\d+)([a-zA-Z])(?:[-_]|$)", document_id)
+        if letter_match:
+            return letter_match.group(2).upper()
+
+        return None
+
+    def _classify_family(self, domain: str | None) -> str | None:
+        """
+        Classify domain into standard family.
+
+        Args:
+            domain: Domain category.
+
+        Returns:
+            Standard family or None.
+
+        Example:
+            >>> pipeline._classify_family("fmea")
+            "fmea_methodology"
+        """
+        if domain is None:
+            return None
+        return self._FAMILY_MAP.get(domain)
+
     def _enrich_chunks(
         self,
         chunk_results: list[ChunkResult],
@@ -196,6 +318,7 @@ class IngestionPipeline:
         - Content hash for deduplication
         - Normative classification
         - Document metadata
+        - RCCA metadata (standard, domain, version, family)
 
         Args:
             chunk_results: List of chunk results from chunker.
@@ -205,6 +328,12 @@ class IngestionPipeline:
             List of enriched KnowledgeChunk objects.
         """
         chunks: list[KnowledgeChunk] = []
+
+        # Extract RCCA metadata once per document (Phase 6)
+        rcca_standard = self._extract_standard_name(metadata.document_id)
+        rcca_domain = self._extract_domain(metadata.document_id)
+        rcca_version = self._extract_version(metadata.document_id)
+        rcca_family = self._classify_family(rcca_domain)
 
         for chunk_result in chunk_results:
             # Generate UUID
@@ -233,7 +362,7 @@ class IngestionPipeline:
                 else ""
             )
 
-            # Create KnowledgeChunk
+            # Create KnowledgeChunk with RCCA metadata
             chunk = KnowledgeChunk(
                 id=chunk_id,
                 document_id=metadata.document_id,
@@ -248,6 +377,11 @@ class IngestionPipeline:
                 page_numbers=chunk_result.page_numbers,
                 chunk_type=chunk_result.chunk_type,
                 normative=normative_value,
+                # RCCA metadata (Phase 6)
+                standard=rcca_standard,
+                domain=rcca_domain,
+                version=rcca_version,
+                standard_family=rcca_family,
             )
 
             chunks.append(chunk)
