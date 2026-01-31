@@ -8,6 +8,7 @@ Supports PDF and DOCX files with progress tracking and error handling.
 Example:
     >>> knowledge ingest docs /path/to/documents
     >>> knowledge ingest docs /path/to/file.pdf --collection my_collection
+    >>> knowledge ingest docs /path/to/standards --validate
 """
 
 from __future__ import annotations
@@ -51,10 +52,13 @@ def ingest_docs(
         "-r",
         help="Recursively process directories",
     ),
+    validate: bool = typer.Option(
+        False,
+        "--validate",
+        help="Run RCCA table validation after ingestion",
+    ),
 ) -> None:
     """Ingest local documents into the knowledge base."""
-    # Silence unused variable warning - collection will be used in future
-    _ = collection
 
     # Collect files to process
     files: list[Path] = []
@@ -113,6 +117,53 @@ def ingest_docs(
         raise typer.Exit(1)
 
     console.print("\n[green]Ingestion complete.[/green]")
+
+    # Run validation if requested
+    if validate:
+        _run_post_ingest_validation(collection)
+
+
+def _run_post_ingest_validation(collection: str) -> None:
+    """Run RCCA table validation after ingestion.
+
+    Args:
+        collection: Name of the collection to validate.
+
+    Raises:
+        typer.Exit: With code 1 if validation fails.
+    """
+    import asyncio
+
+    # Import validation helpers locally to avoid circular imports
+    from knowledge_mcp.cli.validate import (
+        display_validation_summary,
+        run_validation_for_ingest,
+    )
+    from knowledge_mcp.utils.config import load_config
+
+    config = load_config()
+
+    console.print("\n[bold]Running RCCA table validation...[/bold]")
+
+    try:
+        all_passed, results = asyncio.run(
+            run_validation_for_ingest(collection, config)
+        )
+
+        display_validation_summary(results, collection)
+
+        if not all_passed:
+            console.print(
+                "\n[yellow]Note:[/yellow] Ingestion completed but validation failed. "
+                "Some RCCA skills may not work correctly until missing tables are ingested."
+            )
+            raise typer.Exit(1)
+
+    except typer.Exit:
+        raise
+    except Exception as e:
+        console.print(f"\n[yellow]Warning:[/yellow] Validation failed: {e}")
+        console.print("Ingestion was successful but validation could not be completed.")
 
 
 def main() -> None:
