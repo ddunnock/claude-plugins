@@ -26,6 +26,42 @@ FMEA is a systematic, proactive method for evaluating a process, design, or syst
 | **PFMEA** | Process/Manufacturing | Production, assembly, service delivery |
 | **FMEA-MSR** | Monitoring & System Response | Diagnostic coverage, fault handling |
 
+## Standards Integration Status
+
+At the start of each FMEA session, check knowledge-mcp availability and display one of:
+
+**When Connected:**
+```
+✓ **Standards Database:** Connected
+
+Available resources:
+- AIAG-VDA FMEA Handbook (2019) - Action Priority methodology
+- ISO 26262 - Automotive functional safety FMEA
+- MIL-STD-882E - System safety analysis
+
+You can request standards lookups via `/lookup-standard [query]`.
+Auto-query prompts offered at Steps 4 (Failure Modes) and 5 (Rating Criteria).
+```
+
+**When Unavailable:**
+```
+⚠️ **Standards Database:** Unavailable
+
+FMEA proceeds using embedded reference data from AIAG-VDA FMEA Handbook (2019):
+- ✓ Action Priority decision tables (complete S×O→AP lookup)
+- ✓ Severity/Occurrence/Detection rating scales (1-10 definitions)
+- ✓ FMEA methodology guidance
+
+Not available without standards database:
+- ✗ Component-specific failure mode catalogs
+- ✗ Industry benchmarks for occurrence probabilities
+- ✗ Detailed regulatory requirement citations
+
+To enable standards integration, ensure knowledge-mcp is configured.
+```
+
+**Important:** Display status banner ONCE at session start (after 5T's collection, before Step 1). Do NOT repeat at each step.
+
 ## Workflow: AIAG-VDA 7-Step Approach
 
 ### Step 1: Planning & Preparation (5T's)
@@ -89,6 +125,33 @@ For each function, establish the **Failure Chain**:
 - Unintended function (wrong operation)
 - Delayed function (timing failure)
 
+---
+
+**Optional Standards Lookup (Step 4)**
+
+When standards database is connected, offer:
+
+> Would you like me to search for common failure modes for this component/function type from industry standards (AIAG-VDA, ISO 26262, MIL-STD-882)?
+>
+> - **Yes**: Query standards database and present relevant failure mode catalogs with citations
+> - **No**: Proceed with failure modes you identify based on your design knowledge
+>
+> Your choice:
+
+**Query behavior:**
+- If user says yes: Execute `knowledge_search` with query "common failure modes for [component/function]", filter by domain="fmea"
+- If user says no: Note preference, do NOT ask again for Step 4 in this session
+- If MCP unavailable: Skip this prompt entirely (banner already warned user)
+- Neutral phrasing, not recommendation - user decides
+
+**Result presentation (if queried):**
+- Show top 5 most relevant failure mode patterns
+- Include inline citations: "Per AIAG-VDA FMEA Handbook (2019), Section 4.3.2"
+- Note: "These are documented patterns. Your design may have additional failure modes."
+- Offer "show more" for additional results
+
+---
+
 **4b. Failure Effects** - What are the consequences?
 - Effects on Next Higher Level element
 - Effects on end customer/user
@@ -114,6 +177,37 @@ Effect (Next Higher Level) ← Failure Mode (Focus Element) ← Cause (Next Lowe
 Identify existing controls for each cause:
 - **Prevention Controls**: Actions that prevent the cause or reduce occurrence
 - **Detection Controls**: Actions that detect the cause or failure mode
+
+---
+
+**Optional Standards Lookup (Step 5)**
+
+When standards database is connected, offer before rating assignment:
+
+> Would you like me to retrieve the detailed severity/occurrence/detection rating criteria from industry standards?
+>
+> This provides:
+> - Full 1-10 scale definitions with examples
+> - Domain-specific criteria (automotive, aerospace, medical)
+> - Boundary conditions for rating assignments
+>
+> - **Yes**: Query standards database for rating scale definitions
+> - **No**: Use embedded rating tables from [references/rating-tables.md](references/rating-tables.md)
+>
+> Your choice:
+
+**Query behavior:**
+- If user says yes: Execute `knowledge_search` with query "[DFMEA|PFMEA] severity rating criteria scale 1-10 definitions"
+- If user says no: Note preference, do NOT ask again for Step 5 in this session
+- If MCP unavailable: Skip this prompt entirely (banner already warned user)
+- Neutral phrasing, not recommendation
+
+**Result presentation (if queried):**
+- Present rating scale table with section citations
+- Example: "Severity: 8 (Very High) - Product inoperable, loss of primary function per AIAG-VDA FMEA Handbook (2019), Table 5.2"
+- Note: "Embedded scales in references/rating-tables.md available for offline use"
+
+---
 
 **5b. Rating Assignment**
 
