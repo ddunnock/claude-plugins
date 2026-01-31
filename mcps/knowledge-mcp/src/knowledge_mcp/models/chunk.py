@@ -89,15 +89,15 @@ class KnowledgeChunk:
     created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
-    # RCCA metadata (Phase 6)
-    standard: Optional[str] = None  # "AIAG-VDA FMEA 2019", "MIL-STD-882E", "ISO 9001:2015"
-    domain: Optional[str] = None  # "fmea", "safety", "quality", "reliability"
-    version: Optional[str] = None  # "2019", "Change 1 (2023)", "2015"
-    standard_family: Optional[str] = None  # "quality", "safety", "fmea_methodology"
+    # RCCA metadata
+    standard: Optional[str] = None
+    domain: Optional[str] = None
+    version: Optional[str] = None
+    standard_family: Optional[str] = None
 
-    # For multi-standard synthesis (Phase 11 prep)
-    supersedes: Optional[str] = None  # "AIAG FMEA-4 2008" (legacy RPN version)
-    related_standards: list[str] = field(default_factory=list)  # ["ISO 26262"]
+    # Multi-standard synthesis
+    supersedes: Optional[str] = None
+    related_standards: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         """
@@ -125,7 +125,6 @@ class KnowledgeChunk:
             "embedding_model": self.embedding_model,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
-            # RCCA metadata (Phase 6)
             "standard": self.standard,
             "domain": self.domain,
             "version": self.version,

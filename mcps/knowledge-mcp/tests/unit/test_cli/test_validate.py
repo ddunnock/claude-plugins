@@ -295,3 +295,143 @@ class TestIngestValidateFlag:
         assert result.exit_code == 0
         assert "--validate" in result.stdout
         assert "RCCA table validation" in result.stdout
+
+
+class TestCollectionNameValidation:
+    """Tests for collection name validation."""
+
+    def test_valid_collection_names(self) -> None:
+        """Test valid collection names are accepted."""
+        from knowledge_mcp.cli.validate import _validate_collection_name
+
+        # Valid names
+        assert _validate_collection_name("rcca_standards") == "rcca_standards"
+        assert _validate_collection_name("test-collection") == "test-collection"
+        assert _validate_collection_name("MyCollection123") == "MyCollection123"
+        assert _validate_collection_name("a") == "a"
+
+    def test_invalid_collection_starts_with_number(self) -> None:
+        """Test collection name starting with number is rejected."""
+        import typer
+
+        from knowledge_mcp.cli.validate import _validate_collection_name
+
+        with pytest.raises(typer.BadParameter) as exc_info:
+            _validate_collection_name("123collection")
+        assert "must start with a letter" in str(exc_info.value)
+
+    def test_invalid_collection_special_chars(self) -> None:
+        """Test collection name with special chars is rejected."""
+        import typer
+
+        from knowledge_mcp.cli.validate import _validate_collection_name
+
+        with pytest.raises(typer.BadParameter) as exc_info:
+            _validate_collection_name("my.collection")
+        assert "letters, numbers, underscores, and hyphens" in str(exc_info.value)
+
+    def test_invalid_collection_too_long(self) -> None:
+        """Test collection name over 100 chars is rejected."""
+        import typer
+
+        from knowledge_mcp.cli.validate import _validate_collection_name
+
+        long_name = "a" * 101
+        with pytest.raises(typer.BadParameter) as exc_info:
+            _validate_collection_name(long_name)
+        assert "100 characters or less" in str(exc_info.value)
+
+
+class TestSearcherAdapter:
+    """Tests for _SearcherAdapter class."""
+
+    @patch("knowledge_mcp.store.create_store")
+    @patch("knowledge_mcp.embed.OpenAIEmbedder")
+    def test_adapter_stores_collection(
+        self,
+        mock_embedder_cls: MagicMock,
+        mock_create_store: MagicMock,
+    ) -> None:
+        """Test adapter stores collection name."""
+        from knowledge_mcp.cli.validate import _SearcherAdapter
+
+        mock_config = MagicMock()
+        mock_config.openai_api_key = "test-key"
+
+        adapter = _SearcherAdapter(mock_config, "my_collection")
+
+        assert adapter._collection == "my_collection"
+
+    @patch("knowledge_mcp.store.create_store")
+    @patch("knowledge_mcp.embed.OpenAIEmbedder")
+    @pytest.mark.asyncio
+    async def test_adapter_search_returns_chunks(
+        self,
+        mock_embedder_cls: MagicMock,
+        mock_create_store: MagicMock,
+    ) -> None:
+        """Test adapter search converts store results to KnowledgeChunks."""
+        from knowledge_mcp.cli.validate import _SearcherAdapter
+
+        # Setup mocks
+        mock_embedder = MagicMock()
+        mock_embedder.embed = AsyncMock(return_value=[0.1] * 1536)
+        mock_embedder_cls.return_value = mock_embedder
+
+        mock_store = MagicMock()
+        mock_store.search.return_value = [
+            {
+                "id": "chunk-1",
+                "content": "Test content",
+                "metadata": {
+                    "document_id": "doc-1",
+                    "document_title": "Test Doc",
+                    "document_type": "standard",
+                },
+            }
+        ]
+        mock_create_store.return_value = mock_store
+
+        mock_config = MagicMock()
+        mock_config.openai_api_key = "test-key"
+
+        adapter = _SearcherAdapter(mock_config, "test_collection")
+        results = await adapter.search("test query", "test_collection", n_results=5)
+
+        assert len(results) == 1
+        assert results[0].id == "chunk-1"
+        assert results[0].content == "Test content"
+        assert results[0].document_id == "doc-1"
+
+    @patch("knowledge_mcp.store.create_store")
+    @patch("knowledge_mcp.embed.OpenAIEmbedder")
+    @pytest.mark.asyncio
+    async def test_adapter_warns_on_collection_mismatch(
+        self,
+        mock_embedder_cls: MagicMock,
+        mock_create_store: MagicMock,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        """Test adapter logs warning when search collection differs."""
+        import logging
+
+        from knowledge_mcp.cli.validate import _SearcherAdapter
+
+        mock_embedder = MagicMock()
+        mock_embedder.embed = AsyncMock(return_value=[0.1] * 1536)
+        mock_embedder_cls.return_value = mock_embedder
+
+        mock_store = MagicMock()
+        mock_store.search.return_value = []
+        mock_create_store.return_value = mock_store
+
+        mock_config = MagicMock()
+        mock_config.openai_api_key = "test-key"
+
+        adapter = _SearcherAdapter(mock_config, "collection_a")
+
+        with caplog.at_level(logging.WARNING):
+            await adapter.search("test", "collection_b", n_results=5)
+
+        assert "collection_b" in caplog.text
+        assert "collection_a" in caplog.text

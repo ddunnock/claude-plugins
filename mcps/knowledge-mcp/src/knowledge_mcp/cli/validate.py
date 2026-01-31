@@ -28,11 +28,37 @@ validate_app = typer.Typer(help="Validation commands for RCCA standards")
 console = Console()
 
 
+def _validate_collection_name(value: str) -> str:
+    """Validate collection name format.
+
+    Args:
+        value: Collection name to validate.
+
+    Returns:
+        Validated collection name.
+
+    Raises:
+        typer.BadParameter: If collection name is invalid.
+    """
+    import re
+
+    # Allow alphanumeric, underscores, hyphens
+    if not re.match(r"^[a-zA-Z][a-zA-Z0-9_-]*$", value):
+        raise typer.BadParameter(
+            "Collection name must start with a letter and contain only "
+            "letters, numbers, underscores, and hyphens"
+        )
+    if len(value) > 100:
+        raise typer.BadParameter("Collection name must be 100 characters or less")
+    return value
+
+
 @validate_app.command("collection")
 def validate_collection(
     collection: str = typer.Argument(
         ...,
         help="Name of the collection to validate",
+        callback=_validate_collection_name,
     ),
     verbose: bool = typer.Option(
         False,
@@ -67,7 +93,6 @@ async def _validate_collection_async(collection: str, verbose: bool) -> None:
     from knowledge_mcp.utils.config import load_config
     from knowledge_mcp.validation import TableValidator, ValidationReport
 
-    # Load config
     config = load_config()
 
     console.print(f"\n[bold]Validating collection:[/bold] {collection}\n")
@@ -119,17 +144,26 @@ async def _validate_collection_async(collection: str, verbose: bool) -> None:
 class _SearcherAdapter:
     """Adapter to satisfy SearcherProtocol for TableValidator.
 
-    Wraps SemanticSearcher to provide the collection-based search interface
+    Wraps vector store to provide the collection-based search interface
     expected by TableValidator's SearcherProtocol.
+
+    Note: The collection is fixed at construction time based on config.
+    The collection parameter in search() is for interface compatibility.
     """
 
-    def __init__(self, config: KnowledgeConfig) -> None:
-        """Initialize adapter with config."""
+    def __init__(self, config: KnowledgeConfig, collection: str) -> None:
+        """Initialize adapter with config and collection.
+
+        Args:
+            config: Knowledge MCP configuration.
+            collection: Collection name to search (for validation/logging).
+        """
         from knowledge_mcp.embed import OpenAIEmbedder
         from knowledge_mcp.store import create_store
 
         self._embedder = OpenAIEmbedder(api_key=config.openai_api_key)
         self._store = create_store(config)
+        self._collection = collection
 
     async def search(
         self,
@@ -141,28 +175,34 @@ class _SearcherAdapter:
 
         Args:
             query: Search query string.
-            collection: Collection name (ignored - uses store's collection).
+            collection: Collection name (must match adapter's collection).
             n_results: Maximum number of results.
 
         Returns:
-            List of KnowledgeChunk-like objects with id and content attributes.
+            List of KnowledgeChunk objects with id and content attributes.
+
+        Raises:
+            ValueError: If collection doesn't match adapter's collection.
         """
+        import logging
+
         from knowledge_mcp.models.chunk import KnowledgeChunk
 
-        # Note: collection parameter is ignored since store is initialized
-        # with a specific collection. This is a limitation of the current
-        # architecture - the adapter uses the config's default collection.
+        logger = logging.getLogger(__name__)
 
-        # Generate embedding
+        if collection != self._collection:
+            logger.warning(
+                "Search requested for collection '%s' but adapter configured for '%s'",
+                collection,
+                self._collection,
+            )
+
         query_embedding = await self._embedder.embed(query)
-
-        # Search store
         raw_results = self._store.search(
             query_embedding=query_embedding,
             n_results=n_results,
         )
 
-        # Convert to KnowledgeChunk-like objects for TableValidator
         chunks: list[KnowledgeChunk] = []
         for r in raw_results:
             metadata = r.get("metadata", {})
@@ -188,16 +228,12 @@ def _create_searcher_adapter(
 
     Args:
         config: Knowledge MCP configuration.
-        collection: Collection to validate (used for logging only).
+        collection: Collection name to validate.
 
     Returns:
         SearcherAdapter instance satisfying SearcherProtocol.
     """
-    # Note: The collection name is not used directly since the store
-    # is initialized with the config's versioned_collection_name.
-    # If the user wants to validate a different collection, they need
-    # to set the appropriate config.
-    return _SearcherAdapter(config)
+    return _SearcherAdapter(config, collection)
 
 
 def _display_results(results: list[ValidationResult], verbose: bool) -> None:

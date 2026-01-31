@@ -20,7 +20,6 @@ import typer
 from rich.console import Console
 from rich.progress import track
 
-from knowledge_mcp.exceptions import IngestionError
 from knowledge_mcp.ingest.pipeline import IngestionPipeline
 
 if TYPE_CHECKING:
@@ -98,9 +97,6 @@ def ingest_docs(
             total_chunks += len(chunks)
             successful += 1
             console.print(f"  [green]OK[/green] {file_path.name}: {len(chunks)} chunks")
-        except IngestionError as e:
-            failed.append((file_path, str(e)))
-            console.print(f"  [red]FAIL[/red] {file_path.name}: {e}")
         except Exception as e:
             failed.append((file_path, str(e)))
             console.print(f"  [red]FAIL[/red] {file_path.name}: {e}")

@@ -174,35 +174,31 @@ class IngestionPipeline:
 
             return chunks
 
-        except IngestionError:
-            # Re-raise ingestion errors
-            raise
-        except FileNotFoundError:
-            # Re-raise file not found errors
+        except (IngestionError, FileNotFoundError):
             raise
         except Exception as e:
             logger.error(f"Failed to process {file_path}: {e}")
             raise IngestionError(f"Failed to process document: {e}") from e
 
-    # RCCA metadata extraction patterns (Phase 6)
-    _STANDARD_PATTERNS: dict[str, str] = {
-        r"aiag[-_]?vda[-_]?fmea[-_]?(\d{4})": "AIAG-VDA FMEA {0}",
-        r"aiag[-_]?fmea[-_]?(\d)[-_]?(\d{4})": "AIAG FMEA-{0} {1}",
-        r"mil[-_]?std[-_]?882([a-z]?)": "MIL-STD-882{0}",
-        r"iso[-_]?(\d+)[-_]?(\d{4})": "ISO {0}:{1}",
-        r"iec[-_]?(\d+)[-_]?(\d{4})": "IEC {0}:{1}",
-        r"sae[-_]?j(\d+)": "SAE J{0}",
-        r"iso[-_]?26262": "ISO 26262",
-        r"iatf[-_]?16949": "IATF 16949",
-        r"as[-_]?9100": "AS9100",
-    }
+    # RCCA metadata extraction patterns (pre-compiled for performance)
+    _STANDARD_PATTERNS: list[tuple[re.Pattern[str], str]] = [
+        (re.compile(r"aiag[-_]?vda[-_]?fmea[-_]?(\d{4})", re.IGNORECASE), "AIAG-VDA FMEA {0}"),
+        (re.compile(r"aiag[-_]?fmea[-_]?(\d)[-_]?(\d{4})", re.IGNORECASE), "AIAG FMEA-{0} {1}"),
+        (re.compile(r"mil[-_]?std[-_]?882([a-z]?)", re.IGNORECASE), "MIL-STD-882{0}"),
+        (re.compile(r"iso[-_]?(\d+)[-_]?(\d{4})", re.IGNORECASE), "ISO {0}:{1}"),
+        (re.compile(r"iec[-_]?(\d+)[-_]?(\d{4})", re.IGNORECASE), "IEC {0}:{1}"),
+        (re.compile(r"sae[-_]?j(\d+)", re.IGNORECASE), "SAE J{0}"),
+        (re.compile(r"iso[-_]?26262", re.IGNORECASE), "ISO 26262"),
+        (re.compile(r"iatf[-_]?16949", re.IGNORECASE), "IATF 16949"),
+        (re.compile(r"as[-_]?9100", re.IGNORECASE), "AS9100"),
+    ]
 
-    _DOMAIN_PATTERNS: dict[str, str] = {
-        r"(aiag|vda|fmea|sae[-_]?j1739)": "fmea",
-        r"(mil[-_]?std[-_]?882|iec[-_]?61508|iso[-_]?26262)": "safety",
-        r"(iso[-_]?9001|iatf[-_]?16949|as[-_]?9100)": "quality",
-        r"(iso[-_]?31000|fmeca)": "reliability",
-    }
+    _DOMAIN_PATTERNS: list[tuple[re.Pattern[str], str]] = [
+        (re.compile(r"(aiag|vda|fmea|sae[-_]?j1739)", re.IGNORECASE), "fmea"),
+        (re.compile(r"(mil[-_]?std[-_]?882|iec[-_]?61508|iso[-_]?26262)", re.IGNORECASE), "safety"),
+        (re.compile(r"(iso[-_]?9001|iatf[-_]?16949|as[-_]?9100)", re.IGNORECASE), "quality"),
+        (re.compile(r"(iso[-_]?31000|fmeca)", re.IGNORECASE), "reliability"),
+    ]
 
     _FAMILY_MAP: dict[str, str] = {
         "fmea": "fmea_methodology",
@@ -227,9 +223,8 @@ class IngestionPipeline:
             >>> pipeline._extract_standard_name("aiag-vda-fmea-2019")
             "AIAG-VDA FMEA 2019"
         """
-        doc_lower = document_id.lower()
-        for pattern, template in self._STANDARD_PATTERNS.items():
-            match = re.search(pattern, doc_lower)
+        for pattern, template in self._STANDARD_PATTERNS:
+            match = pattern.search(document_id)
             if match:
                 groups = match.groups()
                 # Format template with captured groups (uppercase letters)
@@ -253,9 +248,8 @@ class IngestionPipeline:
             >>> pipeline._extract_domain("aiag-vda-fmea-2019")
             "fmea"
         """
-        doc_lower = document_id.lower()
-        for pattern, domain in self._DOMAIN_PATTERNS.items():
-            if re.search(pattern, doc_lower):
+        for pattern, domain in self._DOMAIN_PATTERNS:
+            if pattern.search(document_id):
                 return domain
         return None
 
@@ -329,7 +323,7 @@ class IngestionPipeline:
         """
         chunks: list[KnowledgeChunk] = []
 
-        # Extract RCCA metadata once per document (Phase 6)
+        # Extract RCCA metadata once per document
         rcca_standard = self._extract_standard_name(metadata.document_id)
         rcca_domain = self._extract_domain(metadata.document_id)
         rcca_version = self._extract_version(metadata.document_id)
@@ -362,7 +356,6 @@ class IngestionPipeline:
                 else ""
             )
 
-            # Create KnowledgeChunk with RCCA metadata
             chunk = KnowledgeChunk(
                 id=chunk_id,
                 document_id=metadata.document_id,
@@ -377,7 +370,6 @@ class IngestionPipeline:
                 page_numbers=chunk_result.page_numbers,
                 chunk_type=chunk_result.chunk_type,
                 normative=normative_value,
-                # RCCA metadata (Phase 6)
                 standard=rcca_standard,
                 domain=rcca_domain,
                 version=rcca_version,

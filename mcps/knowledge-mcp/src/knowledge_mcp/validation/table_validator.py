@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import asyncio
+import logging
 import re
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
     from knowledge_mcp.models.chunk import KnowledgeChunk
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -207,7 +211,7 @@ class TableValidator:
         ]
 
     async def _run_queries(self, queries: list[str]) -> list[KnowledgeChunk]:
-        """Run multiple queries and deduplicate results.
+        """Run multiple queries in parallel and deduplicate results.
 
         Args:
             queries: List of query strings to search for.
@@ -215,18 +219,25 @@ class TableValidator:
         Returns:
             Deduplicated list of KnowledgeChunk results.
         """
+        # Run queries in parallel
+        tasks = [
+            self.searcher.search(query, collection=self.collection, n_results=10)
+            for query in queries
+        ]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # Collect successful results, log failures
         all_chunks: list[KnowledgeChunk] = []
-        for query in queries:
-            try:
-                results = await self.searcher.search(
-                    query,
-                    collection=self.collection,
-                    n_results=10,
+        for i, result in enumerate(results):
+            if isinstance(result, BaseException):
+                logger.warning(
+                    "Validation query failed: %s - %s",
+                    queries[i][:50],
+                    type(result).__name__,
                 )
-                all_chunks.extend(results)
-            except Exception:
-                # Query failed, continue with others
-                pass
+            else:
+                # result is list[KnowledgeChunk] here
+                all_chunks.extend(result)
 
         # Deduplicate by chunk ID
         seen_ids: set[str] = set()

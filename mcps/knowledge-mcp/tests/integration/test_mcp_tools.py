@@ -187,19 +187,18 @@ class TestMCPToolIntegration:
         data = json.loads(response.root.content[0].text)
 
         assert "results" in data
-        assert data["total_results"] > 0
+        assert data["count"] > 0
         assert data["query"] == "system requirements review"
 
         # Verify we got actual content from ChromaDB
         result = data["results"][0]
         assert "content" in result
-        assert "score" in result
-        assert "source" in result
+        assert "relevance" in result  # Percentage string like "87%"
+        assert "citation" in result   # Citation string
 
-        # Verify source metadata is populated
-        source = result["source"]
-        assert source["document_title"] in ["IEEE 15288.2-2014", "INCOSE SE Handbook"]
-        assert source["document_type"] in ["standard", "handbook"]
+        # Verify metadata is populated
+        metadata = result["metadata"]
+        assert metadata["document_id"] in ["ieee-15288", "incose-handbook"]
 
     @pytest.mark.asyncio
     async def test_knowledge_search_filter_works(
@@ -225,9 +224,9 @@ class TestMCPToolIntegration:
         data = json.loads(response.root.content[0].text)
 
         # Should only get handbook documents
-        if data["total_results"] > 0:
+        if data["count"] > 0:
             for result in data["results"]:
-                assert result["source"]["document_type"] == "handbook"
+                assert result["metadata"]["document_id"] == "incose-handbook"
 
     @pytest.mark.asyncio
     async def test_knowledge_search_normative_filter_works(
@@ -253,7 +252,7 @@ class TestMCPToolIntegration:
         data = json.loads(response.root.content[0].text)
 
         # Should only get normative content
-        if data["total_results"] > 0:
+        if data["count"] > 0:
             for result in data["results"]:
                 assert result["metadata"]["normative"] is True
 
@@ -280,9 +279,10 @@ class TestMCPToolIntegration:
         # Assert
         data = json.loads(response.root.content[0].text)
 
-        # All results should have score >= threshold
+        # All results should meet threshold (relevance is percentage string like "99%")
         for result in data["results"]:
-            assert result["score"] >= 0.99
+            relevance_pct = int(result["relevance"].rstrip("%"))
+            assert relevance_pct >= 99
 
     @pytest.mark.asyncio
     async def test_knowledge_stats_returns_real_count(
@@ -328,7 +328,7 @@ class TestMCPToolIntegration:
         # Assert
         data = json.loads(response.root.content[0].text)
 
-        assert data["total_results"] == 0
+        assert data["count"] == 0
         assert data["results"] == []
 
     @pytest.mark.asyncio
@@ -385,14 +385,14 @@ class TestMCPToolIntegration:
         # Assert
         data = json.loads(response.root.content[0].text)
 
-        assert data["total_results"] <= 2
+        assert data["count"] <= 2
 
     @pytest.mark.asyncio
-    async def test_search_results_ordered_by_score(
+    async def test_search_results_ordered_by_relevance(
         self,
         server_with_real_deps: KnowledgeMCPServer,
     ) -> None:
-        """Verify results are returned in descending score order."""
+        """Verify results are returned in descending relevance order."""
         # Arrange
         request = CallToolRequest(
             params={
@@ -408,8 +408,9 @@ class TestMCPToolIntegration:
         data = json.loads(response.root.content[0].text)
 
         if len(data["results"]) > 1:
-            scores = [r["score"] for r in data["results"]]
-            assert scores == sorted(scores, reverse=True), "Results should be in descending score order"
+            # Extract numeric relevance from percentage strings like "87%"
+            relevances = [int(r["relevance"].rstrip("%")) for r in data["results"]]
+            assert relevances == sorted(relevances, reverse=True), "Results should be in descending relevance order"
 
     @pytest.mark.asyncio
     async def test_stats_reflects_collection_config(
@@ -480,7 +481,7 @@ class TestMCPToolErrorHandling:
         # Act
         response = await server.server.request_handlers[CallToolRequest](request)
 
-        # Assert - should return empty results, not error
+        # Assert - graceful degradation: empty results, no crash, no hallucination
         data = json.loads(response.root.content[0].text)
-        assert data["total_results"] == 0
-        assert data["results"] == []
+        assert data["count"] == 0  # Empty count
+        assert data["results"] == []  # Empty results, no hallucination
