@@ -231,6 +231,50 @@ Use the AP tables (replacing traditional RPN) to assign priority:
 
 **Note**: AP prioritizes Severity first, then Occurrence, then Detection. Unlike RPN (S×O×D), AP ensures safety-critical issues (high S) are never ignored regardless of O and D.
 
+**AP Output Format (with citations):**
+
+When presenting AP results, always include methodology citation:
+
+```
+**Action Priority:** H (High) based on S=8, O=6, D=4 per AIAG-VDA 2019 Table 5.4
+
+Per AIAG-VDA methodology, High priority items MUST identify action to improve
+Prevention Controls, Detection Controls, or both. Action cannot be closed without
+documented risk mitigation.
+```
+
+For Medium and Low priorities:
+```
+**Action Priority:** M (Medium) based on S=7, O=4, D=3 per AIAG-VDA 2019 Table 5.4
+
+Per AIAG-VDA methodology, Medium priority items SHOULD identify action or justify
+why current controls are adequate with documented rationale.
+```
+
+**AP vs RPN Clarification:**
+
+When user context suggests RPN familiarity, include explanation:
+
+> This analysis uses **Action Priority (AP)** methodology from AIAG-VDA 2019,
+> which prioritizes severity first. This replaced the legacy **Risk Priority Number
+> (RPN = S×O×D)** from FMEA-4 (2008).
+>
+> For this failure mode:
+> - **AP: H (High)** — severity-driven prioritization
+> - **RPN: 192** (for reference if your organization still tracks RPN)
+>
+> AP ensures safety-critical items (S ≥ 9) are never ignored regardless of
+> occurrence or detection ratings.
+
+Provide RPN for reference when:
+- User asks about RPN
+- Organization still requires RPN reporting
+- Comparing with legacy FMEA documents
+
+**Citation Source:**
+AP calculated using embedded decision table from `references/rating-tables.md` (AIAG-VDA 2019).
+Use `/lookup-standard Action Priority AIAG-VDA` to view full table from standards text.
+
 ### Step 6: Optimization
 
 **For High and Medium AP items:**
@@ -308,6 +352,66 @@ See [references/examples.md](references/examples.md) for worked examples:
 - **APQP**: FMEA is a core deliverable in phases 2-4
 - **DVP&R**: Design Verification integrates with DFMEA
 
+## Manual Commands
+
+### /lookup-standard
+
+Query the knowledge base for FMEA-related standards information at any point in the analysis.
+
+**Syntax**: `/lookup-standard [natural language query]`
+
+**Examples:**
+- `/lookup-standard DFMEA severity rating criteria for safety-critical systems`
+- `/lookup-standard common failure modes for brushless DC motors`
+- `/lookup-standard Action Priority calculation AIAG-VDA 2019`
+- `/lookup-standard difference between prevention controls and detection controls`
+- `/lookup-standard what does occurrence rating 6 mean`
+- `/lookup-standard ISO 26262 ASIL determination for motor controller`
+
+**Response Format:**
+```
+## Standards Lookup: [query]
+
+### Result 1 (92% relevant)
+**Source:** AIAG-VDA FMEA Handbook (2019), Section 5.2.1
+
+[Content excerpt with relevant context]
+
+### Result 2 (87% relevant)
+**Source:** ISO 26262-9:2018, Section 8.4.3
+
+[Content excerpt with relevant context]
+
+---
+Showing 3 of 7 results. Say "show more" for additional results.
+```
+
+**When to Use:**
+- Need detailed definitions of rating criteria beyond embedded tables
+- Investigating specific failure mechanisms for unfamiliar components
+- Checking regulatory requirements for your industry (automotive, aerospace, medical)
+- Validating control effectiveness criteria against standards
+- Understanding Action Priority methodology details
+- Comparing AIAG-VDA 2019 (AP) with legacy FMEA-4 2008 (RPN)
+
+**No Results Response:**
+```
+## Standards Lookup: [query]
+
+No direct matches found for "[query]".
+
+Did you mean:
+- "failure modes electric motor"
+- "severity rating automotive FMEA"
+- "AIAG-VDA Action Priority"
+
+Try refining with specific standard names (AIAG-VDA, ISO 26262) or broader terms.
+```
+
+**Availability:**
+Requires knowledge-mcp connection. If unavailable:
+> Standards database not available. Use embedded reference data in `references/rating-tables.md` and `references/common-pitfalls.md`.
+
 ## Rating Tables Quick Reference
 
 See [references/rating-tables.md](references/rating-tables.md) for complete tables including:
@@ -330,3 +434,11 @@ See [references/rating-tables.md](references/rating-tables.md) for complete tabl
 4. **Severity drives priority**: High severity (9-10) always requires action regardless of AP
 5. **Document assumptions**: Record basis for all ratings
 6. **Living document**: Update FMEA with design/process changes
+7. **Inline citations**: Include standards citations directly in failure mode documentation, not in footnotes. Format: "per AIAG-VDA FMEA Handbook (2019), Section X.Y"
+
+**Citation Best Practices:**
+- Cite source when presenting rating criteria: "Severity: 8 (Very High) per AIAG-VDA Table 5.2"
+- Cite when referencing failure mode catalogs: "Per ISO 26262-9, motor controller failures include..."
+- Cite AP methodology: "AP: H (High) based on S×O per AIAG-VDA 2019 Table 5.4"
+- When MCP unavailable, note embedded source: "per AIAG-VDA 2019 (embedded reference data)"
+- Never fabricate section numbers when MCP unavailable
