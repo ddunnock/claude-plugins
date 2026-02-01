@@ -8,6 +8,53 @@ field: quality
 expertise: intermediate
 ---
 
+## Standards Integration Status
+
+At the start of each Problem Definition session, check knowledge-mcp availability and display one of:
+
+**When Connected:**
+```
+===================================================================
+PROBLEM DEFINITION SESSION
+===================================================================
+
+✓ **Standards Database:** Connected
+
+Available resources:
+- MIL-STD-882E severity categories (Catastrophic/Critical/Marginal/Negligible)
+- AIAG-VDA FMEA severity scale (1-10)
+- Industry-specific problem definition guidance
+
+Severity classification lookup available after describing problem impact.
+Use `/lookup-standard [query]` for manual standards queries at any point.
+
+===================================================================
+```
+
+**When Unavailable:**
+```
+===================================================================
+PROBLEM DEFINITION SESSION
+===================================================================
+
+⚠️ **Standards Database:** Unavailable
+
+Problem Definition will proceed using standard 5W2H + IS/IS NOT methodology.
+Severity classification available from embedded reference data:
+- ✓ MIL-STD-882E severity categories (embedded)
+- ✓ AIAG-VDA severity scale (embedded)
+
+Not available without standards database:
+- ✗ Detailed industry-specific severity criteria
+- ✗ Regulatory context for severity classification
+
+To enable standards integration, ensure knowledge-mcp is configured.
+
+===================================================================
+```
+
+**Important:** Display status banner ONCE at session start. Do NOT repeat at each elicitation step.
+
 # Problem Definition for RCCA
 
 Problem Definition (D2 in 8D methodology) transforms scattered observations about a failure, defect, or nonconformance into a precise, bounded statement that enables effective root cause analysis.
@@ -29,6 +76,44 @@ The problem definition answers: *"What is the deviation between expected and act
 4. **Sharpen boundaries with IS/IS NOT** — For each 5W2H dimension, explicitly state what the problem IS and IS NOT. The contrast reveals investigation clues. See [references/is-is-not-analysis.md](references/is-is-not-analysis.md).
 
 5. **Quantify the gap** — Express deviation numerically: "Measured 15 in-lbs; specification requires 22 ± 2 in-lbs" not "torque was low."
+
+---
+
+**Optional Severity Classification Lookup**
+
+After quantifying impact/consequences (How Much), offer:
+
+> You've described the problem extent and impact. Would you like me to search for severity classification scales from industry standards (MIL-STD-882E, AIAG-VDA) to formally classify this problem's severity?
+>
+> This provides:
+> - Standardized severity levels with definitions
+> - Domain-specific criteria (safety-critical, quality, financial impact)
+> - Consistent severity language for FMEA and corrective action prioritization
+> - Severity classification flows automatically to 5 Whys and FMEA analysis
+>
+> - **Yes**: Query standards database for severity classification scales
+> - **No**: Proceed with problem statement synthesis
+>
+> Your choice:
+
+**Query behavior:**
+- If user says yes: Execute `knowledge_search` with query "severity classification scale [domain inferred from problem] impact consequences", filter by domain="rcca" or "fmea"
+- If user says no: Note preference, do NOT ask again for severity lookup in this session
+- If MCP unavailable: Skip this prompt entirely (banner already warned user at session start)
+- Neutral phrasing, not recommendation
+
+**Result presentation (if queried):**
+1. Show top 2-3 matching severity scales with brief domain labels:
+   - MIL-STD-882E (safety-critical systems)
+   - AIAG-VDA FMEA (quality/manufacturing)
+
+2. User selects scale, then display full definitions
+
+3. User picks applicable level based on problem description
+
+4. Include in final output with citation: "Severity: 7 (AIAG-VDA FMEA Handbook (2019), Table 5.1)"
+
+---
 
 6. **Synthesize problem statement** — Combine findings into a single statement using the template:
 
@@ -131,10 +216,45 @@ For complete question templates across all 5W2H categories, see [references/ques
 
 ## Output Format
 
-For structured output, generate both:
+For structured output, generate:
 
 1. **5W2H + IS/IS NOT table** — Systematic data capture
 2. **Problem statement** — Single synthesized statement
+3. **Severity classification** — If user opted for severity lookup
+
+**Example output with severity:**
+
+```
+===============================================================================
+PROBLEM DEFINITION SUMMARY
+===============================================================================
+
+PROBLEM STATEMENT:
+Connector housing P/N 12345-A, Rev C exhibited cracked locking tabs (crack
+length 3mm) at final assembly station 3 during torque verification, affecting
+12 of 400 units (3%), detected by visual inspection.
+
+SEVERITY CLASSIFICATION:
+Severity: 7 (AIAG-VDA FMEA Handbook (2019), Table 5.1)
+- Product inoperable, loss of primary function
+- Customer very dissatisfied
+- Justification: 3% failure rate with complete loss of connector locking function
+
+5W2H ANALYSIS:
+| Element | IS | IS NOT |
+|---------|----|----- ---|
+| What (Object) | Connector housing P/N 12345-A, Rev C | Other connector types |
+| What (Defect) | Cracked locking tab, 3mm length | Fully severed |
+| Where | Final assembly station 3 | Stations 1, 2 |
+| When | Week 12 production | Prior weeks |
+| How Much | 12 of 400 units (3%) | All units |
+
+===============================================================================
+```
+
+**Cross-tool context available for downstream skills:**
+This output, including severity classification, is available to 5 Whys and FMEA skills
+when invoked in the same RCCA session.
 
 See [references/examples.md](references/examples.md) for worked examples.
 
