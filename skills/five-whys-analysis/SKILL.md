@@ -66,6 +66,69 @@ The 5 Whys is an iterative interrogative technique for exploring cause-and-effec
 
 Before asking any "Why" questions, establish a clear problem statement.
 
+**Check for inherited context from Problem Definition skill:**
+
+**If Problem Definition context available** (from prior skill invocation in this session):
+
+```
+===============================================================================
+5 WHYS ROOT CAUSE ANALYSIS
+===============================================================================
+
+✓ **Inherited Context** (from Problem Definition)
+
+Problem Statement:
+Connector housing P/N 12345-A, Rev C exhibited cracked locking tabs (crack
+length 3mm) at final assembly station 3 during torque verification, affecting
+12 of 400 units (3%), detected by visual inspection.
+
+Severity: 7 (AIAG-VDA FMEA Handbook (2019), Table 5.1)
+- Product inoperable, loss of primary function
+- Customer very dissatisfied
+
+[Expandable] Full 5W2H + IS/IS NOT analysis ▼
+| Element | IS | IS NOT |
+|---------|----|----- ---|
+| What (Object) | Connector housing P/N 12345-A, Rev C | Other connector types |
+| What (Defect) | Cracked locking tab, 3mm length | Fully severed |
+| Where | Final assembly station 3 | Stations 1, 2 |
+| When | Week 12 production | Prior weeks |
+| How Much | 12 of 400 units (3%) | All units |
+
+===============================================================================
+
+Proceeding to iterative Why analysis with inherited severity context...
+```
+
+**If Problem Definition context NOT available:**
+
+Display recommendation with options:
+
+```
+===============================================================================
+5 WHYS ROOT CAUSE ANALYSIS
+===============================================================================
+
+ℹ️ **Recommendation:** Run `/problem-definition` first
+
+No problem definition context found. For effective root cause analysis, I recommend
+establishing a clear, bounded problem statement first using `/problem-definition`.
+
+This provides:
+- Structured 5W2H + IS/IS NOT analysis
+- Severity classification (flows to FMEA and corrective action prioritization)
+- Problem scope boundaries (what IS and IS NOT affected)
+- Consistent context for root cause validation
+
+Options:
+1. Run `/problem-definition` first (recommended for formal RCCA/8D investigations)
+2. Continue 5 Whys standalone (I'll elicit basic problem statement below)
+
+Your choice:
+```
+
+**If user chooses standalone, elicit minimal problem context:**
+
 **Collect from user:**
 1. What is the specific problem or deviation observed?
 2. When was it first observed? When does it occur?
