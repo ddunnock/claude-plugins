@@ -315,3 +315,64 @@ See [references/examples.md](references/examples.md) for worked examples includi
 4. **Stay process-focused**: Redirect person-blame to process gaps
 5. **Allow branching**: Multiple valid answers create parallel chains
 6. **Verify with evidence**: "Show me" is better than "tell me"
+
+## Manual Commands
+
+### /lookup-standard
+
+Query the knowledge base for RCCA-related standards information at any point in 5 Whys analysis.
+
+**Syntax**: `/lookup-standard [natural language query]`
+
+**Examples:**
+- `/lookup-standard common root causes for sensor failures automotive systems`
+- `/lookup-standard systematic failures ISO 26262 definition examples`
+- `/lookup-standard how deep should 5 Whys analysis go stopping criteria`
+- `/lookup-standard validation tests for root cause analysis AIAG-VDA`
+- `/lookup-standard difference between symptom and root cause`
+- `/lookup-standard 5M Man Machine Material Method Measurement root causes`
+- `/lookup-standard process capability Cpk root cause manufacturing`
+
+**Response Format:**
+```
+## Standards Lookup: [query]
+
+### Result 1 (92% relevant)
+**Source:** AIAG-VDA FMEA Handbook (2019), Section 4.3.2
+
+[Content excerpt with relevant context]
+
+### Result 2 (88% relevant)
+**Source:** ISO 26262-9:2018, Section 8.4.3
+
+[Content excerpt with relevant context]
+
+---
+Showing 3 of 7 results. Say "show more" for additional results.
+```
+
+**When to Use:**
+- Validating proposed root causes against industry-documented patterns
+- Understanding systematic vs. random failure definitions
+- Checking best practices for 5 Whys depth and stopping criteria
+- Finding example root cause analyses from standards
+- Investigating unfamiliar failure mechanisms
+- Strengthening root cause analysis with standards evidence (regulatory context)
+
+**No Results Response:**
+```
+## Standards Lookup: [query]
+
+No direct matches found for "[query]".
+
+Did you mean:
+- "root cause pattern process control"
+- "common failure modes manufacturing"
+- "5M root cause categories"
+
+Try refining with specific standard names (AIAG-VDA, ISO 26262, MIL-STD) or broader terms.
+```
+
+**Availability:**
+Requires knowledge-mcp connection. If unavailable:
+> Standards database not available. Use embedded reference data in `references/root-cause-patterns.md`.
