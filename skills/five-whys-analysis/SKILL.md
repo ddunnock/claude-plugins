@@ -8,6 +8,48 @@ field: quality
 expertise: intermediate
 ---
 
+## Standards Integration Status
+
+At the start of each 5 Whys session, check knowledge-mcp availability and display one of:
+
+**When Connected:**
+```
+===============================================================================
+5 WHYS ROOT CAUSE ANALYSIS SESSION
+===============================================================================
+
+✓ **Standards Database:** Connected (AIAG-VDA, ISO 26262, MIL-STD-882 available)
+
+Root cause validation will be offered at each "Why" iteration to validate against
+documented failure patterns. Use `/lookup-standard [query]` for manual queries.
+
+===============================================================================
+```
+
+**When Unavailable:**
+```
+===============================================================================
+5 WHYS ROOT CAUSE ANALYSIS SESSION
+===============================================================================
+
+⚠️ **Standards Database:** Unavailable
+
+5 Whys analysis will proceed using standard iterative questioning methodology.
+Root cause validation available from embedded reference data:
+- ✓ 5M root cause categories (Man, Machine, Material, Method, Measurement)
+- ✓ Systematic vs. random failure patterns
+
+Not available without standards database:
+- ✗ Industry-specific failure pattern catalogs
+- ✗ Detailed root cause validation from AIAG-VDA, ISO 26262
+
+To enable standards integration, ensure knowledge-mcp is configured.
+
+===============================================================================
+```
+
+**Important:** Display status banner ONCE at session start. Do NOT repeat at each Why iteration.
+
 # 5 Whys Root Cause Analysis
 
 Conduct rigorous 5 Whys analysis using a structured, Q&A-based approach with built-in quality validation and scoring.
@@ -50,10 +92,77 @@ For each "Why" iteration:
 
 1. **Ask**: "Why did [previous answer/problem] occur?"
 2. **Record**: Document the answer verbatim
-3. **Validate**: 
+3. **Validate**:
    - Is this answer based on fact/evidence or assumption?
    - Does this answer logically follow from the previous statement?
    - Could there be multiple causes? (If yes, branch the analysis)
+
+---
+
+**Optional Root Cause Validation (Standards Check)**
+
+After recording the "Why" answer, offer:
+
+> Would you like me to validate this proposed cause against documented root cause patterns from industry standards (AIAG-VDA, ISO 26262)?
+>
+> This can:
+> - Confirm if this matches known failure mechanisms
+> - Suggest related causes or contributing factors
+> - Identify if this is a symptom vs. true root cause
+> - Provide confidence level: High/Medium/Low
+>
+> - **Yes**: Query standards for root cause patterns matching "[answer]"
+> - **No**: Continue to next "Why" iteration
+>
+> Your choice:
+
+**Query behavior:**
+- If user says yes: Execute `knowledge_search` with query "root cause pattern [answer from Why] failure mechanism common causes", filter by domain="rcca" or "fmea"
+- If user says no: Continue, but still offer at next iteration (different causes may benefit from validation)
+- If MCP unavailable: Skip this prompt entirely (banner already warned user)
+- If user declines 3+ times consecutively: "I'll stop offering validation. Use `/lookup-standard` if you want to validate a specific cause."
+
+**Result presentation (if queried):**
+
+**High confidence match:**
+> ✓ **High confidence match**
+>
+> This matches documented pattern: "Inadequate process control leading to variation"
+> (AIAG-VDA FMEA Handbook (2019), Section 4.3.2)
+>
+> Common related causes from standards:
+> - Lack of statistical process control
+> - Inadequate inspection frequency
+> - Process capability (Cpk) below 1.33
+>
+> This is a recognized root cause pattern. Consider if any related factors apply.
+
+**Medium confidence match:**
+> ⚠️ **Medium confidence match**
+>
+> Partial match to documented patterns in ISO 26262-9 Section 8.4.3:
+> - Systematic failures in sensor calibration
+> - Environmental stress factors
+>
+> Consider these related factors. You may want to explore another "Why" level.
+
+**Low confidence / No match:**
+> ℹ️ **Low confidence match**
+>
+> No exact match found for "[answer]" in documented root cause patterns.
+>
+> This could indicate:
+> - Novel root cause (not previously documented in standards)
+> - Opportunity to explore another "Why" level
+> - Need to refine the causal statement
+>
+> Recommendations:
+> 1. Consider another Why level or alternative cause paths
+> 2. Search related terms: [suggested related queries based on answer]
+> 3. Continue with this cause if supported by strong evidence/expertise
+
+---
+
 4. **Test**: Read the chain backward: "Therefore..." - does it make logical sense?
 
 **Stopping Criteria** - Stop when:
@@ -61,11 +170,13 @@ For each "Why" iteration:
 - You've reached a process/system issue (not a person)
 - Addressing this cause would plausibly prevent recurrence
 - The cause is within your control to address
+- Standards validation shows high confidence (recognized root cause pattern)
 
 **Continue if:**
 - Answer is still a symptom, not a root cause
 - Answer blames a person rather than a process
 - Answer is "it's always been that way" or similar deflection
+- Standards validation shows low confidence (suggests deeper investigation needed)
 
 ### Phase 4: Root Cause Verification
 
