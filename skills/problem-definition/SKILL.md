@@ -268,3 +268,62 @@ Before finalizing, verify:
 - [ ] Extent quantified (count, percentage, rate)
 - [ ] Detection method stated
 - [ ] Scope bounded (what IS affected, what IS NOT)
+
+## Manual Commands
+
+### /lookup-standard
+
+Query the knowledge base for RCCA-related standards information at any point in problem definition.
+
+**Syntax**: `/lookup-standard [natural language query]`
+
+**Examples:**
+- `/lookup-standard MIL-STD-882E severity classification catastrophic critical definitions`
+- `/lookup-standard AIAG-VDA severity rating scale quality problems customer impact`
+- `/lookup-standard how to classify financial impact in problem definition`
+- `/lookup-standard problem statement examples from 8D methodology`
+- `/lookup-standard IS IS NOT analysis best practices`
+- `/lookup-standard difference between MIL-STD severity categories and AIAG-VDA scale`
+
+**Response Format:**
+```
+## Standards Lookup: [query]
+
+### Result 1 (94% relevant)
+**Source:** MIL-STD-882E, Section 3.1
+
+[Content excerpt with relevant context]
+
+### Result 2 (89% relevant)
+**Source:** AIAG-VDA FMEA Handbook (2019), Section 2.4
+
+[Content excerpt with relevant context]
+
+---
+Showing 3 of 8 results. Say "show more" for additional results.
+```
+
+**When to Use:**
+- Need detailed severity classification definitions beyond embedded scales
+- Checking regulatory requirements for specific industries (automotive, aerospace, medical)
+- Understanding industry-standard problem definition terminology
+- Validating IS/IS NOT boundaries against documented examples
+- Comparing different severity classification systems
+
+**No Results Response:**
+```
+## Standards Lookup: [query]
+
+No direct matches found for "[query]".
+
+Did you mean:
+- "severity classification safety systems"
+- "problem definition 8D methodology"
+- "IS IS NOT analysis examples"
+
+Try refining with specific standard names (MIL-STD-882, AIAG-VDA, ISO) or broader terms.
+```
+
+**Availability:**
+Requires knowledge-mcp connection. If unavailable:
+> Standards database not available. Use embedded reference data in `references/severity-scales.md`.
