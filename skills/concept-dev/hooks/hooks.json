@@ -1,0 +1,13 @@
+{
+  "hooks": [
+    {
+      "event": "PostToolUse",
+      "matcher": {
+        "tool_name": "Write",
+        "path_pattern": "**/.concept-dev/*.md"
+      },
+      "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/update-state-on-write.sh \"$TOOL_INPUT_PATH\"",
+      "description": "Auto-update state.json when concept-dev artifacts are written"
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "session": {
+    "id": null,
+    "created_at": null,
+    "last_updated": null,
+    "project_name": null,
+    "description": null
+  },
+  "current_phase": null,
+  "phases": {
+    "spitball": {
+      "status": "not_started",
+      "started_at": null,
+      "completed_at": null,
+      "gate_passed": false,
+      "selected_themes": [],
+      "artifact": null
+    },
+    "problem": {
+      "status": "not_started",
+      "started_at": null,
+      "completed_at": null,
+      "gate_passed": false,
+      "artifact": null
+    },
+    "blackbox": {
+      "status": "not_started",
+      "started_at": null,
+      "completed_at": null,
+      "gate_passed": false,
+      "selected_approach": null,
+      "sections_approved": [],
+      "artifact": null
+    },
+    "drilldown": {
+      "status": "not_started",
+      "started_at": null,
+      "completed_at": null,
+      "gate_passed": false,
+      "blocks_researched": [],
+      "blocks_total": 0,
+      "artifact": null
+    },
+    "document": {
+      "status": "not_started",
+      "started_at": null,
+      "completed_at": null,
+      "gate_passed": false,
+      "concept_doc_approved": false,
+      "solution_landscape_approved": false,
+      "concept_doc_artifact": null,
+      "solution_landscape_artifact": null
+    }
+  },
+  "tools": {
+    "detected_at": null,
+    "available": [],
+    "tier1": [],
+    "tier2": [],
+    "tier3": []
+  },
+  "sources": {
+    "total": 0,
+    "by_confidence": {
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "ungrounded": 0
+    }
+  },
+  "assumptions": {
+    "total": 0,
+    "pending": 0,
+    "approved": 0
+  },
+  "skeptic_findings": {
+    "verified": 0,
+    "unverified": 0,
+    "disputed": 0,
+    "needs_user_input": 0
+  }
+}

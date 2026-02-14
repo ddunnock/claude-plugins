@@ -1,0 +1,5 @@
+{
+  "name": "concept-dev",
+  "description": "Walk through the NASA Phase A concept development lifecycle: ideation, problem definition, black-box architecture, drill-down with gap analysis, and document generation. Produces concept documents and solution landscape summaries with cited research.",
+  "version": "1.0.0"
+}
