@@ -10,6 +10,7 @@ import json
 import argparse
 from pathlib import Path
 from datetime import datetime
+from typing import Optional
 
 
 # Tool definitions by tier
@@ -36,7 +37,7 @@ TOOL_TIERS = {
 }
 
 
-def check_tools(state_path: str = None) -> dict:
+def check_tools(state_path: Optional[str] = None) -> dict:
     """
     Report tool tier definitions for display.
 
@@ -58,7 +59,6 @@ def check_tools(state_path: str = None) -> dict:
         "note": "MCP tool detection occurs at runtime. Use /concept:init to probe availability."
     }
 
-    # Update state if path provided
     if state_path:
         path = Path(state_path)
         if path.exists():
@@ -71,27 +71,25 @@ def check_tools(state_path: str = None) -> dict:
     return report
 
 
-def print_report(report: dict):
+# Tier display labels and status icons
+_TIER_DISPLAY = [
+    ("always", "ALWAYS AVAILABLE", "+"),
+    ("tier1",  "TIER 1 (Free MCP tools -- detect at init)", "?"),
+    ("tier2",  "TIER 2 (Configurable)", "?"),
+    ("tier3",  "TIER 3 (Premium, optional)", "?"),
+]
+
+
+def print_report():
     """Print formatted tool availability report."""
     print("=" * 70)
     print("RESEARCH TOOL AVAILABILITY")
     print("=" * 70)
 
-    print("\nALWAYS AVAILABLE:")
-    for tool, desc in TOOL_TIERS["always"].items():
-        print(f"  [+] {tool} -- {desc}")
-
-    print("\nTIER 1 (Free MCP tools -- detect at init):")
-    for tool, desc in TOOL_TIERS["tier1"].items():
-        print(f"  [?] {tool} -- {desc}")
-
-    print("\nTIER 2 (Configurable):")
-    for tool, desc in TOOL_TIERS["tier2"].items():
-        print(f"  [?] {tool} -- {desc}")
-
-    print("\nTIER 3 (Premium, optional):")
-    for tool, desc in TOOL_TIERS["tier3"].items():
-        print(f"  [?] {tool} -- {desc}")
+    for tier_key, label, icon in _TIER_DISPLAY:
+        print(f"\n{label}:")
+        for tool, desc in TOOL_TIERS[tier_key].items():
+            print(f"  [{icon}] {tool} -- {desc}")
 
     print("\n" + "=" * 70)
     print("Run /concept:init to detect which MCP tools are available.")
@@ -109,7 +107,7 @@ def main():
     if args.json:
         print(json.dumps(report, indent=2))
     else:
-        print_report(report)
+        print_report()
 
 
 if __name__ == "__main__":

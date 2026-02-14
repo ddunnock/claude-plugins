@@ -102,6 +102,62 @@ GAPS:
 - [What needs domain expertise]
 ```
 
+## Using web_researcher.py
+
+The `web_researcher.py` script provides crawl4ai-powered research with BM25 relevance filtering and automatic source registration.
+
+### When to Use Each Subcommand
+
+| Subcommand | When to Use | Example |
+|------------|-------------|---------|
+| `crawl` | Deep-read a single page you've already identified as relevant | A specific technical doc, standards page, or architecture overview |
+| `batch` | Process multiple known URLs at once | A set of vendor datasheets or blog posts found via WebSearch |
+| `deep` | Comprehensively cover a documentation site | NASA technical standards site, framework docs, API references |
+| `summary` | Review all research artifacts gathered so far | Before presenting findings to the user |
+
+### Script Location
+
+```
+${CLAUDE_PLUGIN_ROOT}/scripts/web_researcher.py
+```
+
+### Examples
+
+**Single page deep-read** (after identifying a promising source via WebSearch):
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/web_researcher.py crawl "https://standards.nasa.gov/standard/nasa/nasa-std-8719-24" --query "spacecraft thermal management requirements" --phase drilldown
+```
+
+**Batch crawl** (multiple datasheets or articles found during broad discovery):
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/web_researcher.py batch "https://vendor.com/specs,https://journal.org/thermal-review" --query "passive thermal control spacecraft" --phase drilldown --max-concurrent 3
+```
+
+**Deep crawl** (comprehensive coverage of a documentation site):
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/web_researcher.py deep "https://docs.example.com/thermal/" --query "thermal management spacecraft" --phase drilldown --max-depth 2 --max-pages 15 --pattern "thermal"
+```
+
+**Research summary** (before presenting findings):
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/web_researcher.py summary --query "thermal"
+```
+
+### Integration with Search Strategy
+
+Use `web_researcher.py` in step 4 (Deep dive) of the Search Strategy Per Sub-Function workflow:
+
+1. **Broad discovery** — WebSearch finds candidate URLs
+2. **Academic depth** — Semantic Scholar / Paper Search if available
+3. **Prior art** — WebSearch for existing systems
+4. **Deep dive** — `web_researcher.py crawl` or `deep` for promising sources
+
+Sources are automatically registered via `source_tracker.py` — no manual `add` call needed after crawling.
+
 ## What NOT to Do
 
 - Do NOT present training data as researched findings

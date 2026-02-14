@@ -10,11 +10,16 @@ import argparse
 import uuid
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 TEMPLATE_STATE = Path(__file__).parent.parent / "templates" / "state.json"
 
 
-def init_session(project_dir: str, project_name: str = None, description: str = None) -> dict:
+def init_session(
+    project_dir: str,
+    project_name: Optional[str] = None,
+    description: Optional[str] = None,
+) -> dict:
     """
     Initialize a new concept-dev session workspace.
 
@@ -30,22 +35,17 @@ def init_session(project_dir: str, project_name: str = None, description: str = 
     state_path = workspace / "state.json"
 
     if state_path.exists():
-        with open(state_path, "r") as f:
-            existing = json.load(f)
+        existing = json.loads(state_path.read_text())
         print(f"Session already exists: {existing['session']['id']}")
         print(f"  Project: {existing['session'].get('project_name', 'unnamed')}")
         print(f"  Phase: {existing.get('current_phase', 'none')}")
         print(f"  Last updated: {existing['session'].get('last_updated', 'unknown')}")
         return existing
 
-    # Create workspace
     workspace.mkdir(parents=True, exist_ok=True)
 
-    # Load template
-    with open(TEMPLATE_STATE, "r") as f:
-        state = json.load(f)
+    state = json.loads(TEMPLATE_STATE.read_text())
 
-    # Initialize session metadata
     now = datetime.now().isoformat()
     state["session"]["id"] = str(uuid.uuid4())[:8]
     state["session"]["created_at"] = now
@@ -53,9 +53,10 @@ def init_session(project_dir: str, project_name: str = None, description: str = 
     state["session"]["project_name"] = project_name
     state["session"]["description"] = description
 
-    # Write state
-    with open(state_path, "w") as f:
-        json.dump(state, f, indent=2)
+    # Write to temp then rename for atomicity (consistent with update_state.py)
+    tmp_path = state_path.with_suffix(".json.tmp")
+    tmp_path.write_text(json.dumps(state, indent=2))
+    tmp_path.rename(state_path)
 
     print(f"Session initialized: {state['session']['id']}")
     print(f"  Workspace: {workspace}")

@@ -50,6 +50,7 @@ Produce Concept Document and Solution Landscape. Section-by-section user approva
 | `/concept:blackbox` | Phase 3: Black-box architecture | [concept.blackbox.md](commands/concept.blackbox.md) |
 | `/concept:drilldown` | Phase 4: Drill-down + gap analysis | [concept.drilldown.md](commands/concept.drilldown.md) |
 | `/concept:document` | Phase 5: Generate deliverables | [concept.document.md](commands/concept.document.md) |
+| `/concept:research` | Web research with crawl4ai | [concept.research.md](commands/concept.research.md) |
 | `/concept:status` | Session status dashboard | [concept.status.md](commands/concept.status.md) |
 | `/concept:resume` | Resume interrupted session | [concept.resume.md](commands/concept.resume.md) |
 
@@ -97,6 +98,7 @@ If information is missing, ask for it. Do not infer or fabricate details. Flag g
 | `update_state.py` | Atomic state.json updates | `python scripts/update_state.py show` |
 | `source_tracker.py` | Manage source registry | `python scripts/source_tracker.py list` |
 | `assumption_tracker.py` | Track assumptions | `python scripts/assumption_tracker.py review` |
+| `web_researcher.py` | Crawl4ai web research | `python scripts/web_researcher.py crawl <url> --query "..."` |
 
 ## Quick Reference
 

@@ -101,7 +101,7 @@ def update_counters(state_path: str, section: str, key: str, value: Any):
     print(f"Updated {section}.{key} = {value}")
 
 
-def set_tools(state_path: str, available: list, tier1: list = None, tier2: list = None, tier3: list = None):
+def set_tools(state_path: str, available: list, tier1: Optional[list] = None, tier2: Optional[list] = None, tier3: Optional[list] = None):
     """Record detected tool availability."""
     state = load_state(state_path)
     state["tools"]["detected_at"] = datetime.now().isoformat()
@@ -126,11 +126,11 @@ def show_state(state_path: str):
     print(f"Last Updated: {state['session'].get('last_updated', 'unknown')}")
     print("-" * 60)
 
+    status_icons = {"not_started": " ", "in_progress": ">", "completed": "X"}
     for phase_name, phase_data in state["phases"].items():
         status = phase_data["status"]
         gate = "PASSED" if phase_data.get("gate_passed") else "pending"
-        icon = {"not_started": " ", "in_progress": ">", "completed": "X"}
-        print(f"  [{icon.get(status, '?')}] {phase_name:12s} | {status:14s} | gate: {gate}")
+        print(f"  [{status_icons.get(status, '?')}] {phase_name:12s} | {status:14s} | gate: {gate}")
 
     print("-" * 60)
     print(f"Sources: {state['sources']['total']}  |  "
@@ -141,6 +141,21 @@ def show_state(state_path: str):
           f"D:{state['skeptic_findings']['disputed']} "
           f"?:{state['skeptic_findings']['needs_user_input']}")
     print("=" * 60)
+
+
+def parse_value(raw: str) -> Any:
+    """Parse a CLI string value into int, float, bool, or leave as str."""
+    try:
+        return int(raw)
+    except ValueError:
+        pass
+    try:
+        return float(raw)
+    except ValueError:
+        pass
+    if raw.lower() in ("true", "false"):
+        return raw.lower() == "true"
+    return raw
 
 
 def main():
@@ -186,17 +201,7 @@ def main():
     elif args.command == "set-artifact":
         set_artifact(args.state, args.phase, args.path, args.key)
     elif args.command == "update":
-        # Try to parse value as int/float/bool
-        val = args.value
-        try:
-            val = int(val)
-        except ValueError:
-            try:
-                val = float(val)
-            except ValueError:
-                if val.lower() in ("true", "false"):
-                    val = val.lower() == "true"
-        update_counters(args.state, args.section, args.key, val)
+        update_counters(args.state, args.section, args.key, parse_value(args.value))
     elif args.command == "set-tools":
         set_tools(args.state, args.available)
     elif args.command == "show":

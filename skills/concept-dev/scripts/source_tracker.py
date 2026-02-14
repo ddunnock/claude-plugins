@@ -74,9 +74,9 @@ class SourceTracker:
             Path(tmp_path).unlink(missing_ok=True)
             raise
 
-    def _generate_id(self, prefix: str = 'SRC') -> str:
-        """Generate unique source ID."""
-        existing_ids = [s['id'] for s in self.registry['sources']]
+    def _generate_id(self, prefix: str, collection: str = 'sources') -> str:
+        """Generate unique ID within the given registry collection."""
+        existing_ids = {item['id'] for item in self.registry[collection]}
         counter = 1
         while f"{prefix}-{counter:03d}" in existing_ids:
             counter += 1
@@ -119,7 +119,7 @@ class SourceTracker:
         if confidence not in self.CONFIDENCE_LEVELS:
             raise ValueError(f"Invalid confidence. Must be one of: {list(self.CONFIDENCE_LEVELS.keys())}")
 
-        source_id = self._generate_id('SRC')
+        source_id = self._generate_id('SRC', 'sources')
 
         source = {
             'id': source_id,
@@ -163,11 +163,7 @@ class SourceTracker:
         Returns:
             Gap ID
         """
-        existing_ids = [g['id'] for g in self.registry['gaps']]
-        counter = 1
-        while f"GAP-{counter:03d}" in existing_ids:
-            counter += 1
-        gap_id = f"GAP-{counter:03d}"
+        gap_id = self._generate_id('GAP', 'gaps')
 
         gap = {
             'id': gap_id,
@@ -220,11 +216,7 @@ class SourceTracker:
         if not source:
             raise ValueError(f"Source {source_id} not found")
 
-        existing_ids = [c['id'] for c in self.registry['citations']]
-        counter = 1
-        while f"CIT-{counter:03d}" in existing_ids:
-            counter += 1
-        citation_id = f"CIT-{counter:03d}"
+        citation_id = self._generate_id('CIT', 'citations')
 
         citation = {
             'id': citation_id,
@@ -277,16 +269,12 @@ class SourceTracker:
         gaps = self.registry['gaps']
 
         confidence_counts = {'high': 0, 'medium': 0, 'low': 0, 'ungrounded': 0}
-        for source in sources:
-            confidence_counts[source['confidence']] += 1
-
         type_counts = {}
-        for source in sources:
-            t = source['type']
-            type_counts[t] = type_counts.get(t, 0) + 1
-
         phase_counts = {}
         for source in sources:
+            confidence_counts[source['confidence']] += 1
+            t = source['type']
+            type_counts[t] = type_counts.get(t, 0) + 1
             p = source.get('phase', 'unassigned')
             phase_counts[p] = phase_counts.get(p, 0) + 1
 
@@ -485,7 +473,7 @@ def main():
 
     elif args.command == 'list':
         if args.gaps_only:
-            gaps = tracker.list_gaps(status='open', phase=getattr(args, 'phase', None))
+            gaps = tracker.list_gaps(status='open', phase=args.phase)
             print(f"Open data gaps: {len(gaps)}")
             for gap in gaps:
                 print(f"  [{gap['id']}] {gap['description']}")

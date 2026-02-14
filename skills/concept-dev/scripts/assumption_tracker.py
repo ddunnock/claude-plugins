@@ -76,31 +76,26 @@ class AssumptionTracker:
             Path(tmp_path).unlink(missing_ok=True)
             raise
 
-    def _generate_id(self) -> str:
-        """Generate unique assumption ID."""
-        existing_ids = [a['id'] for a in self.registry['assumptions']]
+    def _generate_id(self, prefix: str, items_key: str) -> str:
+        """Generate unique ID with the given prefix from the given registry list."""
+        existing_ids = {item['id'] for item in self.registry[items_key]}
         counter = 1
-        while f"A-{counter:03d}" in existing_ids:
+        while f"{prefix}-{counter:03d}" in existing_ids:
             counter += 1
-        return f"A-{counter:03d}"
+        return f"{prefix}-{counter:03d}"
 
     def _calculate_summary(self) -> Dict[str, Any]:
         """Calculate summary statistics."""
         assumptions = self.registry['assumptions']
 
-        by_status = {}
-        for status in AssumptionStatus:
-            by_status[status.value] = len([a for a in assumptions if a['status'] == status.value])
+        by_status = {s.value: sum(1 for a in assumptions if a['status'] == s.value)
+                     for s in AssumptionStatus}
+        by_category = {c.value: sum(1 for a in assumptions if a['category'] == c.value)
+                       for c in AssumptionCategory}
+        by_impact = {level: sum(1 for a in assumptions if a['impact_level'] == level)
+                     for level in self.IMPACT_LEVELS}
 
-        by_category = {}
-        for cat in AssumptionCategory:
-            by_category[cat.value] = len([a for a in assumptions if a['category'] == cat.value])
-
-        by_impact = {}
-        for impact in self.IMPACT_LEVELS:
-            by_impact[impact] = len([a for a in assumptions if a['impact_level'] == impact])
-
-        by_phase = {}
+        by_phase: Dict[str, int] = {}
         for a in assumptions:
             phase = a.get('phase', 'unassigned')
             by_phase[phase] = by_phase.get(phase, 0) + 1
@@ -150,7 +145,7 @@ class AssumptionTracker:
         if impact_level not in self.IMPACT_LEVELS:
             raise ValueError(f"Invalid impact level. Must be one of: {self.IMPACT_LEVELS}")
 
-        assumption_id = self._generate_id()
+        assumption_id = self._generate_id('A', 'assumptions')
 
         assumption = {
             'id': assumption_id,
@@ -194,11 +189,7 @@ class AssumptionTracker:
         Returns:
             Claim ID
         """
-        existing_ids = [c['id'] for c in self.registry['ungrounded_claims']]
-        counter = 1
-        while f"UG-{counter:03d}" in existing_ids:
-            counter += 1
-        claim_id = f"UG-{counter:03d}"
+        claim_id = self._generate_id('UG', 'ungrounded_claims')
 
         ungrounded = {
             'id': claim_id,
@@ -216,6 +207,32 @@ class AssumptionTracker:
 
         return claim_id
 
+    def _find_assumption(self, assumption_id: str) -> Dict[str, Any]:
+        """Find assumption by ID or raise ValueError."""
+        for assumption in self.registry['assumptions']:
+            if assumption['id'] == assumption_id:
+                return assumption
+        raise ValueError(f"Assumption {assumption_id} not found")
+
+    def _review_assumption(
+        self,
+        assumption_id: str,
+        status: AssumptionStatus,
+        action: str,
+        reviewed_by: str = 'user',
+        notes: Optional[str] = None
+    ):
+        """Apply a review action to an assumption and save."""
+        assumption = self._find_assumption(assumption_id)
+        assumption['status'] = status.value
+        assumption['reviewed_at'] = datetime.now().isoformat()
+        assumption['reviewed_by'] = reviewed_by
+        if notes:
+            assumption['user_response'] = notes
+        self._add_review_event(assumption_id, action, notes)
+        self._save_registry()
+        return assumption
+
     def approve_assumption(
         self,
         assumption_id: str,
@@ -223,17 +240,8 @@ class AssumptionTracker:
         notes: Optional[str] = None
     ):
         """Approve an assumption."""
-        for assumption in self.registry['assumptions']:
-            if assumption['id'] == assumption_id:
-                assumption['status'] = AssumptionStatus.APPROVED.value
-                assumption['reviewed_at'] = datetime.now().isoformat()
-                assumption['reviewed_by'] = reviewed_by
-                if notes:
-                    assumption['user_response'] = notes
-                self._add_review_event(assumption_id, 'approved', notes)
-                self._save_registry()
-                return
-        raise ValueError(f"Assumption {assumption_id} not found")
+        self._review_assumption(assumption_id, AssumptionStatus.APPROVED, 'approved',
+                                reviewed_by, notes)
 
     def reject_assumption(
         self,
@@ -242,16 +250,8 @@ class AssumptionTracker:
         reviewed_by: str = 'user'
     ):
         """Reject an assumption."""
-        for assumption in self.registry['assumptions']:
-            if assumption['id'] == assumption_id:
-                assumption['status'] = AssumptionStatus.REJECTED.value
-                assumption['user_response'] = reason
-                assumption['reviewed_at'] = datetime.now().isoformat()
-                assumption['reviewed_by'] = reviewed_by
-                self._add_review_event(assumption_id, 'rejected', reason)
-                self._save_registry()
-                return
-        raise ValueError(f"Assumption {assumption_id} not found")
+        self._review_assumption(assumption_id, AssumptionStatus.REJECTED, 'rejected',
+                                reviewed_by, reason)
 
     def modify_assumption(
         self,
@@ -260,19 +260,15 @@ class AssumptionTracker:
         modification_reason: str,
         reviewed_by: str = 'user'
     ):
-        """Modify an assumption and mark as approved."""
-        for assumption in self.registry['assumptions']:
-            if assumption['id'] == assumption_id:
-                old_description = assumption['description']
-                assumption['description'] = new_description
-                assumption['status'] = AssumptionStatus.MODIFIED.value
-                assumption['modification_note'] = f"Changed from: '{old_description}'. Reason: {modification_reason}"
-                assumption['reviewed_at'] = datetime.now().isoformat()
-                assumption['reviewed_by'] = reviewed_by
-                self._add_review_event(assumption_id, 'modified', modification_reason)
-                self._save_registry()
-                return
-        raise ValueError(f"Assumption {assumption_id} not found")
+        """Modify an assumption and mark as modified."""
+        assumption = self._find_assumption(assumption_id)
+        old_description = assumption['description']
+        assumption['description'] = new_description
+        assumption['modification_note'] = (
+            f"Changed from: '{old_description}'. Reason: {modification_reason}"
+        )
+        self._review_assumption(assumption_id, AssumptionStatus.MODIFIED, 'modified',
+                                reviewed_by, modification_reason)
 
     def approve_all_pending(self, reviewed_by: str = 'user'):
         """Approve all pending assumptions."""
@@ -322,11 +318,11 @@ class AssumptionTracker:
         raise ValueError(f"Ungrounded claim {claim_id} not found")
 
     def get_assumption(self, assumption_id: str) -> Optional[Dict[str, Any]]:
-        """Get assumption by ID."""
-        for assumption in self.registry['assumptions']:
-            if assumption['id'] == assumption_id:
-                return assumption
-        return None
+        """Get assumption by ID, or None if not found."""
+        try:
+            return self._find_assumption(assumption_id)
+        except ValueError:
+            return None
 
     def list_assumptions(
         self,
@@ -560,11 +556,12 @@ def main():
         assumptions = tracker.list_assumptions(
             status=args.status,
             category=args.category,
-            phase=getattr(args, 'phase', None)
+            phase=args.phase
         )
+        status_icons = {'approved': 'V', 'pending': '?'}
         for a in assumptions:
-            status_icon = "V" if a['status'] == 'approved' else "?" if a['status'] == 'pending' else "X"
-            print(f"[{a['id']}] {status_icon} {a['description'][:60]}...")
+            icon = status_icons.get(a['status'], 'X')
+            print(f"[{a['id']}] {icon} {a['description'][:60]}...")
 
     elif args.command == 'export':
         if args.format == 'json':
