@@ -454,12 +454,44 @@ class AssumptionTracker:
         return ''.join(lines)
 
 
+def _sync_to_state(registry_path: str, state_path: str):
+    """Sync assumption counts from registry to state.json."""
+    state_file = Path(state_path)
+    if not state_file.exists():
+        return
+    reg_file = Path(registry_path)
+    if not reg_file.exists():
+        return
+    with open(reg_file, 'r') as f:
+        reg = json.load(f)
+    assumptions = reg.get('assumptions', [])
+    total = len(assumptions)
+    pending = sum(1 for a in assumptions if a.get('status') == 'pending')
+    approved = sum(1 for a in assumptions if a.get('status') in ('approved', 'modified'))
+
+    with open(state_file, 'r') as f:
+        state = json.load(f)
+    state['assumptions']['total'] = total
+    state['assumptions']['pending'] = pending
+    state['assumptions']['approved'] = approved
+    state['session']['last_updated'] = datetime.now().isoformat()
+    tmp = state_file.with_suffix('.json.tmp')
+    with open(tmp, 'w') as f:
+        json.dump(state, f, indent=2)
+    tmp.rename(state_file)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='Manage assumptions for concept development'
     )
+    parser.add_argument('--state', default='.concept-dev/state.json',
+                       help='Path to state.json for auto-sync')
 
     subparsers = parser.add_subparsers(dest='command', help='Commands')
+
+    # Init
+    subparsers.add_parser('init', help='Initialize assumption registry')
 
     # Add assumption
     add_parser = subparsers.add_parser('add', help='Add a new assumption')
@@ -517,7 +549,17 @@ def main():
 
     tracker = AssumptionTracker(args.registry)
 
-    if args.command == 'add':
+    if args.command == 'init':
+        if tracker.registry_path.exists():
+            summary = tracker.get_summary()
+            print(f"Registry exists: {tracker.registry_path}")
+            print(f"  Assumptions: {summary['total']} ({summary['pending_count']} pending)")
+        else:
+            tracker._save_registry()
+            print(f"Created empty registry: {tracker.registry_path}")
+        _sync_to_state(args.registry, args.state)
+
+    elif args.command == 'add':
         assumption_id = tracker.add_assumption(
             description=args.description,
             category=args.category,
@@ -528,6 +570,7 @@ def main():
             impact_explanation=args.impact_explanation
         )
         print(f"Added assumption: {assumption_id}")
+        _sync_to_state(args.registry, args.state)
 
     elif args.command == 'approve':
         if args.id.lower() == 'all':
@@ -536,14 +579,17 @@ def main():
         else:
             tracker.approve_assumption(args.id, notes=args.notes)
             print(f"Approved: {args.id}")
+        _sync_to_state(args.registry, args.state)
 
     elif args.command == 'reject':
         tracker.reject_assumption(args.id, reason=args.reason)
         print(f"Rejected: {args.id}")
+        _sync_to_state(args.registry, args.state)
 
     elif args.command == 'modify':
         tracker.modify_assumption(args.id, args.new_description, args.reason)
         print(f"Modified: {args.id}")
+        _sync_to_state(args.registry, args.state)
 
     elif args.command == 'review':
         tracker.print_review_prompt()

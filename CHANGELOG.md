@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-02-15
+
+### Added
+
+- **concept-dev plugin** — NASA Phase A concept development lifecycle with 7 agents, 9 commands, 6 scripts
+  - Five-phase workflow: ideation, problem definition, black-box architecture, drill-down with gap analysis, document generation
+  - Produces Concept Document and Solution Landscape with cited sources
+  - Tiered research tool detection (WebSearch/WebFetch + crawl4ai, Tavily, Exa, etc.)
+  - `web_researcher.py` script with crawl4ai integration for BM25-filtered deep web research
+
+### Fixed
+
+- **concept-dev: state.json counters always zero** — Tracker scripts (`source_tracker.py`, `assumption_tracker.py`) now auto-sync counts to state.json after every mutation
+- **concept-dev: update_state.py couldn't handle nested paths** — Replaced `update_counters()` with `update_by_path()` supporting dotted paths like `phases.drilldown.blocks_total`
+- **concept-dev: assumption_tracker.py never called** — Added `init` subcommand to create empty registry; `/concept:init` now initializes it; all phase commands register assumptions
+- **concept-dev: skeptic agent never invoked** — All phase commands now use explicit `Task tool with subagent_type='concept-dev:skeptic'` syntax instead of vague references
+- **concept-dev: no prerequisite checks** — Added `check-gate` subcommand to `update_state.py`; all phase commands (problem through document) now run programmatic gate checks
+- **concept-dev: missing sync-counts** — Added `sync-counts` subcommand that reads both registries and updates all state.json counters
+- **concept-dev: template reads not explicit** — All phase commands now include explicit `Read file:` instructions for templates
+- **concept-dev: drilldown AUTO mode undefined** — Added AUTO mode definition with parallel Task agents per block and consolidated skeptic review
+- **concept-dev: source_tracker --source-type ambiguous** — Renamed to `--needed-source-type` with backward-compatible alias
+
 ## [1.0.0] - 2026-01-28
 
 ### Added
@@ -43,4 +65,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Comprehensive README documentation
 
+[1.1.0]: https://github.com/dunnock/claude-plugins/releases/tag/v1.1.0
 [1.0.0]: https://github.com/dunnock/claude-plugins/releases/tag/v1.0.0

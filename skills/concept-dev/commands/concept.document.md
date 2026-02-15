@@ -9,8 +9,16 @@ Phase 5 of concept development: document generation.
 
 ## Prerequisites
 
-- Phase 4 gate passed (drill-down approved)
-- Load state: `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json show`
+Run the prerequisite gate check:
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json check-gate document
+```
+
+If this exits non-zero, stop and tell the user to complete the previous phase first.
+
+Then load context:
+- `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json show`
 - Read all artifacts:
   - `.concept-dev/IDEAS.md`
   - `.concept-dev/PROBLEM-STATEMENT.md`
@@ -98,6 +106,11 @@ Use the document-writer agent. For each section:
 3. Wait for approval or revision
 4. Only proceed to next section after approval
 
+Read the concept document template using the Read tool:
+```
+Read file: ${CLAUDE_PLUGIN_ROOT}/templates/concept-document.md
+```
+
 **Sections (from [references/concept-doc-structure.md](../references/concept-doc-structure.md)):**
 
 1. Executive Summary
@@ -126,6 +139,11 @@ Write to: `.concept-dev/CONCEPT-DOCUMENT.md`
 
 ### Step 5: Generate Solution Landscape
 
+Read the solution landscape template using the Read tool:
+```
+Read file: ${CLAUDE_PLUGIN_ROOT}/templates/solution-landscape.md
+```
+
 Use the document-writer agent for the second document.
 Follow the presentation rules in [references/solution-landscape-guide.md](../references/solution-landscape-guide.md).
 
@@ -144,7 +162,15 @@ Write to: `.concept-dev/SOLUTION-LANDSCAPE.md`
 
 ### Step 6: Skeptic Final Review
 
-Run skeptic on the Solution Landscape before final approval:
+Explicitly invoke the skeptic agent on the Solution Landscape:
+
+```
+Use the Task tool with subagent_type='concept-dev:skeptic' to review the complete
+Solution Landscape content. Pass all solution approach descriptions, feasibility claims,
+and source references in the prompt.
+```
+
+Present findings before final approval:
 
 ```
 ===================================================================
@@ -162,6 +188,14 @@ Claims reviewed: [N]
 [High-priority flags if any]
 
 ===================================================================
+```
+
+### Step 6b: Sync Counts
+
+Before presenting the final gate, sync all counters:
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json sync-counts
 ```
 
 ### Step 7: Gate — Final Approval

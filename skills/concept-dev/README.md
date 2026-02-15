@@ -79,9 +79,9 @@ Six Python scripts manage session state and research data:
 |--------|---------|
 | `init_session.py` | Create workspace and initialize state.json |
 | `check_tools.py` | Report research tool tier definitions |
-| `update_state.py` | Atomic state.json updates (phase, gate, artifact, counters) |
-| `source_tracker.py` | Manage source registry with confidence ratings and gap tracking |
-| `assumption_tracker.py` | Track and review assumptions and ungrounded claims |
+| `update_state.py` | Atomic state.json updates (phase, gate, artifact, dotted-path counters, gate checks, registry sync) |
+| `source_tracker.py` | Manage source registry with confidence ratings, gap tracking, and auto-sync to state.json |
+| `assumption_tracker.py` | Track and review assumptions and ungrounded claims with init and auto-sync to state.json |
 | `web_researcher.py` | crawl4ai web research with BM25 filtering |
 
 ## Workspace Structure
@@ -107,9 +107,12 @@ After initialization, your project gets a `.concept-dev/` directory:
 
 - **Solution-agnostic through Phase 3** — Phases 1-3 describe WHAT, not HOW. Solutions are deferred to Phase 4.
 - **Source grounding** — All claims in Phases 4-5 must reference a registered source or be marked `UNVERIFIED_CLAIM`.
-- **Skeptic verification** — An opus-powered agent checks for AI slop before findings reach the user.
+- **Skeptic verification** — An opus-powered agent checks for AI slop before findings reach the user. Invoked explicitly via Task tool in Phases 1, 4, and 5.
+- **Assumption tracking** — Every phase registers assumptions to assumption_registry.json with auto-sync to state.json counters.
+- **Gate checks** — Programmatic prerequisite validation (`check-gate`) prevents phase skipping.
 - **Metered questioning** — 3-4 questions per turn, then checkpoint. No question floods.
 - **Atomic state** — All state updates use temp-file-then-rename for crash safety.
+- **Auto-sync counters** — Tracker scripts automatically push counts to state.json after every mutation.
 - **Auto-state hooks** — Writing artifacts to `.concept-dev/*.md` automatically updates state.json via a PostToolUse hook.
 
 ## Research Tool Tiers

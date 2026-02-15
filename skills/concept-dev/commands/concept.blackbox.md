@@ -9,11 +9,17 @@ Phase 3 of concept development: black-box architecture.
 
 ## Prerequisites
 
-- Phase 2 gate passed (problem statement approved)
-- Load state and verify: `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json show`
-- Read: `.concept-dev/PROBLEM-STATEMENT.md`
+Run the prerequisite gate check:
 
-If Phase 2 is not complete, inform the user and suggest `/concept:problem`.
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json check-gate blackbox
+```
+
+If this exits non-zero, stop and tell the user to complete the previous phase first.
+
+Then load context:
+- `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json show`
+- Read: `.concept-dev/PROBLEM-STATEMENT.md`
 
 ## Procedure
 
@@ -156,8 +162,24 @@ Ask: "Does this operational picture match your vision?"
 
 ### Step 6: Write BLACKBOX.md
 
-After all sections are approved, read the template: `${CLAUDE_PLUGIN_ROOT}/templates/blackbox.md`
+After all sections are approved, read the template using the Read tool:
+```
+Read file: ${CLAUDE_PLUGIN_ROOT}/templates/blackbox.md
+```
+
 Write to: `.concept-dev/BLACKBOX.md`
+
+### Step 6b: Register Architecture Assumptions
+
+Register any architectural assumptions made during this phase:
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/assumption_tracker.py --registry .concept-dev/assumption_registry.json add "[architecture assumption]" --category architecture --phase blackbox --basis "[rationale from approach selection]"
+```
+
+Register assumptions about block responsibilities, relationships, and design principles.
+
+### Step 6c: Update State
 
 ```bash
 python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json set-artifact blackbox ".concept-dev/BLACKBOX.md"

@@ -17,6 +17,12 @@ Run the init script to create the `.concept-dev/` workspace:
 python3 ${CLAUDE_PLUGIN_ROOT}/scripts/init_session.py "$(pwd)"
 ```
 
+Then initialize the assumption registry:
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/assumption_tracker.py --registry .concept-dev/assumption_registry.json init
+```
+
 If a session already exists, report the existing session details and ask:
 - [A] Resume existing session (use `/concept:resume`)
 - [B] Start fresh (archive existing `.concept-dev/` to `.concept-dev.bak.TIMESTAMP/`)

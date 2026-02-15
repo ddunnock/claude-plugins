@@ -9,11 +9,17 @@ Phase 2 of concept development: problem definition.
 
 ## Prerequisites
 
-- Phase 1 gate passed (spit-ball themes selected)
-- Load state and verify: `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json show`
-- Read IDEAS.md: `.concept-dev/IDEAS.md`
+Run the prerequisite gate check:
 
-If Phase 1 is not complete, inform the user and suggest `/concept:spitball`.
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json check-gate problem
+```
+
+If this exits non-zero, stop and tell the user to complete the previous phase first.
+
+Then load context:
+- `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json show`
+- Read IDEAS.md: `.concept-dev/IDEAS.md`
 
 ## Procedure
 
@@ -167,8 +173,24 @@ I will NOT proceed until you approve the problem statement.
 
 ### Step 7: Write PROBLEM-STATEMENT.md
 
-Read the template: `${CLAUDE_PLUGIN_ROOT}/templates/problem-statement.md`
+Read the template using the Read tool:
+```
+Read file: ${CLAUDE_PLUGIN_ROOT}/templates/problem-statement.md
+```
+
 Write to: `.concept-dev/PROBLEM-STATEMENT.md`
+
+### Step 7b: Register Assumptions
+
+After writing PROBLEM-STATEMENT.md, register all assumptions from the Assumptions section of the document. For each assumption identified during questioning:
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/assumption_tracker.py --registry .concept-dev/assumption_registry.json add "[assumption from problem definition]" --category scope --phase problem --basis "[rationale from questioning]"
+```
+
+Use appropriate categories: `scope`, `feasibility`, `constraint`, `stakeholder`, `domain_knowledge`.
+
+### Step 7c: Update State
 
 ```bash
 python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json set-artifact problem ".concept-dev/PROBLEM-STATEMENT.md"

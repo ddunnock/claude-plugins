@@ -9,7 +9,8 @@ A collection of plugins that extend Claude's capabilities. Supports two plugin t
 
 ```
 claude-plugins/
-├── skills/                 # Skill plugins (16 skills)
+├── skills/                 # Skill plugins (17 skills)
+│   ├── concept-dev/
 │   ├── documentation-architect/
 │   ├── fault-tree-analysis/
 │   ├── fishbone-diagram/
@@ -123,6 +124,12 @@ Then add to Claude Desktop config (`~/.config/claude/claude_desktop_config.json`
 | specification-refiner | SEAMS framework analysis with sequential clarification and multi-phase workflow |
 | documentation-architect | Transform documentation using the Diátaxis framework |
 | research-opportunity-investigator | Research and opportunity investigation for protocols |
+
+#### Concept Development (1 skill)
+
+| Skill | Description |
+|-------|-------------|
+| concept-dev | NASA Phase A concept development lifecycle: ideation, problem definition, black-box architecture, drill-down with gap analysis, and document generation with cited research |
 
 #### Decision Support (1 skill)
 

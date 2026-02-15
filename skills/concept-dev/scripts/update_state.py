@@ -84,21 +84,80 @@ def set_artifact(state_path: str, phase: str, artifact_path: str, artifact_key: 
     print(f"Artifact recorded for '{phase}': {artifact_path}")
 
 
-def update_counters(state_path: str, section: str, key: str, value: Any):
-    """Update a counter or value in a state section."""
+def update_by_path(state_path: str, dotted_path: str, value: Any):
+    """Update a value at a dotted path like 'phases.drilldown.blocks_total'."""
     state = load_state(state_path)
-    if section not in state:
-        print(f"Error: Unknown section '{section}'", file=sys.stderr)
+    keys = dotted_path.split(".")
+    target = state
+    for key in keys[:-1]:
+        if not isinstance(target, dict) or key not in target:
+            print(f"Error: Path '{dotted_path}' not found (failed at '{key}')", file=sys.stderr)
+            sys.exit(1)
+        target = target[key]
+    final_key = keys[-1]
+    if not isinstance(target, dict):
+        print(f"Error: Parent of '{final_key}' is not a dict", file=sys.stderr)
+        sys.exit(1)
+    target[final_key] = value
+    save_state(state_path, state)
+    print(f"Updated {dotted_path} = {value}")
+
+
+def check_gate(state_path: str, phase: str):
+    """Check if the prerequisite gate for a phase has been passed. Exit 0 if yes, 1 if no."""
+    phase_order = ["spitball", "problem", "blackbox", "drilldown", "document"]
+    if phase not in phase_order:
+        print(f"Error: Unknown phase '{phase}'", file=sys.stderr)
+        sys.exit(1)
+    idx = phase_order.index(phase)
+    if idx == 0:
+        # spitball has no prerequisite
+        print(f"Gate check for '{phase}': no prerequisite needed")
+        sys.exit(0)
+    prev_phase = phase_order[idx - 1]
+    state = load_state(state_path)
+    if state["phases"].get(prev_phase, {}).get("gate_passed"):
+        print(f"Gate check for '{phase}': prerequisite '{prev_phase}' gate passed")
+        sys.exit(0)
+    else:
+        print(f"Gate check for '{phase}': prerequisite '{prev_phase}' gate NOT passed. "
+              f"Run /concept:{prev_phase} first.", file=sys.stderr)
         sys.exit(1)
 
-    if isinstance(state[section], dict):
-        state[section][key] = value
-    else:
-        print(f"Error: Section '{section}' is not a dict", file=sys.stderr)
-        sys.exit(1)
+
+def sync_counts(state_path: str):
+    """Read source_registry.json and assumption_registry.json, update all counters in state.json."""
+    state = load_state(state_path)
+    workspace = str(Path(state_path).parent)
+
+    # Sync sources
+    src_path = Path(workspace) / "source_registry.json"
+    if src_path.exists():
+        with open(src_path, "r") as f:
+            src_reg = json.load(f)
+        sources = src_reg.get("sources", [])
+        state["sources"]["total"] = len(sources)
+        by_conf = {"high": 0, "medium": 0, "low": 0, "ungrounded": 0}
+        for s in sources:
+            conf = s.get("confidence", "medium")
+            if conf in by_conf:
+                by_conf[conf] += 1
+        state["sources"]["by_confidence"] = by_conf
+
+    # Sync assumptions
+    asn_path = Path(workspace) / "assumption_registry.json"
+    if asn_path.exists():
+        with open(asn_path, "r") as f:
+            asn_reg = json.load(f)
+        assumptions = asn_reg.get("assumptions", [])
+        state["assumptions"]["total"] = len(assumptions)
+        state["assumptions"]["pending"] = sum(1 for a in assumptions if a.get("status") == "pending")
+        state["assumptions"]["approved"] = sum(1 for a in assumptions if a.get("status") in ("approved", "modified"))
 
     save_state(state_path, state)
-    print(f"Updated {section}.{key} = {value}")
+    print(f"Synced counts — sources: {state['sources']['total']}, "
+          f"assumptions: {state['assumptions']['total']} "
+          f"({state['assumptions']['pending']} pending)")
 
 
 def set_tools(state_path: str, available: list, tier1: Optional[list] = None, tier2: Optional[list] = None, tier3: Optional[list] = None):
@@ -179,11 +238,16 @@ def main():
     sa.add_argument("path", help="Artifact file path")
     sa.add_argument("--key", default="artifact", help="Artifact key name")
 
-    # update
-    up = subparsers.add_parser("update", help="Update counter/value")
-    up.add_argument("section", help="State section (sources, assumptions, skeptic_findings)")
-    up.add_argument("key", help="Key to update")
-    up.add_argument("value", help="New value")
+    # update — supports dotted path (2-arg) or legacy 3-arg mode
+    up = subparsers.add_parser("update", help="Update counter/value by dotted path")
+    up.add_argument("path_parts", nargs="+", help="Dotted path and value, e.g. 'phases.drilldown.blocks_total 11' or legacy 'sources total 17'")
+
+    # check-gate
+    cg = subparsers.add_parser("check-gate", help="Check if prerequisite gate passed for a phase")
+    cg.add_argument("phase", help="Phase name to check prerequisite for")
+
+    # sync-counts
+    subparsers.add_parser("sync-counts", help="Sync source/assumption counts from registries to state.json")
 
     # set-tools
     st = subparsers.add_parser("set-tools", help="Record detected tools")
@@ -201,7 +265,22 @@ def main():
     elif args.command == "set-artifact":
         set_artifact(args.state, args.phase, args.path, args.key)
     elif args.command == "update":
-        update_counters(args.state, args.section, args.key, parse_value(args.value))
+        parts = args.path_parts
+        if len(parts) == 3:
+            # Legacy 3-arg mode: section key value -> section.key value
+            dotted = f"{parts[0]}.{parts[1]}"
+            value = parse_value(parts[2])
+        elif len(parts) == 2:
+            dotted = parts[0]
+            value = parse_value(parts[1])
+        else:
+            print("Error: 'update' expects 2 args (dotted.path value) or 3 args (section key value)", file=sys.stderr)
+            sys.exit(1)
+        update_by_path(args.state, dotted, value)
+    elif args.command == "check-gate":
+        check_gate(args.state, args.phase)
+    elif args.command == "sync-counts":
+        sync_counts(args.state)
     elif args.command == "set-tools":
         set_tools(args.state, args.available)
     elif args.command == "show":

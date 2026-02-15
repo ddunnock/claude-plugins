@@ -9,8 +9,11 @@ Phase 1 of concept development: open-ended ideation.
 
 ## Prerequisites
 
-- Session initialized (`/concept:init`). If not, run init first.
-- Load state: `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json show`
+- Session initialized (`/concept:init`). Verify state.json exists:
+  ```bash
+  python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json show
+  ```
+  If this fails, tell the user to run `/concept:init` first and stop.
 
 ## Procedure
 
@@ -60,7 +63,14 @@ Use the ideation-partner agent pattern. For each idea the user shares:
 
 **Questioning approach:** See [references/questioning-heuristics.md](../references/questioning-heuristics.md) for adaptive questioning patterns. Start fully open, gradually focus as themes emerge.
 
-**Skeptic check:** After accumulating feasibility notes, invoke the skeptic agent to verify any specific feasibility claims before presenting them to the user. See [agents/skeptic.md](../agents/skeptic.md).
+**Skeptic check:** After accumulating feasibility notes, explicitly invoke the skeptic agent using the Task tool:
+
+```
+Use the Task tool with subagent_type='concept-dev:skeptic' to review all feasibility claims
+gathered during ideation. Pass the claims as a structured list in the prompt.
+```
+
+Present skeptic findings to the user before theme clustering.
 
 ### Step 4: Theme Clustering
 
@@ -116,6 +126,16 @@ Your selection: _______________________________________________
 I will NOT proceed until you select themes to advance.
 ===================================================================
 ```
+
+### Step 5b: Register Key Feasibility Assumptions
+
+After the user selects themes, register any key feasibility assumptions that emerged during ideation:
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/assumption_tracker.py --registry .concept-dev/assumption_registry.json add "[assumption description]" --category feasibility --phase spitball --basis "[source or rationale]" --impact medium
+```
+
+Register one assumption per major feasibility claim that the selected themes depend on.
 
 ### Step 6: Write IDEAS.md
 

@@ -394,10 +394,40 @@ class SourceTracker:
                 f.write("No open data gaps.\n")
 
 
+def _sync_to_state(registry_path: str, state_path: str):
+    """Sync source counts from registry to state.json."""
+    state_file = Path(state_path)
+    if not state_file.exists():
+        return
+    reg_file = Path(registry_path)
+    if not reg_file.exists():
+        return
+    with open(reg_file, 'r') as f:
+        reg = json.load(f)
+    sources = reg.get('sources', [])
+    by_conf = {'high': 0, 'medium': 0, 'low': 0, 'ungrounded': 0}
+    for s in sources:
+        conf = s.get('confidence', 'medium')
+        if conf in by_conf:
+            by_conf[conf] += 1
+
+    with open(state_file, 'r') as f:
+        state = json.load(f)
+    state['sources']['total'] = len(sources)
+    state['sources']['by_confidence'] = by_conf
+    state['session']['last_updated'] = datetime.now().isoformat()
+    tmp = state_file.with_suffix('.json.tmp')
+    with open(tmp, 'w') as f:
+        json.dump(state, f, indent=2)
+    tmp.rename(state_file)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='Manage source registry for concept development'
     )
+    parser.add_argument('--state', default='.concept-dev/state.json',
+                       help='Path to state.json for auto-sync')
 
     subparsers = parser.add_subparsers(dest='command', help='Commands')
 
@@ -421,8 +451,9 @@ def main():
     gap_parser.add_argument('description', help='Description of missing data')
     gap_parser.add_argument('--required-for', nargs='+', required=True,
                            help='Blocks/sections needing this data')
-    gap_parser.add_argument('--source-type', required=True,
-                           choices=SourceTracker.SOURCE_TYPES.keys(),
+    gap_parser.add_argument('--needed-source-type', '--source-type', required=True,
+                           choices=list(SourceTracker.SOURCE_TYPES.keys()),
+                           dest='needed_source_type',
                            help='Type of source needed')
     gap_parser.add_argument('--phase', help='Concept-dev phase')
 
@@ -461,15 +492,17 @@ def main():
             phase=args.phase
         )
         print(f"Added source: {source_id}")
+        _sync_to_state(args.registry, args.state)
 
     elif args.command == 'gap':
         gap_id = tracker.add_gap(
             description=args.description,
             required_for=args.required_for,
-            requested_source_type=args.source_type,
+            requested_source_type=args.needed_source_type,
             phase=args.phase
         )
         print(f"Registered data gap: {gap_id}")
+        _sync_to_state(args.registry, args.state)
 
     elif args.command == 'list':
         if args.gaps_only:

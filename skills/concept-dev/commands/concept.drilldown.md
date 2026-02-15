@@ -9,8 +9,16 @@ Phase 4 of concept development: drill-down and gap analysis.
 
 ## Prerequisites
 
-- Phase 3 gate passed (black-box architecture approved)
-- Load state: `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json show`
+Run the prerequisite gate check:
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json check-gate drilldown
+```
+
+If this exits non-zero, stop and tell the user to complete the previous phase first.
+
+Then load context:
+- `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json show`
 - Read: `.concept-dev/BLACKBOX.md`
 
 ## Procedure
@@ -62,7 +70,7 @@ Your selection: _______________________________________________
 
 Update state with block count:
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json update phases.drilldown blocks_total [N]
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json update phases.drilldown.blocks_total [N]
 ```
 
 ### Step 3: Per-Block Drill-Down
@@ -143,13 +151,38 @@ happens during implementation planning, not concept development.
 
 #### 3e: Skeptic Review
 
-After completing research for each block, invoke the skeptic agent:
-- Submit all feasibility claims and solution descriptions
-- Review skeptic findings
-- Adjust confidence levels as needed
-- Present skeptic summary to user
+After completing research for each block, explicitly invoke the skeptic agent:
 
-#### 3f: Block Checkpoint (Interactive mode)
+```
+Use the Task tool with subagent_type='concept-dev:skeptic' to review all feasibility
+claims and solution descriptions for this block. Pass the block name, all claims,
+source IDs, and solution approach descriptions in the prompt.
+```
+
+After skeptic review, update state with findings:
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json update skeptic_findings.verified [N]
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json update skeptic_findings.unverified [N]
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json update skeptic_findings.disputed [N]
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json update skeptic_findings.needs_user_input [N]
+```
+
+#### 3f: Register Assumptions
+
+After research per block, register any assumptions made:
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/assumption_tracker.py --registry .concept-dev/assumption_registry.json add "[assumption from research]" --category technology --phase drilldown --basis "[source or rationale]"
+```
+
+Use appropriate categories: `technology`, `feasibility`, `architecture`, `domain_knowledge`.
+
+#### 3g: Block Checkpoint (Interactive mode)
+
+Sync counts before presenting checkpoint:
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json sync-counts
+```
 
 ```
 -------------------------------------------------------------------
@@ -174,11 +207,25 @@ Does this block drill-down look correct?
 -------------------------------------------------------------------
 ```
 
+### AUTO Mode
+
+When the user selects AUTO mode (option B), execute all blocks in parallel:
+
+1. Launch one Task agent per block using `subagent_type='concept-dev:domain-researcher'` with the block name, sub-functions, and available research tools in the prompt
+2. After all block agents complete, run a consolidated skeptic review using `subagent_type='concept-dev:skeptic'` on all findings
+3. Present the complete drill-down with all block results, skeptic findings, and gaps for user review
+4. Sync all counts after the consolidated review:
+   ```bash
+   python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json sync-counts
+   ```
+
 ### Step 4: Write DRILLDOWN.md
 
-After all blocks are drilled into:
+After all blocks are drilled into, read the template using the Read tool:
+```
+Read file: ${CLAUDE_PLUGIN_ROOT}/templates/drilldown.md
+```
 
-Read template: `${CLAUDE_PLUGIN_ROOT}/templates/drilldown.md`
 Write to: `.concept-dev/DRILLDOWN.md`
 
 ```bash
