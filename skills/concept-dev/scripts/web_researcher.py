@@ -7,10 +7,14 @@ Integrates with source_tracker.py for automatic source registration.
 Supports single-page, batch, deep-crawl, and summary modes.
 
 Requires: crawl4ai >= 0.7.4 (except 'summary' subcommand which reads local files only)
+
+If crawl4ai is not importable from the current Python, this script
+will attempt to re-exec itself using the pipx venv's Python.
 """
 
 import json
 import sys
+import os
 import asyncio
 import argparse
 import tempfile
@@ -18,6 +22,29 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 from urllib.parse import urlparse
+
+
+def _ensure_crawl4ai_available():
+    """Re-exec under the pipx venv Python if crawl4ai isn't importable here."""
+    try:
+        import crawl4ai  # noqa: F401
+        return  # Already available
+    except ImportError:
+        pass
+
+    # Check pipx venv
+    pipx_python = Path.home() / ".local" / "pipx" / "venvs" / "crawl4ai" / "bin" / "python3"
+    if pipx_python.exists() and str(pipx_python) != sys.executable:
+        os.execv(str(pipx_python), [str(pipx_python)] + sys.argv)
+
+    # Neither available — let it fail naturally on import with a helpful message
+    print(
+        "Error: crawl4ai is not installed. Install with:\n"
+        "  pip install crawl4ai   (system Python)\n"
+        "  pipx install crawl4ai  (isolated, auto-detected)\n",
+        file=sys.stderr
+    )
+    sys.exit(1)
 
 
 class WebResearcher:
@@ -497,6 +524,11 @@ def _parse_urls(url_arg: str) -> List[str]:
 
 
 def main():
+    # For the 'summary' subcommand, crawl4ai is not needed.
+    # For all others, ensure it's importable (re-exec under pipx venv if needed).
+    if len(sys.argv) > 1 and sys.argv[1] != 'summary':
+        _ensure_crawl4ai_available()
+
     parser = argparse.ArgumentParser(
         description='Web research tool for concept development using crawl4ai'
     )

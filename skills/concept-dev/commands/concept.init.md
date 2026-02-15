@@ -29,14 +29,28 @@ If a session already exists, report the existing session details and ask:
 
 ### Step 2: Detect Research Tools
 
-Probe for available MCP research tools by attempting ToolSearch for each tier:
+Detect available research tools using two methods:
+
+#### 2a: Detect Python packages (via shell import check)
+
+Run `check_tools.py` to detect Python packages like crawl4ai. This uses `python3 -c "import <pkg>"` to check if the package is importable, and updates state.json with the results:
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/check_tools.py --state .concept-dev/state.json --json
+```
+
+**Python Packages (detected by check_tools.py):**
+- `crawl4ai` — Deep web crawling (used via `web_researcher.py`, not MCP)
 
 **Always Available:**
 - WebSearch (built-in)
 - WebFetch (built-in)
 
+#### 2b: Detect MCP tools (via ToolSearch)
+
+Probe for available MCP research tools by attempting ToolSearch for each tier:
+
 **Tier 1 (Free MCP — probe each):**
-- `mcp__crawl4ai` — Deep web crawling
 - `mcp__jina` — Document parsing
 - `mcp__fetch` — MCP fetch
 - `mcp__paper_search` — Academic papers
@@ -50,10 +64,10 @@ Probe for available MCP research tools by attempting ToolSearch for each tier:
 - `mcp__exa` — Neural search
 - `mcp__perplexity` — Perplexity Sonar
 
-For each tool, attempt a ToolSearch with `select:<tool_name>`. If found, mark as available. Record results in state.json using:
+For each MCP tool, attempt a ToolSearch with `select:<tool_name>`. If found, mark as available. Merge MCP results with the Python package results already in state.json:
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json set-tools --available [list of detected tools]
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json set-tools --available [list of all detected tools including python packages]
 ```
 
 ### Step 3: Display Session Banner
@@ -77,8 +91,10 @@ Always Available:
   [+] WebSearch
   [+] WebFetch
 
+Python Packages:
+  [+/-] crawl4ai           [detected/not found]
+
 Tier 1 (Free MCP):
-  [+/-] crawl4ai          [detected/not found]
   [+/-] Jina Reader        [detected/not found]
   [+/-] MCP Fetch          [detected/not found]
   [+/-] Paper Search       [detected/not found]

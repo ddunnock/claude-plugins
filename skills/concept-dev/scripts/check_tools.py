@@ -8,6 +8,7 @@ Results are stored in state.json for research agents to adapt strategy.
 
 import json
 import argparse
+import subprocess
 from pathlib import Path
 from datetime import datetime
 from typing import Optional
@@ -19,8 +20,10 @@ TOOL_TIERS = {
         "WebSearch": "Built-in web search",
         "WebFetch": "Built-in URL fetching",
     },
+    "python_packages": {
+        "crawl4ai": "Deep web crawling (Python package)",
+    },
     "tier1": {
-        "mcp__crawl4ai": "crawl4ai deep web crawling",
         "mcp__jina": "Jina Reader document parsing",
         "mcp__paper_search": "Academic paper search",
         "mcp__fetch": "MCP fetch tool",
@@ -37,12 +40,45 @@ TOOL_TIERS = {
 }
 
 
+def detect_python_package(package_name: str) -> dict:
+    """Check if a Python package is importable, including in pipx venvs.
+
+    Returns:
+        dict with 'available' (bool) and 'python' (str path to interpreter)
+    """
+    # Try system Python first
+    try:
+        result = subprocess.run(
+            ["python3", "-c", f"import {package_name}"],
+            capture_output=True, timeout=10
+        )
+        if result.returncode == 0:
+            return {"available": True, "python": "python3"}
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        pass
+
+    # Try pipx venv
+    pipx_python = Path.home() / ".local" / "pipx" / "venvs" / package_name / "bin" / "python3"
+    if pipx_python.exists():
+        try:
+            result = subprocess.run(
+                [str(pipx_python), "-c", f"import {package_name}"],
+                capture_output=True, timeout=10
+            )
+            if result.returncode == 0:
+                return {"available": True, "python": str(pipx_python)}
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            pass
+
+    return {"available": False, "python": None}
+
+
 def check_tools(state_path: Optional[str] = None) -> dict:
     """
-    Report tool tier definitions for display.
+    Report tool tier definitions and detect Python packages.
 
-    Actual MCP tool detection happens at runtime within Claude.
-    This script provides the tier structure for the init command to display.
+    Python package detection (crawl4ai) happens here via import check.
+    MCP tool detection happens at runtime within Claude via ToolSearch.
 
     Args:
         state_path: Optional path to state.json to update
@@ -50,13 +86,18 @@ def check_tools(state_path: Optional[str] = None) -> dict:
     Returns:
         Tool availability report
     """
+    # Detect Python packages
+    python_results = {}
+    for pkg in TOOL_TIERS["python_packages"]:
+        python_results[pkg] = detect_python_package(pkg)
+
     report = {
         "detected_at": datetime.now().isoformat(),
         "always_available": list(TOOL_TIERS["always"].keys()),
+        "python_packages": python_results,
         "tier1_tools": TOOL_TIERS["tier1"],
         "tier2_tools": TOOL_TIERS["tier2"],
         "tier3_tools": TOOL_TIERS["tier3"],
-        "note": "MCP tool detection occurs at runtime. Use /concept:init to probe availability."
     }
 
     if state_path:
@@ -65,6 +106,13 @@ def check_tools(state_path: Optional[str] = None) -> dict:
             with open(path, "r") as f:
                 state = json.load(f)
             state["tools"]["detected_at"] = report["detected_at"]
+            # Record detected Python packages as available tools
+            detected = list(TOOL_TIERS["always"].keys())
+            for pkg, info in python_results.items():
+                if info["available"]:
+                    detected.append(pkg)
+            state["tools"]["available"] = detected
+            state["tools"]["python_packages"] = python_results
             with open(path, "w") as f:
                 json.dump(state, f, indent=2)
 
@@ -73,10 +121,11 @@ def check_tools(state_path: Optional[str] = None) -> dict:
 
 # Tier display labels and status icons
 _TIER_DISPLAY = [
-    ("always", "ALWAYS AVAILABLE", "+"),
-    ("tier1",  "TIER 1 (Free MCP tools -- detect at init)", "?"),
-    ("tier2",  "TIER 2 (Configurable)", "?"),
-    ("tier3",  "TIER 3 (Premium, optional)", "?"),
+    ("always",          "ALWAYS AVAILABLE",                        "+"),
+    ("python_packages", "PYTHON PACKAGES (detected via import)",   "?"),
+    ("tier1",           "TIER 1 (Free MCP tools -- detect at init)", "?"),
+    ("tier2",           "TIER 2 (Configurable)",                   "?"),
+    ("tier3",           "TIER 3 (Premium, optional)",              "?"),
 ]
 
 
@@ -88,8 +137,14 @@ def print_report():
 
     for tier_key, label, icon in _TIER_DISPLAY:
         print(f"\n{label}:")
-        for tool, desc in TOOL_TIERS[tier_key].items():
-            print(f"  [{icon}] {tool} -- {desc}")
+        for tool, tool_desc in TOOL_TIERS[tier_key].items():
+            if tier_key == "python_packages":
+                info = detect_python_package(tool)
+                status = "+" if info["available"] else "-"
+                via = f" (via {info['python']})" if info["available"] else ""
+                print(f"  [{status}] {tool} -- {tool_desc}{via}")
+            else:
+                print(f"  [{icon}] {tool} -- {tool_desc}")
 
     print("\n" + "=" * 70)
     print("Run /concept:init to detect which MCP tools are available.")
