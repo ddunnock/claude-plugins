@@ -437,12 +437,13 @@ class KnowledgeGraph:
                 entity_ids = [e["id"] for e in entities]
                 placeholders = ",".join("?" * len(entity_ids))
 
+                # Placeholders are ? only, entity_ids are parameterized
                 rel_sql = f"""
                     SELECT * FROM entity_relations
                     WHERE source_entity_id IN ({placeholders})
                        OR target_entity_id IN ({placeholders})
-                """
-                rel_rows = conn.execute(rel_sql, entity_ids * 2).fetchall()
+                """  # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
+                rel_rows = conn.execute(rel_sql, entity_ids * 2).fetchall()  # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
                 relations = [Relation.from_row(row).to_dict() for row in rel_rows]
 
             return {

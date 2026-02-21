@@ -194,16 +194,16 @@ class EmbeddingService:
 
             where_clause = " AND ".join(conditions) if conditions else "1=1"
 
-            # Get all embeddings that match filters
+            # Get all embeddings that match filters — where_clause uses ? placeholders only
             sql = f"""
                 SELECT emb.event_id, emb.embedding, e.category, e.type, e.timestamp,
                        e.jsonl_offset, e.jsonl_length
                 FROM embeddings emb
                 JOIN events e ON emb.event_id = e.id
                 WHERE {where_clause}
-            """
+            """  # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
 
-            rows = conn.execute(sql, params).fetchall()
+            rows = conn.execute(sql, params).fetchall()  # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
 
             # Calculate similarities
             results = []
@@ -245,6 +245,7 @@ class EmbeddingService:
         """Combine embedding results with FTS5 results."""
         try:
             # Get FTS results
+            # where_clause uses ? placeholders only, query/top_k are parameterized
             fts_sql = f"""
                 SELECT e.id as event_id, e.category, e.type, e.timestamp,
                        e.jsonl_offset, e.jsonl_length
@@ -253,8 +254,8 @@ class EmbeddingService:
                 WHERE events_fts MATCH ? AND {where_clause}
                 ORDER BY rank
                 LIMIT ?
-            """
-            fts_rows = conn.execute(fts_sql, [query] + params + [top_k]).fetchall()
+            """  # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
+            fts_rows = conn.execute(fts_sql, [query] + params + [top_k]).fetchall()  # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
 
             # Merge results
             seen_ids = {r["event_id"] for r in embedding_results}

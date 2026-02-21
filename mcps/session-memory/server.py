@@ -619,9 +619,9 @@ class SessionMemoryServer:
 
             where_clause = " AND ".join(conditions) if conditions else "1=1"
 
-            # Count total
-            count_sql = f"SELECT COUNT(*) FROM events e WHERE {where_clause}"
-            total_count = conn.execute(count_sql, params).fetchone()[0]
+            # Count total — where_clause uses ? placeholders only
+            count_sql = f"SELECT COUNT(*) FROM events e WHERE {where_clause}"  # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
+            total_count = conn.execute(count_sql, params).fetchone()[0]  # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
 
             # Fetch events
             query_sql = f"""
@@ -631,10 +631,10 @@ class SessionMemoryServer:
                 WHERE {where_clause}
                 ORDER BY e.timestamp DESC
                 LIMIT ? OFFSET ?
-            """
+            """  # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
             params.extend([limit, offset])
 
-            rows = conn.execute(query_sql, params).fetchall()
+            rows = conn.execute(query_sql, params).fetchall()  # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
             conn.close()
 
             # Build results
@@ -751,16 +751,17 @@ class SessionMemoryServer:
 
             where_clause = " AND ".join(conditions) if conditions else "1=1"
 
+            # where_clause uses ? placeholders only
             query = f"""
                 SELECT id, name, timestamp, type, session_id, event_count, summary
                 FROM checkpoints
                 WHERE {where_clause}
                 ORDER BY timestamp DESC
                 LIMIT ?
-            """
+            """  # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
             params.append(limit)
 
-            rows = conn.execute(query, params).fetchall()
+            rows = conn.execute(query, params).fetchall()  # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
             conn.close()
 
             checkpoints = [

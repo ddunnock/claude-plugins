@@ -560,11 +560,10 @@ class StreamingOutputServer:
             # Get blocks
             if blocks:
                 placeholders = ",".join("?" * len(blocks))
-                block_rows = conn.execute(
-                    f"""SELECT * FROM blocks WHERE document_id = ? AND block_key IN ({placeholders})
-                        ORDER BY sequence""",
-                    [document_id] + blocks
-                ).fetchall()
+                # placeholders are ? only, values are parameterized
+                block_sql = f"""SELECT * FROM blocks WHERE document_id = ? AND block_key IN ({placeholders})
+                        ORDER BY sequence"""  # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
+                block_rows = conn.execute(block_sql, [document_id] + blocks).fetchall()  # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
             else:
                 block_rows = conn.execute(
                     "SELECT * FROM blocks WHERE document_id = ? ORDER BY sequence",

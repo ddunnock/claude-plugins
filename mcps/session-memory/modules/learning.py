@@ -172,14 +172,15 @@ class LearningService:
             if query:
                 try:
                     # Use FTS for better search
+                    # Conditions use ? placeholders only, query/limit are parameterized
                     fts_query = f"""
                         SELECT l.* FROM learnings l
                         JOIN learnings_fts fts ON l.id = fts.id
                         WHERE learnings_fts MATCH ? AND {" AND ".join(conditions)}
                         ORDER BY rank, l.confidence DESC, l.usage_count DESC
                         LIMIT ?
-                    """
-                    rows = conn.execute(fts_query, [query] + params + [limit]).fetchall()
+                    """  # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
+                    rows = conn.execute(fts_query, [query] + params + [limit]).fetchall()  # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
                     results = [Learning.from_row(row) for row in rows]
                 except sqlite3.OperationalError:
                     # Fallback to LIKE search
@@ -189,14 +190,15 @@ class LearningService:
             # If no FTS results or no query, use regular query
             if not results:
                 where_clause = " AND ".join(conditions)
+                # where_clause uses ? placeholders only
                 sql = f"""
                     SELECT * FROM learnings
                     WHERE {where_clause}
                     ORDER BY confidence DESC, usage_count DESC
                     LIMIT ?
-                """
+                """  # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
                 params.append(limit)
-                rows = conn.execute(sql, params).fetchall()
+                rows = conn.execute(sql, params).fetchall()  # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
                 results = [Learning.from_row(row) for row in rows]
 
             # Context similarity with embeddings if available
@@ -291,10 +293,8 @@ class LearningService:
         try:
             # Fetch all learnings to merge
             placeholders = ",".join("?" * len(learning_ids))
-            rows = conn.execute(
-                f"SELECT * FROM learnings WHERE id IN ({placeholders})",
-                learning_ids
-            ).fetchall()
+            sql = f"SELECT * FROM learnings WHERE id IN ({placeholders})"  # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
+            rows = conn.execute(sql, learning_ids).fetchall()  # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
 
             if len(rows) < 2:
                 raise ValueError("Need at least 2 learnings to merge")

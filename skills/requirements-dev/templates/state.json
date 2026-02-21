@@ -1,0 +1,39 @@
+{
+  "session_id": "",
+  "schema_version": "1.0.0",
+  "created_at": "",
+  "current_phase": "init",
+  "gates": {
+    "init": false,
+    "needs": false,
+    "requirements": false,
+    "deliver": false
+  },
+  "blocks": {},
+  "progress": {
+    "current_block": null,
+    "current_type_pass": null,
+    "type_pass_order": ["functional", "performance", "interface", "constraint", "quality"],
+    "requirements_in_draft": []
+  },
+  "counts": {
+    "needs_total": 0,
+    "needs_approved": 0,
+    "needs_deferred": 0,
+    "requirements_total": 0,
+    "requirements_registered": 0,
+    "requirements_baselined": 0,
+    "requirements_withdrawn": 0,
+    "tbd_open": 0,
+    "tbr_open": 0
+  },
+  "traceability": {
+    "links_total": 0,
+    "coverage_pct": 0.0
+  },
+  "decomposition": {
+    "levels": {},
+    "max_level": 3
+  },
+  "artifacts": {}
+}

@@ -229,11 +229,9 @@ class CloudSyncService:
         try:
             # Get pending items
             placeholders = ",".join("?" * len(resource_types))
-            rows = conn.execute(f"""
-                SELECT * FROM sync_state
-                WHERE sync_status IN ('pending', {'\'conflict\'' if force else ''})
-                  AND resource_type IN ({placeholders})
-            """, resource_types).fetchall()
+            status_filter = "('pending', 'conflict')" if force else "('pending')"
+            sql = f"SELECT * FROM sync_state WHERE sync_status IN {status_filter} AND resource_type IN ({placeholders})"  # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
+            rows = conn.execute(sql, resource_types).fetchall()  # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
 
             for row in rows:
                 try:
@@ -332,10 +330,9 @@ class CloudSyncService:
         if not table:
             return None
 
-        row = conn.execute(
-            f"SELECT * FROM {table} WHERE id = ?",
-            (resource_id,)
-        ).fetchone()
+        # Table name from hardcoded allowlist (table_map), not user input
+        sql = f"SELECT * FROM {table} WHERE id = ?"  # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
+        row = conn.execute(sql, (resource_id,)).fetchone()  # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
 
         if row:
             return dict(row)
