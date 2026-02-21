@@ -51,7 +51,12 @@ rcca-master/
 
 ## Version History
 
-### v1.0.0 (Current)
+### v1.0.1 (Current)
+- Add path validation to all scripts (reject traversal, restrict extensions)
+- Add Input Handling and Content Security section to SKILL.md
+- Fix incorrect CLI flags in HOW_TO_USE.md
+
+### v1.0.0
 - Initial release with complete 8D workflow
 - Gate checkpoint system
 - Domain-based team recommendations

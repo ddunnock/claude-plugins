@@ -46,7 +46,12 @@ fmea-analysis/
 
 ## Version History
 
-### v1.0.0 (Current)
+### v1.0.1 (Current)
+- Add HTML escaping (XSS prevention) to generate_report.py
+- Add path validation to all scripts (reject traversal, restrict extensions)
+- Add Input Handling and Content Security section to SKILL.md
+
+### v1.0.0
 - Initial release with AIAG-VDA 7-step workflow
 - Action Priority risk assessment
 - Rating tables for S/O/D

@@ -50,7 +50,12 @@ five-whys-analysis/
 
 ## Version History
 
-### v1.0.0 (Current)
+### v1.0.1 (Current)
+- Add path validation to all scripts (reject traversal, restrict extensions)
+- Add Input Handling and Content Security section to SKILL.md
+- Fix HOW_TO_USE.md: remove nonexistent run_analysis.py, correct CLI flags
+
+### v1.0.0
 - Initial release with structured Q&A workflow
 - Quality scoring system
 - Verification tests
