@@ -230,6 +230,8 @@ def update_requirement(workspace: str, req_id: str, **fields) -> None:
             req.setdefault("attributes", {}).update(value)
         elif key in req:
             req[key] = value
+        else:
+            raise ValueError(f"Unknown field: {key}")
 
     registry["requirements"][idx] = req
     _save_registry(workspace, registry)

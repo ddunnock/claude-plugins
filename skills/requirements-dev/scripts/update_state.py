@@ -95,6 +95,12 @@ def _parse_value(value_str: str):
         return float(value_str)
     except ValueError:
         pass
+    # Try JSON for arrays and objects
+    if value_str.startswith(("[", "{")):
+        try:
+            return json.loads(value_str)
+        except (json.JSONDecodeError, ValueError):
+            pass
     return value_str
 
 
@@ -117,7 +123,8 @@ def sync_counts(workspace_path: str) -> None:
     needs_file = os.path.join(workspace_path, "needs_registry.json")
     if os.path.isfile(needs_file):
         with open(needs_file) as f:
-            needs = json.load(f)
+            needs_data = json.load(f)
+        needs = needs_data.get("needs", []) if isinstance(needs_data, dict) else needs_data
     else:
         needs = []
 
@@ -125,7 +132,8 @@ def sync_counts(workspace_path: str) -> None:
     reqs_file = os.path.join(workspace_path, "requirements_registry.json")
     if os.path.isfile(reqs_file):
         with open(reqs_file) as f:
-            reqs = json.load(f)
+            reqs_data = json.load(f)
+        reqs = reqs_data.get("requirements", []) if isinstance(reqs_data, dict) else reqs_data
     else:
         reqs = []
 
