@@ -6,6 +6,8 @@ Interactive root cause analysis using the 5 Whys methodology.
 Enforces source documentation for each answer.
 """
 
+import sys
+import os
 import json
 import argparse
 from datetime import datetime
@@ -379,6 +381,20 @@ class FiveWhysAnalysis:
             print(f"Saved to: {filename}")
 
 
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> str:
+    """Validate file path: reject traversal and restrict extensions. Returns resolved path."""
+    resolved = os.path.realpath(filepath)
+    if ".." in os.path.relpath(resolved):
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = os.path.splitext(resolved)[1].lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+    return resolved
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='5 Whys root cause analysis'
@@ -390,6 +406,8 @@ def main():
     parser.add_argument('--output', '-o', help='Output file for results')
     
     args = parser.parse_args()
+
+    args.load = _validate_path(args.load, {'.htm', '.html', '.json', '.md', '.svg', '.txt', '.yaml', '.yml'}, "load")
     
     analysis = FiveWhysAnalysis()
     

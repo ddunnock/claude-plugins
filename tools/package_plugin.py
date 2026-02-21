@@ -10,6 +10,7 @@ Examples:
     package_plugin.py mcps/session-memory ./dist
 """
 
+import os
 import json
 import sys
 import zipfile
@@ -66,7 +67,7 @@ def package_plugin(plugin_path: Path, output_dir: Path | None = None) -> Path | 
     Returns:
         Path to the created .plugin file, or None if error
     """
-    plugin_path = plugin_path.resolve()
+    plugin_path = Path(os.path.realpath(str(plugin_path))).resolve()
 
     # Validate plugin folder exists
     if not plugin_path.exists():
@@ -97,7 +98,7 @@ def package_plugin(plugin_path: Path, output_dir: Path | None = None) -> Path | 
 
     # Determine output location
     if output_dir:
-        output_path = output_dir.resolve()
+        output_path = Path(os.path.realpath(str(output_dir))).resolve()
         output_path.mkdir(parents=True, exist_ok=True)
     else:
         output_path = Path.cwd()

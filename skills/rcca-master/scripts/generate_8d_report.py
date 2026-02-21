@@ -9,6 +9,7 @@ Usage:
     python generate_8d_report.py --sample --output sample_report.html
 """
 
+import os
 import argparse
 import json
 import sys

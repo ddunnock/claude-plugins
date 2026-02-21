@@ -19,6 +19,7 @@ Examples:
     python stream_repair.py report.md analysis --dry-run
 """
 
+import os
 import argparse
 import sys
 import re
@@ -334,6 +335,19 @@ def print_result(result: dict):
             print(f"(Review the .context file first to continue coherently)")
 
 
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> str:
+    """Validate file path: reject traversal and restrict extensions. Returns resolved path."""
+    resolved = os.path.realpath(filepath)
+    if ".." in os.path.relpath(resolved):
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = os.path.splitext(resolved)[1].lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+    return resolved
+
 def main():
     parser = argparse.ArgumentParser(
         description='Fix corrupted or partial sections in streaming files'
@@ -358,6 +372,8 @@ def main():
     )
 
     args = parser.parse_args()
+
+    args.filepath = _validate_path(args.filepath, {'.md', '.txt', '.html'}, "filepath")
 
     result = repair_section(
         args.filepath,

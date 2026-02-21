@@ -11,6 +11,7 @@ Usage:
     python calculate_scores.py --output results.json  # Save results
 """
 
+import os
 import json
 import argparse
 import sys
@@ -365,12 +366,30 @@ def process_json_input(input_file: str, output_file: Optional[str] = None):
     return output
 
 
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> str:
+    """Validate file path: reject traversal and restrict extensions. Returns resolved path."""
+    resolved = os.path.realpath(filepath)
+    if ".." in os.path.relpath(resolved):
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = os.path.splitext(resolved)[1].lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+    return resolved
+
 def main():
     parser = argparse.ArgumentParser(description='Kepner-Tregoe Decision Analysis Scoring Calculator')
     parser.add_argument('--input', '-i', help='Input JSON file')
     parser.add_argument('--output', '-o', help='Output JSON file')
     
     args = parser.parse_args()
+
+    if args.input:
+        args.input = _validate_path(args.input, {'.json'}, "input file")
+    if args.output:
+        args.output = _validate_path(args.output, {'.json'}, "output file")
     
     if args.input:
         process_json_input(args.input, args.output)

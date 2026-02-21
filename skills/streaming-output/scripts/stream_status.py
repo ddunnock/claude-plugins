@@ -12,6 +12,7 @@ Examples:
     python stream_status.py report.md --resume  # Just output next section ID
 """
 
+import os
 import argparse
 import sys
 import re
@@ -225,6 +226,19 @@ def print_status(status: dict):
             print(f"   (Has context file - continue from where interrupted, don't restart)")
 
 
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> str:
+    """Validate file path: reject traversal and restrict extensions. Returns resolved path."""
+    resolved = os.path.realpath(filepath)
+    if ".." in os.path.relpath(resolved):
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = os.path.splitext(resolved)[1].lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+    return resolved
+
 def main():
     parser = argparse.ArgumentParser(
         description='Show status and resume point for streaming files'
@@ -242,6 +256,8 @@ def main():
     )
 
     args = parser.parse_args()
+
+    args.filepath = _validate_path(args.filepath, {'.md', '.txt', '.html'}, "filepath")
 
     status = get_status(args.filepath)
 

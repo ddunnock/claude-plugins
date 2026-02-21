@@ -6,6 +6,8 @@ Generates ONLY user-selected diagrams. No auto-generation.
 All diagrams include source attribution where applicable.
 """
 
+import sys
+import os
 import json
 import argparse
 import numpy as np
@@ -470,6 +472,20 @@ def print_diagram_menu():
     print("\n" + "=" * 70)
 
 
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> str:
+    """Validate file path: reject traversal and restrict extensions. Returns resolved path."""
+    resolved = os.path.realpath(filepath)
+    if ".." in os.path.relpath(resolved):
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = os.path.splitext(resolved)[1].lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+    return resolved
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='Generate trade study visualizations (ONLY selected diagrams)'
@@ -488,6 +504,10 @@ def main():
                        help='Output format')
     
     args = parser.parse_args()
+
+    args.data = _validate_path(args.data, {'.json'}, "data")
+    args.sensitivity = _validate_path(args.sensitivity, {'.htm', '.html', '.json', '.md', '.svg', '.txt', '.yaml', '.yml'}, "sensitivity")
+    args.weights = _validate_path(args.weights, {'.htm', '.html', '.json', '.md', '.svg', '.txt', '.yaml', '.yml'}, "weights")
     
     if args.list:
         print_diagram_menu()

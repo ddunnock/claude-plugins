@@ -11,6 +11,7 @@ Examples:
     init_skill.py custom-skill --path /custom/location
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -202,6 +203,7 @@ def init_skill(skill_name, path):
         Path to created skill directory, or None if error
     """
     # Determine skill directory path
+    path = os.path.realpath(path)
     skill_dir = Path(path).resolve() / skill_name
 
     # Check if directory already exists

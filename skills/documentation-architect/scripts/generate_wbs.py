@@ -6,6 +6,7 @@ Usage:
     python generate_wbs.py --inventory inventory.json --output wbs.md [--target-structure structure.yaml]
 """
 
+import os
 import argparse
 import json
 from pathlib import Path
@@ -296,15 +297,17 @@ def generate_markdown(items: list, effort: dict, output_path: Path):
 
 
 
-def _validate_path(filepath: str, allowed_extensions: set, label: str) -> None:
-    """Validate file path: reject traversal and restrict extensions."""
-    if ".." in filepath:
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> str:
+    """Validate file path: reject traversal and restrict extensions. Returns resolved path."""
+    resolved = os.path.realpath(filepath)
+    if ".." in os.path.relpath(resolved):
         print(f"Error: Path traversal not allowed in {label}: {filepath}")
         sys.exit(1)
-    ext = Path(filepath).suffix.lower()
+    ext = os.path.splitext(resolved)[1].lower()
     if ext not in allowed_extensions:
         print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
         sys.exit(1)
+    return resolved
 
 
 def main():

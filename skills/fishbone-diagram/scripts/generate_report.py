@@ -9,6 +9,7 @@ Usage:
   python generate_report.py --sample --output sample_report.html
 """
 
+import os
 import argparse
 import json
 import sys
@@ -621,15 +622,17 @@ def generate_html_report(data):
 
 
 
-def _validate_path(filepath: str, allowed_extensions: set, label: str) -> None:
-    """Validate file path: reject traversal and restrict extensions."""
-    if ".." in filepath:
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> str:
+    """Validate file path: reject traversal and restrict extensions. Returns resolved path."""
+    resolved = os.path.realpath(filepath)
+    if ".." in os.path.relpath(resolved):
         print(f"Error: Path traversal not allowed in {label}: {filepath}")
         sys.exit(1)
-    ext = Path(filepath).suffix.lower()
+    ext = os.path.splitext(resolved)[1].lower()
     if ext not in allowed_extensions:
         print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
         sys.exit(1)
+    return resolved
 
 
 def main():
@@ -661,8 +664,8 @@ def main():
     args = parser.parse_args()
 
     if args.file:
-        _validate_path(args.file, {'.json'}, "input file")
-    _validate_path(args.output, {'.htm', '.html'}, "output file")
+        args.file = _validate_path(args.file, {'.json'}, "input file")
+    args.output = _validate_path(args.output, {'.htm', '.html'}, "output file")
     
     # Get data from appropriate source
     if args.sample:

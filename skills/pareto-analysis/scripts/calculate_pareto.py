@@ -22,6 +22,7 @@ Input JSON format:
 }
 """
 
+import os
 import json
 import argparse
 import sys
@@ -190,6 +191,20 @@ def interactive_mode() -> Dict[str, Any]:
     }
 
 
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> str:
+    """Validate file path: reject traversal and restrict extensions. Returns resolved path."""
+    resolved = os.path.realpath(filepath)
+    if ".." in os.path.relpath(resolved):
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = os.path.splitext(resolved)[1].lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+    return resolved
+
+
 def main():
     parser = argparse.ArgumentParser(description="Pareto Analysis Calculator")
     parser.add_argument("--input", "-i", help="Input JSON file")
@@ -199,6 +214,9 @@ def main():
     parser.add_argument("--format", "-f", choices=["json", "table", "both"], default="both", help="Output format")
     
     args = parser.parse_args()
+
+    args.input = _validate_path(args.input, {'.json'}, "input")
+    args.output = _validate_path(args.output, {'.htm', '.html', '.json', '.md', '.svg', '.txt'}, "output")
     
     # Get input data
     if args.interactive:

@@ -11,6 +11,7 @@ Examples:
     init_plugin.py mcp my-new-mcp --path mcps
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -247,6 +248,7 @@ def class_case_name(name: str) -> str:
 
 def init_skill(plugin_name: str, path: str) -> Path | None:
     """Initialize a new skill plugin."""
+    path = os.path.realpath(path)
     plugin_dir = Path(path).resolve() / plugin_name
 
     if plugin_dir.exists():
@@ -302,6 +304,7 @@ def init_skill(plugin_name: str, path: str) -> Path | None:
 
 def init_mcp(plugin_name: str, path: str) -> Path | None:
     """Initialize a new MCP plugin."""
+    path = os.path.realpath(path)
     plugin_dir = Path(path).resolve() / plugin_name
 
     if plugin_dir.exists():

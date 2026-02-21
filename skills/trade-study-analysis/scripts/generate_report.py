@@ -11,6 +11,7 @@ Generates final trade study report with:
 WILL NOT generate report until all gates pass.
 """
 
+import os
 import json
 import argparse
 from datetime import datetime
@@ -467,15 +468,17 @@ class ReportGenerator:
 
 
 
-def _validate_path(filepath: str, allowed_extensions: set, label: str) -> None:
-    """Validate file path: reject traversal and restrict extensions."""
-    if ".." in filepath:
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> str:
+    """Validate file path: reject traversal and restrict extensions. Returns resolved path."""
+    resolved = os.path.realpath(filepath)
+    if ".." in os.path.relpath(resolved):
         print(f"Error: Path traversal not allowed in {label}: {filepath}")
         sys.exit(1)
-    ext = Path(filepath).suffix.lower()
+    ext = os.path.splitext(resolved)[1].lower()
     if ext not in allowed_extensions:
         print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
         sys.exit(1)
+    return resolved
 
 
 def main():
@@ -498,11 +501,11 @@ def main():
     
     args = parser.parse_args()
 
-    _validate_path(args.study_data, {'.json'}, "study data file")
-    _validate_path(args.output, {'.md', '.html'}, "output file")
-    _validate_path(args.sources, {'.json'}, "sources file")
-    _validate_path(args.assumptions, {'.json'}, "assumptions file")
-    _validate_path(args.diagrams, {'.json'}, "diagrams file")
+    args.study_data = _validate_path(args.study_data, {'.json'}, "study data file")
+    args.output = _validate_path(args.output, {'.md', '.html'}, "output file")
+    args.sources = _validate_path(args.sources, {'.json'}, "sources file")
+    args.assumptions = _validate_path(args.assumptions, {'.json'}, "assumptions file")
+    args.diagrams = _validate_path(args.diagrams, {'.json'}, "diagrams file")
     
     # Load data
     with open(args.study_data) as f:

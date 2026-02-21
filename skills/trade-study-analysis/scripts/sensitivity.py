@@ -6,6 +6,8 @@ Performs weight zeroing, tornado, Monte Carlo, and breakeven analyses.
 All analyses require user-specified parameters - no auto-selection.
 """
 
+import sys
+import os
 import json
 import argparse
 import numpy as np
@@ -411,6 +413,20 @@ class SensitivityAnalyzer:
             json.dump(output, f, indent=2)
 
 
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> str:
+    """Validate file path: reject traversal and restrict extensions. Returns resolved path."""
+    resolved = os.path.realpath(filepath)
+    if ".." in os.path.relpath(resolved):
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = os.path.splitext(resolved)[1].lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+    return resolved
+
+
 def main():
     parser = argparse.ArgumentParser(description='Perform sensitivity analysis')
     
@@ -430,6 +446,9 @@ def main():
     parser.add_argument('--report', action='store_true', help='Print summary report')
     
     args = parser.parse_args()
+
+    args.mc_params = _validate_path(args.mc_params, {'.htm', '.html', '.json', '.md', '.svg', '.txt', '.yaml', '.yml'}, "mc_params")
+    args.weights = _validate_path(args.weights, {'.htm', '.html', '.json', '.md', '.svg', '.txt', '.yaml', '.yml'}, "weights")
     
     # Load data
     scores_df = pd.read_csv(args.scores)

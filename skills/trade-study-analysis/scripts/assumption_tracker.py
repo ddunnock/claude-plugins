@@ -6,6 +6,7 @@ Manages assumption registration, tracking, and mandatory review.
 All assumptions must be explicitly approved before report generation.
 """
 
+import os
 import json
 import argparse
 from datetime import datetime
@@ -457,15 +458,17 @@ class AssumptionTracker:
 
 
 
-def _validate_path(filepath: str, allowed_extensions: set, label: str) -> None:
-    """Validate file path: reject traversal and restrict extensions."""
-    if ".." in filepath:
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> str:
+    """Validate file path: reject traversal and restrict extensions. Returns resolved path."""
+    resolved = os.path.realpath(filepath)
+    if ".." in os.path.relpath(resolved):
         print(f"Error: Path traversal not allowed in {label}: {filepath}")
         sys.exit(1)
-    ext = Path(filepath).suffix.lower()
+    ext = os.path.splitext(resolved)[1].lower()
     if ext not in allowed_extensions:
         print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
         sys.exit(1)
+    return resolved
 
 
 def main():
@@ -528,9 +531,9 @@ def main():
     
     args = parser.parse_args()
 
-    _validate_path(args.registry, {'.json'}, "registry file")
+    args.registry = _validate_path(args.registry, {'.json'}, "registry file")
     if args.command == "export" and hasattr(args, "output") and args.output:
-        _validate_path(args.output, {'.md', '.json'}, "output file")
+        args.output = _validate_path(args.output, {'.md', '.json'}, "output file")
     
     tracker = AssumptionTracker(args.registry)
     

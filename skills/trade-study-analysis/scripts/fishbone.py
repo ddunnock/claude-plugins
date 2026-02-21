@@ -6,6 +6,8 @@ Structured cause categorization across 6 standard dimensions.
 Requires source documentation for each identified factor.
 """
 
+import sys
+import os
 import json
 import argparse
 from datetime import datetime
@@ -476,6 +478,20 @@ class FishboneAnalysis:
                 self.generate_diagram(diagram_file)
 
 
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> str:
+    """Validate file path: reject traversal and restrict extensions. Returns resolved path."""
+    resolved = os.path.realpath(filepath)
+    if ".." in os.path.relpath(resolved):
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = os.path.splitext(resolved)[1].lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+    return resolved
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='Fishbone (Ishikawa) diagram analysis'
@@ -488,6 +504,8 @@ def main():
     parser.add_argument('--diagram', '-d', help='Generate diagram to file')
     
     args = parser.parse_args()
+
+    args.load = _validate_path(args.load, {'.htm', '.html', '.json', '.md', '.svg', '.txt', '.yaml', '.yml'}, "load")
     
     analysis = FishboneAnalysis()
     

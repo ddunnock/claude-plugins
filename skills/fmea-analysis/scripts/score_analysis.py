@@ -15,6 +15,7 @@ Usage:
     python score_analysis.py --interactive
 """
 
+import os
 import json
 import argparse
 import sys
@@ -417,15 +418,17 @@ def format_assessment_report(assessment: QualityAssessment) -> str:
     return "\n".join(lines)
 
 
-def _validate_path(filepath: str, allowed_extensions: set, label: str) -> None:
-    """Validate file path: reject traversal and restrict extensions."""
-    if ".." in filepath:
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> str:
+    """Validate file path: reject traversal and restrict extensions. Returns resolved path."""
+    resolved = os.path.realpath(filepath)
+    if ".." in os.path.relpath(resolved):
         print(f"Error: Path traversal not allowed in {label}: {filepath}")
         sys.exit(1)
-    ext = Path(filepath).suffix.lower()
+    ext = os.path.splitext(resolved)[1].lower()
     if ext not in allowed_extensions:
-        print(f"Error: {label} must be one of {allowed_extensions}, got '{ext}'")
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
         sys.exit(1)
+    return resolved
 
 
 def main():
@@ -442,9 +445,9 @@ def main():
     if args.interactive:
         assessment = interactive_scoring()
     elif args.input:
-        _validate_path(args.input, {".json"}, "input file")
+        args.input = _validate_path(args.input, {".json"}, "input file")
         if args.output:
-            _validate_path(args.output, {".json", ".txt"}, "output file")
+            args.output = _validate_path(args.output, {".json", ".txt"}, "output file")
         try:
             with open(args.input, 'r') as f:
                 fmea_data = json.load(f)

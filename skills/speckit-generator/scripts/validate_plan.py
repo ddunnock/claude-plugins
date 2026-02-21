@@ -327,6 +327,20 @@ def generate_report(results: dict, format: str = "text") -> str:
     return "\n".join(lines)
 
 
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> str:
+    """Validate file path: reject traversal and restrict extensions. Returns resolved path."""
+    resolved = os.path.realpath(filepath)
+    if ".." in os.path.relpath(resolved):
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = os.path.splitext(resolved)[1].lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+    return resolved
+
+
 def main():
     """CLI entry point."""
     import argparse
@@ -353,6 +367,9 @@ def main():
     )
 
     args = parser.parse_args()
+
+    if args.path:
+        args.path = os.path.realpath(args.path)
 
     path = Path(args.path)
 

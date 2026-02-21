@@ -14,6 +14,7 @@ Examples:
     install_mcp.py mcps/session-memory --symlink
 """
 
+import os
 import argparse
 import json
 import shutil
@@ -188,6 +189,20 @@ def print_config_snippet(manifest: dict, target_dir: Path):
         print(f"  pip install {' '.join(deps)}")
 
 
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> str:
+    """Validate file path: reject traversal and restrict extensions. Returns resolved path."""
+    resolved = os.path.realpath(filepath)
+    if ".." in os.path.relpath(resolved):
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = os.path.splitext(resolved)[1].lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+    return resolved
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Install MCP plugins to ~/.claude/ for Claude Desktop"
@@ -202,6 +217,7 @@ def main():
         help="Create symlink instead of copying (for development)"
     )
     args = parser.parse_args()
+
 
     source_path = Path(args.source)
 

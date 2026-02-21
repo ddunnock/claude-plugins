@@ -10,6 +10,8 @@ Usage:
     python score_analysis.py --input analysis.json # From JSON file
 """
 
+import sys
+import os
 import json
 import argparse
 from typing import Dict, List, Optional
@@ -394,12 +396,30 @@ def score_from_json(input_file: str, output_file: Optional[str] = None):
     return assessment
 
 
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> str:
+    """Validate file path: reject traversal and restrict extensions. Returns resolved path."""
+    resolved = os.path.realpath(filepath)
+    if ".." in os.path.relpath(resolved):
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = os.path.splitext(resolved)[1].lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+    return resolved
+
 def main():
     parser = argparse.ArgumentParser(description='Kepner-Tregoe Quality Assessment')
     parser.add_argument('--input', '-i', help='Input JSON file with ratings')
     parser.add_argument('--output', '-o', help='Output JSON file')
     
     args = parser.parse_args()
+
+    if args.input:
+        args.input = _validate_path(args.input, {'.json'}, "input file")
+    if args.output:
+        args.output = _validate_path(args.output, {'.json', '.txt'}, "output file")
     
     if args.input:
         score_from_json(args.input, args.output)

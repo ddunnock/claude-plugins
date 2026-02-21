@@ -10,6 +10,7 @@ Examples:
     validate_plugin.py mcps/session-memory
 """
 
+import os
 import re
 import sys
 from pathlib import Path
@@ -260,7 +261,7 @@ def main():
         print("  validate_plugin.py mcps/session-memory")
         sys.exit(1)
 
-    plugin_path = Path(sys.argv[1]).resolve()
+    plugin_path = Path(os.path.realpath(sys.argv[1])).resolve()
 
     if not plugin_path.exists():
         print(f"Error: Plugin directory not found: {plugin_path}")

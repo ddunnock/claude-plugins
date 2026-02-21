@@ -10,6 +10,7 @@ Selects appropriate memory files for a project based on:
 Copies selected memory files from template location to project .claude/memory/
 """
 
+import sys
 import json
 import os
 import shutil
@@ -456,6 +457,15 @@ def generate_manifest(
     return "\n".join(lines)
 
 
+
+def _validate_dir_path(dirpath: str, label: str) -> str:
+    """Validate directory path: reject traversal. Returns resolved path."""
+    resolved = os.path.realpath(dirpath)
+    if ".." in os.path.relpath(resolved):
+        print(f"Error: Path traversal not allowed in {label}: {dirpath}")
+        sys.exit(1)
+    return resolved
+
 def main():
     """CLI entry point."""
     import argparse
@@ -507,6 +517,10 @@ def main():
     )
 
     args = parser.parse_args()
+
+    args.project_path = _validate_dir_path(args.project_path, "project path")
+    if args.source:
+        args.source = _validate_dir_path(args.source, "source directory")
 
     # Select files
     files = select_memory_files(

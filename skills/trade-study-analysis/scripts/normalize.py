@@ -6,6 +6,8 @@ Converts raw measurements to comparable scales with full source traceability.
 All normalization operations require source-grounded input data.
 """
 
+import sys
+import os
 import json
 import argparse
 import numpy as np
@@ -227,6 +229,20 @@ class Normalizer:
             }, f, indent=2)
 
 
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> str:
+    """Validate file path: reject traversal and restrict extensions. Returns resolved path."""
+    resolved = os.path.realpath(filepath)
+    if ".." in os.path.relpath(resolved):
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = os.path.splitext(resolved)[1].lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+    return resolved
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='Normalize trade study data'
@@ -249,6 +265,8 @@ def main():
     parser.add_argument('--report', action='store_true', help='Print summary report')
     
     args = parser.parse_args()
+
+    args.config = _validate_path(args.config, {'.json', '.yaml', '.yml'}, "config")
     
     # Load data
     df = pd.read_csv(args.input)

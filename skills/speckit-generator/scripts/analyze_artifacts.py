@@ -468,6 +468,15 @@ def generate_report(result: AnalysisResult, format: str = "markdown") -> str:
     return "\n".join(lines)
 
 
+
+def _validate_dir_path(dirpath: str, label: str) -> str:
+    """Validate directory path: reject traversal. Returns resolved path."""
+    resolved = os.path.realpath(dirpath)
+    if ".." in os.path.relpath(resolved):
+        print(f"Error: Path traversal not allowed in {label}: {dirpath}")
+        sys.exit(1)
+    return resolved
+
 def main():
     """CLI entry point."""
     import argparse
@@ -499,6 +508,8 @@ def main():
     )
 
     args = parser.parse_args()
+
+    args.project_path = _validate_dir_path(args.project_path, "project path")
 
     analyzer = ArtifactAnalyzer(args.project_path)
     result = analyzer.analyze()

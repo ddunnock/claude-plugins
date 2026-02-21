@@ -11,6 +11,7 @@ Usage:
 If no input file provided, runs in interactive mode.
 """
 
+import os
 import json
 import sys
 import argparse
@@ -394,6 +395,19 @@ def interactive_mode():
     return tree
 
 
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> str:
+    """Validate file path: reject traversal and restrict extensions. Returns resolved path."""
+    resolved = os.path.realpath(filepath)
+    if ".." in os.path.relpath(resolved):
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = os.path.splitext(resolved)[1].lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+    return resolved
+
 def main():
     parser = argparse.ArgumentParser(description="Fault Tree Analysis Calculator")
     parser.add_argument("input_file", nargs="?", help="JSON input file")
@@ -404,6 +418,11 @@ def main():
     parser.add_argument("--output", "-o", help="Output JSON file")
     
     args = parser.parse_args()
+
+    if args.input_file:
+        args.input_file = _validate_path(args.input_file, {'.json'}, "input file")
+    if args.output:
+        args.output = _validate_path(args.output, {'.json'}, "output file")
     
     # Load or build tree
     if args.input_file:

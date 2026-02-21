@@ -5,6 +5,8 @@ Initialize a concept development session.
 Creates the .concept-dev/ workspace directory and initializes state.json.
 """
 
+import sys
+import os
 import json
 import argparse
 import uuid
@@ -65,6 +67,15 @@ def init_session(
     return state
 
 
+
+def _validate_dir_path(dirpath: str, label: str) -> str:
+    """Validate directory path: reject traversal. Returns resolved path."""
+    resolved = os.path.realpath(dirpath)
+    if ".." in os.path.relpath(resolved):
+        print(f"Error: Path traversal not allowed in {label}: {dirpath}")
+        sys.exit(1)
+    return resolved
+
 def main():
     parser = argparse.ArgumentParser(description="Initialize concept development session")
     parser.add_argument("project_dir", nargs="?", default=".", help="Project directory (default: current)")
@@ -72,6 +83,8 @@ def main():
     parser.add_argument("--description", help="Project description")
 
     args = parser.parse_args()
+
+    args.project_dir = _validate_dir_path(args.project_dir, "project directory")
     init_session(args.project_dir, args.name, args.description)
 
 

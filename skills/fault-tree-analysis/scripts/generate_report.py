@@ -10,6 +10,7 @@ Usage:
     python generate_report.py tree.json results.json --svg diagram.svg
 """
 
+import os
 import html
 import json
 import sys
@@ -510,15 +511,17 @@ def generate_report_html(
 
 
 
-def _validate_path(filepath: str, allowed_extensions: set, label: str) -> None:
-    """Validate file path: reject traversal and restrict extensions."""
-    if ".." in filepath:
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> str:
+    """Validate file path: reject traversal and restrict extensions. Returns resolved path."""
+    resolved = os.path.realpath(filepath)
+    if ".." in os.path.relpath(resolved):
         print(f"Error: Path traversal not allowed in {label}: {filepath}")
         sys.exit(1)
-    ext = Path(filepath).suffix.lower()
+    ext = os.path.splitext(resolved)[1].lower()
     if ext not in allowed_extensions:
         print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
         sys.exit(1)
+    return resolved
 
 
 def main():
@@ -532,11 +535,11 @@ def main():
     
     args = parser.parse_args()
 
-    _validate_path(args.tree_file, {'.json'}, "tree file")
-    _validate_path(args.results_file, {'.json'}, "results file")
-    _validate_path(args.output_file, {'.htm', '.html'}, "output file")
+    args.tree_file = _validate_path(args.tree_file, {'.json'}, "tree file")
+    args.results_file = _validate_path(args.results_file, {'.json'}, "results file")
+    args.output_file = _validate_path(args.output_file, {'.htm', '.html'}, "output file")
     if args.svg:
-        _validate_path(args.svg, {'.svg'}, "SVG file")
+        args.svg = _validate_path(args.svg, {'.svg'}, "SVG file")
     
     # Load input files
     with open(args.tree_file, 'r') as f:

@@ -10,6 +10,7 @@ Usage:
     python initialize_8d.py --output session.json
 """
 
+import os
 import argparse
 import json
 import sys

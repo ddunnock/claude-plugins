@@ -11,6 +11,7 @@ Usage:
     python score_8d.py --json '{"d0": 4, "d1": 3, ...}'
 """
 
+import os
 import argparse
 import json
 import sys

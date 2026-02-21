@@ -15,6 +15,7 @@ Examples:
     python stream_cleanup.py report.md --check            # Validate only
 """
 
+import os
 import argparse
 import sys
 import re
@@ -164,6 +165,19 @@ def finalize(filepath: str, output_path: str = None, in_place: bool = False, che
     return True
 
 
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> str:
+    """Validate file path: reject traversal and restrict extensions. Returns resolved path."""
+    resolved = os.path.realpath(filepath)
+    if ".." in os.path.relpath(resolved):
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = os.path.splitext(resolved)[1].lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+    return resolved
+
 def main():
     parser = argparse.ArgumentParser(
         description='Finalize streaming files by removing markers'
@@ -185,6 +199,10 @@ def main():
     )
 
     args = parser.parse_args()
+
+    args.filepath = _validate_path(args.filepath, {'.md', '.txt', '.html'}, "filepath")
+    if args.output:
+        args.output = _validate_path(args.output, {'.md', '.txt', '.html'}, "output file")
 
     if args.in_place and args.output:
         print("Error: Cannot use both --in-place and --output", file=sys.stderr)
