@@ -43,6 +43,10 @@ fault-tree-analysis/
 
 ## Version History
 
+### v1.0.2
+- Add html.escape() via esc() helper to all user-provided content in generate_report.py (event names, IDs, analyst name, data sources) preventing XSS in HTML reports
+- Document HTML escaping in SKILL.md security section
+
 ### v1.0.1
 - Add path validation to generate_diagram.py and generate_report.py
 - Add Input Handling and Content Security section to SKILL.md

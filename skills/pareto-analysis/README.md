@@ -42,6 +42,10 @@ pareto-analysis/
 
 ## Version History
 
+### v1.0.2
+- Add html.escape() via esc() helper to all user-provided content in generate_report.py (category names, problem statement, analyst, notes) preventing XSS in HTML reports
+- Document HTML escaping in SKILL.md security section
+
 ### v1.0.1
 - Add path validation to generate_chart.py and generate_report.py
 - Add Input Handling and Content Security section to SKILL.md

@@ -12,12 +12,18 @@ Usage:
 """
 
 import argparse
+import html
 import json
 import sys
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from typing import Optional
 from pathlib import Path
+
+
+def esc(val):
+    """HTML-escape a value for safe interpolation into HTML."""
+    return html.escape(str(val)) if val else ''
 
 
 @dataclass
@@ -76,7 +82,7 @@ def generate_html_report(definition: ProblemDefinition) -> str:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Problem Definition Report - {definition.title or 'Untitled'}</title>
+    <title>Problem Definition Report - {esc(definition.title) or 'Untitled'}</title>
     <style>
         body {{
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -144,10 +150,10 @@ def generate_html_report(definition: ProblemDefinition) -> str:
     <h1>Problem Definition Report</h1>
 
     <div class="metadata">
-        <p><strong>Title:</strong> {definition.title or 'N/A'}</p>
-        <p><strong>Date:</strong> {definition.created_date or datetime.now().strftime('%Y-%m-%d')}</p>
-        <p><strong>Created By:</strong> {definition.created_by or 'N/A'}</p>
-        {f'<p><strong>Quality Score:</strong> {definition.score}/100 <span class="score-badge score-{definition.rating.lower()}">{definition.rating}</span></p>' if definition.score else ''}
+        <p><strong>Title:</strong> {esc(definition.title) or 'N/A'}</p>
+        <p><strong>Date:</strong> {esc(definition.created_date) or datetime.now().strftime('%Y-%m-%d')}</p>
+        <p><strong>Created By:</strong> {esc(definition.created_by) or 'N/A'}</p>
+        {f'<p><strong>Quality Score:</strong> {definition.score}/100 <span class="score-badge score-{esc(definition.rating.lower())}">{esc(definition.rating)}</span></p>' if definition.score else ''}
     </div>
 
     <h2>5W2H Analysis</h2>
@@ -158,43 +164,43 @@ def generate_html_report(definition: ProblemDefinition) -> str:
         </tr>
         <tr>
             <th>WHAT (Object)</th>
-            <td>{definition.what_object or '—'}</td>
+            <td>{esc(definition.what_object) or '—'}</td>
         </tr>
         <tr>
             <th>WHAT (Defect)</th>
-            <td>{definition.what_defect or '—'}</td>
+            <td>{esc(definition.what_defect) or '—'}</td>
         </tr>
         <tr>
             <th>WHERE (Geographic)</th>
-            <td>{definition.where_geographic or '—'}</td>
+            <td>{esc(definition.where_geographic) or '—'}</td>
         </tr>
         <tr>
             <th>WHERE (On Object)</th>
-            <td>{definition.where_on_object or '—'}</td>
+            <td>{esc(definition.where_on_object) or '—'}</td>
         </tr>
         <tr>
             <th>WHEN (Calendar)</th>
-            <td>{definition.when_calendar or '—'}</td>
+            <td>{esc(definition.when_calendar) or '—'}</td>
         </tr>
         <tr>
             <th>WHEN (Lifecycle)</th>
-            <td>{definition.when_lifecycle or '—'}</td>
+            <td>{esc(definition.when_lifecycle) or '—'}</td>
         </tr>
         <tr>
             <th>WHO (Affected)</th>
-            <td>{definition.who_affected or '—'}</td>
+            <td>{esc(definition.who_affected) or '—'}</td>
         </tr>
         <tr>
             <th>HOW (Detected)</th>
-            <td>{definition.how_detected or '—'}</td>
+            <td>{esc(definition.how_detected) or '—'}</td>
         </tr>
         <tr>
             <th>HOW MUCH (Magnitude)</th>
-            <td>{definition.how_much_magnitude or '—'}</td>
+            <td>{esc(definition.how_much_magnitude) or '—'}</td>
         </tr>
         <tr>
             <th>HOW MUCH (Frequency)</th>
-            <td>{definition.how_much_frequency or '—'}</td>
+            <td>{esc(definition.how_much_frequency) or '—'}</td>
         </tr>
     </table>
 
@@ -207,35 +213,35 @@ def generate_html_report(definition: ProblemDefinition) -> str:
         </tr>
         <tr>
             <th>WHAT</th>
-            <td class="is-column">{definition.is_what or '—'}</td>
-            <td class="is-not-column">{definition.is_not_what or '—'}</td>
+            <td class="is-column">{esc(definition.is_what) or '—'}</td>
+            <td class="is-not-column">{esc(definition.is_not_what) or '—'}</td>
         </tr>
         <tr>
             <th>WHERE</th>
-            <td class="is-column">{definition.is_where or '—'}</td>
-            <td class="is-not-column">{definition.is_not_where or '—'}</td>
+            <td class="is-column">{esc(definition.is_where) or '—'}</td>
+            <td class="is-not-column">{esc(definition.is_not_where) or '—'}</td>
         </tr>
         <tr>
             <th>WHEN</th>
-            <td class="is-column">{definition.is_when or '—'}</td>
-            <td class="is-not-column">{definition.is_not_when or '—'}</td>
+            <td class="is-column">{esc(definition.is_when) or '—'}</td>
+            <td class="is-not-column">{esc(definition.is_not_when) or '—'}</td>
         </tr>
         <tr>
             <th>WHO</th>
-            <td class="is-column">{definition.is_who or '—'}</td>
-            <td class="is-not-column">{definition.is_not_who or '—'}</td>
+            <td class="is-column">{esc(definition.is_who) or '—'}</td>
+            <td class="is-not-column">{esc(definition.is_not_who) or '—'}</td>
         </tr>
     </table>
 
     <h2>Deviation Statement</h2>
     <div class="deviation-box">
-        <p><strong>Expected:</strong> {definition.expected_condition or '—'}</p>
-        <p><strong>Actual:</strong> {definition.actual_condition or '—'}</p>
+        <p><strong>Expected:</strong> {esc(definition.expected_condition) or '—'}</p>
+        <p><strong>Actual:</strong> {esc(definition.actual_condition) or '—'}</p>
     </div>
 
     <h2>Problem Statement</h2>
     <div class="statement-box">
-        {definition.problem_statement or '<em>Problem statement not yet defined</em>'}
+        {esc(definition.problem_statement) or '<em>Problem statement not yet defined</em>'}
     </div>
 
     <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 0.9em;">

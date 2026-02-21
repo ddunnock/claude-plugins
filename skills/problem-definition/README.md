@@ -51,6 +51,10 @@ problem-definition/
 
 ## Version History
 
+### v1.0.2
+- Add html.escape() via esc() helper to all user-provided content in generate_report.py (title, 5W2H fields, IS/IS NOT values, deviation statement, problem statement) preventing XSS in HTML reports
+- Document HTML escaping in SKILL.md security section
+
 ### v1.0.1
 - Add path validation to generate_report.py
 - Add Input Handling and Content Security section to SKILL.md

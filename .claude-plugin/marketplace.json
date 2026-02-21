@@ -65,7 +65,7 @@
       "name": "problem-definition",
       "source": "./skills/problem-definition",
       "description": "Guide RCCA/8D problem definition using 5W2H and IS/IS NOT analysis. Transforms failure data into precise, measurable problem statements without embedded cause or solution.",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "category": "quality-engineering",
       "tags": [
         "problem-definition",
@@ -106,7 +106,7 @@
       "name": "pareto-analysis",
       "source": "./skills/pareto-analysis",
       "description": "Conduct Pareto Analysis (80/20 Rule) to identify vital few causes driving majority of problems. Generates Pareto charts and prioritization reports.",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "category": "quality-engineering",
       "tags": [
         "pareto",
@@ -133,7 +133,7 @@
       "name": "fault-tree-analysis",
       "source": "./skills/fault-tree-analysis",
       "description": "Conduct Fault Tree Analysis (FTA) for system failure analysis using Boolean logic gates. Identifies minimal cut sets, single points of failure, and failure probabilities.",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "category": "quality-engineering",
       "tags": [
         "fta",

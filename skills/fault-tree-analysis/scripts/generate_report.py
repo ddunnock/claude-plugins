@@ -10,6 +10,7 @@ Usage:
     python generate_report.py tree.json results.json --svg diagram.svg
 """
 
+import html
 import json
 import sys
 import argparse
@@ -17,6 +18,11 @@ from datetime import datetime
 from typing import Dict, List, Any, Optional
 import base64
 from pathlib import Path
+
+
+def esc(val):
+    """HTML-escape a value for safe interpolation into HTML."""
+    return html.escape(str(val)) if val else ''
 
 
 def generate_report_html(
@@ -41,7 +47,7 @@ def generate_report_html(
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fault Tree Analysis Report - {top_event}</title>
+    <title>Fault Tree Analysis Report - {esc(top_event)}</title>
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
         body {{ 
@@ -248,11 +254,11 @@ def generate_report_html(
     <div class="container">
         <header>
             <h1>⚙️ Fault Tree Analysis Report</h1>
-            <div class="subtitle">{top_event}</div>
+            <div class="subtitle">{esc(top_event)}</div>
             <div class="meta">
-                <span>📅 {timestamp}</span>
-                <span>👤 {analyst_name}</span>
-                <span>📊 {analysis_type.capitalize()} Analysis</span>
+                <span>📅 {esc(timestamp)}</span>
+                <span>👤 {esc(analyst_name)}</span>
+                <span>📊 {esc(analysis_type.capitalize())} Analysis</span>
             </div>
         </header>
 '''
@@ -325,8 +331,8 @@ def generate_report_html(
             html += f'''
             <div class="spof-item">
                 <span class="spof-icon">⚠️</span>
-                <strong>{spof['name']}</strong>
-                <span style="color: #666;">({spof['id']})</span>
+                <strong>{esc(spof['name'])}</strong>
+                <span style="color: #666;">({esc(spof['id'])})</span>
             </div>
 '''
         html += '''
@@ -359,7 +365,7 @@ def generate_report_html(
             <h3>Order {order} ({len(cs_list)} cut sets)</h3>
 '''
             for cs in cs_list[:10]:  # Limit to first 10 per order
-                event_names = [e['name'] for e in cs.get('events', [])]
+                event_names = [esc(e['name']) for e in cs.get('events', [])]
                 prob = cs.get('probability')
                 prob_str = f" — P = {prob:.2e}" if prob else ""
                 order_class = f"order-{order}" if order <= 2 else ""
@@ -397,7 +403,7 @@ def generate_report_html(
             bar_width = min(fv * 100, 100)
             html += f'''
             <div class="importance-bar">
-                <span class="name">{name}</span>
+                <span class="name">{esc(name)}</span>
                 <div class="bar-container">
                     <div class="bar" style="width: {bar_width}%"></div>
                 </div>
@@ -430,7 +436,7 @@ def generate_report_html(
             html += f'''
             <div class="recommendation">
                 <h4>Focus on Dominant Contributor</h4>
-                <p><strong>{top_contributor[1].get('name')}</strong> contributes 
+                <p><strong>{esc(top_contributor[1].get('name'))}</strong> contributes 
                 {top_contributor[1].get('fussell_vesely', 0):.0%} to the top event probability.
                 Improving reliability of this component will have the greatest impact.</p>
             </div>
@@ -476,10 +482,10 @@ def generate_report_html(
             source = event.get('data_source', 'Not specified')
             html += f'''
                     <tr>
-                        <td>{event['id']}</td>
-                        <td>{event['name']}</td>
-                        <td>{prob_str}</td>
-                        <td>{source}</td>
+                        <td>{esc(event['id'])}</td>
+                        <td>{esc(event['name'])}</td>
+                        <td>{esc(prob_str)}</td>
+                        <td>{esc(source)}</td>
                     </tr>
 '''
         html += '''

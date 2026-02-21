@@ -19,12 +19,18 @@ Input JSON format (output from calculate_pareto.py):
 }
 """
 
+import html as html_mod
 import json
 import argparse
 import sys
 from datetime import datetime
 from typing import Dict, Any
 from pathlib import Path
+
+
+def esc(val):
+    """HTML-escape a value for safe interpolation into HTML."""
+    return html_mod.escape(str(val)) if val else ''
 
 
 def generate_svg_inline(results, total, threshold, vital_few_count, title="Pareto Chart"):
@@ -118,7 +124,7 @@ def generate_html_report(
         table_rows.append(f'''
             <tr class="{row_class}">
                 <td>{r['rank']}</td>
-                <td>{r['category']}</td>
+                <td>{esc(r['category'])}</td>
                 <td class="number">{r['value']:,.0f}</td>
                 <td class="number">{r['percentage']:.1f}%</td>
                 <td class="number">{r['cumulative_percentage']:.1f}%</td>
@@ -127,7 +133,7 @@ def generate_html_report(
         ''')
     
     # Generate vital few list
-    vital_list = '\n'.join([f'<li>{cat}</li>' for cat in vital_few.get('categories', [])])
+    vital_list = '\n'.join([f'<li>{esc(cat)}</li>' for cat in vital_few.get('categories', [])])
     
     # Generate SVG
     svg_chart = generate_svg_inline(
@@ -324,11 +330,11 @@ def generate_html_report(
     <div class="report-container">
         <div class="header">
             <h1>Pareto Analysis Report</h1>
-            <div class="subtitle">{problem_statement}</div>
+            <div class="subtitle">{esc(problem_statement)}</div>
             <div class="meta-info">
-                <span>Generated: {timestamp}</span>
-                {f'<span>Analyst: {analyst}</span>' if analyst else ''}
-                <span>Measurement: {measurement_type.title()}</span>
+                <span>Generated: {esc(timestamp)}</span>
+                {f'<span>Analyst: {esc(analyst)}</span>' if analyst else ''}
+                <span>Measurement: {esc(measurement_type.title())}</span>
             </div>
         </div>
         
@@ -357,7 +363,7 @@ def generate_html_report(
                     <span class="effect-badge">{effect_label}</span>
                 </p>
                 <p style="text-align: center; margin-top: 10px; color: #7f8c8d;">
-                    {pareto_description}
+                    {esc(pareto_description)}
                 </p>
             </div>
             
@@ -414,7 +420,7 @@ def generate_html_report(
                 </div>
             </div>
             
-            {f'<div class="section"><h2>Additional Notes</h2><p>{notes}</p></div>' if notes else ''}
+            {f'<div class="section"><h2>Additional Notes</h2><p>{esc(notes)}</p></div>' if notes else ''}
         </div>
         
         <div class="footer">
