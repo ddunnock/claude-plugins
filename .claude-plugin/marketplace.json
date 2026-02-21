@@ -64,7 +64,7 @@
       "name": "five-whys-analysis",
       "source": "./skills/five-whys-analysis",
       "description": "Conduct rigorous 5 Whys root cause analysis with guided questioning, quality scoring, and professional report generation. Includes validation tests and countermeasure development.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "category": "quality-engineering",
       "tags": ["5-whys", "root-cause", "rca", "quality"]
     },

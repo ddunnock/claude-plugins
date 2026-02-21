@@ -680,6 +680,17 @@ def interactive_input() -> AnalysisData:
     return create_sample_data()
 
 
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> None:
+    """Validate file path: reject traversal and restrict extensions."""
+    if ".." in filepath:
+        print(f"Error: Path traversal not allowed in {label}: {filepath}", file=sys.stderr)
+        sys.exit(1)
+    ext = Path(filepath).suffix.lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got '{ext}'", file=sys.stderr)
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Generate 5 Whys Analysis HTML Report"
@@ -706,9 +717,13 @@ def main():
         action="store_true",
         help="Generate report with sample data",
     )
-    
+
     args = parser.parse_args()
-    
+
+    if args.file:
+        _validate_path(args.file, {".json"}, "input file")
+    _validate_path(args.output, {".html", ".htm"}, "output file")
+
     # Get analysis data
     if args.sample:
         data = create_sample_data()

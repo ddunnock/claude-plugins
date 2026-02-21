@@ -14,6 +14,7 @@ Usage:
 import argparse
 import json
 import sys
+from pathlib import Path
 from dataclasses import dataclass
 from typing import Optional
 
@@ -264,6 +265,17 @@ def interactive_scoring() -> AnalysisScores:
     return AnalysisScores(**scores)
 
 
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> None:
+    """Validate file path: reject traversal and restrict extensions."""
+    if ".." in filepath:
+        print(f"Error: Path traversal not allowed in {label}: {filepath}", file=sys.stderr)
+        sys.exit(1)
+    ext = Path(filepath).suffix.lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got '{ext}'", file=sys.stderr)
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Calculate 5 Whys Analysis Quality Score"
@@ -288,9 +300,14 @@ def main():
         action="store_true",
         help="Only output JSON, no formatted report",
     )
-    
+
     args = parser.parse_args()
-    
+
+    if args.file:
+        _validate_path(args.file, {".json"}, "input file")
+    if args.output:
+        _validate_path(args.output, {".json"}, "output file")
+
     # Get scores from input source
     if args.json:
         try:

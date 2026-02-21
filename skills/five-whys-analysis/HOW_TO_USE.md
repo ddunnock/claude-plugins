@@ -80,11 +80,6 @@ The skill applies these tests:
 
 ## Python Scripts
 
-### Run Interactive Analysis
-```bash
-python scripts/run_analysis.py --interactive
-```
-
 ### Score an Analysis
 ```bash
 python scripts/score_analysis.py --interactive
@@ -94,7 +89,7 @@ python scripts/score_analysis.py --json '{"problem_definition": 4, "causal_chain
 
 ### Generate Report
 ```bash
-python scripts/generate_report.py --file analysis.json --format html
+python scripts/generate_report.py --file analysis.json --output report.html
 ```
 
 ## Common Pitfalls
