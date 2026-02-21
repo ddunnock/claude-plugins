@@ -14,12 +14,18 @@ Usage:
     python generate_report.py --input fmea_data.json --output report.html --include-quality
 """
 
+import html
 import json
 import argparse
 import sys
 from datetime import datetime
 from typing import Dict, List, Optional
 from pathlib import Path
+
+
+def esc(value) -> str:
+    """Escape a value for safe HTML interpolation."""
+    return html.escape(str(value)) if value else ""
 
 # Import calculation functions
 try:
@@ -70,14 +76,14 @@ def get_severity_color(severity: int) -> str:
 def generate_html_report(fmea_data: Dict, include_quality: bool = False) -> str:
     """Generate complete HTML report from FMEA data."""
     
-    # Extract data
-    title = fmea_data.get("title", "FMEA Report")
-    fmea_type = fmea_data.get("fmea_type", "FMEA")
-    project = fmea_data.get("project", "")
-    prepared_by = fmea_data.get("prepared_by", "")
-    date = fmea_data.get("date", datetime.now().strftime("%Y-%m-%d"))
-    revision = fmea_data.get("revision", "1.0")
-    scope = fmea_data.get("scope", "")
+    # Extract and escape data for safe HTML output
+    title = esc(fmea_data.get("title", "FMEA Report"))
+    fmea_type = esc(fmea_data.get("fmea_type", "FMEA"))
+    project = esc(fmea_data.get("project", ""))
+    prepared_by = esc(fmea_data.get("prepared_by", ""))
+    date = esc(fmea_data.get("date", datetime.now().strftime("%Y-%m-%d")))
+    revision = esc(fmea_data.get("revision", "1.0"))
+    scope = esc(fmea_data.get("scope", ""))
     failure_modes = fmea_data.get("failure_modes", [])
     
     # Calculate statistics
@@ -458,11 +464,19 @@ def generate_html_report(fmea_data: Dict, include_quality: bool = False) -> str:
     
     # Add failure mode rows
     for fm in failure_modes:
-        fm_id = fm.get("id", "")
-        function = fm.get("function", "")[:50] + "..." if len(fm.get("function", "")) > 50 else fm.get("function", "")
-        failure_mode = fm.get("failure_mode", "")[:40] + "..." if len(fm.get("failure_mode", "")) > 40 else fm.get("failure_mode", "")
-        effect = fm.get("effect", "")[:40] + "..." if len(fm.get("effect", "")) > 40 else fm.get("effect", "")
-        cause = fm.get("cause", "")[:40] + "..." if len(fm.get("cause", "")) > 40 else fm.get("cause", "")
+        fm_id = esc(fm.get("id", ""))
+        raw_function = fm.get("function", "")
+        raw_failure_mode = fm.get("failure_mode", "")
+        raw_effect = fm.get("effect", "")
+        raw_cause = fm.get("cause", "")
+        function = esc(raw_function[:50] + "..." if len(raw_function) > 50 else raw_function)
+        failure_mode = esc(raw_failure_mode[:40] + "..." if len(raw_failure_mode) > 40 else raw_failure_mode)
+        effect = esc(raw_effect[:40] + "..." if len(raw_effect) > 40 else raw_effect)
+        cause = esc(raw_cause[:40] + "..." if len(raw_cause) > 40 else raw_cause)
+        function_full = esc(raw_function)
+        failure_mode_full = esc(raw_failure_mode)
+        effect_full = esc(raw_effect)
+        cause_full = esc(raw_cause)
         
         s = fm.get("severity", 1)
         o = fm.get("occurrence", 1)
@@ -495,10 +509,10 @@ def generate_html_report(fmea_data: Dict, include_quality: bool = False) -> str:
         html += f"""
                         <tr>
                             <td>{fm_id}</td>
-                            <td title="{fm.get('function', '')}">{function}</td>
-                            <td title="{fm.get('failure_mode', '')}">{failure_mode}</td>
-                            <td title="{fm.get('effect', '')}">{effect}</td>
-                            <td title="{fm.get('cause', '')}">{cause}</td>
+                            <td title="{function_full}">{function}</td>
+                            <td title="{failure_mode_full}">{failure_mode}</td>
+                            <td title="{effect_full}">{effect}</td>
+                            <td title="{cause_full}">{cause}</td>
                             <td class="rating-cell {s_class}">{s}</td>
                             <td class="rating-cell">{o}</td>
                             <td class="rating-cell">{d}</td>
@@ -537,27 +551,28 @@ def generate_html_report(fmea_data: Dict, include_quality: bool = False) -> str:
                     <tbody>
 """
         for fm in actions:
-            fm_id = fm.get("id", "")
-            failure_mode = fm.get("failure_mode", "")[:30] + "..." if len(fm.get("failure_mode", "")) > 30 else fm.get("failure_mode", "")
-            
+            fm_id = esc(fm.get("id", ""))
+            raw_fm = fm.get("failure_mode", "")
+            failure_mode = esc(raw_fm[:30] + "..." if len(raw_fm) > 30 else raw_fm)
+
             s = fm.get("severity", 1)
             o = fm.get("occurrence", 1)
             d = fm.get("detection", 1)
             ap = determine_action_priority(s, o, d, fmea_type)
             if hasattr(ap, 'value'):
                 ap = ap.value
-            
-            action = fm.get("recommended_action", "")
-            owner = fm.get("action_owner", "TBD")
-            target = fm.get("target_date", "TBD")
-            
+
+            action = esc(fm.get("recommended_action", ""))
+            owner = esc(fm.get("action_owner", "TBD"))
+            target = esc(fm.get("target_date", "TBD"))
+
             if fm.get("action_taken"):
                 status_class = "status-complete"
                 status_text = "Complete"
             else:
                 status_class = "status-pending"
                 status_text = "Open"
-            
+
             html += f"""
                         <tr>
                             <td>{fm_id}</td>
@@ -591,15 +606,29 @@ def generate_html_report(fmea_data: Dict, include_quality: bool = False) -> str:
     return html
 
 
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> None:
+    """Validate file path: reject traversal and restrict extensions."""
+    if ".." in filepath:
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = Path(filepath).suffix.lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got '{ext}'")
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(description="FMEA Report Generator")
     parser.add_argument("--input", "-i", required=True, help="Input JSON file with FMEA data")
     parser.add_argument("--output", "-o", required=True, help="Output HTML file")
-    parser.add_argument("--include-quality", action="store_true", 
+    parser.add_argument("--include-quality", action="store_true",
                         help="Include quality assessment section")
-    
+
     args = parser.parse_args()
-    
+
+    _validate_path(args.input, {".json"}, "input file")
+    _validate_path(args.output, {".html", ".htm"}, "output file")
+
     # Load data
     try:
         with open(args.input, 'r') as f:

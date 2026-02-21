@@ -13,6 +13,7 @@ Usage:
 import json
 import argparse
 import sys
+from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 from dataclasses import dataclass, asdict
 from enum import Enum
@@ -304,27 +305,42 @@ def interactive_mode():
     print("\nExiting calculator.")
 
 
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> None:
+    """Validate file path: reject traversal and restrict extensions."""
+    if ".." in filepath:
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = Path(filepath).suffix.lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got '{ext}'")
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(description="FMEA Risk Calculator")
     parser.add_argument("--input", "-i", help="Input JSON file with FMEA data")
     parser.add_argument("--output", "-o", help="Output JSON file for results")
-    parser.add_argument("--mode", "-m", choices=["rpn", "ap", "summary", "all"], 
+    parser.add_argument("--mode", "-m", choices=["rpn", "ap", "summary", "all"],
                         default="all", help="Calculation mode")
-    parser.add_argument("--interactive", action="store_true", 
+    parser.add_argument("--interactive", action="store_true",
                         help="Run in interactive mode")
-    parser.add_argument("--type", "-t", choices=["DFMEA", "PFMEA"], 
+    parser.add_argument("--type", "-t", choices=["DFMEA", "PFMEA"],
                         default="DFMEA", help="FMEA type")
-    
+
     args = parser.parse_args()
-    
+
     if args.interactive:
         interactive_mode()
         return
-    
+
     if not args.input:
         print("Error: --input file required (or use --interactive mode)")
         sys.exit(1)
-    
+
+    _validate_path(args.input, {".json"}, "input file")
+    if args.output:
+        _validate_path(args.output, {".json"}, "output file")
+
     # Load data
     try:
         failure_modes, fmea_type = load_fmea_data(args.input)

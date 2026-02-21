@@ -18,6 +18,7 @@ Usage:
 import json
 import argparse
 import sys
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 
@@ -416,20 +417,34 @@ def format_assessment_report(assessment: QualityAssessment) -> str:
     return "\n".join(lines)
 
 
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> None:
+    """Validate file path: reject traversal and restrict extensions."""
+    if ".." in filepath:
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = Path(filepath).suffix.lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got '{ext}'")
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(description="FMEA Quality Scorer")
     parser.add_argument("--input", "-i", help="Input JSON file with FMEA data")
     parser.add_argument("--output", "-o", help="Output file for results")
-    parser.add_argument("--interactive", action="store_true", 
+    parser.add_argument("--interactive", action="store_true",
                         help="Run interactive scoring")
-    parser.add_argument("--format", "-f", choices=["json", "text"], 
+    parser.add_argument("--format", "-f", choices=["json", "text"],
                         default="text", help="Output format")
-    
+
     args = parser.parse_args()
-    
+
     if args.interactive:
         assessment = interactive_scoring()
     elif args.input:
+        _validate_path(args.input, {".json"}, "input file")
+        if args.output:
+            _validate_path(args.output, {".json", ".txt"}, "output file")
         try:
             with open(args.input, 'r') as f:
                 fmea_data = json.load(f)

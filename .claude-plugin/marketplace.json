@@ -104,7 +104,7 @@
       "name": "fmea-analysis",
       "source": "./skills/fmea-analysis",
       "description": "Conduct FMEA for systematic failure mode identification using AIAG-VDA 7-step methodology. Supports DFMEA, PFMEA, and FMEA-MSR with Action Priority risk assessment.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "category": "quality-engineering",
       "tags": ["fmea", "dfmea", "pfmea", "risk-assessment", "aiag-vda"]
     },
