@@ -46,6 +46,10 @@ fishbone-diagram/
 
 ## Version History
 
+### v1.0.1
+- Add path validation to export_data.py, generate_diagram.py, and generate_report.py
+- Add Input Handling and Content Security section to SKILL.md
+
 ### v1.0.0 (Current)
 - Initial release with 6-phase workflow
 - Multiple category frameworks

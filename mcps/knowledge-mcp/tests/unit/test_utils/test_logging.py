@@ -24,6 +24,7 @@ from knowledge_mcp.utils.logging import (
     get_logger,
     setup_logging,
 )
+from conftest import TEST_OPENAI_API_KEY, TEST_QDRANT_API_KEY, TEST_SK_API_KEY, TEST_COHERE_API_KEY
 
 
 class TestSensitiveDataFilter:
@@ -83,11 +84,12 @@ class TestSensitiveDataFilter:
         self, filter_instance: SensitiveDataFilter
     ) -> None:
         """Verify args dict values are redacted for sensitive keys."""
+        test_secret = TEST_OPENAI_API_KEY  # Intentionally secret-like for redaction testing
         args_dict = {
-            "api_key": "sk-secret123",
+            "api_key": test_secret,
             "username": "john",
-            "password": "mypass123",
-            "token": "bearer_abc",
+            "password": test_secret,
+            "token": test_secret,
         }
         record = self._create_record("Config: %(api_key)s", args_dict)
         filter_instance.filter(record)
@@ -247,12 +249,12 @@ class TestJSONFormatter:
     def test_includes_extra_fields(self, formatter: JSONFormatter) -> None:
         """Verify custom extra fields are included."""
         record = self._create_record("Processing")
-        record.request_id = "abc123"
-        record.user_id = "user456"
+        record.request_id = "req-abc-123"
+        record.user_id = "usr-test-456"
         output = formatter.format(record)
         parsed = json.loads(output)
-        assert parsed["request_id"] == "abc123"
-        assert parsed["user_id"] == "user456"
+        assert parsed["request_id"] == "req-abc-123"
+        assert parsed["user_id"] == "usr-test-456"
 
     def test_excludes_standard_attrs(self, formatter: JSONFormatter) -> None:
         """Verify standard LogRecord attrs are not duplicated."""

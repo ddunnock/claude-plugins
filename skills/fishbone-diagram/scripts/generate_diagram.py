@@ -37,6 +37,7 @@ import json
 import math
 import sys
 from datetime import datetime
+from pathlib import Path
 
 
 def escape_xml(text):
@@ -362,6 +363,19 @@ def generate_svg(data, width=1200, height=800):
     return "".join(svg_parts)
 
 
+
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> None:
+    """Validate file path: reject traversal and restrict extensions."""
+    if ".." in filepath:
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = Path(filepath).suffix.lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Generate SVG Fishbone (Ishikawa) Diagram"
@@ -401,6 +415,10 @@ def main():
     )
     
     args = parser.parse_args()
+
+    if args.file:
+        _validate_path(args.file, {'.json'}, "input file")
+    _validate_path(args.output, {'.svg'}, "output file")
     
     # Get data from appropriate source
     if args.sample:

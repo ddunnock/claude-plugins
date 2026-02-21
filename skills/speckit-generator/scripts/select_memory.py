@@ -211,7 +211,7 @@ def get_file_hash(path: Path) -> str:
     """Get a simple hash of file contents for comparison."""
     import hashlib
     try:
-        return hashlib.md5(path.read_bytes()).hexdigest()
+        return hashlib.sha256(path.read_bytes()).hexdigest()
     except Exception:
         return ""
 

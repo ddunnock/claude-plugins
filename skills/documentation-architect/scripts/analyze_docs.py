@@ -14,6 +14,7 @@ from pathlib import Path
 from dataclasses import dataclass, asdict
 from typing import Optional
 from datetime import datetime
+import sys
 
 
 @dataclass
@@ -280,6 +281,19 @@ def output_markdown(documents: list, summary: dict, output_path: Path):
     print(f"Markdown output written to {output_path}")
 
 
+
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> None:
+    """Validate file path: reject traversal and restrict extensions."""
+    if ".." in filepath:
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = Path(filepath).suffix.lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(description='Analyze documentation structure')
     parser.add_argument('source_dir', type=Path, help='Directory containing documentation')
@@ -289,6 +303,8 @@ def main():
                         help='Output format')
     
     args = parser.parse_args()
+
+    _validate_path(str(args.output), {'.md', '.json'}, "output file")
     
     if not args.source_dir.exists():
         print(f"Error: Directory {args.source_dir} does not exist")

@@ -24,6 +24,7 @@ import argparse
 import sys
 from datetime import datetime
 from typing import Dict, Any
+from pathlib import Path
 
 
 def generate_svg_inline(results, total, threshold, vital_few_count, title="Pareto Chart"):
@@ -426,6 +427,19 @@ def generate_html_report(
     return html
 
 
+
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> None:
+    """Validate file path: reject traversal and restrict extensions."""
+    if ".." in filepath:
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = Path(filepath).suffix.lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Pareto Report Generator")
     parser.add_argument("--input", "-i", required=True, help="Input JSON file (from calculate_pareto.py)")
@@ -434,6 +448,9 @@ def main():
     parser.add_argument("--notes", "-n", default="", help="Additional notes")
     
     args = parser.parse_args()
+
+    _validate_path(args.input, {'.json'}, "input file")
+    _validate_path(args.output, {'.htm', '.html'}, "output file")
     
     # Load input data
     try:

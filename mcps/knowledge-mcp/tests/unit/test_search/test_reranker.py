@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from knowledge_mcp.search.models import SearchResult
+from conftest import TEST_OPENAI_API_KEY, TEST_QDRANT_API_KEY, TEST_SK_API_KEY, TEST_COHERE_API_KEY
 
 
 def make_result(id: str, content: str, score: float) -> SearchResult:
@@ -49,9 +50,9 @@ class TestRerankerInit:
         with patch.dict(sys.modules, {"cohere": mock_cohere}):
             from knowledge_mcp.search.reranker import Reranker
 
-            reranker = Reranker(provider="cohere", api_key="test-key")
+            reranker = Reranker(provider="cohere", api_key=TEST_COHERE_API_KEY)
             assert reranker._provider == "cohere"
-            mock_cohere.ClientV2.assert_called_once_with(api_key="test-key")
+            mock_cohere.ClientV2.assert_called_once_with(api_key=TEST_COHERE_API_KEY)
 
     def test_cohere_init_custom_model(self) -> None:
         """Test Cohere provider accepts custom model name."""
@@ -60,7 +61,7 @@ class TestRerankerInit:
             from knowledge_mcp.search.reranker import Reranker
 
             reranker = Reranker(
-                provider="cohere", api_key="test-key", model="rerank-multilingual-v3.0"
+                provider="cohere", api_key=TEST_COHERE_API_KEY, model="rerank-multilingual-v3.0"
             )
             assert reranker._model_name == "rerank-multilingual-v3.0"
 
@@ -239,7 +240,7 @@ class TestRerankerRerank:
         with patch.dict(sys.modules, {"cohere": mock_cohere}):
             from knowledge_mcp.search.reranker import Reranker
 
-            reranker = Reranker(provider="cohere", api_key="test-key")
+            reranker = Reranker(provider="cohere", api_key=TEST_COHERE_API_KEY)
 
             results = [
                 make_result("1", "content 1", 0.9),

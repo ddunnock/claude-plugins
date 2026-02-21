@@ -83,7 +83,7 @@ class LearningService:
     def create_context_hash(self, context: str) -> str:
         """Create a hash for context similarity matching."""
         normalized = " ".join(context.lower().split())
-        return hashlib.md5(normalized.encode()).hexdigest()[:16]
+        return hashlib.sha256(normalized.encode()).hexdigest()[:16]
 
     def create_learning(
         self,

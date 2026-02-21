@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 from knowledge_mcp.utils.config import KnowledgeConfig, load_config
+from conftest import TEST_OPENAI_API_KEY, TEST_QDRANT_API_KEY, TEST_SK_API_KEY, TEST_COHERE_API_KEY
 
 
 class TestKnowledgeConfig:
@@ -38,7 +39,7 @@ class TestKnowledgeConfig:
     def test_validate_qdrant_missing_url(self) -> None:
         """Test validation fails when Qdrant URL is missing."""
         config = KnowledgeConfig(
-            openai_api_key="sk-test",
+            openai_api_key=TEST_SK_API_KEY,
             vector_store="qdrant",
             qdrant_url="",
         )
@@ -50,10 +51,10 @@ class TestKnowledgeConfig:
     def test_validate_success(self) -> None:
         """Test validation passes with complete config."""
         config = KnowledgeConfig(
-            openai_api_key="sk-test",
+            openai_api_key=TEST_SK_API_KEY,
             vector_store="qdrant",
             qdrant_url="https://test.qdrant.io",
-            qdrant_api_key="test-key",
+            qdrant_api_key=TEST_QDRANT_API_KEY,
             offline_mode=True,  # Skip DATABASE_URL requirement for unit test
         )
 
@@ -64,10 +65,10 @@ class TestKnowledgeConfig:
     def test_validate_requires_database_url_when_online(self) -> None:
         """Test validation requires DATABASE_URL when offline_mode=False."""
         config = KnowledgeConfig(
-            openai_api_key="sk-test",
+            openai_api_key=TEST_SK_API_KEY,
             vector_store="qdrant",
             qdrant_url="https://test.qdrant.io",
-            qdrant_api_key="test-key",
+            qdrant_api_key=TEST_QDRANT_API_KEY,
             offline_mode=False,
         )
 
@@ -79,7 +80,7 @@ class TestKnowledgeConfig:
         """Test that overlap cannot exceed minimum chunk size."""
         with pytest.raises(ValueError, match="chunk_overlap must be less than"):
             KnowledgeConfig(
-                openai_api_key="sk-test",
+                openai_api_key=TEST_SK_API_KEY,
                 chunk_size_min=200,
                 chunk_overlap=250,  # Greater than min
             )
@@ -90,14 +91,14 @@ class TestVersionedCollectionName:
 
     def test_versioned_collection_name_default(self) -> None:
         """Test versioned collection name with default model."""
-        config = KnowledgeConfig(openai_api_key="test-key")
+        config = KnowledgeConfig(openai_api_key=TEST_OPENAI_API_KEY)
         # Default model is text-embedding-3-small
         assert config.versioned_collection_name == "se_knowledge_base_v1_te3small"
 
     def test_versioned_collection_name_custom_base(self) -> None:
         """Test versioned collection name with custom base name."""
         config = KnowledgeConfig(
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             qdrant_collection="my_collection",
         )
         assert config.versioned_collection_name == "my_collection_v1_te3small"
@@ -105,14 +106,14 @@ class TestVersionedCollectionName:
     def test_versioned_collection_name_different_model(self) -> None:
         """Test versioned collection name with different embedding model."""
         config = KnowledgeConfig(
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             embedding_model="text-embedding-3-large",
         )
         assert config.versioned_collection_name == "se_knowledge_base_v1_te3large"
 
     def test_versioned_chromadb_collection_name(self) -> None:
         """Test ChromaDB versioned collection name."""
-        config = KnowledgeConfig(openai_api_key="test-key")
+        config = KnowledgeConfig(openai_api_key=TEST_OPENAI_API_KEY)
         assert config.versioned_chromadb_collection_name == "se_knowledge_base_v1_te3small"
 
 
@@ -121,7 +122,7 @@ class TestCacheConfiguration:
 
     def test_cache_defaults(self) -> None:
         """Test that cache configuration has correct defaults."""
-        config = KnowledgeConfig(openai_api_key="test-key")
+        config = KnowledgeConfig(openai_api_key=TEST_OPENAI_API_KEY)
 
         assert config.cache_dir == Path("./data/embeddings/cache")
         assert config.cache_enabled is True
@@ -131,14 +132,14 @@ class TestCacheConfiguration:
         """Test that cache_size_limit enforces minimum of 100MB."""
         with pytest.raises(ValueError):
             KnowledgeConfig(
-                openai_api_key="test-key",
+                openai_api_key=TEST_OPENAI_API_KEY,
                 cache_size_limit=50 * 1024 * 1024,  # 50MB - below minimum
             )
 
     def test_cache_configuration_from_values(self) -> None:
         """Test creating config with custom cache values."""
         config = KnowledgeConfig(
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             cache_dir=Path("/custom/cache/path"),
             cache_enabled=False,
             cache_size_limit=500 * 1024 * 1024,  # 500MB
@@ -154,7 +155,7 @@ class TestTokenTrackingConfiguration:
 
     def test_token_tracking_defaults(self) -> None:
         """Test that token tracking configuration has correct defaults."""
-        config = KnowledgeConfig(openai_api_key="test-key")
+        config = KnowledgeConfig(openai_api_key=TEST_OPENAI_API_KEY)
 
         assert config.token_log_file == Path("./data/token_usage.json")
         assert config.token_tracking_enabled is True
@@ -164,14 +165,14 @@ class TestTokenTrackingConfiguration:
         """Test that daily_token_warning_threshold must be non-negative."""
         with pytest.raises(ValueError):
             KnowledgeConfig(
-                openai_api_key="test-key",
+                openai_api_key=TEST_OPENAI_API_KEY,
                 daily_token_warning_threshold=-1000,
             )
 
     def test_token_tracking_configuration_from_values(self) -> None:
         """Test creating config with custom token tracking values."""
         config = KnowledgeConfig(
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             token_log_file=Path("/custom/tokens.json"),
             token_tracking_enabled=False,
             daily_token_warning_threshold=500_000,

@@ -16,6 +16,7 @@ import argparse
 from typing import Dict, List, Tuple, Optional, Any
 from dataclasses import dataclass
 import math
+from pathlib import Path
 
 
 @dataclass
@@ -283,6 +284,19 @@ def generate_svg(
     return '\n'.join(svg_parts)
 
 
+
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> None:
+    """Validate file path: reject traversal and restrict extensions."""
+    if ".." in filepath:
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = Path(filepath).suffix.lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Generate Fault Tree Diagram")
     parser.add_argument("input_file", help="JSON input file with fault tree structure")
@@ -296,6 +310,9 @@ def main():
                        help="Vertical spacing between levels (default: 150)")
     
     args = parser.parse_args()
+
+    _validate_path(args.input_file, {'.json'}, "input file")
+    _validate_path(args.output_file, {'.png', '.svg'}, "output file")
     
     # Load tree data
     with open(args.input_file, 'r') as f:

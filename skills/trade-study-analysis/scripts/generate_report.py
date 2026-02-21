@@ -16,6 +16,7 @@ import argparse
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional
+import sys
 
 
 class ReportGenerator:
@@ -464,6 +465,19 @@ class ReportGenerator:
             raise ValueError(f"Unsupported format: {format}")
 
 
+
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> None:
+    """Validate file path: reject traversal and restrict extensions."""
+    if ".." in filepath:
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = Path(filepath).suffix.lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='Generate trade study report (requires all gates to pass)'
@@ -483,6 +497,12 @@ def main():
                        help='Only check gates, do not generate')
     
     args = parser.parse_args()
+
+    _validate_path(args.study_data, {'.json'}, "study data file")
+    _validate_path(args.output, {'.md', '.html'}, "output file")
+    _validate_path(args.sources, {'.json'}, "sources file")
+    _validate_path(args.assumptions, {'.json'}, "assumptions file")
+    _validate_path(args.diagrams, {'.json'}, "diagrams file")
     
     # Load data
     with open(args.study_data) as f:

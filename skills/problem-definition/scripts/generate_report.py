@@ -17,6 +17,7 @@ import sys
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from typing import Optional
+from pathlib import Path
 
 
 @dataclass
@@ -356,6 +357,19 @@ def interactive_create() -> ProblemDefinition:
     return definition
 
 
+
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> None:
+    """Validate file path: reject traversal and restrict extensions."""
+    if ".." in filepath:
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = Path(filepath).suffix.lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Generate Problem Definition Report"
@@ -386,6 +400,11 @@ def main():
     )
 
     args = parser.parse_args()
+
+    if args.file:
+        _validate_path(args.file, {'.json'}, "input file")
+    if args.output:
+        _validate_path(args.output, {'.htm', '.md', '.html'}, "output file")
 
     # Get definition from input source
     if args.file:

@@ -10,6 +10,7 @@ import argparse
 import json
 from pathlib import Path
 from datetime import datetime
+import sys
 
 
 # Default target structure based on Diátaxis
@@ -293,6 +294,19 @@ def generate_markdown(items: list, effort: dict, output_path: Path):
     print(f"WBS written to {output_path}")
 
 
+
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> None:
+    """Validate file path: reject traversal and restrict extensions."""
+    if ".." in filepath:
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = Path(filepath).suffix.lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(description='Generate work breakdown structure')
     parser.add_argument('--inventory', '-i', type=Path, required=True,
@@ -303,6 +317,8 @@ def main():
                         help='Optional YAML file defining target structure')
     
     args = parser.parse_args()
+
+    _validate_path(str(args.output), {'.md', '.json'}, "output file")
     
     if not args.inventory.exists():
         print(f"Error: Inventory file {args.inventory} not found")

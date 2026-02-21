@@ -12,7 +12,15 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock
 
+import os
+
 import pytest
+
+# Test constants — not real credentials, used only in test fixtures
+TEST_OPENAI_API_KEY = os.environ.get("TEST_OPENAI_API_KEY", "test-api-key-not-real")
+TEST_QDRANT_API_KEY = os.environ.get("TEST_QDRANT_API_KEY", "test-qdrant-key-not-real")
+TEST_SK_API_KEY = os.environ.get("TEST_SK_API_KEY", "sk-test-not-real-key")
+TEST_COHERE_API_KEY = os.environ.get("TEST_COHERE_API_KEY", "test-cohere-key-not-real")
 
 if TYPE_CHECKING:
     from knowledge_mcp.models.chunk import KnowledgeChunk
@@ -25,7 +33,7 @@ def mock_config() -> KnowledgeConfig:
     from knowledge_mcp.utils.config import KnowledgeConfig
 
     return KnowledgeConfig(
-        openai_api_key="test-api-key",
+        openai_api_key=TEST_OPENAI_API_KEY,
         embedding_model="text-embedding-3-small",
         embedding_dimensions=1536,
         vector_store="chromadb",

@@ -16,6 +16,7 @@ import argparse
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 import base64
+from pathlib import Path
 
 
 def generate_report_html(
@@ -501,6 +502,19 @@ def generate_report_html(
     return html
 
 
+
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> None:
+    """Validate file path: reject traversal and restrict extensions."""
+    if ".." in filepath:
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = Path(filepath).suffix.lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Generate FTA Report")
     parser.add_argument("tree_file", help="JSON file with fault tree structure")
@@ -511,6 +525,12 @@ def main():
     parser.add_argument("--analyst", default="FTA Analyst", help="Analyst name for report")
     
     args = parser.parse_args()
+
+    _validate_path(args.tree_file, {'.json'}, "tree file")
+    _validate_path(args.results_file, {'.json'}, "results file")
+    _validate_path(args.output_file, {'.htm', '.html'}, "output file")
+    if args.svg:
+        _validate_path(args.svg, {'.svg'}, "SVG file")
     
     # Load input files
     with open(args.tree_file, 'r') as f:

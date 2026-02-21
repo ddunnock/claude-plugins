@@ -51,6 +51,10 @@ problem-definition/
 
 ## Version History
 
+### v1.0.1
+- Add path validation to generate_report.py
+- Add Input Handling and Content Security section to SKILL.md
+
 ### v1.0.0 (Current)
 - Initial release with 5W2H and IS/IS NOT frameworks
 - Structured elicitation workflow

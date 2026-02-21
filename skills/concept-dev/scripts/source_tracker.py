@@ -13,6 +13,7 @@ import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, List, Dict, Any
+import sys
 
 
 class SourceTracker:
@@ -422,6 +423,19 @@ def _sync_to_state(registry_path: str, state_path: str):
     tmp.rename(state_file)
 
 
+
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> None:
+    """Validate file path: reject traversal and restrict extensions."""
+    if ".." in filepath:
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = Path(filepath).suffix.lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='Manage source registry for concept development'
@@ -475,6 +489,11 @@ def main():
                        help='Path to source registry file')
 
     args = parser.parse_args()
+
+    _validate_path(args.registry, {'.json'}, "registry file")
+    _validate_path(args.state, {'.json'}, "state file")
+    if args.command == "export" and hasattr(args, "output") and args.output:
+        _validate_path(args.output, {'.md', '.json'}, "output file")
 
     tracker = SourceTracker(args.registry)
 

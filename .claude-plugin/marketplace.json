@@ -10,7 +10,8 @@
     {
       "name": "documentation-architect",
       "source": "./skills/documentation-architect",
-      "description": "Transform documentation using the Diátaxis framework"
+      "description": "Transform documentation using the Di\u00e1taxis framework",
+      "version": "1.0.1"
     },
     {
       "name": "research-opportunity-investigator",
@@ -27,7 +28,7 @@
       "name": "speckit-generator",
       "source": "./skills/speckit-generator",
       "description": "Specification and task management with PLANS taxonomy, ADR-style decisions, SMART acceptance criteria, SEAMS clarification, anti-pattern detection (50 patterns), 4-level verification (stub detection + wiring checks), execution orchestration (deviation rules, checkpoint taxonomy, auth gates, session continuity), tech-specific designer agents, git checkpoints, and session-memory hooks. Outputs to speckit/ directory.",
-      "version": "2.1.0"
+      "version": "2.1.1"
     },
     {
       "name": "streaming-output",
@@ -37,12 +38,14 @@
     {
       "name": "trade-study-analysis",
       "source": "./skills/trade-study-analysis",
-      "description": "Systematic trade study using DAU 9-Step Process"
+      "description": "Systematic trade study using DAU 9-Step Process",
+      "version": "1.0.1"
     },
     {
       "name": "session-memory",
       "source": "./mcps/session-memory",
-      "description": "Persistent session memory with searchable storage and checkpoints"
+      "description": "Persistent session memory with searchable storage and checkpoints",
+      "version": "1.0.1"
     },
     {
       "name": "rcca-master",
@@ -50,15 +53,27 @@
       "description": "Orchestrate complete 8D investigations with integrated tool selection and domain-specific team formation guidance. Use for RCCA, root cause analysis, corrective action, failure investigation, nonconformance analysis, quality problems, or customer complaints.",
       "version": "1.0.1",
       "category": "quality-engineering",
-      "tags": ["rcca", "8d", "root-cause", "corrective-action", "quality"]
+      "tags": [
+        "rcca",
+        "8d",
+        "root-cause",
+        "corrective-action",
+        "quality"
+      ]
     },
     {
       "name": "problem-definition",
       "source": "./skills/problem-definition",
       "description": "Guide RCCA/8D problem definition using 5W2H and IS/IS NOT analysis. Transforms failure data into precise, measurable problem statements without embedded cause or solution.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "category": "quality-engineering",
-      "tags": ["problem-definition", "5w2h", "is-is-not", "rcca", "8d"]
+      "tags": [
+        "problem-definition",
+        "5w2h",
+        "is-is-not",
+        "rcca",
+        "8d"
+      ]
     },
     {
       "name": "five-whys-analysis",
@@ -66,39 +81,67 @@
       "description": "Conduct rigorous 5 Whys root cause analysis with guided questioning, quality scoring, and professional report generation. Includes validation tests and countermeasure development.",
       "version": "1.0.1",
       "category": "quality-engineering",
-      "tags": ["5-whys", "root-cause", "rca", "quality"]
+      "tags": [
+        "5-whys",
+        "root-cause",
+        "rca",
+        "quality"
+      ]
     },
     {
       "name": "fishbone-diagram",
       "source": "./skills/fishbone-diagram",
       "description": "Create Fishbone (Ishikawa/Cause-and-Effect) diagrams for structured root cause brainstorming with 6Ms, 8Ps, 4Ss, or custom categories. Generates SVG diagrams and HTML reports.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "category": "quality-engineering",
-      "tags": ["fishbone", "ishikawa", "cause-effect", "brainstorming", "quality"]
+      "tags": [
+        "fishbone",
+        "ishikawa",
+        "cause-effect",
+        "brainstorming",
+        "quality"
+      ]
     },
     {
       "name": "pareto-analysis",
       "source": "./skills/pareto-analysis",
       "description": "Conduct Pareto Analysis (80/20 Rule) to identify vital few causes driving majority of problems. Generates Pareto charts and prioritization reports.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "category": "quality-engineering",
-      "tags": ["pareto", "80-20", "prioritization", "quality"]
+      "tags": [
+        "pareto",
+        "80-20",
+        "prioritization",
+        "quality"
+      ]
     },
     {
       "name": "kepner-tregoe-analysis",
       "source": "./skills/kepner-tregoe-analysis",
       "description": "Conduct Kepner-Tregoe (KT) PSDM analysis using Situation Appraisal, Problem Analysis (IS/IS NOT), Decision Analysis (MUSTS/WANTS), and Potential Problem Analysis.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "category": "quality-engineering",
-      "tags": ["kepner-tregoe", "kt", "is-is-not", "decision-analysis", "psdm"]
+      "tags": [
+        "kepner-tregoe",
+        "kt",
+        "is-is-not",
+        "decision-analysis",
+        "psdm"
+      ]
     },
     {
       "name": "fault-tree-analysis",
       "source": "./skills/fault-tree-analysis",
       "description": "Conduct Fault Tree Analysis (FTA) for system failure analysis using Boolean logic gates. Identifies minimal cut sets, single points of failure, and failure probabilities.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "category": "quality-engineering",
-      "tags": ["fta", "fault-tree", "safety", "reliability", "failure-analysis"]
+      "tags": [
+        "fta",
+        "fault-tree",
+        "safety",
+        "reliability",
+        "failure-analysis"
+      ]
     },
     {
       "name": "fmea-analysis",
@@ -106,7 +149,13 @@
       "description": "Conduct FMEA for systematic failure mode identification using AIAG-VDA 7-step methodology. Supports DFMEA, PFMEA, and FMEA-MSR with Action Priority risk assessment.",
       "version": "1.0.1",
       "category": "quality-engineering",
-      "tags": ["fmea", "dfmea", "pfmea", "risk-assessment", "aiag-vda"]
+      "tags": [
+        "fmea",
+        "dfmea",
+        "pfmea",
+        "risk-assessment",
+        "aiag-vda"
+      ]
     },
     {
       "name": "plugin-creator",
@@ -114,15 +163,31 @@
       "description": "Automatically generate Claude plugins from user prompts. Supports plugin creation, documentation, and testing.",
       "version": "",
       "category": "development",
-      "tags": ["plugin", "claude", "development", "generator"]
+      "tags": [
+        "plugin",
+        "claude",
+        "development",
+        "generator"
+      ]
     },
     {
       "name": "concept-dev",
       "source": "./skills/concept-dev",
       "description": "Walk through the NASA Phase A concept development lifecycle: ideation, problem definition, black-box architecture, drill-down with gap analysis, and document generation. 7 agents, 6 scripts (source/assumption tracking, crawl4ai web research), 9 commands, hooks for auto-state updates, and tiered research tool detection.",
-      "version": "1.1.3",
+      "version": "1.1.4",
       "category": "systems-engineering",
-      "tags": ["concept-development", "systems-engineering", "nasa-phase-a", "brainstorming", "research", "architecture", "feasibility", "gap-analysis", "solution-landscape", "crawl4ai"]
+      "tags": [
+        "concept-development",
+        "systems-engineering",
+        "nasa-phase-a",
+        "brainstorming",
+        "research",
+        "architecture",
+        "feasibility",
+        "gap-analysis",
+        "solution-landscape",
+        "crawl4ai"
+      ]
     }
   ]
 }

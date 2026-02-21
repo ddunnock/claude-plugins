@@ -26,6 +26,7 @@ from knowledge_mcp.search import SemanticSearcher
 from knowledge_mcp.server import KnowledgeMCPServer
 from knowledge_mcp.store.chromadb_store import ChromaDBStore
 from knowledge_mcp.utils.config import KnowledgeConfig
+from conftest import TEST_OPENAI_API_KEY, TEST_QDRANT_API_KEY, TEST_SK_API_KEY, TEST_COHERE_API_KEY
 
 if TYPE_CHECKING:
     pass
@@ -45,7 +46,7 @@ class TestMCPToolIntegration:
     def test_config(self, temp_chromadb_dir: Path) -> KnowledgeConfig:
         """Create test configuration with ChromaDB backend."""
         return KnowledgeConfig(
-            openai_api_key="test-api-key-not-real",
+            openai_api_key=TEST_OPENAI_API_KEY,
             embedding_model="text-embedding-3-small",
             embedding_dimensions=1536,
             vector_store="chromadb",
@@ -446,7 +447,7 @@ class TestMCPToolErrorHandling:
     def test_config(self, temp_chromadb_dir: Path) -> KnowledgeConfig:
         """Create test configuration."""
         return KnowledgeConfig(
-            openai_api_key="test-api-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             vector_store="chromadb",
             chromadb_path=temp_chromadb_dir,
             cache_enabled=False,

@@ -12,6 +12,7 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
+from conftest import TEST_OPENAI_API_KEY, TEST_QDRANT_API_KEY, TEST_SK_API_KEY, TEST_COHERE_API_KEY
 
 if TYPE_CHECKING:
     pass
@@ -191,7 +192,7 @@ class TestCreateEmbedder:
 
         config = KnowledgeConfig(
             embedding_provider="openai",
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
         )
         embedder = create_embedder(config)
 

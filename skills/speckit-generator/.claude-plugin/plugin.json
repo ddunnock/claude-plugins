@@ -1,11 +1,24 @@
 {
   "name": "speckit-generator",
   "description": "Project-focused specification and task management with PLANS taxonomy, ADR-style architecture decisions, SMART acceptance criteria, SEAMS-enhanced clarification, tech-specific designer agents, anti-pattern detection (50 patterns across 5 tech stacks), 4-level verification (stub detection + wiring checks), execution orchestration (deviation rules, checkpoint taxonomy, auth gates, session continuity), specialized analysis agents, git checkpoints, mandatory approval gates, and session-memory hooks. Outputs to speckit/ directory.",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "author": {
     "name": "Claude Code Skills"
   },
   "license": "MIT",
   "repository": "https://github.com/anthropics/claude-code-plugins",
-  "keywords": ["specification", "project-management", "task-management", "git-checkpoints", "workflow", "hooks", "adr", "smart-criteria", "session-memory", "anti-patterns", "code-quality", "linting"]
+  "keywords": [
+    "specification",
+    "project-management",
+    "task-management",
+    "git-checkpoints",
+    "workflow",
+    "hooks",
+    "adr",
+    "smart-criteria",
+    "session-memory",
+    "anti-patterns",
+    "code-quality",
+    "linting"
+  ]
 }

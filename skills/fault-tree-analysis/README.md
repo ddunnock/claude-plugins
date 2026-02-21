@@ -43,6 +43,10 @@ fault-tree-analysis/
 
 ## Version History
 
+### v1.0.1
+- Add path validation to generate_diagram.py and generate_report.py
+- Add Input Handling and Content Security section to SKILL.md
+
 ### v1.0.0 (Current)
 - Initial release with 7-phase workflow
 - Qualitative and quantitative analysis

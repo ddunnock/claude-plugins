@@ -102,7 +102,7 @@ class EmbeddingService:
 
     def content_hash(self, content: str) -> str:
         """Generate a hash for deduplication."""
-        return hashlib.md5(content.encode()).hexdigest()[:16]
+        return hashlib.sha256(content.encode()).hexdigest()[:16]
 
     def store_embedding(
         self,

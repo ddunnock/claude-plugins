@@ -53,7 +53,7 @@ class Finding:
     def id(self) -> str:
         """Generate stable, deterministic finding ID."""
         content = f"{self.category.value}:{self.location}:{self.description}"
-        hash_val = hashlib.md5(content.encode()).hexdigest()[:8]
+        hash_val = hashlib.sha256(content.encode()).hexdigest()[:8]
         return f"{self.category.value[:3]}-{hash_val}"
 
 

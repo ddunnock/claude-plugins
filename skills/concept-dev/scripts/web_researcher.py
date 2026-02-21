@@ -630,6 +630,19 @@ def _parse_urls(url_arg: str) -> List[str]:
     return [u.strip() for u in url_arg.split(',') if u.strip()]
 
 
+
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> None:
+    """Validate file path: reject traversal and restrict extensions."""
+    if ".." in filepath:
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = Path(filepath).suffix.lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+
+
 def main():
     # For the 'summary' subcommand, crawl4ai is not needed.
     # For all others, ensure it's importable (re-exec under pipx venv if needed).
@@ -680,6 +693,10 @@ def main():
                         help='Path to research directory')
 
     args = parser.parse_args()
+
+    if ".." in args.research_dir:
+        print(f"Error: Path traversal not allowed in research dir: {args.research_dir}")
+        sys.exit(1)
 
     researcher = WebResearcher(research_dir=args.research_dir)
 

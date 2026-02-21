@@ -21,6 +21,7 @@ import json
 import argparse
 import sys
 from typing import List, Dict, Any
+from pathlib import Path
 
 
 def generate_pareto_svg(
@@ -208,6 +209,19 @@ def generate_pareto_svg(
     return '\n'.join(svg_parts)
 
 
+
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> None:
+    """Validate file path: reject traversal and restrict extensions."""
+    if ".." in filepath:
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = Path(filepath).suffix.lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Pareto Chart Generator")
     parser.add_argument("--input", "-i", required=True, help="Input JSON file (from calculate_pareto.py)")
@@ -217,6 +231,9 @@ def main():
     parser.add_argument("--height", type=int, default=500, help="Chart height (default: 500)")
     
     args = parser.parse_args()
+
+    _validate_path(args.input, {'.json'}, "input file")
+    _validate_path(args.output, {'.png', '.svg'}, "output file")
     
     # Load input data
     try:

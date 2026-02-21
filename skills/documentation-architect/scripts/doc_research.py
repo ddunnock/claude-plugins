@@ -16,6 +16,7 @@ from pathlib import Path
 from datetime import datetime
 from dataclasses import dataclass, asdict
 from typing import Optional
+import sys
 
 
 @dataclass
@@ -232,6 +233,19 @@ def generate_json_template(domain: str) -> dict:
     }
 
 
+
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> None:
+    """Validate file path: reject traversal and restrict extensions."""
+    if ".." in filepath:
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = Path(filepath).suffix.lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='Generate documentation research template',
@@ -254,6 +268,8 @@ should be performed by Claude using the web_search tool.
                         default='markdown', help='Output format')
     
     args = parser.parse_args()
+
+    _validate_path(str(args.output), {'.md', '.json'}, "output file")
     
     print(f"Generating research template for domain: {args.domain}")
     

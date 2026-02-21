@@ -10,6 +10,7 @@ import pytest
 from knowledge_mcp.embed.cache import EmbeddingCache
 from knowledge_mcp.embed.openai_embedder import OpenAIEmbedder
 from knowledge_mcp.monitoring.token_tracker import TokenTracker
+from conftest import TEST_OPENAI_API_KEY, TEST_QDRANT_API_KEY, TEST_SK_API_KEY, TEST_COHERE_API_KEY
 
 
 class TestEmbedderCacheIntegration:
@@ -45,7 +46,7 @@ class TestEmbedderCacheIntegration:
     ) -> OpenAIEmbedder:
         """Embedder with real cache/tracker but mocked API."""
         embedder = OpenAIEmbedder(
-            api_key="sk-test-key",
+            api_key=TEST_SK_API_KEY,
             cache=real_cache,
             token_tracker=real_tracker,
         )
@@ -112,7 +113,7 @@ class TestEmbedderCacheIntegration:
         cache1 = EmbeddingCache(temp_cache_dir, "text-embedding-3-small")
         tracker1 = TokenTracker(temp_log_file, "text-embedding-3-small")
         embedder1 = OpenAIEmbedder(
-            api_key="sk-test-key",
+            api_key=TEST_SK_API_KEY,
             cache=cache1,
             token_tracker=tracker1,
         )
@@ -132,7 +133,7 @@ class TestEmbedderCacheIntegration:
         cache2 = EmbeddingCache(temp_cache_dir, "text-embedding-3-small")
         tracker2 = TokenTracker(temp_log_file, "text-embedding-3-small")
         embedder2 = OpenAIEmbedder(
-            api_key="sk-test-key",
+            api_key=TEST_SK_API_KEY,
             cache=cache2,
             token_tracker=tracker2,
         )

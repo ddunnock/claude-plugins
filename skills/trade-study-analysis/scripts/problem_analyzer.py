@@ -11,6 +11,8 @@ import argparse
 import re
 from datetime import datetime
 from typing import Dict, List, Any, Tuple
+import sys
+from pathlib import Path
 
 
 class ProblemStatementAnalyzer:
@@ -515,6 +517,19 @@ class ProblemStatementAnalyzer:
         print("=" * 80)
 
 
+
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> None:
+    """Validate file path: reject traversal and restrict extensions."""
+    if ".." in filepath:
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = Path(filepath).suffix.lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='Analyze problem statement against quality criteria'
@@ -527,6 +542,11 @@ def main():
     parser.add_argument('--output', '-o', help='Save results to file')
     
     args = parser.parse_args()
+
+    if args.file:
+        _validate_path(args.file, {'.md', '.txt', '.json'}, "input file")
+    if args.output:
+        _validate_path(args.output, {'.md', '.json'}, "output file")
     
     # Get statement
     if args.file:

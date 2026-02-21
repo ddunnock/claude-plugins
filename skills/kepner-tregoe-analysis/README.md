@@ -45,6 +45,10 @@ kepner-tregoe-analysis/
 
 ## Version History
 
+### v1.0.1
+- Add path validation to generate_report.py
+- Add Input Handling and Content Security section to SKILL.md
+
 ### v1.0.0 (Current)
 - Initial release with all four KT processes
 - IS/IS NOT specification matrix

@@ -13,6 +13,7 @@ import pytest
 
 from knowledge_mcp.store import create_store, QdrantStore
 from knowledge_mcp.utils.config import KnowledgeConfig
+from conftest import TEST_OPENAI_API_KEY, TEST_QDRANT_API_KEY, TEST_SK_API_KEY, TEST_COHERE_API_KEY
 
 
 @pytest.fixture(autouse=True)
@@ -52,10 +53,10 @@ class TestQdrantToChromaDBFallback:
     def config_with_bad_qdrant(self, temp_chromadb_path: Path) -> KnowledgeConfig:
         """Create config with unreachable Qdrant URL."""
         return KnowledgeConfig(
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             vector_store="qdrant",
             qdrant_url="http://localhost:9999",  # Unreachable port
-            qdrant_api_key="test-api-key",
+            qdrant_api_key=TEST_QDRANT_API_KEY,
             chromadb_path=temp_chromadb_path,
         )
 
@@ -99,7 +100,7 @@ class TestQdrantToChromaDBFallback:
         ChromaDBStore = get_chromadb_store_class()
 
         config = KnowledgeConfig(
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             vector_store="chromadb",
             chromadb_path=temp_chromadb_path,
         )
@@ -122,7 +123,7 @@ class TestHealthCheckBeforeOperations:
         chromadb_dir = tmp_path / "chromadb"
         chromadb_dir.mkdir()
         return KnowledgeConfig(
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             vector_store="chromadb",
             chromadb_path=chromadb_dir,
         )
@@ -148,10 +149,10 @@ class TestBothStoresUnavailable:
         ChromaDBStore = get_chromadb_store_class()
 
         config = KnowledgeConfig(
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             vector_store="qdrant",
             qdrant_url="http://localhost:9999",  # Unreachable
-            qdrant_api_key="test-key",
+            qdrant_api_key=TEST_QDRANT_API_KEY,
             chromadb_path=tmp_path / "nonexistent" / "deep" / "path",  # Will fail
         )
 
@@ -184,10 +185,10 @@ class TestCategorizedExceptions:
     def config_with_qdrant(self, temp_chromadb_path: Path) -> KnowledgeConfig:
         """Create config that tries Qdrant first."""
         return KnowledgeConfig(
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             vector_store="qdrant",
             qdrant_url="http://localhost:6333",
-            qdrant_api_key="test-api-key",
+            qdrant_api_key=TEST_QDRANT_API_KEY,
             chromadb_path=temp_chromadb_path,
         )
 
@@ -337,7 +338,7 @@ class TestCategorizedExceptions:
         # This tests that ValueError from config validation propagates
         # ChromaDB is configured explicitly, no fallback should occur
         config = KnowledgeConfig(
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             vector_store="chromadb",
             chromadb_path=tmp_path / "chromadb",
         )

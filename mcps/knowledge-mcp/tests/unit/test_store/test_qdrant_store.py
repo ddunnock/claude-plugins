@@ -32,6 +32,7 @@ from qdrant_client.models import (
 
 from knowledge_mcp.models.chunk import KnowledgeChunk
 from knowledge_mcp.utils.config import KnowledgeConfig
+from conftest import TEST_OPENAI_API_KEY, TEST_QDRANT_API_KEY, TEST_SK_API_KEY, TEST_COHERE_API_KEY
 
 if TYPE_CHECKING:
     pass
@@ -44,12 +45,12 @@ class TestQdrantStoreInit:
     def mock_config(self, tmp_path: Path) -> KnowledgeConfig:
         """Create test configuration."""
         return KnowledgeConfig(
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             embedding_model="text-embedding-3-small",
             embedding_dimensions=1536,
             vector_store="qdrant",
             qdrant_url="http://localhost:6333",
-            qdrant_api_key="test-api-key",
+            qdrant_api_key=TEST_QDRANT_API_KEY,
             qdrant_collection="test_collection",
             qdrant_hybrid_search=False,
             chromadb_path=tmp_path / "chromadb",
@@ -59,12 +60,12 @@ class TestQdrantStoreInit:
     def mock_config_hybrid(self, tmp_path: Path) -> KnowledgeConfig:
         """Create test configuration with hybrid search enabled."""
         return KnowledgeConfig(
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             embedding_model="text-embedding-3-small",
             embedding_dimensions=1536,
             vector_store="qdrant",
             qdrant_url="http://localhost:6333",
-            qdrant_api_key="test-api-key",
+            qdrant_api_key=TEST_QDRANT_API_KEY,
             qdrant_collection="test_collection",
             qdrant_hybrid_search=True,
             chromadb_path=tmp_path / "chromadb",
@@ -142,12 +143,12 @@ class TestQdrantStoreAddChunks:
     def mock_config(self, tmp_path: Path) -> KnowledgeConfig:
         """Create test configuration."""
         return KnowledgeConfig(
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             embedding_model="text-embedding-3-small",
             embedding_dimensions=1536,
             vector_store="qdrant",
             qdrant_url="http://localhost:6333",
-            qdrant_api_key="test-api-key",
+            qdrant_api_key=TEST_QDRANT_API_KEY,
             qdrant_collection="test_collection",
             qdrant_hybrid_search=False,
             chromadb_path=tmp_path / "chromadb",
@@ -157,12 +158,12 @@ class TestQdrantStoreAddChunks:
     def mock_config_hybrid(self, tmp_path: Path) -> KnowledgeConfig:
         """Create test configuration with hybrid search."""
         return KnowledgeConfig(
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             embedding_model="text-embedding-3-small",
             embedding_dimensions=1536,
             vector_store="qdrant",
             qdrant_url="http://localhost:6333",
-            qdrant_api_key="test-api-key",
+            qdrant_api_key=TEST_QDRANT_API_KEY,
             qdrant_collection="test_collection",
             qdrant_hybrid_search=True,
             chromadb_path=tmp_path / "chromadb",
@@ -332,12 +333,12 @@ class TestQdrantStoreSearch:
     def mock_config(self, tmp_path: Path) -> KnowledgeConfig:
         """Create test configuration."""
         return KnowledgeConfig(
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             embedding_model="text-embedding-3-small",
             embedding_dimensions=1536,
             vector_store="qdrant",
             qdrant_url="http://localhost:6333",
-            qdrant_api_key="test-api-key",
+            qdrant_api_key=TEST_QDRANT_API_KEY,
             qdrant_collection="test_collection",
             qdrant_hybrid_search=False,
             chromadb_path=tmp_path / "chromadb",
@@ -347,12 +348,12 @@ class TestQdrantStoreSearch:
     def mock_config_hybrid(self, tmp_path: Path) -> KnowledgeConfig:
         """Create test configuration with hybrid search."""
         return KnowledgeConfig(
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             embedding_model="text-embedding-3-small",
             embedding_dimensions=1536,
             vector_store="qdrant",
             qdrant_url="http://localhost:6333",
-            qdrant_api_key="test-api-key",
+            qdrant_api_key=TEST_QDRANT_API_KEY,
             qdrant_collection="test_collection",
             qdrant_hybrid_search=True,
             chromadb_path=tmp_path / "chromadb",
@@ -563,12 +564,12 @@ class TestQdrantStoreStats:
     def mock_config(self, tmp_path: Path) -> KnowledgeConfig:
         """Create test configuration."""
         return KnowledgeConfig(
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             embedding_model="text-embedding-3-small",
             embedding_dimensions=1536,
             vector_store="qdrant",
             qdrant_url="http://localhost:6333",
-            qdrant_api_key="test-api-key",
+            qdrant_api_key=TEST_QDRANT_API_KEY,
             qdrant_collection="test_collection",
             qdrant_hybrid_search=False,
             chromadb_path=tmp_path / "chromadb",
@@ -608,12 +609,12 @@ class TestQdrantStoreValidation:
     def mock_config(self, tmp_path: Path) -> KnowledgeConfig:
         """Create test configuration."""
         return KnowledgeConfig(
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             embedding_model="text-embedding-3-small",
             embedding_dimensions=1536,
             vector_store="qdrant",
             qdrant_url="http://localhost:6333",
-            qdrant_api_key="test-api-key",
+            qdrant_api_key=TEST_QDRANT_API_KEY,
             qdrant_collection="test_collection",
             qdrant_hybrid_search=False,
             chromadb_path=tmp_path / "chromadb",
@@ -706,12 +707,12 @@ class TestQdrantStoreHealthCheck:
     def mock_config(self, tmp_path: Path) -> KnowledgeConfig:
         """Create test configuration."""
         return KnowledgeConfig(
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             embedding_model="text-embedding-3-small",
             embedding_dimensions=1536,
             vector_store="qdrant",
             qdrant_url="http://localhost:6333",
-            qdrant_api_key="test-api-key",
+            qdrant_api_key=TEST_QDRANT_API_KEY,
             qdrant_collection="test_collection",
             qdrant_hybrid_search=False,
             chromadb_path=tmp_path / "chromadb",

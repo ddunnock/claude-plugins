@@ -17,6 +17,7 @@ import pytest
 
 from knowledge_mcp.models.chunk import KnowledgeChunk
 from knowledge_mcp.utils.config import KnowledgeConfig
+from conftest import TEST_OPENAI_API_KEY, TEST_QDRANT_API_KEY, TEST_SK_API_KEY, TEST_COHERE_API_KEY
 
 if TYPE_CHECKING:
     pass
@@ -48,7 +49,7 @@ class TestChromaDBStoreInit:
     def mock_config(self, tmp_path: Path) -> KnowledgeConfig:
         """Create test configuration."""
         return KnowledgeConfig(
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             embedding_model="text-embedding-3-small",
             embedding_dimensions=1536,
             vector_store="chromadb",
@@ -115,7 +116,7 @@ class TestChromaDBStoreAddChunks:
     def mock_config(self, tmp_path: Path) -> KnowledgeConfig:
         """Create test configuration."""
         return KnowledgeConfig(
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             embedding_model="text-embedding-3-small",
             embedding_dimensions=1536,
             vector_store="chromadb",
@@ -253,7 +254,7 @@ class TestChromaDBStoreSearch:
     def mock_config(self, tmp_path: Path) -> KnowledgeConfig:
         """Create test configuration."""
         return KnowledgeConfig(
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             embedding_model="text-embedding-3-small",
             embedding_dimensions=1536,
             vector_store="chromadb",
@@ -387,7 +388,7 @@ class TestChromaDBStoreStats:
     def mock_config(self, tmp_path: Path) -> KnowledgeConfig:
         """Create test configuration."""
         return KnowledgeConfig(
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             embedding_model="text-embedding-3-small",
             embedding_dimensions=1536,
             vector_store="chromadb",
@@ -434,7 +435,7 @@ class TestChromaDBStoreValidation:
     def mock_config(self, tmp_path: Path) -> KnowledgeConfig:
         """Create test configuration."""
         return KnowledgeConfig(
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             embedding_model="text-embedding-3-small",
             embedding_dimensions=1536,
             vector_store="chromadb",
@@ -521,7 +522,7 @@ class TestChromaDBStoreHealthCheck:
     def mock_config(self, tmp_path: Path) -> KnowledgeConfig:
         """Create test configuration."""
         return KnowledgeConfig(
-            openai_api_key="test-key",
+            openai_api_key=TEST_OPENAI_API_KEY,
             embedding_model="text-embedding-3-small",
             embedding_dimensions=1536,
             vector_store="chromadb",

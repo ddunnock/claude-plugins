@@ -150,3 +150,9 @@ concept-dev/
 
 - [HOW_TO_USE.md](HOW_TO_USE.md) — Step-by-step walkthrough with examples
 - [SKILL.md](SKILL.md) — Full skill definition with behavioral rules
+
+
+## Changelog
+
+### v1.1.4
+- Add path validation to assumption_tracker.py, source_tracker.py, and web_researcher.py

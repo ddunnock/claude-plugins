@@ -29,6 +29,7 @@ from knowledge_mcp.exceptions import (
     TimeoutError,
     ValidationError,
 )
+from conftest import TEST_OPENAI_API_KEY, TEST_QDRANT_API_KEY, TEST_SK_API_KEY, TEST_COHERE_API_KEY
 
 if TYPE_CHECKING:
     pass
@@ -40,7 +41,7 @@ class TestOpenAIEmbedderInit:
     def test_init_with_valid_api_key(self) -> None:
         """Test successful initialization with valid API key."""
         # Arrange & Act
-        embedder = OpenAIEmbedder(api_key="sk-test-key")
+        embedder = OpenAIEmbedder(api_key=TEST_SK_API_KEY)
 
         # Assert
         assert embedder.dimensions == 1536
@@ -50,7 +51,7 @@ class TestOpenAIEmbedderInit:
         """Test initialization with custom model and dimensions."""
         # Arrange & Act
         embedder = OpenAIEmbedder(
-            api_key="sk-test-key",
+            api_key=TEST_SK_API_KEY,
             model="text-embedding-3-large",
             dimensions=3072,
         )
@@ -75,7 +76,7 @@ class TestOpenAIEmbedderEmbed:
     def mock_embedder(self) -> OpenAIEmbedder:
         """Create an embedder with mocked OpenAI client."""
         with patch("knowledge_mcp.embed.openai_embedder.AsyncOpenAI"):
-            return OpenAIEmbedder(api_key="sk-test-key")
+            return OpenAIEmbedder(api_key=TEST_SK_API_KEY)
 
     @pytest.mark.asyncio
     async def test_embed_single_text_success(self, mock_embedder: OpenAIEmbedder) -> None:
@@ -139,7 +140,7 @@ class TestOpenAIEmbedderEmbedBatch:
     def mock_embedder(self) -> OpenAIEmbedder:
         """Create an embedder with mocked OpenAI client."""
         with patch("knowledge_mcp.embed.openai_embedder.AsyncOpenAI"):
-            return OpenAIEmbedder(api_key="sk-test-key")
+            return OpenAIEmbedder(api_key=TEST_SK_API_KEY)
 
     @pytest.mark.asyncio
     async def test_embed_batch_within_limit(self, mock_embedder: OpenAIEmbedder) -> None:
@@ -268,7 +269,7 @@ class TestOpenAIEmbedderRetry:
     def mock_embedder(self) -> OpenAIEmbedder:
         """Create an embedder with mocked OpenAI client."""
         with patch("knowledge_mcp.embed.openai_embedder.AsyncOpenAI"):
-            return OpenAIEmbedder(api_key="sk-test-key")
+            return OpenAIEmbedder(api_key=TEST_SK_API_KEY)
 
     @pytest.mark.asyncio
     async def test_retry_on_connection_error_then_success(
@@ -376,7 +377,7 @@ class TestOpenAIEmbedderErrorHandling:
     def mock_embedder(self) -> OpenAIEmbedder:
         """Create an embedder with mocked OpenAI client."""
         with patch("knowledge_mcp.embed.openai_embedder.AsyncOpenAI"):
-            return OpenAIEmbedder(api_key="sk-test-key")
+            return OpenAIEmbedder(api_key=TEST_SK_API_KEY)
 
     @pytest.mark.asyncio
     async def test_rate_limit_error(self, mock_embedder: OpenAIEmbedder) -> None:
@@ -441,7 +442,7 @@ class TestOpenAIEmbedderBatchErrorHandling:
     def mock_embedder(self) -> OpenAIEmbedder:
         """Create an embedder with mocked OpenAI client."""
         with patch("knowledge_mcp.embed.openai_embedder.AsyncOpenAI"):
-            return OpenAIEmbedder(api_key="sk-test-key")
+            return OpenAIEmbedder(api_key=TEST_SK_API_KEY)
 
     @pytest.mark.asyncio
     async def test_embed_batch_rate_limit_error(
@@ -543,7 +544,7 @@ class TestOpenAIEmbedderHealthCheck:
     def mock_embedder(self) -> OpenAIEmbedder:
         """Create an embedder with mocked OpenAI client."""
         with patch("knowledge_mcp.embed.openai_embedder.AsyncOpenAI"):
-            return OpenAIEmbedder(api_key="sk-test-key")
+            return OpenAIEmbedder(api_key=TEST_SK_API_KEY)
 
     @pytest.mark.asyncio
     async def test_health_check_success(self, mock_embedder: OpenAIEmbedder) -> None:
@@ -600,7 +601,7 @@ class TestOpenAIEmbedderCacheIntegration:
         """Create embedder with mock cache and tracker."""
         with patch("knowledge_mcp.embed.openai_embedder.AsyncOpenAI"):
             embedder = OpenAIEmbedder(
-                api_key="sk-test-key",
+                api_key=TEST_SK_API_KEY,
                 cache=mock_cache,
                 token_tracker=mock_tracker,
             )
@@ -688,7 +689,7 @@ class TestOpenAIEmbedderCacheIntegration:
     async def test_embed_works_without_cache(self) -> None:
         """Verify embedder works when cache is None (backwards compat)."""
         with patch("knowledge_mcp.embed.openai_embedder.AsyncOpenAI"):
-            embedder = OpenAIEmbedder(api_key="sk-test-key")
+            embedder = OpenAIEmbedder(api_key=TEST_SK_API_KEY)
             embedder._client = MagicMock()
             embedder._client.embeddings = MagicMock()
             embedder._client.embeddings.create = AsyncMock(

@@ -18,6 +18,8 @@ import argparse
 from datetime import datetime
 from typing import Dict, List, Optional
 import html
+import sys
+from pathlib import Path
 
 
 def escape_html(text: str) -> str:
@@ -480,6 +482,19 @@ def generate_report(data: dict, output_file: str, report_type: Optional[str] = N
     print(f"Report generated: {output_file}")
 
 
+
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> None:
+    """Validate file path: reject traversal and restrict extensions."""
+    if ".." in filepath:
+        print(f"Error: Path traversal not allowed in {label}: {filepath}")
+        sys.exit(1)
+    ext = Path(filepath).suffix.lower()
+    if ext not in allowed_extensions:
+        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(description='Generate Kepner-Tregoe Analysis Report')
     parser.add_argument('--input', '-i', required=True, help='Input JSON file')
@@ -488,6 +503,9 @@ def main():
                         help='Report type (auto-detected if not specified)')
     
     args = parser.parse_args()
+
+    _validate_path(args.input, {'.json'}, "input file")
+    _validate_path(args.output, {'.htm', '.html'}, "output file")
     
     with open(args.input, 'r') as f:
         data = json.load(f)

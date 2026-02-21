@@ -1,7 +1,7 @@
 {
   "name": "knowledge-mcp",
   "description": "Semantic search over systems engineering standards (IEEE, INCOSE, ISO). Provides RAG capabilities for grounding specifications in engineering knowledge.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": {
     "name": "David Dunnock"
   },
@@ -17,7 +17,10 @@
   "mcpServers": {
     "knowledge-mcp": {
       "command": "python3",
-      "args": ["-m", "knowledge_mcp"],
+      "args": [
+        "-m",
+        "knowledge_mcp"
+      ],
       "cwd": "${CLAUDE_PLUGIN_ROOT}",
       "env": {
         "PYTHONPATH": "${CLAUDE_PLUGIN_ROOT}/src",
