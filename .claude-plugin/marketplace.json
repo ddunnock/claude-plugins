@@ -120,7 +120,7 @@
       "name": "concept-dev",
       "source": "./skills/concept-dev",
       "description": "Walk through the NASA Phase A concept development lifecycle: ideation, problem definition, black-box architecture, drill-down with gap analysis, and document generation. 7 agents, 6 scripts (source/assumption tracking, crawl4ai web research), 9 commands, hooks for auto-state updates, and tiered research tool detection.",
-      "version": "1.0.0",
+      "version": "1.1.2",
       "category": "systems-engineering",
       "tags": ["concept-development", "systems-engineering", "nasa-phase-a", "brainstorming", "research", "architecture", "feasibility", "gap-analysis", "solution-landscape", "crawl4ai"]
     }
