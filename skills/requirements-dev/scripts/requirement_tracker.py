@@ -163,9 +163,29 @@ def baseline_requirement(workspace: str, req_id: str) -> None:
     if req["status"] != "registered":
         raise ValueError(f"Can only baseline a registered requirement (current status: {req['status']})")
     req["status"] = "baselined"
+    req["baselined_at"] = datetime.now(timezone.utc).isoformat()
     registry["requirements"][idx] = req
     _save_registry(workspace, registry)
     _sync_counts(workspace, registry)
+
+
+def baseline_all(workspace: str) -> dict:
+    """Baseline all registered requirements. Returns summary."""
+    workspace = _validate_dir_path(workspace)
+    registry = _load_registry(workspace)
+    baselined = []
+    skipped_draft = []
+    now = datetime.now(timezone.utc).isoformat()
+    for req in registry["requirements"]:
+        if req["status"] == "registered":
+            req["status"] = "baselined"
+            req["baselined_at"] = now
+            baselined.append(req["id"])
+        elif req["status"] == "draft":
+            skipped_draft.append(req["id"])
+    _save_registry(workspace, registry)
+    _sync_counts(workspace, registry)
+    return {"baselined": baselined, "skipped_draft": skipped_draft}
 
 
 def withdraw_requirement(workspace: str, req_id: str, rationale: str) -> None:
@@ -264,7 +284,9 @@ def main():
 
     # baseline
     sp = subparsers.add_parser("baseline")
-    sp.add_argument("--id", required=True)
+    group = sp.add_mutually_exclusive_group(required=True)
+    group.add_argument("--id")
+    group.add_argument("--all", action="store_true")
 
     # withdraw
     sp = subparsers.add_parser("withdraw")
@@ -297,8 +319,12 @@ def main():
         register_requirement(args.workspace, args.id, args.parent_need)
         print(json.dumps({"registered": args.id}))
     elif args.command == "baseline":
-        baseline_requirement(args.workspace, args.id)
-        print(json.dumps({"baselined": args.id}))
+        if getattr(args, "all", False):
+            result = baseline_all(args.workspace)
+            print(json.dumps(result, indent=2))
+        else:
+            baseline_requirement(args.workspace, args.id)
+            print(json.dumps({"baselined": args.id}))
     elif args.command == "withdraw":
         withdraw_requirement(args.workspace, args.id, args.rationale)
         print(json.dumps({"withdrawn": args.id}))

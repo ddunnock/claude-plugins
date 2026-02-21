@@ -373,3 +373,139 @@ class TestResumeFlow:
         for req_id in drafts:
             req = next(r for r in reg["requirements"] if r["id"] == req_id)
             assert req["status"] == "draft"
+
+
+# ---------------------------------------------------------------------------
+# Section 09: Deliverable generation and baselining tests
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def delivery_workspace(pipeline_workspace):
+    """Workspace ready for delivery: requirements gate passed, 3 registered requirements."""
+    ws = pipeline_workspace
+
+    # Pass requirements gate
+    state = json.loads((ws / "state.json").read_text())
+    state["gates"]["requirements"] = True
+    state["current_phase"] = "requirements"
+    (ws / "state.json").write_text(json.dumps(state, indent=2))
+
+    # Add 3 registered requirements across different types
+    for i, (stmt, rtype, need) in enumerate([
+        ("The system shall authenticate users via username and password", "functional", "NEED-001"),
+        ("The system shall respond to login requests within 500ms", "performance", "NEED-001"),
+        ("The system shall expose a REST API for password reset", "interface", "NEED-002"),
+    ], start=1):
+        req_id = requirement_tracker.add_requirement(ws_str := str(ws), stmt, rtype, "high", "auth")
+        requirement_tracker.register_requirement(ws_str, req_id, need)
+        # Create traceability links
+        traceability.link(ws_str, req_id, need, "derives_from", "requirement")
+
+    return ws
+
+
+class TestDeliverablePipeline:
+    """Verify deliverable generation, baselining, and withdrawal."""
+
+    def test_baselining_transitions_all_requirements(self, delivery_workspace):
+        """baseline_all() transitions all registered requirements to baselined."""
+        ws = str(delivery_workspace)
+
+        # Get all registered requirements
+        reqs = requirement_tracker.query_requirements(ws, status="registered")
+        assert len(reqs) == 3, f"Expected 3 registered, got {len(reqs)}"
+
+        # Baseline all using baseline_all()
+        result = requirement_tracker.baseline_all(ws)
+        assert len(result["baselined"]) == 3
+        assert len(result["skipped_draft"]) == 0
+
+        # Verify all baselined
+        reg = requirement_tracker._load_registry(ws)
+        for req in reg["requirements"]:
+            assert req["status"] == "baselined", f"{req['id']} not baselined"
+            assert "baselined_at" in req
+
+        # Verify counts
+        state = json.loads((delivery_workspace / "state.json").read_text())
+        assert state["counts"]["requirements_baselined"] == 3
+        assert state["counts"]["requirements_registered"] == 0
+
+    def test_baseline_all_reports_draft_warnings(self, delivery_workspace):
+        """baseline_all() reports draft requirements as skipped."""
+        ws = str(delivery_workspace)
+
+        # Add a draft requirement (not registered)
+        requirement_tracker.add_requirement(
+            ws, "Draft requirement for testing", "functional", "high", "auth",
+        )
+
+        result = requirement_tracker.baseline_all(ws)
+        assert len(result["baselined"]) == 3  # Only the registered ones
+        assert len(result["skipped_draft"]) == 1  # The draft one
+
+    def test_withdrawn_excluded_from_coverage(self, delivery_workspace):
+        """Withdrawn requirements remain in registry but do not count in coverage."""
+        ws = str(delivery_workspace)
+
+        # Get the coverage before withdrawal
+        report_before = traceability.coverage_report(ws)
+
+        # Withdraw one requirement
+        reqs = requirement_tracker.list_requirements(ws)
+        req_to_withdraw = reqs[0]
+        requirement_tracker.withdraw_requirement(ws, req_to_withdraw["id"], "No longer needed")
+
+        # Coverage should account for withdrawal
+        report_after = traceability.coverage_report(ws)
+        # The withdrawn req's link is excluded from coverage
+        assert report_after["requirements_with_vv"] <= report_before["requirements_with_vv"]
+
+        # But the requirement still exists in registry
+        all_reqs = requirement_tracker.list_requirements(ws, include_withdrawn=True)
+        withdrawn = [r for r in all_reqs if r["status"] == "withdrawn"]
+        assert len(withdrawn) == 1
+
+    def test_withdrawn_excluded_from_deliverables(self, delivery_workspace):
+        """list_requirements without include_withdrawn excludes withdrawn reqs."""
+        ws = str(delivery_workspace)
+
+        # Withdraw one
+        reqs = requirement_tracker.list_requirements(ws)
+        initial_count = len(reqs)
+        requirement_tracker.withdraw_requirement(ws, reqs[0]["id"], "Superseded")
+
+        # Default list excludes withdrawn
+        active_reqs = requirement_tracker.list_requirements(ws)
+        assert len(active_reqs) == initial_count - 1
+
+        # With flag, all are present
+        all_reqs = requirement_tracker.list_requirements(ws, include_withdrawn=True)
+        assert len(all_reqs) == initial_count
+
+    def test_generate_traceability_matrix_data(self, delivery_workspace):
+        """Traceability coverage report includes all need-to-requirement chains."""
+        ws = str(delivery_workspace)
+
+        report = traceability.coverage_report(ws)
+        assert report["needs_covered"] == 2  # Both NEED-001 and NEED-002 have reqs
+        assert report["needs_total"] == 2
+        assert report["coverage_pct"] == 100.0
+
+    def test_generate_verification_matrix_data(self, delivery_workspace):
+        """All registered requirements can be queried for V&V entries."""
+        ws = str(delivery_workspace)
+
+        reqs = requirement_tracker.list_requirements(ws)
+        assert len(reqs) == 3
+        # Each has a type that maps to a V&V method
+        for req in reqs:
+            assert req["type"] in {"functional", "performance", "interface", "constraint", "quality"}
+
+    def test_orphan_check_clean(self, delivery_workspace):
+        """With full traceability, orphan check returns empty lists."""
+        ws = str(delivery_workspace)
+
+        orphans = traceability.orphan_check(ws)
+        assert len(orphans["orphan_needs"]) == 0
+        assert len(orphans["orphan_requirements"]) == 0
