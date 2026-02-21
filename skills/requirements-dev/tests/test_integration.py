@@ -288,3 +288,88 @@ class TestMeteredInteractionState:
         drafts = state["progress"]["requirements_in_draft"]
         assert isinstance(drafts, list), f"Expected list, got {type(drafts)}"
         assert req_id in drafts
+
+
+# ---------------------------------------------------------------------------
+# Section 08: Resume flow tests
+# ---------------------------------------------------------------------------
+
+class TestResumeFlow:
+    """Verify state reading for resume after interruptions."""
+
+    def test_resume_after_need_registration(self, pipeline_workspace):
+        """After needs registered, state shows correct phase and counts."""
+        ws = str(pipeline_workspace)
+
+        # State already has init+needs gates passed, 2 approved needs
+        summary = update_state.show(ws)
+        assert "needs" in summary
+        state = json.loads((pipeline_workspace / "state.json").read_text())
+        assert state["current_phase"] == "needs"
+        assert state["counts"]["needs_approved"] == 2
+        assert state["gates"]["needs"] is True
+
+    def test_resume_mid_type_pass(self, pipeline_workspace):
+        """Mid-type-pass state shows current block and type."""
+        ws = str(pipeline_workspace)
+
+        # Set phase and progress
+        update_state.set_phase(ws, "requirements")
+        update_state.update_field(ws, "progress.current_block", "auth")
+        update_state.update_field(ws, "progress.current_type_pass", "performance")
+
+        # Add some requirements
+        for stmt in (
+            "The system shall authenticate in under 500ms",
+            "The system shall support 100 concurrent login sessions",
+        ):
+            req_id = requirement_tracker.add_requirement(
+                ws, stmt, "performance", "high", "auth",
+            )
+            requirement_tracker.register_requirement(ws, req_id, "NEED-001")
+
+        update_state.sync_counts(ws)
+
+        # Verify resume state
+        state = json.loads((pipeline_workspace / "state.json").read_text())
+        assert state["progress"]["current_block"] == "auth"
+        assert state["progress"]["current_type_pass"] == "performance"
+        assert state["counts"]["requirements_registered"] == 2
+
+        # Show output includes position
+        summary = update_state.show(ws)
+        assert "auth" in summary
+        assert "performance" in summary
+
+    def test_resume_preserves_requirements_in_draft(self, pipeline_workspace):
+        """Draft requirements are preserved and readable for resume."""
+        ws = str(pipeline_workspace)
+
+        # Add drafts (not registered)
+        ids = []
+        for stmt in (
+            "The system shall encrypt passwords using bcrypt",
+            "The system shall enforce minimum password length of 12 characters",
+        ):
+            req_id = requirement_tracker.add_requirement(
+                ws, stmt, "functional", "high", "auth",
+            )
+            ids.append(req_id)
+
+        # Save drafts to state
+        update_state.update_field(
+            ws, "progress.requirements_in_draft", json.dumps(ids),
+        )
+
+        # Verify state correctly reports drafts
+        state = json.loads((pipeline_workspace / "state.json").read_text())
+        drafts = state["progress"]["requirements_in_draft"]
+        assert isinstance(drafts, list)
+        assert len(drafts) == 2
+        assert all(d.startswith("REQ-") for d in drafts)
+
+        # Verify draft requirements exist in registry with draft status
+        reg = requirement_tracker._load_registry(ws)
+        for req_id in drafts:
+            req = next(r for r in reg["requirements"] if r["id"] == req_id)
+            assert req["status"] == "draft"
