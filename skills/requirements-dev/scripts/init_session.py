@@ -33,8 +33,7 @@ def init_workspace(project_path: str) -> dict:
 
     Returns the initialized (or existing) state dict.
     """
-    resolved_path = _validate_dir_path(project_path)
-    ws_path = os.path.join(resolved_path, WORKSPACE_DIR)
+    ws_path = os.path.join(project_path, WORKSPACE_DIR)
     state_path = os.path.join(ws_path, "state.json")
 
     # Check for existing workspace (resume scenario)
@@ -82,7 +81,7 @@ def init_workspace(project_path: str) -> dict:
 def main():
     """CLI entry point."""
     parser = argparse.ArgumentParser(description="Initialize requirements-dev workspace")
-    parser.add_argument("project_path", help="Path to the project root directory")
+    parser.add_argument("project_path", type=_validate_dir_path, help="Path to the project root directory")
     args = parser.parse_args()
 
     init_workspace(args.project_path)

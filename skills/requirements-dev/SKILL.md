@@ -1,9 +1,6 @@
 ---
 name: requirements-dev
 description: This skill should be used when the user asks to "develop requirements", "formalize needs", "write requirements", "create a specification", "build traceability", "quality check requirements", "INCOSE requirements", "requirements development", "reqdev", or mentions requirements engineering, needs formalization, verification planning, traceability matrix, or systems engineering requirements.
-version: 1.0.0
-tools: WebSearch, WebFetch, Read, Write, Edit, Bash, Grep, Glob, Task, AskUserQuestion
-model: sonnet
 ---
 
 # Requirements Development (INCOSE GtWR v4)
@@ -53,7 +50,7 @@ Plus JSON registries (needs, requirements, traceability links, sources) and opti
 
 **Commands:** `/reqdev:init`, `/reqdev:needs`, `/reqdev:requirements`, `/reqdev:deliver`
 
-Initialize a session by ingesting concept-dev artifacts (BLACKBOX.md, source/assumption registries) or manually defining functional blocks and stakeholders. Formalize stakeholder needs using INCOSE patterns. Then walk through each block with a type-guided pass (functional, performance, interface, constraint, quality) to develop requirements. Each requirement passes through Tier 1 deterministic quality checks (21 rules) and Tier 2 LLM semantic checks (9 rules) before registration. V&V methods are planned per requirement type. All requirements trace to parent needs. Finally, assemble deliverable documents from templates.
+Initialize a session by ingesting concept-dev artifacts (BLACKBOX.md, source/assumption registries) or manually defining functional blocks and stakeholders. Formalize stakeholder needs using INCOSE patterns. Then walk through each block with a type-guided pass (functional, performance, interface, constraint, quality) to develop requirements. Each requirement passes through Tier 1 deterministic quality checks (16 rules) and Tier 2 LLM semantic checks (9 rules) before registration. V&V methods are planned per requirement type. All requirements trace to parent needs. Finally, assemble deliverable documents from templates.
 
 **Gate:** User approves assembled specification before advancing.
 

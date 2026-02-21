@@ -69,7 +69,7 @@ def add_source(
     concept_dev_ref: str = "",
 ) -> str:
     """Add a source to the registry. Returns the assigned ID."""
-    workspace = _validate_dir_path(workspace)
+
     registry = _load_registry(workspace)
     src = Source(
         id=_next_id(registry),
@@ -87,21 +87,21 @@ def add_source(
 
 def list_sources(workspace: str) -> list[dict]:
     """List all sources."""
-    workspace = _validate_dir_path(workspace)
+
     registry = _load_registry(workspace)
     return registry["sources"]
 
 
 def export_sources(workspace: str) -> dict:
     """Export full registry as dict."""
-    workspace = _validate_dir_path(workspace)
+
     return _load_registry(workspace)
 
 
 def main():
     """CLI entry point."""
     parser = argparse.ArgumentParser(description="Manage source registry")
-    parser.add_argument("--workspace", required=True, help="Path to .requirements-dev/ directory")
+    parser.add_argument("--workspace", required=True, type=_validate_dir_path, help="Path to .requirements-dev/ directory")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # add

@@ -115,11 +115,17 @@ def test_ingest_missing_concept_dev_returns_fallback(tmp_path):
 
 
 def test_ingest_validates_path_rejects_traversal(tmp_path):
-    """ingest() rejects paths containing '..' traversal."""
-    bad_path = str(tmp_path / ".." / "escape")
-    output = str(tmp_path / "ingestion.json")
-    with pytest.raises(SystemExit):
-        ingest(bad_path, output)
+    """CLI rejects paths containing '..' traversal at argparse level."""
+    import subprocess
+    from pathlib import Path
+    scripts_dir = Path(__file__).resolve().parent.parent / "scripts"
+    result = subprocess.run(
+        ["python3", "ingest_concept.py",
+         "--concept-dir", str(tmp_path / ".." / "escape"),
+         "--output", str(tmp_path / "ingestion.json")],
+        capture_output=True, text=True, cwd=str(scripts_dir),
+    )
+    assert result.returncode != 0
 
 
 def test_ingest_output_contains_artifact_inventory(concept_dev_dir, tmp_path):

@@ -10,11 +10,11 @@ Pure stdlib implementation -- no external dependencies.
 """
 import argparse
 import json
-import os
 import re
-import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
+
+from shared_io import _validate_path as _shared_validate_path
 
 
 @dataclass
@@ -365,18 +365,6 @@ def list_rules() -> list[RuleInfo]:
 
 # --- CLI ---
 
-def _validate_path(filepath: str, allowed_extensions: list[str]) -> str:
-    """Validate file path: reject traversal and restrict extensions."""
-    resolved = os.path.realpath(filepath)
-    if ".." in Path(resolved).parts:
-        print(f"Error: Path contains '..' traversal: {filepath}", file=sys.stderr)
-        sys.exit(1)
-    ext = os.path.splitext(resolved)[1].lower()
-    if ext not in allowed_extensions:
-        print(f"Error: Extension '{ext}' not in {allowed_extensions}", file=sys.stderr)
-        sys.exit(1)
-    return resolved
-
 
 def main():
     """CLI entry point."""
@@ -389,7 +377,7 @@ def main():
 
     # check-all
     sp = subparsers.add_parser("check-all", help="Check all requirements in a registry")
-    sp.add_argument("--registry", required=True, help="Path to requirements_registry.json")
+    sp.add_argument("--registry", required=True, type=lambda p: _shared_validate_path(p, [".json"]), help="Path to requirements_registry.json")
 
     # rules
     subparsers.add_parser("rules", help="List all available rules")
@@ -401,8 +389,7 @@ def main():
         print(json.dumps([asdict(v) for v in violations], indent=2))
 
     elif args.command == "check-all":
-        registry_path = _validate_path(args.registry, [".json"])
-        with open(registry_path) as f:
+        with open(args.registry) as f:
             registry = json.load(f)
         results = {}
         reqs = registry if isinstance(registry, list) else registry.get("requirements", [])

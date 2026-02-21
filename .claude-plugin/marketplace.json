@@ -186,6 +186,24 @@
       ]
     },
     {
+      "name": "requirements-dev",
+      "source": "./skills/requirements-dev",
+      "description": "INCOSE-compliant requirements development with hybrid quality checking (16 deterministic + 9 semantic GtWR v4 rules), verification planning, bidirectional traceability, and ReqIF export. 4 agents, 13 scripts, 9 commands, 172 tests.",
+      "version": "1.0.0",
+      "category": "systems-engineering",
+      "tags": [
+        "requirements-engineering",
+        "systems-engineering",
+        "incose",
+        "quality-checking",
+        "traceability",
+        "verification-validation",
+        "reqif",
+        "needs-formalization",
+        "specification"
+      ]
+    },
+    {
       "name": "concept-dev",
       "source": "./skills/concept-dev",
       "description": "Walk through the NASA Phase A concept development lifecycle: ideation, problem definition, black-box architecture, drill-down with gap analysis, and document generation. 7 agents, 6 scripts (source/assumption tracking, crawl4ai web research), 9 commands, hooks for auto-state updates, and tiered research tool detection.",

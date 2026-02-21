@@ -63,7 +63,7 @@ def _entity_exists(workspace: str, entity_id: str) -> bool:
 
 def link(workspace: str, source_id: str, target_id: str, link_type: str, role: str) -> None:
     """Create a traceability link with referential integrity validation."""
-    workspace = _validate_dir_path(workspace)
+
 
     if link_type not in VALID_LINK_TYPES:
         raise ValueError(f"Invalid link type '{link_type}'. Must be one of: {sorted(VALID_LINK_TYPES)}")
@@ -96,7 +96,7 @@ def link(workspace: str, source_id: str, target_id: str, link_type: str, role: s
 
 def query(workspace: str, entity_id: str, direction: str = "both") -> list[dict]:
     """Find all links for an entity."""
-    workspace = _validate_dir_path(workspace)
+
     registry = _load_registry(workspace)
     results = []
     for lnk in registry["links"]:
@@ -109,7 +109,7 @@ def query(workspace: str, entity_id: str, direction: str = "both") -> list[dict]
 
 def coverage_report(workspace: str) -> dict:
     """Compute traceability coverage: percentage of needs with requirements."""
-    workspace = _validate_dir_path(workspace)
+
     registry = _load_registry(workspace)
 
     # Load needs
@@ -152,7 +152,7 @@ def coverage_report(workspace: str) -> dict:
 
 def orphan_check(workspace: str) -> dict:
     """Find needs with no requirements and requirements with no parent needs."""
-    workspace = _validate_dir_path(workspace)
+
     registry = _load_registry(workspace)
 
     # Load needs
@@ -191,7 +191,7 @@ def orphan_check(workspace: str) -> dict:
 def main():
     """CLI entry point."""
     parser = argparse.ArgumentParser(description="Manage traceability links")
-    parser.add_argument("--workspace", required=True, help="Path to .requirements-dev/ directory")
+    parser.add_argument("--workspace", required=True, type=_validate_dir_path, help="Path to .requirements-dev/ directory")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # link

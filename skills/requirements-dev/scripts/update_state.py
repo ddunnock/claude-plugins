@@ -210,7 +210,7 @@ def show(workspace_path: str) -> str:
 def main():
     """CLI entry point with argparse subcommands."""
     parser = argparse.ArgumentParser(description="Update requirements-dev session state")
-    parser.add_argument("--state", required=True, help="Path to state.json or workspace directory")
+    parser.add_argument("--state", required=True, type=_validate_path, help="Path to state.json or workspace directory")
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -245,13 +245,12 @@ def main():
 
     args = parser.parse_args()
 
-    # Resolve and validate workspace path from --state
+    # Resolve workspace path from --state (already validated by argparse type)
     state_path = args.state
     if os.path.isfile(state_path) and state_path.endswith(".json"):
-        state_path = _validate_path(state_path, allowed_extensions=[".json"])
         workspace = os.path.dirname(state_path)
     else:
-        workspace = os.path.realpath(state_path)
+        workspace = state_path
 
     if args.command == "set-phase":
         set_phase(workspace, args.phase)

@@ -31,7 +31,7 @@ def validate_baseline(workspace: str, block_name: str) -> bool:
     Returns True if all are baselined, False otherwise.
     Raises ValueError if block has no requirements.
     """
-    workspace = _validate_dir_path(workspace)
+
     reqs = _load_json(os.path.join(workspace, "requirements_registry.json"))
     block_reqs = [r for r in reqs["requirements"]
                   if r.get("source_block") == block_name and r.get("status") != "withdrawn"]
@@ -45,7 +45,7 @@ def check_max_level(workspace: str, current_level: int) -> bool:
 
     Returns True if allowed, False if would exceed.
     """
-    workspace = _validate_dir_path(workspace)
+
     state = _load_json(os.path.join(workspace, "state.json"))
     max_level = state.get("decomposition", {}).get("max_level", 3)
     return current_level + 1 <= max_level
@@ -58,7 +58,7 @@ def register_sub_blocks(workspace: str, parent_block: str,
     Each sub_block dict has: name, description.
     Adds each sub-block to blocks dict with level and parent_block fields.
     """
-    workspace = _validate_dir_path(workspace)
+
     state_path = os.path.join(workspace, "state.json")
     state = _load_json(state_path)
 
@@ -81,7 +81,7 @@ def allocate_requirement(workspace: str, requirement_id: str,
     Creates an allocated_to link in the traceability registry.
     Validates that the requirement exists and is baselined.
     """
-    workspace = _validate_dir_path(workspace)
+
 
     # Validate requirement exists and is baselined
     reqs = _load_json(os.path.join(workspace, "requirements_registry.json"))
@@ -118,7 +118,7 @@ def validate_allocation_coverage(workspace: str, parent_block: str) -> dict:
 
     Returns dict with coverage, allocated, unallocated, and total.
     """
-    workspace = _validate_dir_path(workspace)
+
     reqs = _load_json(os.path.join(workspace, "requirements_registry.json"))
     trace = _load_json(os.path.join(workspace, "traceability_registry.json"))
 
@@ -148,7 +148,7 @@ def update_decomposition_state(workspace: str, level: int,
                                parent_block: str, sub_blocks: list[str],
                                coverage: float) -> None:
     """Update the decomposition section in state.json."""
-    workspace = _validate_dir_path(workspace)
+
     state_path = os.path.join(workspace, "state.json")
     state = _load_json(state_path)
 
@@ -167,7 +167,7 @@ def update_decomposition_state(workspace: str, level: int,
 def main():
     """CLI entry point."""
     parser = argparse.ArgumentParser(description="Subsystem decomposition")
-    parser.add_argument("--workspace", required=True, help="Path to .requirements-dev/ directory")
+    parser.add_argument("--workspace", required=True, type=_validate_dir_path, help="Path to .requirements-dev/ directory")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     sp = subparsers.add_parser("validate-baseline")
@@ -190,7 +190,7 @@ def main():
     sp.add_argument("--level", type=int, required=True)
 
     args = parser.parse_args()
-    ws = _validate_dir_path(args.workspace)
+    ws = args.workspace
 
     if args.command == "validate-baseline":
         result = validate_baseline(ws, args.block)

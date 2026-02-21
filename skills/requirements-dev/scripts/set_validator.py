@@ -221,7 +221,6 @@ def check_tbd_tbr(requirements: list[dict]) -> dict:
 
 def check_incose_set_characteristics(workspace_path: str) -> dict:
     """Run INCOSE C10-C15 set characteristic validation."""
-    workspace_path = _validate_dir_path(workspace_path)
     needs_data = _load_json(os.path.join(workspace_path, "needs_registry.json"))
     reqs_data = _load_json(os.path.join(workspace_path, "requirements_registry.json"))
     trace_data = _load_json(os.path.join(workspace_path, "traceability_registry.json"))
@@ -281,7 +280,6 @@ def check_incose_set_characteristics(workspace_path: str) -> dict:
 
 def validate_all(workspace_path: str) -> dict:
     """Run all set validation checks."""
-    workspace_path = _validate_dir_path(workspace_path)
     state = _load_json(os.path.join(workspace_path, "state.json"))
     needs_data = _load_json(os.path.join(workspace_path, "needs_registry.json"))
     reqs_data = _load_json(os.path.join(workspace_path, "requirements_registry.json"))
@@ -304,7 +302,7 @@ def validate_all(workspace_path: str) -> dict:
 def main():
     """CLI entry point."""
     parser = argparse.ArgumentParser(description="Cross-block set validation")
-    parser.add_argument("--workspace", required=True, help="Path to .requirements-dev/ directory")
+    parser.add_argument("--workspace", required=True, type=_validate_dir_path, help="Path to .requirements-dev/ directory")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     subparsers.add_parser("validate")
@@ -315,7 +313,7 @@ def main():
     subparsers.add_parser("check-tbd")
 
     args = parser.parse_args()
-    ws = _validate_dir_path(args.workspace)
+    ws = args.workspace
 
     if args.command == "validate":
         result = validate_all(ws)

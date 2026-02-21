@@ -302,19 +302,16 @@ def export_reqif(requirements_path: str, needs_path: str,
 def main():
     """CLI entry point."""
     parser = argparse.ArgumentParser(description="Export requirements to ReqIF XML")
-    parser.add_argument("--requirements", required=True, help="Path to requirements_registry.json")
-    parser.add_argument("--needs", required=True, help="Path to needs_registry.json")
-    parser.add_argument("--traceability", required=True, help="Path to traceability_registry.json")
-    parser.add_argument("--output", required=True, help="Path for output .reqif file")
+    _json_path = lambda p: _validate_path(p, [".json"])
+    _reqif_path = lambda p: _validate_path(p, [".reqif"])
+    parser.add_argument("--requirements", required=True, type=_json_path, help="Path to requirements_registry.json")
+    parser.add_argument("--needs", required=True, type=_json_path, help="Path to needs_registry.json")
+    parser.add_argument("--traceability", required=True, type=_json_path, help="Path to traceability_registry.json")
+    parser.add_argument("--output", required=True, type=_reqif_path, help="Path for output .reqif file")
 
     args = parser.parse_args()
 
-    req_path = _validate_path(args.requirements, [".json"])
-    needs_path = _validate_path(args.needs, [".json"])
-    trace_path = _validate_path(args.traceability, [".json"])
-
-    output_path = _validate_path(args.output, [".reqif"])
-    export_reqif(req_path, needs_path, trace_path, output_path)
+    export_reqif(args.requirements, args.needs, args.traceability, args.output)
 
 
 if __name__ == "__main__":

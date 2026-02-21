@@ -101,7 +101,6 @@ def add_need(
     concept_dev_refs: dict | None = None,
 ) -> str:
     """Add a need to the registry. Returns the assigned ID."""
-    workspace = _validate_dir_path(workspace)
     registry = _load_registry(workspace)
 
     # Check uniqueness (case-insensitive statement + stakeholder)
@@ -132,7 +131,6 @@ _PROTECTED_FIELDS = {"id", "status", "registered_at"}
 
 def update_need(workspace: str, need_id: str, **fields) -> None:
     """Update fields on an existing need. Protected fields (id, status, registered_at) cannot be changed."""
-    workspace = _validate_dir_path(workspace)
     registry = _load_registry(workspace)
     idx, need = _find_need(registry, need_id)
 
@@ -153,7 +151,6 @@ def defer_need(workspace: str, need_id: str, rationale: str) -> None:
     """Set need status to deferred with rationale."""
     if not rationale or not rationale.strip():
         raise ValueError("rationale is required for defer")
-    workspace = _validate_dir_path(workspace)
     registry = _load_registry(workspace)
     idx, need = _find_need(registry, need_id)
     need["status"] = "deferred"
@@ -167,7 +164,6 @@ def reject_need(workspace: str, need_id: str, rationale: str) -> None:
     """Set need status to rejected with rationale."""
     if not rationale or not rationale.strip():
         raise ValueError("rationale is required for reject")
-    workspace = _validate_dir_path(workspace)
     registry = _load_registry(workspace)
     idx, need = _find_need(registry, need_id)
     need["status"] = "rejected"
@@ -179,7 +175,6 @@ def reject_need(workspace: str, need_id: str, rationale: str) -> None:
 
 def list_needs(workspace: str, block: str | None = None, status: str | None = None) -> list[dict]:
     """List needs with optional filters."""
-    workspace = _validate_dir_path(workspace)
     registry = _load_registry(workspace)
     results = registry["needs"]
     if block:
@@ -191,7 +186,6 @@ def list_needs(workspace: str, block: str | None = None, status: str | None = No
 
 def query_needs(workspace: str, source_ref: str | None = None, assumption_ref: str | None = None) -> list[dict]:
     """Query needs by concept-dev cross-references."""
-    workspace = _validate_dir_path(workspace)
     registry = _load_registry(workspace)
     results = []
     for need in registry["needs"]:
@@ -205,14 +199,13 @@ def query_needs(workspace: str, source_ref: str | None = None, assumption_ref: s
 
 def export_needs(workspace: str) -> dict:
     """Export full registry as dict."""
-    workspace = _validate_dir_path(workspace)
     return _load_registry(workspace)
 
 
 def main():
     """CLI entry point."""
     parser = argparse.ArgumentParser(description="Manage stakeholder needs registry")
-    parser.add_argument("--workspace", required=True, help="Path to .requirements-dev/ directory")
+    parser.add_argument("--workspace", required=True, type=_validate_dir_path, help="Path to .requirements-dev/ directory")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # add

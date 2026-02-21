@@ -104,7 +104,7 @@ def add_requirement(
     level: int = 0,
 ) -> str:
     """Add a requirement in draft status. Returns the assigned ID."""
-    workspace = _validate_dir_path(workspace)
+
     if type not in VALID_TYPES:
         raise ValueError(f"Invalid type '{type}'. Must be one of: {sorted(VALID_TYPES)}")
     if priority not in VALID_PRIORITIES:
@@ -130,7 +130,7 @@ def register_requirement(workspace: str, req_id: str, parent_need: str) -> None:
     """Transition a draft requirement to registered status."""
     if not parent_need or not parent_need.strip():
         raise ValueError("parent_need is required for registration")
-    workspace = _validate_dir_path(workspace)
+
     registry = _load_registry(workspace)
     idx, req = _find_requirement(registry, req_id)
 
@@ -157,7 +157,7 @@ def register_requirement(workspace: str, req_id: str, parent_need: str) -> None:
 
 def baseline_requirement(workspace: str, req_id: str) -> None:
     """Transition a registered requirement to baselined status."""
-    workspace = _validate_dir_path(workspace)
+
     registry = _load_registry(workspace)
     idx, req = _find_requirement(registry, req_id)
     if req["status"] != "registered":
@@ -171,7 +171,7 @@ def baseline_requirement(workspace: str, req_id: str) -> None:
 
 def baseline_all(workspace: str) -> dict:
     """Baseline all registered requirements. Returns summary."""
-    workspace = _validate_dir_path(workspace)
+
     registry = _load_registry(workspace)
     baselined = []
     skipped_draft = []
@@ -192,7 +192,7 @@ def withdraw_requirement(workspace: str, req_id: str, rationale: str) -> None:
     """Withdraw a requirement with rationale."""
     if not rationale or not rationale.strip():
         raise ValueError("rationale is required for withdrawal")
-    workspace = _validate_dir_path(workspace)
+
     registry = _load_registry(workspace)
     idx, req = _find_requirement(registry, req_id)
     req["status"] = "withdrawn"
@@ -204,7 +204,7 @@ def withdraw_requirement(workspace: str, req_id: str, rationale: str) -> None:
 
 def list_requirements(workspace: str, include_withdrawn: bool = False) -> list[dict]:
     """List requirements, excluding withdrawn by default."""
-    workspace = _validate_dir_path(workspace)
+
     registry = _load_registry(workspace)
     results = registry["requirements"]
     if not include_withdrawn:
@@ -220,7 +220,7 @@ def query_requirements(
     status: str | None = None,
 ) -> list[dict]:
     """Query requirements with filters."""
-    workspace = _validate_dir_path(workspace)
+
     registry = _load_registry(workspace)
     results = registry["requirements"]
     if type is not None:
@@ -239,7 +239,7 @@ _PROTECTED_FIELDS = {"id", "status", "registered_at"}
 
 def update_requirement(workspace: str, req_id: str, **fields) -> None:
     """Update fields on an existing requirement. Merges into attributes dict."""
-    workspace = _validate_dir_path(workspace)
+
     registry = _load_registry(workspace)
     idx, req = _find_requirement(registry, req_id)
 
@@ -259,14 +259,14 @@ def update_requirement(workspace: str, req_id: str, **fields) -> None:
 
 def export_requirements(workspace: str) -> dict:
     """Export full registry as dict."""
-    workspace = _validate_dir_path(workspace)
+
     return _load_registry(workspace)
 
 
 def main():
     """CLI entry point."""
     parser = argparse.ArgumentParser(description="Manage requirements registry")
-    parser.add_argument("--workspace", required=True, help="Path to .requirements-dev/ directory")
+    parser.add_argument("--workspace", required=True, type=_validate_dir_path, help="Path to .requirements-dev/ directory")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # add

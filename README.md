@@ -9,7 +9,7 @@ A collection of plugins that extend Claude's capabilities. Supports two plugin t
 
 ```
 claude-plugins/
-├── skills/                 # Skill plugins (17 skills)
+├── skills/                 # Skill plugins (18 skills)
 │   ├── concept-dev/
 │   ├── documentation-architect/
 │   ├── fault-tree-analysis/
@@ -21,6 +21,7 @@ claude-plugins/
 │   ├── plugin-creator/
 │   ├── problem-definition/
 │   ├── rcca-master/
+│   ├── requirements-dev/
 │   ├── research-opportunity-investigator/
 │   ├── specification-refiner/
 │   ├── speckit-generator/
@@ -125,11 +126,12 @@ Then add to Claude Desktop config (`~/.config/claude/claude_desktop_config.json`
 | documentation-architect | Transform documentation using the Diátaxis framework |
 | research-opportunity-investigator | Research and opportunity investigation for protocols |
 
-#### Concept Development (1 skill)
+#### Concept & Requirements Development (2 skills)
 
 | Skill | Description |
 |-------|-------------|
 | concept-dev | NASA Phase A concept development lifecycle: ideation, problem definition, black-box architecture, drill-down with gap analysis, and document generation with cited research |
+| requirements-dev | INCOSE-compliant requirements development with hybrid quality checking (16 deterministic + 9 semantic rules), verification planning, bidirectional traceability, and ReqIF export |
 
 #### Decision Support (1 skill)
 

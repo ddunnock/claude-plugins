@@ -37,14 +37,10 @@ def ingest(concept_path: str, output_path: str) -> dict:
         dict with keys: source_refs, assumption_refs, gate_status,
         artifact_inventory, ingested_at
     """
-    # Validate paths
-    resolved_concept = _validate_dir_path(concept_path)
-    _validate_path(output_path, allowed_extensions=[".json"])
-
     now = datetime.now(timezone.utc).isoformat()
 
     # Check if concept_path exists; if not, return fallback dict
-    if not os.path.isdir(resolved_concept):
+    if not os.path.isdir(concept_path):
         fallback = {
             "ingested_at": now,
             "concept_path": None,
@@ -65,12 +61,12 @@ def ingest(concept_path: str, output_path: str) -> dict:
     artifact_inventory = {}
     for artifact in EXPECTED_ARTIFACTS:
         artifact_inventory[artifact] = os.path.isfile(
-            os.path.join(resolved_concept, artifact)
+            os.path.join(concept_path, artifact)
         )
 
     # Parse source_registry.json (graceful on malformed JSON)
     source_refs = []
-    source_path = os.path.join(resolved_concept, "source_registry.json")
+    source_path = os.path.join(concept_path, "source_registry.json")
     if os.path.isfile(source_path):
         try:
             with open(source_path) as f:
@@ -84,7 +80,7 @@ def ingest(concept_path: str, output_path: str) -> dict:
 
     # Parse assumption_registry.json (graceful on malformed JSON)
     assumption_refs = []
-    assumption_path = os.path.join(resolved_concept, "assumption_registry.json")
+    assumption_path = os.path.join(concept_path, "assumption_registry.json")
     if os.path.isfile(assumption_path):
         try:
             with open(assumption_path) as f:
@@ -98,7 +94,7 @@ def ingest(concept_path: str, output_path: str) -> dict:
 
     # Parse state.json for gate status (graceful on malformed JSON)
     gate_status = {"all_passed": False, "gates": {}, "warnings": []}
-    state_path = os.path.join(resolved_concept, "state.json")
+    state_path = os.path.join(concept_path, "state.json")
     if os.path.isfile(state_path):
         try:
             with open(state_path) as f:
@@ -139,10 +135,10 @@ def main():
         description="Ingest concept-dev artifacts for requirements development"
     )
     parser.add_argument(
-        "--concept-dir", required=True, help="Path to .concept-dev/ directory"
+        "--concept-dir", required=True, type=_validate_dir_path, help="Path to .concept-dev/ directory"
     )
     parser.add_argument(
-        "--output", required=True, help="Path to write ingestion.json"
+        "--output", required=True, type=lambda p: _validate_path(p, [".json"]), help="Path to write ingestion.json"
     )
     args = parser.parse_args()
 

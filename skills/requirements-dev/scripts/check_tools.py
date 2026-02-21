@@ -166,13 +166,11 @@ def print_report():
 
 def main():
     parser = argparse.ArgumentParser(description="Check available research tools")
-    parser.add_argument("--state", help="Path to state.json to update")
+    parser.add_argument("--state", type=_validate_path, help="Path to state.json to update")
     parser.add_argument("--json", action="store_true", help="Output as JSON")
 
     args = parser.parse_args()
 
-    if args.state:
-        args.state = _validate_path(args.state, allowed_extensions=[".json"])
     report = check_tools(args.state)
 
     if args.json:

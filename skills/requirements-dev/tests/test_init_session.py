@@ -59,6 +59,12 @@ def test_init_does_not_overwrite_existing_workspace(tmp_path):
 
 
 def test_init_validates_path_rejects_traversal(tmp_path):
-    """Path arguments containing '..' must be rejected for security."""
-    with pytest.raises(SystemExit):
-        init_workspace(str(tmp_path / ".." / "evil"))
+    """CLI rejects paths containing '..' traversal at argparse level."""
+    import subprocess
+    from pathlib import Path
+    scripts_dir = Path(__file__).resolve().parent.parent / "scripts"
+    result = subprocess.run(
+        ["python3", "init_session.py", str(tmp_path / ".." / "evil")],
+        capture_output=True, text=True, cwd=str(scripts_dir),
+    )
+    assert result.returncode != 0
