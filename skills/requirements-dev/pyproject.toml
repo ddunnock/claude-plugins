@@ -1,0 +1,10 @@
+[project]
+name = "requirements-dev"
+version = "1.0.0"
+description = "INCOSE-compliant requirements development plugin"
+requires-python = ">=3.11"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=7.0",
+]
