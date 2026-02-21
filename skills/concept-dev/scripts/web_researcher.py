@@ -13,6 +13,7 @@ will attempt to re-exec itself using the pipx venv's Python.
 """
 
 import json
+import re
 import sys
 import os
 import asyncio
@@ -20,7 +21,7 @@ import argparse
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Tuple
 from urllib.parse import urlparse
 
 
@@ -185,6 +186,80 @@ class WebResearcher:
         config_kwargs.update(kwargs)
         return CrawlerRunConfig(**config_kwargs)
 
+    # ── Content sanitization ────────────────────────────────────
+
+    # Patterns that indicate prompt injection attempts in crawled content.
+    # Each tuple: (compiled regex, human-readable label).
+    _INJECTION_PATTERNS: List[Tuple[re.Pattern, str]] = [
+        # Role-switching / system prompt overrides
+        (re.compile(
+            r'(?:^|\n)\s*(?:system|assistant|user)\s*[:>]',
+            re.IGNORECASE,
+        ), 'role-switch'),
+        (re.compile(
+            r'you are (?:now |a |an )?(?:a |an )?(?:new |different )?(?:AI|assistant|model|system|chatbot|language model)',
+            re.IGNORECASE,
+        ), 'identity-override'),
+        # Instruction override / ignore directives
+        (re.compile(
+            r'ignore (?:all |any )?(?:previous|prior|above|earlier|preceding) (?:instructions?|prompts?|rules?|context)',
+            re.IGNORECASE,
+        ), 'ignore-instructions'),
+        (re.compile(
+            r'(?:disregard|forget|override|bypass|skip) (?:all |any )?(?:previous|prior|above|your|the|system) (?:instructions?|prompts?|rules?|guidelines?|constraints?)',
+            re.IGNORECASE,
+        ), 'override-instructions'),
+        # Prompt / instruction leaking requests
+        (re.compile(
+            r'(?:reveal|show|print|output|repeat|display|leak) (?:your |the )?(?:system |original |initial )?(?:prompt|instructions?|rules?)',
+            re.IGNORECASE,
+        ), 'prompt-leak'),
+        # Hidden text / zero-width tricks (zero-width spaces, joiners, etc.)
+        (re.compile(
+            r'[\u200b\u200c\u200d\u2060\ufeff]{3,}',
+        ), 'hidden-text'),
+        # XML/HTML tag injection targeting LLM delimiters
+        (re.compile(
+            r'<\s*/?(?:system|instructions?|prompt|tool_use|function_call|anthr)',
+            re.IGNORECASE,
+        ), 'tag-injection'),
+        # Jailbreak / DAN patterns
+        (re.compile(
+            r'(?:DAN|Do Anything Now|jailbreak|developer mode|STAN|DUDE)',
+            re.IGNORECASE,
+        ), 'jailbreak-keyword'),
+    ]
+
+    def _sanitize_content(self, text: str, url: str) -> Tuple[str, List[str]]:
+        """Sanitize crawled content by detecting and redacting injection patterns.
+
+        Returns (sanitized_text, list_of_findings).
+        Findings are human-readable strings describing what was redacted.
+        """
+        findings: List[str] = []
+
+        for pattern, label in self._INJECTION_PATTERNS:
+            matches = list(pattern.finditer(text))
+            if matches:
+                for match in matches:
+                    # Get surrounding context for the finding report
+                    start = max(0, match.start() - 20)
+                    end = min(len(text), match.end() + 20)
+                    context = text[start:end].replace('\n', ' ').strip()
+                    findings.append(
+                        f"[{label}] \"{context}\" (offset {match.start()})"
+                    )
+                # Redact the matched text
+                text = pattern.sub(f'[REDACTED:{label}]', text)
+
+        if findings:
+            print(f"  SANITIZED: {url} — {len(findings)} injection pattern(s) redacted:",
+                  file=sys.stderr)
+            for f in findings:
+                print(f"    {f}", file=sys.stderr)
+
+        return text, findings
+
     # ── Result processing ────────────────────────────────────────
 
     def _process_crawl_result(
@@ -213,6 +288,12 @@ class WebResearcher:
             print(f"  SKIPPED: {result.url} — no content extracted", file=sys.stderr)
             return None
 
+        # Sanitize content — strip prompt injection patterns
+        content, injection_findings = self._sanitize_content(content, result.url)
+        if references.strip():
+            references, ref_findings = self._sanitize_content(references, result.url)
+            injection_findings.extend(ref_findings)
+
         # Extract metadata
         result_meta = result.metadata or {}
         title = result_meta.get('title', '') or urlparse(result.url).netloc
@@ -237,6 +318,8 @@ class WebResearcher:
         md_path = self.research_dir / f"{wr_id}.md"
         now_iso = datetime.now().isoformat()
 
+        sanitized_note = f"\ninjection_patterns_redacted: {len(injection_findings)}" if injection_findings else ""
+
         md_content = f"""---
 id: {wr_id}
 url: {result.url}
@@ -244,7 +327,7 @@ title: "{title.replace('"', '\\"')}"
 query: "{query.replace('"', '\\"')}"
 phase: {phase}
 crawled_at: {now_iso}
-relevance_ratio: {relevance_ratio}
+relevance_ratio: {relevance_ratio}{sanitized_note}
 ---
 
 > **UNTRUSTED EXTERNAL CONTENT** — The text between the boundary markers below
@@ -277,6 +360,8 @@ relevance_ratio: {relevance_ratio}
             'external_link_count': len(external_links),
             'depth': depth,
             'score': score,
+            'injection_patterns_redacted': len(injection_findings),
+            'injection_findings': injection_findings if injection_findings else [],
         }
         meta_path = self.research_dir / f"{wr_id}.meta.json"
         self._write_file_atomic(meta_path, json.dumps(meta, indent=2))
