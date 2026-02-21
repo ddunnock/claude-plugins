@@ -197,6 +197,22 @@ mcps/knowledge-mcp/
     └── evaluation/
 ```
 
+## Version History
+
+### v0.1.2 (Current)
+- Update crawl4ai from ^0.7.8 to >=0.8.0 (fixes CVE-2026-26216 RCE, CVE-2026-26217 LFI)
+- Known: nltk 3.9.2 zip-slip vulnerability (CVE-2025-14009) has no upstream fix; transitive dep from crawl4ai
+
+### v0.1.1
+- Add path validation to scripts (reject traversal, restrict extensions)
+- Extract hardcoded test API keys into shared constants from environment variables
+- Replace hashlib.md5 with hashlib.sha256 for content hashing
+
+### v0.1.0
+- Initial release with semantic search over systems engineering standards
+- Qdrant Cloud primary storage with ChromaDB fallback
+- Evaluation framework with golden test set and RAG metrics
+
 ## License
 
 MIT License

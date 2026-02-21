@@ -171,6 +171,21 @@
       ]
     },
     {
+      "name": "knowledge-mcp",
+      "source": "./mcps/knowledge-mcp",
+      "description": "Semantic search over systems engineering standards (IEEE, INCOSE, ISO) with RAG capabilities for grounding specifications in engineering knowledge.",
+      "version": "0.1.2",
+      "category": "systems-engineering",
+      "tags": [
+        "mcp",
+        "semantic-search",
+        "rag",
+        "standards",
+        "ieee",
+        "incose"
+      ]
+    },
+    {
       "name": "concept-dev",
       "source": "./skills/concept-dev",
       "description": "Walk through the NASA Phase A concept development lifecycle: ideation, problem definition, black-box architecture, drill-down with gap analysis, and document generation. 7 agents, 6 scripts (source/assumption tracking, crawl4ai web research), 9 commands, hooks for auto-state updates, and tiered research tool detection.",

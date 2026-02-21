@@ -1258,14 +1258,14 @@ toml = ["tomli ; python_full_version <= \"3.11.0a6\""]
 
 [[package]]
 name = "crawl4ai"
-version = "0.7.8"
+version = "0.8.0"
 description = "🚀🤖 Crawl4AI: Open-source LLM Friendly Web Crawler & scraper"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "crawl4ai-0.7.8-py3-none-any.whl", hash = "sha256:a25a108e3e027022e98a6ab447d8261676c5e83717fa712502718ac47456b1dd"},
-    {file = "crawl4ai-0.7.8.tar.gz", hash = "sha256:ed0189ca19ccc1dad349a37565d9dcbfed7897650e44d7c6ae25a37eef5ab44b"},
+    {file = "crawl4ai-0.8.0-py3-none-any.whl", hash = "sha256:0a822400a0968e1e92cc844ecc79a24873d61d801b4147c0ee23bc3d3ad34482"},
+    {file = "crawl4ai-0.8.0.tar.gz", hash = "sha256:202dacc5493550bb40746ee712f27af563594080745431b465cdfd86305666fc"},
 ]
 
 [package.dependencies]
@@ -9734,4 +9734,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.14"
-content-hash = "1f10139ef8e2398e48a647444192f3634951ce18b0af8f4d6d9484656480f793"
+content-hash = "546fd319a6d4d0885f7230b3fb8f251d5ff8524b9535a3988a8a9f67c78fb635"

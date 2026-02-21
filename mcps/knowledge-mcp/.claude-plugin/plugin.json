@@ -1,7 +1,7 @@
 {
   "name": "knowledge-mcp",
   "description": "Semantic search over systems engineering standards (IEEE, INCOSE, ISO). Provides RAG capabilities for grounding specifications in engineering knowledge.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": {
     "name": "David Dunnock"
   },
