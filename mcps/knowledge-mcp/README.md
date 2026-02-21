@@ -199,9 +199,12 @@ mcps/knowledge-mcp/
 
 ## Version History
 
-### v0.1.2 (Current)
-- Update crawl4ai from ^0.7.8 to >=0.8.0 (fixes CVE-2026-26216 RCE, CVE-2026-26217 LFI)
+### v0.1.3 (Current)
+- Update transitive deps: cryptography 46.0.5, pillow 12.1.1, protobuf 6.33.5, python-multipart 0.0.22, urllib3 2.6.3
 - Known: nltk 3.9.2 zip-slip vulnerability (CVE-2025-14009) has no upstream fix; transitive dep from crawl4ai
+
+### v0.1.2
+- Update crawl4ai from ^0.7.8 to >=0.8.0 (fixes CVE-2026-26216 RCE, CVE-2026-26217 LFI)
 
 ### v0.1.1
 - Add path validation to scripts (reject traversal, restrict extensions)

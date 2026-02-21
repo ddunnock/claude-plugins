@@ -174,7 +174,7 @@
       "name": "knowledge-mcp",
       "source": "./mcps/knowledge-mcp",
       "description": "Semantic search over systems engineering standards (IEEE, INCOSE, ISO) with RAG capabilities for grounding specifications in engineering knowledge.",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "category": "systems-engineering",
       "tags": [
         "mcp",
