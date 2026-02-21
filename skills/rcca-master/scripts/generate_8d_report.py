@@ -17,6 +17,21 @@ from pathlib import Path
 from typing import Dict, List, Any
 import html
 
+_ALLOWED_INPUT_EXTENSIONS = {'.json'}
+_ALLOWED_OUTPUT_EXTENSIONS = {'.html', '.htm'}
+
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> Path:
+    """Validate a file path: check extension, reject traversal."""
+    path = Path(filepath).resolve()
+    if '..' in Path(filepath).parts:
+        print(f"Error: Path traversal not allowed in {label}: {filepath}", file=sys.stderr)
+        sys.exit(1)
+    if path.suffix.lower() not in allowed_extensions:
+        print(f"Error: {label} file must be one of {allowed_extensions}, got '{path.suffix}'", file=sys.stderr)
+        sys.exit(1)
+    return path
+
 
 def escape_html(text: str) -> str:
     """Safely escape HTML special characters."""
@@ -664,8 +679,9 @@ def main():
     if args.sample:
         data = create_sample_data()
     elif args.input:
+        input_path = _validate_path(args.input, _ALLOWED_INPUT_EXTENSIONS, 'input')
         try:
-            with open(args.input, 'r') as f:
+            with open(input_path, 'r') as f:
                 data = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError) as e:
             print(f"Error reading input file: {e}", file=sys.stderr)
@@ -678,7 +694,7 @@ def main():
     html_content = generate_html_report(data)
 
     # Write output
-    output_path = Path(args.output)
+    output_path = _validate_path(args.output, _ALLOWED_OUTPUT_EXTENSIONS, 'output')
     output_path.write_text(html_content, encoding='utf-8')
 
     print(f"\n✓ Report generated: {output_path.absolute()}")

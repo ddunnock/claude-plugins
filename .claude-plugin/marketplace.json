@@ -48,7 +48,7 @@
       "name": "rcca-master",
       "source": "./skills/rcca-master",
       "description": "Orchestrate complete 8D investigations with integrated tool selection and domain-specific team formation guidance. Use for RCCA, root cause analysis, corrective action, failure investigation, nonconformance analysis, quality problems, or customer complaints.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "category": "quality-engineering",
       "tags": ["rcca", "8d", "root-cause", "corrective-action", "quality"]
     },

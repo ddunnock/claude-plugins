@@ -15,7 +15,23 @@ import argparse
 import json
 import sys
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional
+
+_ALLOWED_INPUT_EXTENSIONS = {'.json'}
+_ALLOWED_OUTPUT_EXTENSIONS = {'.json'}
+
+
+def _validate_path(filepath: str, allowed_extensions: set, label: str) -> Path:
+    """Validate a file path: check extension, reject traversal."""
+    path = Path(filepath).resolve()
+    if '..' in Path(filepath).parts:
+        print(f"Error: Path traversal not allowed in {label}: {filepath}", file=sys.stderr)
+        sys.exit(1)
+    if path.suffix.lower() not in allowed_extensions:
+        print(f"Error: {label} file must be one of {allowed_extensions}, got '{path.suffix}'", file=sys.stderr)
+        sys.exit(1)
+    return path
 
 
 # Phase weights (sum to 1.0)
@@ -440,8 +456,9 @@ def main():
             print(f"Error parsing JSON: {e}", file=sys.stderr)
             sys.exit(1)
     elif args.file:
+        file_path = _validate_path(args.file, _ALLOWED_INPUT_EXTENSIONS, 'input')
         try:
-            with open(args.file, "r") as f:
+            with open(file_path, "r") as f:
                 data = json.load(f)
             scores = extract_scores_from_session(data)
         except (json.JSONDecodeError, FileNotFoundError, TypeError) as e:
@@ -467,9 +484,10 @@ def main():
         print_score_report(result)
 
     if args.output:
-        with open(args.output, "w") as f:
+        output_path = _validate_path(args.output, _ALLOWED_OUTPUT_EXTENSIONS, 'output')
+        with open(output_path, "w") as f:
             json.dump(result, f, indent=2)
-        print(f"\nResults saved to: {args.output}")
+        print(f"\nResults saved to: {output_path}")
     elif args.quiet:
         print(json.dumps(result, indent=2))
 

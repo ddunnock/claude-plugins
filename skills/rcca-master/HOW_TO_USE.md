@@ -80,7 +80,7 @@ python scripts/initialize_8d.py --id "8D-2025-001" --title "Cracked Connector" -
 
 ### Generate Final Report
 ```bash
-python scripts/generate_8d_report.py --file session.json --format html --output report.html
+python scripts/generate_8d_report.py --input session.json --output report.html
 ```
 
 ### Score Investigation Quality

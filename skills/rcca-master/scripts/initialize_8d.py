@@ -18,6 +18,21 @@ from pathlib import Path
 from typing import Optional
 from dataclasses import dataclass, field, asdict
 
+# Allowed output file extensions
+_ALLOWED_OUTPUT_EXTENSIONS = {'.json'}
+
+
+def _validate_output_path(filepath: str) -> Path:
+    """Validate an output file path: check extension, reject traversal."""
+    path = Path(filepath).resolve()
+    if '..' in Path(filepath).parts:
+        print(f"Error: Path traversal not allowed: {filepath}", file=sys.stderr)
+        sys.exit(1)
+    if path.suffix.lower() not in _ALLOWED_OUTPUT_EXTENSIONS:
+        print(f"Error: Output file must be one of {_ALLOWED_OUTPUT_EXTENSIONS}, got '{path.suffix}'", file=sys.stderr)
+        sys.exit(1)
+    return path
+
 
 @dataclass
 class TeamMember:
@@ -314,8 +329,9 @@ def main():
     print_session_summary(session)
 
     if args.output:
-        save_session(session, args.output)
-        print(f"\n✓ Session saved to: {args.output}")
+        output_path = _validate_output_path(args.output)
+        save_session(session, str(output_path))
+        print(f"\n✓ Session saved to: {output_path}")
     else:
         # Print JSON to stdout
         print("\n--- SESSION JSON ---")
