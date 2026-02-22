@@ -10,6 +10,7 @@ from requirement_tracker import (
     list_requirements,
     query_requirements,
     register_requirement,
+    split_requirement,
     update_requirement,
     withdraw_requirement,
 )
@@ -173,3 +174,110 @@ def test_sync_counts_updates_state(tmp_workspace):
     state = json.loads((tmp_workspace / "state.json").read_text())
     assert state["counts"]["requirements_total"] == 1
     assert state["counts"]["requirements_registered"] == 1
+
+
+# --- Split requirement tests ---
+
+
+class TestSplitRequirement:
+    def test_split_withdraws_original_and_creates_new(self, tmp_workspace):
+        """split withdraws the original and creates N new draft requirements."""
+        add_requirement(str(tmp_workspace), "The system shall encrypt data and log access",
+                        type="functional", priority="high", source_block="security")
+        result = split_requirement(
+            str(tmp_workspace), "REQ-001",
+            ["The system shall encrypt all data at rest.",
+             "The system shall log all access attempts within 5 seconds."],
+        )
+        assert result["withdrawn"] == "REQ-001"
+        assert len(result["created"]) == 2
+        assert result["created"] == ["REQ-002", "REQ-003"]
+
+        # Original should be withdrawn
+        reg = json.loads((tmp_workspace / "requirements_registry.json").read_text())
+        original = next(r for r in reg["requirements"] if r["id"] == "REQ-001")
+        assert original["status"] == "withdrawn"
+        assert "Split" in original["rationale"]
+
+    def test_split_inherits_metadata(self, tmp_workspace):
+        """split copies type, priority, source_block, and level to new requirements."""
+        add_requirement(str(tmp_workspace), "Combined req",
+                        type="performance", priority="medium", source_block="api", level=1)
+        result = split_requirement(
+            str(tmp_workspace), "REQ-001",
+            ["Part A", "Part B"],
+        )
+        reg = json.loads((tmp_workspace / "requirements_registry.json").read_text())
+        for new_id in result["created"]:
+            req = next(r for r in reg["requirements"] if r["id"] == new_id)
+            assert req["type"] == "performance"
+            assert req["priority"] == "medium"
+            assert req["source_block"] == "api"
+            assert req["level"] == 1
+            assert req["status"] == "draft"
+
+    def test_split_records_split_from_attribute(self, tmp_workspace):
+        """split records split_from in each new requirement's attributes."""
+        add_requirement(str(tmp_workspace), "Combined req",
+                        type="functional", priority="high", source_block="blk")
+        result = split_requirement(
+            str(tmp_workspace), "REQ-001",
+            ["Part A", "Part B"],
+        )
+        reg = json.loads((tmp_workspace / "requirements_registry.json").read_text())
+        for new_id in result["created"]:
+            req = next(r for r in reg["requirements"] if r["id"] == new_id)
+            assert req["attributes"]["split_from"] == "REQ-001"
+
+    def test_split_inherits_parent_need(self, tmp_workspace):
+        """split returns the inherited parent_need from the original."""
+        _add_need(tmp_workspace)
+        add_requirement(str(tmp_workspace), "Combined req",
+                        type="functional", priority="high", source_block="blk")
+        register_requirement(str(tmp_workspace), "REQ-001", parent_need="NEED-001")
+        result = split_requirement(
+            str(tmp_workspace), "REQ-001",
+            ["Part A", "Part B"],
+        )
+        assert result["parent_need"] == "NEED-001"
+
+    def test_split_requires_at_least_two_statements(self, tmp_workspace):
+        """split with fewer than 2 statements raises ValueError."""
+        add_requirement(str(tmp_workspace), "Req",
+                        type="functional", priority="high", source_block="blk")
+        with pytest.raises(ValueError, match="at least 2"):
+            split_requirement(str(tmp_workspace), "REQ-001", ["Only one"])
+
+    def test_split_requires_rationale(self, tmp_workspace):
+        """split with empty rationale raises ValueError."""
+        add_requirement(str(tmp_workspace), "Req",
+                        type="functional", priority="high", source_block="blk")
+        with pytest.raises(ValueError, match="rationale"):
+            split_requirement(str(tmp_workspace), "REQ-001",
+                              ["A", "B"], rationale="")
+
+    def test_split_syncs_counts(self, tmp_workspace):
+        """split updates counts in state.json correctly."""
+        add_requirement(str(tmp_workspace), "Combined req",
+                        type="functional", priority="high", source_block="blk")
+        split_requirement(str(tmp_workspace), "REQ-001",
+                          ["Part A", "Part B", "Part C"])
+        state = json.loads((tmp_workspace / "state.json").read_text())
+        assert state["counts"]["requirements_total"] == 4  # 1 withdrawn + 3 new
+        assert state["counts"]["requirements_withdrawn"] == 1
+
+    def test_split_three_way(self, tmp_workspace):
+        """split into 3 statements creates 3 new requirements."""
+        add_requirement(str(tmp_workspace), "A and B and C",
+                        type="functional", priority="high", source_block="blk")
+        result = split_requirement(
+            str(tmp_workspace), "REQ-001",
+            ["Part A", "Part B", "Part C"],
+        )
+        assert len(result["created"]) == 3
+
+    def test_split_not_found(self, tmp_workspace):
+        """split on nonexistent ID raises ValueError."""
+        with pytest.raises(ValueError, match="not found"):
+            split_requirement(str(tmp_workspace), "REQ-999",
+                              ["A", "B"])

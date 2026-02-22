@@ -10,6 +10,7 @@ from needs_tracker import (
     list_needs,
     query_needs,
     reject_need,
+    split_need,
     update_need,
 )
 
@@ -176,3 +177,99 @@ def test_schema_version_in_registry(workspace):
     add_need(workspace, "Need A", "User", "block-a")
     registry = json.loads(open(f"{workspace}/needs_registry.json").read())
     assert registry["schema_version"] == "1.0.0"
+
+
+# --- Split need tests ---
+
+
+class TestSplitNeed:
+    def test_split_rejects_original_and_creates_new(self, workspace):
+        """split rejects the original and creates N new approved needs."""
+        add_need(workspace, "The operator needs monitoring and alerting",
+                 "Operator", "monitoring")
+        result = split_need(
+            workspace, "NEED-001",
+            ["The operator needs to monitor pipeline health in real time.",
+             "The operator needs to receive alerts when anomalies are detected."],
+        )
+        assert result["rejected"] == "NEED-001"
+        assert len(result["created"]) == 2
+        assert result["created"] == ["NEED-002", "NEED-003"]
+
+        # Original should be rejected
+        registry = json.loads(open(f"{workspace}/needs_registry.json").read())
+        original = next(n for n in registry["needs"] if n["id"] == "NEED-001")
+        assert original["status"] == "rejected"
+        assert "Split" in original["rationale"]
+
+    def test_split_inherits_metadata(self, workspace):
+        """split copies stakeholder, source_block, source_artifacts, concept_dev_refs."""
+        add_need(
+            workspace, "Combined need", "Admin", "block-x",
+            source_artifacts=["doc.pdf"],
+            concept_dev_refs={"sources": ["SRC-001"], "assumptions": ["ASN-001"]},
+        )
+        result = split_need(
+            workspace, "NEED-001",
+            ["Part A", "Part B"],
+        )
+        registry = json.loads(open(f"{workspace}/needs_registry.json").read())
+        for new_id in result["created"]:
+            need = next(n for n in registry["needs"] if n["id"] == new_id)
+            assert need["stakeholder"] == "Admin"
+            assert need["source_block"] == "block-x"
+            assert need["source_artifacts"] == ["doc.pdf"]
+            assert need["concept_dev_refs"]["sources"] == ["SRC-001"]
+            assert need["concept_dev_refs"]["assumptions"] == ["ASN-001"]
+            assert need["status"] == "approved"
+
+    def test_split_requires_at_least_two_statements(self, workspace):
+        """split with fewer than 2 statements raises ValueError."""
+        add_need(workspace, "Need", "User", "block-a")
+        with pytest.raises(ValueError, match="at least 2"):
+            split_need(workspace, "NEED-001", ["Only one"])
+
+    def test_split_requires_rationale(self, workspace):
+        """split with empty rationale raises ValueError."""
+        add_need(workspace, "Need", "User", "block-a")
+        with pytest.raises(ValueError, match="rationale"):
+            split_need(workspace, "NEED-001", ["A", "B"], rationale="")
+
+    def test_split_syncs_counts(self, workspace):
+        """split updates counts in state.json correctly."""
+        add_need(workspace, "Combined need", "User", "block-a")
+        split_need(workspace, "NEED-001", ["Part A", "Part B", "Part C"])
+        state = json.loads(open(f"{workspace}/state.json").read())
+        assert state["counts"]["needs_total"] == 4  # 1 rejected + 3 new
+        assert state["counts"]["needs_approved"] == 3  # 3 new approved
+
+    def test_split_three_way(self, workspace):
+        """split into 3 statements creates 3 new needs."""
+        add_need(workspace, "A and B and C", "User", "block-a")
+        result = split_need(
+            workspace, "NEED-001",
+            ["Part A", "Part B", "Part C"],
+        )
+        assert len(result["created"]) == 3
+
+    def test_split_rejected_need_fails(self, workspace):
+        """split on a rejected need raises ValueError."""
+        add_need(workspace, "Need", "User", "block-a")
+        reject_need(workspace, "NEED-001", "Out of scope")
+        with pytest.raises(ValueError, match="rejected"):
+            split_need(workspace, "NEED-001", ["A", "B"])
+
+    def test_split_not_found(self, workspace):
+        """split on nonexistent ID raises ValueError."""
+        with pytest.raises(ValueError, match="not found"):
+            split_need(workspace, "NEED-999", ["A", "B"])
+
+    def test_split_deferred_need_succeeds(self, workspace):
+        """split on a deferred need works (deferred is splittable)."""
+        add_need(workspace, "Deferred compound need", "User", "block-a")
+        defer_need(workspace, "NEED-001", "Deferred for now")
+        result = split_need(
+            workspace, "NEED-001",
+            ["Part A of deferred", "Part B of deferred"],
+        )
+        assert len(result["created"]) == 2

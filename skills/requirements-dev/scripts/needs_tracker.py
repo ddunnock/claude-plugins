@@ -197,6 +197,72 @@ def query_needs(workspace: str, source_ref: str | None = None, assumption_ref: s
     return results
 
 
+def split_need(
+    workspace: str,
+    need_id: str,
+    new_statements: list[str],
+    rationale: str = "Split: original contained multiple concerns",
+) -> dict:
+    """Split a need into multiple new needs.
+
+    Rejects the original (with rationale) and creates N new needs that
+    inherit the original's stakeholder, source_block, source_artifacts,
+    and concept_dev_refs. Each new need enters as 'approved'.
+
+    Returns dict with:
+      - rejected: the original need_id
+      - created: list of new need_ids
+    """
+    if len(new_statements) < 2:
+        raise ValueError("split requires at least 2 new statements")
+    if not rationale or not rationale.strip():
+        raise ValueError("rationale is required for split")
+
+    registry = _load_registry(workspace)
+    _idx, original = _find_need(registry, need_id)
+
+    if original["status"] not in ("approved", "deferred"):
+        raise ValueError(f"Cannot split a {original['status']} need")
+
+    # Capture inherited fields
+    inherited_stakeholder = original["stakeholder"]
+    inherited_source_block = original["source_block"]
+    inherited_source_artifacts = original.get("source_artifacts", [])
+    inherited_concept_dev_refs = original.get("concept_dev_refs", {"sources": [], "assumptions": []})
+
+    # Reject the original
+    original["status"] = "rejected"
+    original["rationale"] = rationale
+    registry["needs"][_idx] = original
+    _save_registry(workspace, registry)
+
+    # Create new needs
+    created_ids = []
+    for stmt in new_statements:
+        registry = _load_registry(workspace)
+        need = Need(
+            id=_next_id(registry),
+            statement=stmt.strip(),
+            stakeholder=inherited_stakeholder,
+            source_block=inherited_source_block,
+            source_artifacts=inherited_source_artifacts,
+            concept_dev_refs=inherited_concept_dev_refs,
+            registered_at=datetime.now(timezone.utc).isoformat(),
+        )
+        registry["needs"].append(asdict(need))
+        _save_registry(workspace, registry)
+        created_ids.append(need.id)
+
+    # Final count sync
+    registry = _load_registry(workspace)
+    _sync_counts(workspace, registry)
+
+    return {
+        "rejected": need_id,
+        "created": created_ids,
+    }
+
+
 def export_needs(workspace: str) -> dict:
     """Export full registry as dict."""
     return _load_registry(workspace)
@@ -242,6 +308,12 @@ def main():
     sp.add_argument("--source-ref", default=None)
     sp.add_argument("--assumption-ref", default=None)
 
+    # split
+    sp = subparsers.add_parser("split")
+    sp.add_argument("--id", required=True, help="ID of need to split")
+    sp.add_argument("--statements", required=True, help="JSON array of new statement strings")
+    sp.add_argument("--rationale", default="Split: original contained multiple concerns")
+
     # export
     subparsers.add_parser("export")
 
@@ -274,6 +346,10 @@ def main():
         print(json.dumps(result, indent=2))
     elif args.command == "query":
         result = query_needs(args.workspace, args.source_ref, args.assumption_ref)
+        print(json.dumps(result, indent=2))
+    elif args.command == "split":
+        statements = json.loads(args.statements)
+        result = split_need(args.workspace, args.id, statements, args.rationale)
         print(json.dumps(result, indent=2))
     elif args.command == "export":
         result = export_needs(args.workspace)

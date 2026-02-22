@@ -14,7 +14,7 @@ Orchestrates cross-block validation of the full requirements set. Runs determini
 Verify the `deliver` gate is passed (requirements must be baselined before validation):
 
 ```bash
-python3 scripts/update_state.py --workspace .requirements-dev check-gate deliver
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --workspace .requirements-dev check-gate deliver
 ```
 
 If the gate is NOT passed, inform the user:
@@ -27,7 +27,7 @@ Stop and wait for user action.
 Run all set validation checks:
 
 ```bash
-python3 scripts/set_validator.py --workspace .requirements-dev validate
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/set_validator.py --workspace .requirements-dev validate
 ```
 
 This produces JSON output with findings grouped by category:
@@ -107,10 +107,10 @@ For any issues the user decides to fix during validation:
 After each fix, re-run the relevant check to confirm resolution:
 
 ```bash
-python3 scripts/set_validator.py --workspace .requirements-dev check-duplicates
-python3 scripts/set_validator.py --workspace .requirements-dev check-terminology
-python3 scripts/set_validator.py --workspace .requirements-dev check-coverage
-python3 scripts/set_validator.py --workspace .requirements-dev check-tbd
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/set_validator.py --workspace .requirements-dev check-duplicates
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/set_validator.py --workspace .requirements-dev check-terminology
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/set_validator.py --workspace .requirements-dev check-coverage
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/set_validator.py --workspace .requirements-dev check-tbd
 ```
 
 ### Step 7: Validation Summary

@@ -28,8 +28,9 @@ Are performance/quality criteria quantifiable and testable?
 - Pass: "The system shall respond within 200ms at the 95th percentile" (measurable)
 
 ### R18 - Single Thought
-Does the statement contain exactly one requirement?
+Does the statement contain exactly one requirement? When flagging R18, **always provide a `split_suggestion`** field containing a JSON array of the proposed separate statements. This feeds directly into the split workflow.
 - Flag: "The system shall encrypt data and shall log all access attempts" (two requirements)
+  - split_suggestion: ["The system shall encrypt all data at rest.", "The system shall log all access attempts within 5 seconds of the access event."]
 - Pass: "The system shall encrypt all data at rest using AES-256" (single requirement)
 
 ### R1 - Structured
@@ -107,5 +108,5 @@ Only **high-confidence flags** should block registration. Medium and low flags a
 You may call `quality_rules.py check` to cross-reference deterministic Tier 1 results:
 
 ```bash
-uv run scripts/quality_rules.py check "requirement statement here"
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/quality_rules.py check "requirement statement here"
 ```

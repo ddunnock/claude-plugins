@@ -1,13 +1,17 @@
 {
-  "hooks": [
-    {
-      "event": "PostToolUse",
-      "matcher": {
-        "tool_name": "Write",
-        "path_pattern": "**/.requirements-dev/*.md"
-      },
-      "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/update-state-on-write.sh \"$TOOL_INPUT_PATH\"",
-      "description": "Auto-update state.json when requirements-dev artifacts are written"
-    }
-  ]
+  "description": "Requirements-dev hooks: auto-update state.json when requirements-dev artifacts are written",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/update-state-on-write.sh \"$TOOL_INPUT_PATH\"",
+            "timeout_ms": 5000
+          }
+        ]
+      }
+    ]
+  }
 }

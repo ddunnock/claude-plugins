@@ -12,7 +12,7 @@ This command initializes the requirements development workspace and ingests conc
 Run the session initialization script:
 
 ```bash
-uv run scripts/init_session.py <project_path>
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/init_session.py <project_path>
 ```
 
 Where `<project_path>` is the project root (typically the current working directory).
@@ -25,7 +25,7 @@ Where `<project_path>` is the project root (typically the current working direct
 Run the concept ingestion script:
 
 ```bash
-uv run scripts/ingest_concept.py --concept-dir .concept-dev/ --output .requirements-dev/ingestion.json
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/ingest_concept.py --concept-dir .concept-dev/ --output .requirements-dev/ingestion.json
 ```
 
 Check the returned JSON output:
@@ -131,7 +131,7 @@ Write manual entries to `.requirements-dev/ingestion.json` using the same JSON s
 Run the tool availability checker:
 
 ```bash
-uv run scripts/check_tools.py --state .requirements-dev/state.json --json
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/check_tools.py --state .requirements-dev/state.json --json
 ```
 
 Display available tools summary to the user. Note which tools are available for Phase 2 TPM research.
@@ -142,14 +142,14 @@ Use `update_state.py` to record initialization completion:
 
 ```bash
 # Set phase
-uv run scripts/update_state.py --state .requirements-dev/state.json set-phase init
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .requirements-dev/state.json set-phase init
 
 # Pass the init gate
-uv run scripts/update_state.py --state .requirements-dev/state.json pass-gate init
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .requirements-dev/state.json pass-gate init
 
 # Record blocks (one per block discovered/defined)
 # For each block, use the update command to add to blocks dict:
-uv run scripts/update_state.py --state .requirements-dev/state.json update blocks.<block-name> "<description>"
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .requirements-dev/state.json update blocks.<block-name> "<description>"
 ```
 
 ## Step 6: Display Final Summary

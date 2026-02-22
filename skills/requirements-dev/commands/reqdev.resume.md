@@ -8,7 +8,7 @@ description: Resume an interrupted requirements development session from the las
 ## Step 1: Load State
 
 ```bash
-uv run scripts/update_state.py --state .requirements-dev show
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .requirements-dev show
 ```
 
 If no state file exists:
@@ -137,19 +137,19 @@ DRAFT REQUIREMENTS TO RESOLVE
 
 For registrations:
 ```bash
-uv run scripts/requirement_tracker.py --workspace .requirements-dev register \
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/requirement_tracker.py --workspace .requirements-dev register \
   --id <REQ-xxx> --parent-need <NEED-xxx>
 ```
 
 For discards:
 ```bash
-uv run scripts/requirement_tracker.py --workspace .requirements-dev withdraw \
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/requirement_tracker.py --workspace .requirements-dev withdraw \
   --id <REQ-xxx> --rationale "Discarded during resume"
 ```
 
 After resolving all drafts, clear the list:
 ```bash
-uv run scripts/update_state.py --state .requirements-dev update progress.requirements_in_draft '[]'
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .requirements-dev update progress.requirements_in_draft '[]'
 ```
 
 ## Step 6: Continue
@@ -160,6 +160,6 @@ Based on user selection:
 - **Dashboard**: Run `/reqdev:status`
 - **Different phase**: Ask which phase; verify gate prerequisites are met using:
   ```bash
-  uv run scripts/update_state.py --state .requirements-dev check-gate <phase>
+  python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .requirements-dev check-gate <phase>
   ```
   Warn if prerequisites are not met.

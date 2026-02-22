@@ -14,7 +14,7 @@ Orchestrates the deliverable generation pipeline: validates traceability, genera
 Verify the `requirements` gate is passed:
 
 ```bash
-python3 scripts/update_state.py --workspace .requirements-dev check-gate requirements
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --workspace .requirements-dev check-gate requirements
 ```
 
 If the gate is NOT passed, inform the user:
@@ -27,8 +27,8 @@ Stop and wait for user action.
 Run traceability checks:
 
 ```bash
-python3 scripts/traceability.py --workspace .requirements-dev orphans
-python3 scripts/traceability.py --workspace .requirements-dev coverage
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/traceability.py --workspace .requirements-dev orphans
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/traceability.py --workspace .requirements-dev coverage
 ```
 
 Present results to the user:
@@ -47,9 +47,9 @@ Invoke the `document-writer` agent for each deliverable:
 3. **VERIFICATION-MATRIX.md** - All requirements with V&V methods and criteria
 
 The agent reads from:
-- `templates/requirements-specification.md`
-- `templates/traceability-matrix.md`
-- `templates/verification-matrix.md`
+- `${CLAUDE_PLUGIN_ROOT}/templates/requirements-specification.md`
+- `${CLAUDE_PLUGIN_ROOT}/templates/traceability-matrix.md`
+- `${CLAUDE_PLUGIN_ROOT}/templates/verification-matrix.md`
 - `.requirements-dev/needs_registry.json`
 - `.requirements-dev/requirements_registry.json`
 - `.requirements-dev/traceability_registry.json`
@@ -71,7 +71,7 @@ Repeat for each document. All three must be approved before proceeding.
 Run the ReqIF export:
 
 ```bash
-python3 scripts/reqif_export.py \
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/reqif_export.py \
     --requirements .requirements-dev/requirements_registry.json \
     --needs .requirements-dev/needs_registry.json \
     --traceability .requirements-dev/traceability_registry.json \
@@ -85,24 +85,34 @@ If the `reqif` package is not installed, inform the user and continue. ReqIF is 
 After all deliverables are approved, baseline all registered requirements:
 
 ```bash
-python3 scripts/requirement_tracker.py --workspace .requirements-dev baseline --all
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/requirement_tracker.py --workspace .requirements-dev baseline --all
 ```
 
 This transitions every registered requirement to `baselined` status. Withdrawn requirements are unaffected. Draft requirements generate warnings.
 
-### Step 7: State Updates
+### Step 7: Review Cross-Cutting Notes
+
+Before closing the deliver gate, check for open notes targeting this phase:
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/notes_tracker.py --workspace .requirements-dev check-gate deliver
+```
+
+If open notes exist, present them and guide the user to resolve or dismiss each one before proceeding (see SKILL.md Cross-Cutting Notes section for resolution flow). All notes targeting this phase must be resolved or dismissed before the gate can pass.
+
+### Step 8: State Updates
 
 Record deliverable artifacts and pass the deliver gate:
 
 ```bash
-python3 scripts/update_state.py --workspace .requirements-dev set-artifact deliver REQUIREMENTS-SPECIFICATION.md
-python3 scripts/update_state.py --workspace .requirements-dev set-artifact deliver TRACEABILITY-MATRIX.md
-python3 scripts/update_state.py --workspace .requirements-dev set-artifact deliver VERIFICATION-MATRIX.md
-python3 scripts/update_state.py --workspace .requirements-dev pass-gate deliver
-python3 scripts/update_state.py --workspace .requirements-dev set-phase deliver
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --workspace .requirements-dev set-artifact deliver REQUIREMENTS-SPECIFICATION.md
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --workspace .requirements-dev set-artifact deliver TRACEABILITY-MATRIX.md
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --workspace .requirements-dev set-artifact deliver VERIFICATION-MATRIX.md
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --workspace .requirements-dev pass-gate deliver
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --workspace .requirements-dev set-phase deliver
 ```
 
-### Step 8: Summary
+### Step 9: Summary
 
 Display delivery summary:
 

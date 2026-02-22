@@ -25,7 +25,11 @@
     "requirements_baselined": 0,
     "requirements_withdrawn": 0,
     "tbd_open": 0,
-    "tbr_open": 0
+    "tbr_open": 0,
+    "notes_total": 0,
+    "notes_open": 0,
+    "notes_resolved": 0,
+    "notes_dismissed": 0
   },
   "traceability": {
     "links_total": 0,

@@ -84,14 +84,14 @@ The plugin guides you through each phase with prompts, gates, and suggested next
 
 ## Scripts
 
-All scripts live in `scripts/` and are invoked by commands/agents. Each uses atomic writes (temp-file-then-rename) and validates paths at the argparse boundary to prevent path traversal.
+All scripts live in `scripts/` and are invoked by commands/agents via `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/...` for deterministic path resolution. Each uses atomic writes (temp-file-then-rename) and validates paths at the argparse boundary to prevent path traversal.
 
 ### Registry Management
 
 | Script | Functions | Description |
 |--------|-----------|-------------|
-| `needs_tracker.py` | `add_need`, `update_need`, `defer_need`, `reject_need`, `list_needs`, `query_needs`, `export_needs` | Stakeholder needs CRUD with INCOSE-pattern formalization, concept-dev cross-references, and state sync |
-| `requirement_tracker.py` | `add_requirement`, `register_requirement`, `baseline_requirement`, `baseline_all`, `withdraw_requirement`, `update_requirement`, `list_requirements`, `query_requirements`, `export_requirements` | Requirements lifecycle (draft -> registered -> baselined -> withdrawn) with type/priority validation and parent-need traceability |
+| `needs_tracker.py` | `add_need`, `update_need`, `defer_need`, `reject_need`, `split_need`, `list_needs`, `query_needs`, `export_needs` | Stakeholder needs CRUD with INCOSE-pattern formalization, compound need splitting, concept-dev cross-references, and state sync |
+| `requirement_tracker.py` | `add_requirement`, `register_requirement`, `baseline_requirement`, `baseline_all`, `withdraw_requirement`, `split_requirement`, `update_requirement`, `list_requirements`, `query_requirements`, `export_requirements` | Requirements lifecycle (draft -> registered -> baselined -> withdrawn) with split workflow, type/priority validation and parent-need traceability |
 | `source_tracker.py` | `add_source`, `list_sources`, `export_sources` | Source reference registry for research artifacts and concept-dev cross-references |
 | `traceability.py` | `link`, `query`, `coverage_report`, `orphan_check` | Bidirectional traceability links with referential integrity, coverage analysis, and orphan detection |
 
@@ -101,6 +101,8 @@ All scripts live in `scripts/` and are invoked by commands/agents. Each uses ato
 |--------|-----------|-------------|
 | `quality_rules.py` | `check_requirement`, `check_rule`, `list_rules` | 16 deterministic INCOSE GtWR v4 quality rules (R2-R40): vague terms, escape clauses, passive voice, combinators, pronouns, absolutes, and more |
 | `set_validator.py` | `validate_all`, `check_interface_coverage`, `check_duplicates`, `check_terminology`, `check_uncovered_needs`, `check_tbd_tbr`, `check_incose_set_characteristics` | Cross-block set validation with n-gram cosine similarity for duplicates, synonym-group terminology checking, and INCOSE C10-C15 compliance |
+
+| `notes_tracker.py` | `add_note`, `resolve_note`, `dismiss_note`, `list_notes`, `check_gate`, `summary`, `export_notes` | Cross-cutting notes registry for observations surfacing in one phase but belonging to another, with gate integration |
 
 ### Session and State
 
@@ -208,9 +210,9 @@ requirements-dev/
   data/                        Quality rule word lists
   hooks/                       PostToolUse hook for state sync
   references/                  INCOSE methodology guides
-  scripts/                     13 Python scripts (CLI + library)
+  scripts/                     14 Python scripts (CLI + library)
   templates/                   Deliverable document templates
-  tests/                       172 pytest tests
+  tests/                       216 pytest tests
 ```
 
 ## Security
@@ -226,12 +228,20 @@ requirements-dev/
 
 ```bash
 cd skills/requirements-dev
-uv run pytest          # 172 tests
-uv run pytest -q       # Quiet mode
-uv run pytest -k needs # Filter by keyword
+python3 -m pytest tests/    # 216 tests
+python3 -m pytest tests/ -q # Quiet mode
+python3 -m pytest tests/ -k needs # Filter by keyword
 ```
 
 ## Version History
+
+### v1.1.0
+- **Cross-cutting notes registry:** Capture observations that surface in one phase but belong to another. Notes are tracked through `open` → `resolved` | `dismissed` lifecycle with mandatory gate checks before phase advancement. New `notes_tracker.py` script with 7 functions and full CLI.
+- **Need/requirement split workflow:** Compound needs and multi-thought requirements are detected and can be split into atomic items. Quality-checker agent suggests splits for R18 (Single Thought) and R19 (Combinators). New `split_need()` and `split_requirement()` functions with split/rewrite/override decision workflow.
+- **Deterministic script path resolution:** All commands use `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/...` instead of relative paths, eliminating CWD-dependent failures.
+- **User-friendly security messaging:** Rewrote content security documentation with plain-language callout box explaining protections as background safeguards.
+- **Hooks schema fix:** Corrected `hooks.json` from array format to record-keyed-by-event format matching the plugin schema.
+- 14 scripts, 216 pytest tests (was 13 scripts, 172 tests)
 
 ### v1.0.0
 - Three-phase requirements development workflow

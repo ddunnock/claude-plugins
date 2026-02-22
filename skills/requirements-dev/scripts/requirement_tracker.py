@@ -257,6 +257,74 @@ def update_requirement(workspace: str, req_id: str, **fields) -> None:
     _save_registry(workspace, registry)
 
 
+def split_requirement(
+    workspace: str,
+    req_id: str,
+    new_statements: list[str],
+    rationale: str = "Split: original contained multiple thoughts (INCOSE R18/R19)",
+) -> dict:
+    """Split a requirement into multiple new requirements.
+
+    Withdraws the original and creates N new requirements that inherit
+    the original's type, priority, source_block, level, and parent_need.
+    Each new requirement enters as 'draft' and must go through the normal
+    quality check → register flow.
+
+    Returns dict with:
+      - withdrawn: the original req_id
+      - created: list of new req_ids
+      - parent_need: inherited parent need
+    """
+    if len(new_statements) < 2:
+        raise ValueError("split requires at least 2 new statements")
+    if not rationale or not rationale.strip():
+        raise ValueError("rationale is required for split")
+
+    registry = _load_registry(workspace)
+    _idx, original = _find_requirement(registry, req_id)
+
+    # Capture inherited fields before withdrawal
+    inherited_type = original["type"]
+    inherited_priority = original["priority"]
+    inherited_source_block = original["source_block"]
+    inherited_level = original.get("level", 0)
+    inherited_parent_need = original.get("parent_need", "")
+
+    # Withdraw the original
+    original["status"] = "withdrawn"
+    original["rationale"] = rationale
+    registry["requirements"][_idx] = original
+    _save_registry(workspace, registry)
+
+    # Create new requirements
+    created_ids = []
+    for stmt in new_statements:
+        registry = _load_registry(workspace)
+        req = Requirement(
+            id=_next_id(registry),
+            statement=stmt.strip(),
+            type=inherited_type,
+            priority=inherited_priority,
+            source_block=inherited_source_block,
+            level=inherited_level,
+            attributes={"split_from": req_id},
+            registered_at=datetime.now(timezone.utc).isoformat(),
+        )
+        registry["requirements"].append(asdict(req))
+        _save_registry(workspace, registry)
+        created_ids.append(req.id)
+
+    # Final count sync
+    registry = _load_registry(workspace)
+    _sync_counts(workspace, registry)
+
+    return {
+        "withdrawn": req_id,
+        "created": created_ids,
+        "parent_need": inherited_parent_need,
+    }
+
+
 def export_requirements(workspace: str) -> dict:
     """Export full registry as dict."""
 
@@ -304,6 +372,12 @@ def main():
     sp.add_argument("--level", type=int, default=None)
     sp.add_argument("--status", default=None)
 
+    # split
+    sp = subparsers.add_parser("split")
+    sp.add_argument("--id", required=True, help="ID of requirement to split")
+    sp.add_argument("--statements", required=True, help="JSON array of new statement strings")
+    sp.add_argument("--rationale", default="Split: original contained multiple thoughts (INCOSE R18/R19)")
+
     # export
     subparsers.add_parser("export")
 
@@ -333,6 +407,10 @@ def main():
         print(json.dumps(result, indent=2))
     elif args.command == "query":
         result = query_requirements(args.workspace, args.type, args.source_block, args.level, args.status)
+        print(json.dumps(result, indent=2))
+    elif args.command == "split":
+        statements = json.loads(args.statements)
+        result = split_requirement(args.workspace, args.id, statements, args.rationale)
         print(json.dumps(result, indent=2))
     elif args.command == "export":
         result = export_requirements(args.workspace)

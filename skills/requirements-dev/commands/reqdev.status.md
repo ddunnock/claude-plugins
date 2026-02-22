@@ -8,7 +8,7 @@ description: Display session status dashboard showing current phase, block progr
 ## Step 1: Load State
 
 ```bash
-uv run scripts/update_state.py --state .requirements-dev show
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .requirements-dev show
 ```
 
 If no state file exists, inform the user:
@@ -21,7 +21,7 @@ No active session. Run /reqdev:init to start.
 Ensure counts reflect current registry contents:
 
 ```bash
-uv run scripts/update_state.py --state .requirements-dev sync-counts
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .requirements-dev sync-counts
 ```
 
 ## Step 3: Load Registry Summaries
@@ -36,6 +36,12 @@ If they exist, also read:
 - `cat .requirements-dev/needs_registry.json`
 - `cat .requirements-dev/requirements_registry.json`
 - `cat .requirements-dev/traceability_registry.json`
+
+Check cross-cutting notes:
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/notes_tracker.py --workspace .requirements-dev summary
+```
 
 ## Step 4: Display Dashboard
 
@@ -85,6 +91,17 @@ TRACEABILITY
 
   Links: [N]
   Coverage: [N]% of needs have derived requirements
+
+-------------------------------------------------------------------
+CROSS-CUTTING NOTES
+-------------------------------------------------------------------
+
+  Total: [N]  Open: [N]  Resolved: [N]  Dismissed: [N]
+
+  [If open notes exist, show by target phase]:
+  Targeting requirements: [N] open
+  Targeting validate:     [N] open
+  Targeting research:     [N] open
 
 -------------------------------------------------------------------
 DECOMPOSITION

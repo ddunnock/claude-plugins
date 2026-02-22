@@ -10,7 +10,7 @@ Decomposes a baselined system-level block into sub-blocks, allocates parent requ
 ## Prerequisites
 
 - Block requirements must be baselined (run `/reqdev:deliver` first)
-- Read `references/decomposition-guide.md` for guidance on decomposition patterns
+- Read `${CLAUDE_PLUGIN_ROOT}/references/decomposition-guide.md` for guidance on decomposition patterns
 
 ## Procedure
 

@@ -84,7 +84,10 @@ For each functional block, the plugin helps you formalize stakeholder needs usin
 | Reject | `python3 scripts/needs_tracker.py --workspace .requirements-dev/ reject --id NEED-001 --rationale "..."` |
 | List | `python3 scripts/needs_tracker.py --workspace .requirements-dev/ list [--block X] [--status Y]` |
 | Query | `python3 scripts/needs_tracker.py --workspace .requirements-dev/ query [--source-ref SRC-xxx]` |
+| Split | `python3 scripts/needs_tracker.py --workspace .requirements-dev/ split --id NEED-001 --statements '["Part A", "Part B"]' --rationale "..."` |
 | Export | `python3 scripts/needs_tracker.py --workspace .requirements-dev/ export` |
+
+**Compound need detection:** During formalization, the plugin assesses each need for compound statements (coordinating conjunctions joining distinct capabilities). If detected, you choose to split, rewrite, or keep the original.
 
 **Gate:** All needs approved (or explicitly deferred/rejected) before advancing to requirements.
 
@@ -130,8 +133,11 @@ draft  -->  registered (linked to parent need)  -->  baselined  -->  [withdrawn]
 | Baseline | `python3 scripts/requirement_tracker.py --workspace .requirements-dev/ baseline --id REQ-001` |
 | Baseline all | `python3 scripts/requirement_tracker.py --workspace .requirements-dev/ baseline --all` |
 | Withdraw | `python3 scripts/requirement_tracker.py --workspace .requirements-dev/ withdraw --id REQ-001 --rationale "..."` |
+| Split | `python3 scripts/requirement_tracker.py --workspace .requirements-dev/ split --id REQ-001 --statements '["Part A", "Part B"]' --rationale "..."` |
 | List | `python3 scripts/requirement_tracker.py --workspace .requirements-dev/ list [--include-withdrawn]` |
 | Query | `python3 scripts/requirement_tracker.py --workspace .requirements-dev/ query [--type X] [--source-block Y] [--level N]` |
+
+**Split workflow:** When Tier 1 R19 (Combinators) or Tier 2 R18 (Single Thought) flags a requirement, the plugin presents a split/rewrite/override decision. Splitting withdraws the original and creates N new draft requirements that inherit type, priority, block, and level from the parent.
 
 **Gate:** All requirements for all blocks registered and quality-checked before advancing to deliverables.
 
@@ -350,6 +356,28 @@ Each violation includes:
 7. **Use active voice** -- "The system shall..." not "It shall be..."
 8. **No escape clauses** -- "where possible" or "if practical" weaken requirements
 
+## Cross-Cutting Notes
+
+During any phase, you may identify observations that belong to a different phase (e.g., a performance concern surfacing during functional needs formalization). The cross-cutting notes registry captures these so they are not lost.
+
+**How it works:**
+
+1. The plugin captures notes with a target phase and category as they arise
+2. Before each gate, the plugin checks whether any open notes target the current phase
+3. All targeted notes must be resolved or dismissed before the gate can pass
+4. Use `/reqdev:status` to see a summary of open notes
+
+**CLI:**
+
+| Action | Command |
+|--------|---------|
+| Add note | `python3 scripts/notes_tracker.py --workspace .requirements-dev/ add --text "..." --source-phase needs --target-phase requirements --category performance` |
+| Resolve | `python3 scripts/notes_tracker.py --workspace .requirements-dev/ resolve --id NOTE-001 --resolution "Addressed in REQ-005"` |
+| Dismiss | `python3 scripts/notes_tracker.py --workspace .requirements-dev/ dismiss --id NOTE-001 --reason "Out of scope"` |
+| List | `python3 scripts/notes_tracker.py --workspace .requirements-dev/ list [--status open] [--target-phase requirements]` |
+| Gate check | `python3 scripts/notes_tracker.py --workspace .requirements-dev/ check-gate --phase requirements` |
+| Summary | `python3 scripts/notes_tracker.py --workspace .requirements-dev/ summary` |
+
 ## Troubleshooting
 
 | Problem | Solution |
@@ -360,3 +388,5 @@ Each violation includes:
 | Gate won't pass | Check that all items in the current phase are approved/resolved |
 | Path traversal error | Paths must not contain `..` components; use absolute or clean relative paths |
 | "Schema version mismatch" warning | The workspace was created with a different plugin version; features may be limited |
+| Gate blocked by open notes | Resolve or dismiss open cross-cutting notes targeting the current phase via `/reqdev:status` |
+| Scripts not found | Ensure commands use `${CLAUDE_PLUGIN_ROOT}/scripts/...` paths (fixed in v1.1.0) |
