@@ -188,8 +188,8 @@
     {
       "name": "requirements-dev",
       "source": "./skills/requirements-dev",
-      "description": "INCOSE-compliant requirements development with hybrid quality checking (16 deterministic + 9 semantic GtWR v4 rules), verification planning, bidirectional traceability, gap analysis against concept architecture, cross-cutting notes registry, need/requirement split workflow, and ReqIF export. 5 agents, 15 scripts, 10 commands.",
-      "version": "1.2.0",
+      "description": "INCOSE-compliant requirements development with hybrid quality checking (16 deterministic + 9 semantic GtWR v4 rules), verification planning, bidirectional traceability, gap analysis against concept architecture, assumption lifecycle management (GtWR §5.3), cross-cutting notes registry, need/requirement split workflow, ConOps scenario mining, provenance scoring, and ReqIF export. 5 agents, 16 scripts, 10 commands.",
+      "version": "1.3.0",
       "category": "systems-engineering",
       "tags": [
         "requirements-engineering",

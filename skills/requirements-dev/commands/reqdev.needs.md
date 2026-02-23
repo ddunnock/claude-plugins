@@ -43,7 +43,11 @@ For each block defined in state.json `blocks`:
 
 ### If needs_candidates exist for this block (from ingestion):
 
-1. Present the candidates in a numbered list
+1. Present the candidates in a numbered list, showing priority hints and provenance scores when available:
+   ```
+   1. [★★★] [HIGH] "The operator needs to monitor system health..." (auth, CONCEPT-DOCUMENT.md)
+   2. [★★]  [MED]  "The user needs to configure alert thresholds..." (monitoring, CONCEPT-DOCUMENT.md)
+   ```
 2. For each candidate, formalize into INCOSE pattern:
 
 **INCOSE Need Pattern:**
@@ -102,6 +106,15 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/needs_tracker.py --workspace .requirements
   --source-artifacts "CONCEPT-DOCUMENT.md" \
   --concept-dev-refs '{"sources": ["SRC-xxx"], "assumptions": []}'
 ```
+
+If the need was derived from an ingestion candidate (concept-dev origin), also create a concept_origin traceability link:
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/traceability.py --workspace .requirements-dev link \
+  --source NEED-xxx --target "CONCEPT-DOCUMENT.md:Section Name" --type concept_origin --role need
+```
+
+This provides backward traceability from the need to the specific concept-dev artifact and section that originated it, per INCOSE SE Handbook §4.3.7.
 
 For split needs (when a previously registered need is found to be compound during review):
 

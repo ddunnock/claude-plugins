@@ -134,3 +134,4 @@ Each note tracks: the observation text, where it was captured (origin_phase), wh
 - **Source Grounding:** All research claims reference registered sources.
 - **Capture Cross-Cutting Observations:** When an observation surfaces that belongs in a different phase, immediately record it as a cross-cutting note rather than trying to address it out of sequence. Notes are reviewed at relevant gates.
 - **Suggest Gap Analysis:** After completing needs or requirements phases, suggest running `/reqdev:gaps` to check for coverage gaps against the concept architecture before proceeding.
+- **Assumption Lifecycle:** Concept-dev assumptions are imported during init and tracked through active → challenged → invalidated | reaffirmed lifecycle per INCOSE GtWR v4 §5.3. New assumptions can be added during requirements development. Assumption health is checked during gap analysis.

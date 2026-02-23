@@ -60,6 +60,19 @@ This produces a JSON report with seven gap categories:
 
 The report is saved to `.requirements-dev/gap_analysis.json`.
 
+### Step 3.5: Assumption Health Check
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/assumption_tracker.py --workspace .requirements-dev/ summary
+```
+
+Flag assumption health issues as additional gap findings:
+- **Critical**: High/critical-impact assumptions still active (unvalidated) late in the lifecycle
+- **High**: Challenged assumptions with no resolution (neither invalidated nor reaffirmed)
+- **Medium**: Concept-dev assumptions never reviewed during requirements development
+
+Include assumption health in the gap-analyst agent context.
+
 ### Step 4: Semantic Gap Discovery
 
 Launch the `gap-analyst` agent with:

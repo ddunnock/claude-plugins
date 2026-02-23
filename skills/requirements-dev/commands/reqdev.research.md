@@ -39,6 +39,18 @@ If no argument is provided, ask the user:
 > - A performance area (e.g., "API response time")
 > - A specific metric you need benchmarks for
 
+### Step 1.5: Check for Existing Concept-Dev Research
+
+Before launching new research, check if concept-dev already crawled relevant sources:
+
+```bash
+ls .concept-dev/research/ 2>/dev/null
+```
+
+If `.concept-dev/research/` exists and contains `WR-xxx.md` files or `research_index.json`, review these for existing benchmarks relevant to the research target. Concept-dev's research corpus may already contain the data needed, avoiding duplicate web crawling.
+
+If relevant concept-dev research exists, note it in the research summary and cite it as a concept_dev source.
+
 ### Step 2: Check Research Tool Availability
 
 Read `.requirements-dev/state.json` to check detected research tools:

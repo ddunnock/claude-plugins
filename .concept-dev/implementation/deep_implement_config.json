@@ -1,0 +1,82 @@
+{
+  "plugin_root": "/Users/dunnock/.claude/plugins/cache/piercelamb-plugins/deep-implement/0.2.0",
+  "sections_dir": "/Users/dunnock/projects/claude-plugins/.concept-dev/sections",
+  "target_dir": "/Users/dunnock/projects/claude-plugins",
+  "state_dir": "/Users/dunnock/projects/claude-plugins/.concept-dev/implementation",
+  "git_root": "/Users/dunnock/projects/claude-plugins",
+  "commit_style": "simple",
+  "test_command": "uv run pytest",
+  "sections": [
+    "section-01-plugin-scaffolding",
+    "section-02-state-management",
+    "section-03-concept-ingestion",
+    "section-04-needs-tracker",
+    "section-05-quality-checker",
+    "section-06-requirements-engine",
+    "section-07-requirements-command",
+    "section-08-status-resume",
+    "section-09-deliverables",
+    "section-10-validation-sweep",
+    "section-11-tpm-research",
+    "section-12-decomposition"
+  ],
+  "sections_state": {
+    "section-01-plugin-scaffolding": {
+      "status": "complete",
+      "commit_hash": "fd8e68b"
+    },
+    "section-02-state-management": {
+      "status": "complete",
+      "commit_hash": "106cd82"
+    },
+    "section-03-concept-ingestion": {
+      "status": "complete",
+      "commit_hash": "f882509"
+    },
+    "section-04-needs-tracker": {
+      "status": "complete",
+      "commit_hash": "fff8209"
+    },
+    "section-05-quality-checker": {
+      "status": "complete",
+      "commit_hash": "aee9342"
+    },
+    "section-06-requirements-engine": {
+      "status": "complete",
+      "commit_hash": "4b64eb4"
+    },
+    "section-07-requirements-command": {
+      "status": "complete",
+      "commit_hash": "36c54b8"
+    },
+    "section-08-status-resume": {
+      "status": "complete",
+      "commit_hash": "51b6cde"
+    },
+    "section-09-deliverables": {
+      "status": "complete",
+      "commit_hash": "11e081c"
+    },
+    "section-10-validation-sweep": {
+      "status": "complete",
+      "commit_hash": "84824f1"
+    },
+    "section-11-tpm-research": {
+      "status": "complete",
+      "commit_hash": "a2684d5"
+    },
+    "section-12-decomposition": {
+      "status": "complete",
+      "commit_hash": "439cfc1"
+    }
+  },
+  "pre_commit": {
+    "present": false,
+    "type": "none",
+    "config_file": null,
+    "native_hook": null,
+    "may_modify_files": false,
+    "detected_formatters": []
+  },
+  "created_at": "2026-02-21T03:51:25.468805+00:00"
+}

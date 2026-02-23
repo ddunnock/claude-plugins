@@ -51,6 +51,16 @@ def test_link_validates_target_exists(tmp_workspace):
         link(str(tmp_workspace), "REQ-001", "NEED-999", "derives_from", "requirement")
 
 
+def test_link_concept_origin_skips_target_validation(tmp_workspace):
+    """concept_origin links allow free-form artifact targets (no registry lookup)."""
+    _seed_registries(tmp_workspace)
+    link(str(tmp_workspace), "NEED-001", "CONCEPT-DOCUMENT.md:ConOps Section", "concept_origin", "need")
+    reg = json.loads((tmp_workspace / "traceability_registry.json").read_text())
+    assert len(reg["links"]) == 1
+    assert reg["links"][0]["type"] == "concept_origin"
+    assert reg["links"][0]["target"] == "CONCEPT-DOCUMENT.md:ConOps Section"
+
+
 def test_link_conflicts_with_has_resolution(tmp_workspace):
     _seed_registries(tmp_workspace)
     link(str(tmp_workspace), "REQ-001", "REQ-002", "conflicts_with", "conflict")

@@ -66,12 +66,16 @@ def ingest(concept_path: str, output_path: str) -> dict:
 
     # Parse source_registry.json (graceful on malformed JSON)
     source_refs = []
+    research_gaps = []
+    citations = []
     source_path = os.path.join(concept_path, "source_registry.json")
     if os.path.isfile(source_path):
         try:
             with open(source_path) as f:
                 source_data = json.load(f)
             source_refs = source_data.get("sources", [])
+            research_gaps = source_data.get("gaps", [])
+            citations = source_data.get("citations", [])
         except (json.JSONDecodeError, KeyError):
             print(
                 "Warning: source_registry.json is malformed, skipping",
@@ -80,34 +84,60 @@ def ingest(concept_path: str, output_path: str) -> dict:
 
     # Parse assumption_registry.json (graceful on malformed JSON)
     assumption_refs = []
+    ungrounded_claims = []
     assumption_path = os.path.join(concept_path, "assumption_registry.json")
     if os.path.isfile(assumption_path):
         try:
             with open(assumption_path) as f:
                 assumption_data = json.load(f)
             assumption_refs = assumption_data.get("assumptions", [])
+            ungrounded_claims = assumption_data.get("ungrounded_claims", [])
         except (json.JSONDecodeError, KeyError):
             print(
                 "Warning: assumption_registry.json is malformed, skipping",
                 file=sys.stderr,
             )
 
-    # Parse state.json for gate status (graceful on malformed JSON)
+    # Parse state.json for gate status and skeptic findings (graceful on malformed JSON)
     gate_status = {"all_passed": False, "gates": {}, "warnings": []}
+    skeptic_findings = {}
     state_path = os.path.join(concept_path, "state.json")
     if os.path.isfile(state_path):
         try:
             with open(state_path) as f:
                 state_data = json.load(f)
-            gates = state_data.get("gates", {})
-            gate_status["gates"] = gates
-            failed = [name for name, passed in gates.items() if not passed]
-            if failed:
-                gate_status["all_passed"] = False
-                for name in failed:
-                    gate_status["warnings"].append(f"Gate '{name}' not passed")
+
+            # BUG-1 fix: concept-dev stores gates as phases.{name}.gate_passed,
+            # not as a flat "gates" dict. Support both formats.
+            phases = state_data.get("phases", {})
+            if phases:
+                gates = {
+                    name: phase.get("gate_passed", False)
+                    for name, phase in phases.items()
+                }
             else:
-                gate_status["all_passed"] = True
+                gates = state_data.get("gates", {})
+
+            # BUG-3 fix: empty gates should not report all_passed=True
+            if not gates:
+                gate_status["all_passed"] = False
+                gate_status["warnings"].append(
+                    "No gate information found in state.json"
+                )
+            else:
+                gate_status["gates"] = gates
+                failed = [name for name, passed in gates.items() if not passed]
+                if failed:
+                    gate_status["all_passed"] = False
+                    for name in failed:
+                        gate_status["warnings"].append(
+                            f"Gate '{name}' not passed"
+                        )
+                else:
+                    gate_status["all_passed"] = True
+
+            # OPP-2: carry forward skeptic findings
+            skeptic_findings = state_data.get("skeptic_findings", {})
         except (json.JSONDecodeError, KeyError):
             gate_status["warnings"].append("state.json is malformed")
     else:
@@ -118,6 +148,10 @@ def ingest(concept_path: str, output_path: str) -> dict:
         "concept_path": concept_path,
         "source_refs": source_refs,
         "assumption_refs": assumption_refs,
+        "research_gaps": research_gaps,
+        "ungrounded_claims": ungrounded_claims,
+        "citations": citations,
+        "skeptic_findings": skeptic_findings,
         "gate_status": gate_status,
         "artifact_inventory": artifact_inventory,
     }

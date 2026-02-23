@@ -131,7 +131,7 @@ Then add to Claude Desktop config (`~/.config/claude/claude_desktop_config.json`
 | Skill | Description |
 |-------|-------------|
 | concept-dev | NASA Phase A concept development lifecycle: ideation, problem definition, black-box architecture, drill-down with gap analysis, and document generation with cited research |
-| requirements-dev | INCOSE-compliant requirements development with hybrid quality checking (16 deterministic + 9 semantic rules), verification planning, bidirectional traceability, and ReqIF export |
+| requirements-dev | INCOSE-compliant requirements development with hybrid quality checking (16 deterministic + 9 semantic rules), verification planning, bidirectional traceability, assumption lifecycle management, gap analysis, and ReqIF export |
 
 #### Decision Support (1 skill)
 

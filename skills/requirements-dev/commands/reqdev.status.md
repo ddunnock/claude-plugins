@@ -43,6 +43,12 @@ Check cross-cutting notes:
 python3 ${CLAUDE_PLUGIN_ROOT}/scripts/notes_tracker.py --workspace .requirements-dev summary
 ```
 
+Check assumption status:
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/assumption_tracker.py --workspace .requirements-dev/ summary
+```
+
 ## Step 4: Display Dashboard
 
 ```
@@ -91,6 +97,14 @@ TRACEABILITY
 
   Links: [N]
   Coverage: [N]% of needs have derived requirements
+
+-------------------------------------------------------------------
+ASSUMPTIONS (GtWR §5.3)
+-------------------------------------------------------------------
+
+  Total: [N]  Active: [N]  Challenged: [N]  Invalidated: [N]  Reaffirmed: [N]
+  Origin: [N] concept-dev, [N] requirements-dev
+  High-impact active: [N] (require monitoring)
 
 -------------------------------------------------------------------
 CROSS-CUTTING NOTES

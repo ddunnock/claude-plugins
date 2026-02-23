@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-02-23
+
+### Changed
+
+- **requirements-dev v1.3.0** — Cross-skill remediation addressing 16 findings (3 bugs, 8 structural gaps, 5 missed opportunities) from concept-dev → requirements-dev integration analysis
+  - **Bug fixes:** Gate schema mismatch with concept-dev state format, wrong ingestion keys in gap_analyzer concept_coverage, empty gates falsely reporting all_passed
+  - **Enriched ingestion:** Carries forward research gaps, ungrounded claims, citations, confidence levels, and skeptic findings from concept-dev
+  - **Assumption lifecycle:** New `assumption_tracker.py` (7 functions) implementing INCOSE GtWR v4 §5.3 — imports concept-dev assumptions, tracks through active→challenged→invalidated|reaffirmed lifecycle
+  - **Interface coverage:** New `interface_coverage()` in gap_analyzer validates block relationships have corresponding interface requirements; new gap-analyst rules G8/G9
+  - **Concept-origin traceability:** New `concept_origin` link type for backward traceability to concept artifacts
+  - **ConOps mining, priority hints, provenance scoring:** Init mines ConOps scenarios; maturation paths map to priority hints; needs annotated with ★★★/★★/★ provenance quality
+  - **Research reuse:** `/reqdev:research` checks for existing concept-dev research before launching web crawling
+  - 5 agents, 16 scripts, 10 commands, 279 pytest tests (was 15 scripts, 241 tests)
+
 ## [1.1.0] - 2026-02-15
 
 ### Added
@@ -65,5 +79,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Comprehensive README documentation
 
+[1.2.0]: https://github.com/dunnock/claude-plugins/releases/tag/v1.2.0
 [1.1.0]: https://github.com/dunnock/claude-plugins/releases/tag/v1.1.0
 [1.0.0]: https://github.com/dunnock/claude-plugins/releases/tag/v1.0.0

@@ -105,7 +105,8 @@ All scripts live in `scripts/` and are invoked by commands/agents via `python3 $
 | `set_validator.py` | `validate_all`, `check_interface_coverage`, `check_duplicates`, `check_terminology`, `check_uncovered_needs`, `check_tbd_tbr`, `check_incose_set_characteristics` | Cross-block set validation with n-gram cosine similarity for duplicates, synonym-group terminology checking, and INCOSE C10-C15 compliance |
 
 | `notes_tracker.py` | `add_note`, `resolve_note`, `dismiss_note`, `list_notes`, `check_gate`, `summary`, `export_notes` | Cross-cutting notes registry for observations surfacing in one phase but belonging to another, with gate integration |
-| `gap_analyzer.py` | `block_type_matrix`, `concept_coverage`, `block_asymmetry`, `vv_coverage`, `priority_alignment`, `need_sufficiency`, `block_need_coverage`, `analyze` | Deterministic gap analysis: coverage matrices, concept traceability, priority alignment, and sufficiency metrics |
+| `gap_analyzer.py` | `block_type_matrix`, `concept_coverage`, `block_asymmetry`, `vv_coverage`, `priority_alignment`, `need_sufficiency`, `block_need_coverage`, `interface_coverage`, `analyze` | Deterministic gap analysis: coverage matrices, concept traceability, interface coverage, priority alignment, and sufficiency metrics |
+| `assumption_tracker.py` | `import_from_ingestion`, `add_assumption`, `challenge_assumption`, `invalidate_assumption`, `reaffirm_assumption`, `list_assumptions`, `summary` | Assumption lifecycle management (active → challenged → invalidated/reaffirmed) with concept-dev import and requirements-dev creation |
 
 ### Session and State
 
@@ -213,9 +214,9 @@ requirements-dev/
   data/                        Quality rule word lists
   hooks/                       PostToolUse hook for state sync
   references/                  INCOSE methodology guides
-  scripts/                     15 Python scripts (CLI + library)
+  scripts/                     16 Python scripts (CLI + library)
   templates/                   Deliverable document templates
-  tests/                       241 pytest tests
+  tests/                       279 pytest tests
 ```
 
 ## Security
@@ -231,12 +232,25 @@ requirements-dev/
 
 ```bash
 cd skills/requirements-dev
-python3 -m pytest tests/    # 216 tests
+python3 -m pytest tests/    # 266 tests
 python3 -m pytest tests/ -q # Quiet mode
 python3 -m pytest tests/ -k needs # Filter by keyword
 ```
 
 ## Version History
+
+### v1.3.0
+- **Critical bug fixes:** Fixed gate schema mismatch (BUG-1: concept-dev stores gates in `phases.{name}.gate_passed`, not flat `gates` object), fixed `gap_analyzer.py` concept_coverage using wrong ingestion keys (BUG-2: `source_refs`/`assumption_refs` not `sources`/`assumptions`), added empty gates guard (BUG-3).
+- **Enriched ingestion:** `ingest_concept.py` now carries forward research gaps, ungrounded claims, citations, confidence levels, and skeptic findings from concept-dev artifacts.
+- **Assumption lifecycle:** New `assumption_tracker.py` script (7 functions) implementing INCOSE GtWR v4 §5.3 assumption management. Tracks assumptions through `active` → `challenged` → `invalidated` | `reaffirmed` lifecycle with concept-dev import, requirements-dev creation, and category/impact classification.
+- **Interface coverage validation:** New `interface_coverage()` function in `gap_analyzer.py` checks that declared block relationships have corresponding interface-type requirements. New gap-analyst rules G8 (Interface Coverage) and G9 (Assumption Health).
+- **Concept-origin traceability:** New `concept_origin` link type in traceability engine for backward traceability to concept artifacts (e.g., CONCEPT-DOCUMENT.md sections). Targets are free-form artifact references.
+- **Source field harmonization:** `source_tracker.py` gains `name` alias and `confidence` fields for cross-skill compatibility with concept-dev.
+- **ConOps scenario mining:** Init command mines ConOps sections from CONCEPT-DOCUMENT.md for implicit operational requirements (performance, usability, reliability).
+- **Priority hints:** Maturation path from concept-dev maps to priority hints (Foundation→high, Integration→medium, Advanced→low) displayed during needs formalization.
+- **Provenance scoring:** Needs candidates annotated with ★★★/★★/★ provenance quality based on source confidence, assumption status, and skeptic findings.
+- **Research reuse:** `/reqdev:research` checks for existing concept-dev research artifacts before launching new web crawling.
+- 5 agents, 16 scripts, 10 commands, 279 pytest tests (was 15 scripts, 241 tests)
 
 ### v1.2.0
 - **Gap analysis engine:** New `/reqdev:gaps` command with deterministic `gap_analyzer.py` script (8 functions) and `gap-analyst` Sonnet agent (7 discovery rules G1-G7). Detects coverage gaps across block×type matrix, concept-to-needs traceability, block asymmetry, V&V coverage, priority alignment, need sufficiency, and block need coverage. Interactive resolution workflow with accept/defer/create options.

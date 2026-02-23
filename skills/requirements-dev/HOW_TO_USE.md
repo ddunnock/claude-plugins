@@ -311,6 +311,7 @@ The plugin maintains bidirectional traceability links in `traceability_registry.
 | `allocated_to` | Requirement allocated to sub-block | REQ-001 -> sub-block |
 | `parent_of` | Block hierarchy | parent-block -> child-block |
 | `conflicts_with` | Conflict requiring resolution | REQ-001 -> REQ-002 |
+| `concept_origin` | Need originated from concept artifact | NEED-001 -> CONCEPT-DOCUMENT.md:Section |
 
 **CLI:**
 
@@ -390,6 +391,7 @@ Gap analysis discovers what is **missing** from your needs and requirements by c
 | V&V coverage | `python3 scripts/gap_analyzer.py --workspace .requirements-dev/ vv-coverage` |
 | Priority alignment | `python3 scripts/gap_analyzer.py --workspace .requirements-dev/ priority-alignment` |
 | Need sufficiency | `python3 scripts/gap_analyzer.py --workspace .requirements-dev/ need-sufficiency` |
+| Interface coverage | `python3 scripts/gap_analyzer.py --workspace .requirements-dev/ interface-coverage` |
 
 ## Cross-Cutting Notes
 
@@ -412,6 +414,41 @@ During any phase, you may identify observations that belong to a different phase
 | List | `python3 scripts/notes_tracker.py --workspace .requirements-dev/ list [--status open] [--target-phase requirements]` |
 | Gate check | `python3 scripts/notes_tracker.py --workspace .requirements-dev/ check-gate --phase requirements` |
 | Summary | `python3 scripts/notes_tracker.py --workspace .requirements-dev/ summary` |
+
+## Assumption Tracking
+
+The plugin tracks assumptions through a lifecycle aligned with INCOSE GtWR v4 §5.3. Assumptions from concept-dev are imported during `/reqdev:init`, and new assumptions can be added during requirements development.
+
+**Lifecycle:**
+
+```
+active  -->  challenged  -->  invalidated
+                         -->  reaffirmed
+```
+
+**How it works:**
+
+1. During `/reqdev:init`, assumptions from concept-dev's assumption registry are imported with their original IDs preserved
+2. During requirements development, new assumptions can be added as they are identified
+3. Assumptions can be challenged when evidence suggests they may not hold
+4. Challenged assumptions are resolved as invalidated (requiring requirement rework) or reaffirmed (with supporting evidence)
+5. Gap analysis checks assumption health and flags invalidated or challenged assumptions linked to requirements
+
+**CLI:**
+
+| Action | Command |
+|--------|---------|
+| Import from concept-dev | `python3 scripts/assumption_tracker.py --workspace .requirements-dev/ import-from-ingestion` |
+| Add assumption | `python3 scripts/assumption_tracker.py --workspace .requirements-dev/ add --statement "..." --category scope --impact high --basis "..."` |
+| Challenge | `python3 scripts/assumption_tracker.py --workspace .requirements-dev/ challenge --id ASN-001 --reason "..." --evidence "..."` |
+| Invalidate | `python3 scripts/assumption_tracker.py --workspace .requirements-dev/ invalidate --id ASN-001 --reason "..."` |
+| Reaffirm | `python3 scripts/assumption_tracker.py --workspace .requirements-dev/ reaffirm --id ASN-001 --notes "..."` |
+| List | `python3 scripts/assumption_tracker.py --workspace .requirements-dev/ list [--status active] [--origin concept-dev]` |
+| Summary | `python3 scripts/assumption_tracker.py --workspace .requirements-dev/ summary` |
+
+**Categories:** scope, feasibility, architecture, technology, constraint, other
+
+**Impact levels:** low, medium, high, critical
 
 ## Troubleshooting
 

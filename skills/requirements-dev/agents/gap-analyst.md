@@ -73,6 +73,27 @@ For needs with 0-1 derived requirements:
 - Example: "The operator needs to monitor system health" likely requires multiple requirements (CPU, memory, disk, network, alerting thresholds, display format)
 - Do NOT flag needs where a single requirement clearly and completely satisfies the need
 
+### G7: Stakeholder Balance (continued below)
+
+### G8: Interface Coverage
+
+For each block relationship (uses/provides/depends) declared in the block architecture:
+
+- Check that at least one interface-type requirement exists involving both blocks
+- Relationships without corresponding interface requirements indicate the inter-block contract is unspecified
+- Flag missing interface requirements as high severity — these are where integration failures occur
+- Cross-reference with block × type matrix: a block with declared relationships but zero interface requirements is a systematic gap
+
+### G9: Assumption Health
+
+Examine the assumption registry for lifecycle issues:
+
+- **Critical**: High-impact or critical-impact assumptions still in `active` status (never validated) — these constrain requirements but have not been confirmed
+- **High**: Assumptions in `challenged` status with no resolution — investigation was started but not completed
+- **Medium**: Concept-dev assumptions imported but never reviewed (all still `active` from import) — indicates the requirements team has not evaluated concept-dev's foundational assumptions
+- For each flagged assumption, suggest: challenge with evidence, reaffirm with SME consultation, or invalidate with rationale
+- Cross-reference: requirements derived from invalidated assumptions should be flagged for review
+
 ### G7: Stakeholder Balance
 
 Examine the distribution of needs across stakeholders:
@@ -88,7 +109,7 @@ Return a JSON array of findings. For each gap discovered:
 ```json
 {
   "gap_id": "GAP-001",
-  "category": "block_type_coverage | concept_alignment | block_symmetry | vv_completeness | priority_coherence | need_depth | stakeholder_balance",
+  "category": "block_type_coverage | concept_alignment | block_symmetry | vv_completeness | priority_coherence | need_depth | stakeholder_balance | interface_coverage | assumption_health",
   "severity": "critical | high | medium | low | info",
   "finding": "Natural language description of the gap",
   "affected_entities": ["NEED-001", "REQ-002", "auth_block"],

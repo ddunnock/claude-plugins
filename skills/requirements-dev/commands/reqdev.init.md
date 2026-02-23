@@ -36,6 +36,28 @@ Check the returned JSON output:
 
 If `gate_status.warnings` has entries, display them to the user with a note that proceeding without all gates passed may result in incomplete ingestion.
 
+Also note enriched ingestion fields in the output:
+- `research_gaps`: Open research gaps from concept-dev source registry
+- `ungrounded_claims`: Claims flagged as lacking source documentation
+- `citations`: Claim-to-source links from concept-dev
+- `skeptic_findings`: Concept-dev skeptic agent verdicts (verified/unverified/disputed counts)
+
+## Step 2.5: Import Assumptions
+
+Import concept-dev assumptions into the local assumption lifecycle tracker:
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/assumption_tracker.py --workspace .requirements-dev/ import-from-ingestion
+```
+
+This creates local copies of concept-dev assumptions with `origin: "concept-dev"` and unique ASN-xxx IDs. These can be challenged, invalidated, or reaffirmed as requirements analysis progresses — per INCOSE GtWR v4 §5.3 continuous assumption management.
+
+Display the import result:
+```
+Assumptions imported: {imported_count} from concept-dev
+Assumptions skipped:  {skipped_count} (already imported)
+```
+
 ## Step 3: Branch on Concept-Dev Availability
 
 ### If concept-dev artifacts found
@@ -51,8 +73,9 @@ If both exist, read and extract structured data:
 
 2. **Read `CONCEPT-DOCUMENT.md`** and extract:
    - Capabilities per block
-   - ConOps scenarios
+   - ConOps scenarios (today-vs-concept workflow narratives) — **mine these specifically for implicit operational requirements** per GtWR v4 §5.2.4: performance expectations, usability constraints, reliability under operational conditions, error recovery workflows
    - Stakeholder needs candidates (statements beginning with "The user needs...", "The system shall...", or similar requirement-like patterns)
+   - Maturation Path phases (Foundation/Integration/Advanced) per capability, if present
 
 3. **Read `SOLUTION-LANDSCAPE.md`** if present for additional context (alternatives, trade-offs)
 
@@ -74,15 +97,39 @@ Format extracted data as:
       "source_block": "block-name",
       "statement": "The user needs...",
       "source_artifact": "CONCEPT-DOCUMENT.md",
-      "source_section": "Section heading where found"
+      "source_section": "Section heading where found",
+      "priority_hint": "high|medium|low",
+      "provenance_score": "★★★|★★|★"
     }
   ]
 }
 ```
 
-4. **Update `ingestion.json`**: Read the existing `.requirements-dev/ingestion.json` (written by `ingest_concept.py`), add the `blocks` and `needs_candidates` keys, and write it back.
+**Priority hints** from maturation path (OPP-5):
+- Foundation-phase capabilities → `priority_hint: "high"`
+- Integration-phase capabilities → `priority_hint: "medium"`
+- Advanced-phase capabilities → `priority_hint: "low"`
+- If no maturation path exists, omit priority_hint
 
-5. **Present extraction summary** to user:
+**Provenance scoring** (OPP-3): Annotate each needs_candidate with a provenance quality indicator based on the strength of its backing evidence:
+- ★★★ — derived from high-confidence sources with approved assumptions and verified skeptic findings
+- ★★ — derived from medium-confidence sources or unreviewed assumptions
+- ★ — derived from low-confidence/ungrounded sources, unresolved claims, or disputed skeptic findings
+
+Use `ingestion.json → source_refs[].confidence`, `assumption_refs[].status`, and `skeptic_findings` to compute provenance
+```
+
+4. **Register carried-forward sources**: For each source in `ingestion.json → source_refs`, register it in the requirements-dev source registry with confidence preserved:
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/source_tracker.py --workspace .requirements-dev add \
+  --title "{source title/name}" --url "" --type concept_dev \
+  --confidence "{source confidence level}" --concept-dev-ref "{source id}"
+```
+
+5. **Update `ingestion.json`**: Read the existing `.requirements-dev/ingestion.json` (written by `ingest_concept.py`), add the `blocks` and `needs_candidates` keys, and write it back.
+
+6. **Present extraction summary** to user:
 
 ```
 CONCEPT INGESTION SUMMARY
@@ -91,6 +138,9 @@ Blocks found:          {N}
 Needs candidates:      {M}
 Sources carried:       {S}
 Assumptions carried:   {A}
+Research gaps:         {RG}
+Ungrounded claims:     {UC}
+Skeptic findings:      {SF verified}/{SF unverified} verified/unverified
 Gate warnings:         {W}
 
 Blocks:

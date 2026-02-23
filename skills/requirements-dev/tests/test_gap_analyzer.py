@@ -9,6 +9,7 @@ from gap_analyzer import (
     block_need_coverage,
     block_type_matrix,
     concept_coverage,
+    interface_coverage,
     need_sufficiency,
     priority_alignment,
     vv_coverage,
@@ -62,7 +63,7 @@ def _seed_traceability(ws, links):
 
 def _seed_ingestion(ws, sources=None, assumptions=None):
     """Helper: write ingestion.json."""
-    data = {"sources": sources or [], "assumptions": assumptions or []}
+    data = {"source_refs": sources or [], "assumption_refs": assumptions or []}
     with open(f"{ws}/ingestion.json", "w") as f:
         json.dump(data, f, indent=2)
 
@@ -355,12 +356,47 @@ class TestBlockNeedCoverage:
 
 
 # ---------------------------------------------------------------------------
+# Interface Coverage
+# ---------------------------------------------------------------------------
+
+class TestInterfaceCoverage:
+    def test_covered_relationship(self, workspace):
+        """Relationship is covered when at least one side has interface reqs."""
+        _seed_requirements(workspace, [
+            _make_req("REQ-001", rtype="interface", block="auth"),
+        ])
+        result = interface_coverage(workspace)
+        # auth-data relationship: auth has interface req
+        auth_data = [u for u in result.get("uncovered", [])
+                     if set([u["block_a"], u["block_b"]]) == {"auth", "data"}]
+        assert len(auth_data) == 0
+        assert result["relationships_covered"] >= 1
+
+    def test_uncovered_relationship(self, workspace):
+        """Relationship without any interface reqs is flagged."""
+        _seed_requirements(workspace, [
+            _make_req("REQ-001", rtype="functional", block="auth"),
+        ])
+        result = interface_coverage(workspace)
+        # auth-data has relationship but no interface reqs on either side
+        uncovered_pairs = {tuple(sorted([u["block_a"], u["block_b"]])) for u in result["uncovered"]}
+        assert ("auth", "data") in uncovered_pairs
+
+    def test_no_relationships(self, workspace):
+        """Blocks without relationships produce 0 total."""
+        # logging has no relationships, so total only includes auth-data pair
+        _seed_requirements(workspace, [])
+        result = interface_coverage(workspace)
+        assert result["relationships_total"] == 1  # only auth-data
+
+
+# ---------------------------------------------------------------------------
 # Analyze (Combined)
 # ---------------------------------------------------------------------------
 
 class TestAnalyze:
     def test_produces_all_sections(self, workspace):
-        """Combined analysis includes all 7 gap categories."""
+        """Combined analysis includes all 8 gap categories."""
         _seed_needs(workspace, [_make_need("NEED-001")])
         _seed_requirements(workspace, [_make_req("REQ-001")])
         _seed_traceability(workspace, [])
@@ -374,6 +410,7 @@ class TestAnalyze:
         assert "priority_alignment" in result
         assert "need_sufficiency" in result
         assert "block_need_coverage" in result
+        assert "interface_coverage" in result
 
     def test_saves_report(self, workspace):
         """analyze() persists gap_analysis.json."""

@@ -21,7 +21,7 @@ SCHEMA_VERSION = "1.0.0"
 
 VALID_LINK_TYPES = {
     "derives_from", "verified_by", "sources", "informed_by",
-    "allocated_to", "parent_of", "conflicts_with",
+    "allocated_to", "parent_of", "conflicts_with", "concept_origin",
 }
 
 # Maps ID prefixes to their registry files and list keys
@@ -69,7 +69,9 @@ def link(workspace: str, source_id: str, target_id: str, link_type: str, role: s
         raise ValueError(f"Invalid link type '{link_type}'. Must be one of: {sorted(VALID_LINK_TYPES)}")
     if not _entity_exists(workspace, source_id):
         raise ValueError(f"Source entity not found: {source_id}")
-    if not _entity_exists(workspace, target_id):
+    # concept_origin targets are free-form artifact references (e.g., "CONCEPT-DOCUMENT.md:Section")
+    # so we skip registry validation for them
+    if link_type != "concept_origin" and not _entity_exists(workspace, target_id):
         raise ValueError(f"Target entity not found: {target_id}")
 
     registry = _load_registry(workspace)

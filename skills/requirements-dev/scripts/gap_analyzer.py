@@ -103,11 +103,11 @@ def concept_coverage(workspace: str) -> dict:
     # Collect all source and assumption IDs from ingestion
     concept_sources = set()
     concept_assumptions = set()
-    for src in ingestion.get("sources", []):
+    for src in ingestion.get("source_refs", []):
         src_id = src.get("id", "")
         if src_id:
             concept_sources.add(src_id)
-    for asn in ingestion.get("assumptions", []):
+    for asn in ingestion.get("assumption_refs", []):
         asn_id = asn.get("id", "")
         if asn_id:
             concept_assumptions.add(asn_id)
@@ -370,6 +370,63 @@ def block_need_coverage(workspace: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Gap 8: Interface Coverage (block relationships vs interface requirements)
+# ---------------------------------------------------------------------------
+
+def interface_coverage(workspace: str) -> dict:
+    """Check that declared block relationships have corresponding interface requirements.
+
+    For each block relationship (uses/provides/depends), verifies at least one
+    interface-type requirement exists involving both blocks.
+
+    Returns:
+      relationships_total: int
+      relationships_covered: int
+      uncovered: [{block_a, block_b}]
+    """
+    state = _load_json(os.path.join(workspace, "state.json")) or {}
+    req_reg = _load_json(os.path.join(workspace, "requirements_registry.json"))
+    blocks = state.get("blocks", {})
+    reqs = _active_requirements(req_reg) if req_reg else []
+
+    # Build set of blocks that have at least one interface requirement
+    blocks_with_interface = set()
+    for req in reqs:
+        if req.get("type") == "interface":
+            blk = req.get("source_block", "")
+            if blk:
+                blocks_with_interface.add(blk)
+
+    # Check each declared relationship pair
+    relationships = []
+    seen = set()
+    for block_name, block_data in blocks.items():
+        if not isinstance(block_data, dict):
+            continue
+        for related in block_data.get("relationships", []):
+            pair_key = tuple(sorted([block_name, related]))
+            if pair_key in seen or related not in blocks:
+                continue
+            seen.add(pair_key)
+            relationships.append((block_name, related))
+
+    uncovered = []
+    covered = 0
+    for block_a, block_b in relationships:
+        # At least one side of the relationship should have interface reqs
+        if block_a in blocks_with_interface or block_b in blocks_with_interface:
+            covered += 1
+        else:
+            uncovered.append({"block_a": block_a, "block_b": block_b})
+
+    return {
+        "relationships_total": len(relationships),
+        "relationships_covered": covered,
+        "uncovered": uncovered,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Combined Analysis
 # ---------------------------------------------------------------------------
 
@@ -385,6 +442,7 @@ def analyze(workspace: str, block_filter: str | None = None) -> dict:
         "priority_alignment": priority_alignment(workspace),
         "need_sufficiency": need_sufficiency(workspace),
         "block_need_coverage": block_need_coverage(workspace),
+        "interface_coverage": interface_coverage(workspace),
     }
 
     # Persist report
@@ -416,6 +474,7 @@ def _build_parser() -> argparse.ArgumentParser:
     sub.add_parser("priority-alignment", help="Need-to-requirement priority alignment")
     sub.add_parser("need-sufficiency", help="Needs with insufficient derived requirements")
     sub.add_parser("block-need-coverage", help="Blocks without approved needs")
+    sub.add_parser("interface-coverage", help="Interface requirements for block relationships")
 
     return parser
 
@@ -439,6 +498,7 @@ def main():
         "priority-alignment": lambda: priority_alignment(ws),
         "need-sufficiency": lambda: need_sufficiency(ws),
         "block-need-coverage": lambda: block_need_coverage(ws),
+        "interface-coverage": lambda: interface_coverage(ws),
     }
 
     result = dispatch[args.command]()

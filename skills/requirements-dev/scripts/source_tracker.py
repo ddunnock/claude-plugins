@@ -26,6 +26,8 @@ class Source:
     title: str
     url: str
     type: str  # research, standard, stakeholder, concept_dev
+    name: str = ""  # alias for title (cross-skill compat with concept-dev)
+    confidence: str = ""  # high, medium, low, ungrounded (from concept-dev)
     research_context: str = ""
     concept_dev_ref: str = ""
     metadata: dict = field(default_factory=dict)
@@ -65,6 +67,7 @@ def add_source(
     title: str,
     url: str,
     type: str,
+    confidence: str = "",
     research_context: str = "",
     concept_dev_ref: str = "",
 ) -> str:
@@ -76,6 +79,8 @@ def add_source(
         title=title,
         url=url,
         type=type,
+        name=title,  # auto-populate name alias from title
+        confidence=confidence,
         research_context=research_context,
         concept_dev_ref=concept_dev_ref,
         registered_at=datetime.now(timezone.utc).isoformat(),
@@ -109,6 +114,7 @@ def main():
     sp.add_argument("--title", required=True)
     sp.add_argument("--url", required=True)
     sp.add_argument("--type", required=True)
+    sp.add_argument("--confidence", default="")
     sp.add_argument("--research-context", default="")
     sp.add_argument("--concept-dev-ref", default="")
 
@@ -123,7 +129,7 @@ def main():
     if args.command == "add":
         src_id = add_source(
             args.workspace, args.title, args.url, args.type,
-            args.research_context, args.concept_dev_ref,
+            args.confidence, args.research_context, args.concept_dev_ref,
         )
         print(json.dumps({"id": src_id}))
     elif args.command == "list":
