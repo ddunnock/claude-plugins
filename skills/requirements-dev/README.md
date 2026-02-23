@@ -67,6 +67,7 @@ The plugin guides you through each phase with prompts, gates, and suggested next
 | `/reqdev:needs` | Formalize stakeholder needs per functional block using INCOSE patterns |
 | `/reqdev:requirements` | Block-by-block, type-guided requirements engine with hybrid quality checking |
 | `/reqdev:validate` | Set validation sweep (coverage, duplicates, terminology, TBD/TBR, INCOSE C10-C15) |
+| `/reqdev:gaps` | Gap analysis against concept architecture (block×type matrix, concept coverage, priority alignment) |
 | `/reqdev:research` | TPM research for measurable requirements with industry benchmark tables |
 | `/reqdev:deliver` | Generate deliverable documents and optional ReqIF export |
 | `/reqdev:decompose` | Subsystem decomposition with allocation rationale (max 3 levels) |
@@ -80,6 +81,7 @@ The plugin guides you through each phase with prompts, gates, and suggested next
 | `quality-checker` | Sonnet | 9 semantic INCOSE rules with chain-of-thought reasoning |
 | `tpm-researcher` | Sonnet | Industry benchmark research with tiered tool strategy and structured tables |
 | `skeptic` | Opus | Coverage verification and feasibility checking |
+| `gap-analyst` | Sonnet | Discovery agent for needs and requirements coverage gaps |
 | `document-writer` | Sonnet | Deliverable generation from registries and templates |
 
 ## Scripts
@@ -103,6 +105,7 @@ All scripts live in `scripts/` and are invoked by commands/agents via `python3 $
 | `set_validator.py` | `validate_all`, `check_interface_coverage`, `check_duplicates`, `check_terminology`, `check_uncovered_needs`, `check_tbd_tbr`, `check_incose_set_characteristics` | Cross-block set validation with n-gram cosine similarity for duplicates, synonym-group terminology checking, and INCOSE C10-C15 compliance |
 
 | `notes_tracker.py` | `add_note`, `resolve_note`, `dismiss_note`, `list_notes`, `check_gate`, `summary`, `export_notes` | Cross-cutting notes registry for observations surfacing in one phase but belonging to another, with gate integration |
+| `gap_analyzer.py` | `block_type_matrix`, `concept_coverage`, `block_asymmetry`, `vv_coverage`, `priority_alignment`, `need_sufficiency`, `block_need_coverage`, `analyze` | Deterministic gap analysis: coverage matrices, concept traceability, priority alignment, and sufficiency metrics |
 
 ### Session and State
 
@@ -205,14 +208,14 @@ requirements-dev/
   .claude-plugin/plugin.json   Plugin manifest
   SKILL.md                     Skill trigger description
   pyproject.toml               Python project config (>=3.11)
-  agents/                      4 specialized LLM agents
-  commands/                    9 slash commands
+  agents/                      5 specialized LLM agents
+  commands/                    10 slash commands
   data/                        Quality rule word lists
   hooks/                       PostToolUse hook for state sync
   references/                  INCOSE methodology guides
-  scripts/                     14 Python scripts (CLI + library)
+  scripts/                     15 Python scripts (CLI + library)
   templates/                   Deliverable document templates
-  tests/                       216 pytest tests
+  tests/                       241 pytest tests
 ```
 
 ## Security
@@ -234,6 +237,12 @@ python3 -m pytest tests/ -k needs # Filter by keyword
 ```
 
 ## Version History
+
+### v1.2.0
+- **Gap analysis engine:** New `/reqdev:gaps` command with deterministic `gap_analyzer.py` script (8 functions) and `gap-analyst` Sonnet agent (7 discovery rules G1-G7). Detects coverage gaps across block×type matrix, concept-to-needs traceability, block asymmetry, V&V coverage, priority alignment, need sufficiency, and block need coverage. Interactive resolution workflow with accept/defer/create options.
+- **Phase-aware gap scope:** Analysis adapts to current phase — needs-only scope after needs gate, full scope after requirements gate.
+- **Status dashboard integration:** Gap analysis summary appears in `/reqdev:status` dashboard when gap_analysis.json exists.
+- 5 agents, 15 scripts, 10 commands, 241 pytest tests (was 14 scripts, 216 tests)
 
 ### v1.1.0
 - **Cross-cutting notes registry:** Capture observations that surface in one phase but belong to another. Notes are tracked through `open` → `resolved` | `dismissed` lifecycle with mandatory gate checks before phase advancement. New `notes_tracker.py` script with 7 functions and full CLI.

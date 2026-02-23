@@ -180,6 +180,7 @@ Total needs:     N
 Blocks covered:  B
 
 Next steps:
+  /reqdev:gaps         -- Check concept-to-needs coverage (recommended)
   /reqdev:requirements -- Develop requirements from approved needs
   /reqdev:status       -- View current session status
 ```

@@ -1,7 +1,7 @@
 {
   "name": "requirements-dev",
-  "description": "Transform concept development artifacts into INCOSE-compliant formal requirements. AI-assisted requirements development with hybrid quality checking (16 deterministic + 9 semantic INCOSE GtWR v4 rules), verification planning, bidirectional traceability, and ReqIF export. Organized around functional blocks from concept development. Includes cross-cutting notes registry, need/requirement split workflow, 4 specialized agents (quality-checker, tpm-researcher, skeptic, document-writer), 14 scripts, 9 commands, and hooks for automatic state updates. Use when developing requirements, formalizing needs, writing specifications, building traceability, or preparing for systems engineering reviews.",
-  "version": "1.1.0",
+  "description": "Transform concept development artifacts into INCOSE-compliant formal requirements. AI-assisted requirements development with hybrid quality checking (16 deterministic + 9 semantic INCOSE GtWR v4 rules), verification planning, bidirectional traceability, gap analysis against concept architecture, and ReqIF export. Organized around functional blocks from concept development. Includes cross-cutting notes registry, need/requirement split workflow, gap discovery agent, 5 specialized agents (quality-checker, tpm-researcher, skeptic, gap-analyst, document-writer), 15 scripts, 10 commands, and hooks for automatic state updates. Use when developing requirements, formalizing needs, writing specifications, building traceability, analyzing coverage gaps, or preparing for systems engineering reviews.",
+  "version": "1.2.0",
   "author": {
     "name": "dunnock"
   },

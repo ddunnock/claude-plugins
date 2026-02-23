@@ -104,6 +104,17 @@ CROSS-CUTTING NOTES
   Targeting research:     [N] open
 
 -------------------------------------------------------------------
+GAP ANALYSIS
+-------------------------------------------------------------------
+
+  [If .requirements-dev/gap_analysis.json exists]:
+  Last run: [timestamp]
+  Findings: [N] total ([critical] critical, [high] high, [medium] medium)
+
+  [If gap_analysis.json does not exist]:
+  Not yet run. Use /reqdev:gaps to analyze coverage.
+
+-------------------------------------------------------------------
 DECOMPOSITION
 -------------------------------------------------------------------
 

@@ -373,7 +373,8 @@ Open TBD items: [n]
 Open TBR items: [n]
 
 Next steps:
-  /reqdev:validate -- Run set validation (recommended)
+  /reqdev:gaps     -- Check coverage gaps against concept (recommended)
+  /reqdev:validate -- Run set validation
   /reqdev:deliver  -- Generate deliverable documents
   /reqdev:status   -- View full dashboard
 ===================================================================

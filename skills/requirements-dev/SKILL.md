@@ -81,9 +81,9 @@ Initialize a session by ingesting concept-dev artifacts (BLACKBOX.md, source/ass
 
 ### Phase 2: Validation and Research
 
-**Commands:** `/reqdev:validate`, `/reqdev:research`
+**Commands:** `/reqdev:validate`, `/reqdev:research`, `/reqdev:gaps`
 
-Run set-level validation across all requirements: coverage analysis, word-level duplicate detection, terminology consistency, uncovered needs report, TBD/TBR summary. Cross-cutting sweep checks INCOSE C10-C15 categories. TPM researcher finds industry benchmarks for measurable requirements.
+Run set-level validation across all requirements: coverage analysis, word-level duplicate detection, terminology consistency, uncovered needs report, TBD/TBR summary. Cross-cutting sweep checks INCOSE C10-C15 categories. TPM researcher finds industry benchmarks for measurable requirements. Gap analysis discovers missing needs and requirements by comparing coverage against the concept architecture.
 
 **Gate:** User reviews and resolves all validation findings.
 
@@ -103,6 +103,7 @@ Decompose system-level requirements into subsystem allocations (max 3 levels). E
 | `/reqdev:needs` | Formalize stakeholder needs per block | [reqdev.needs.md](commands/reqdev.needs.md) |
 | `/reqdev:requirements` | Block requirements engine with quality checking | [reqdev.requirements.md](commands/reqdev.requirements.md) |
 | `/reqdev:validate` | Set validation and cross-cutting sweep | [reqdev.validate.md](commands/reqdev.validate.md) |
+| `/reqdev:gaps` | Gap analysis against concept architecture | [reqdev.gaps.md](commands/reqdev.gaps.md) |
 | `/reqdev:research` | TPM research for measurable requirements | [reqdev.research.md](commands/reqdev.research.md) |
 | `/reqdev:deliver` | Generate deliverable documents | [reqdev.deliver.md](commands/reqdev.deliver.md) |
 | `/reqdev:decompose` | Subsystem decomposition | [reqdev.decompose.md](commands/reqdev.decompose.md) |
@@ -132,3 +133,4 @@ Each note tracks: the observation text, where it was captured (origin_phase), wh
 - **Concept-Dev Preferred, Manual Fallback:** Optimized for concept-dev artifacts but supports manual block/needs definition.
 - **Source Grounding:** All research claims reference registered sources.
 - **Capture Cross-Cutting Observations:** When an observation surfaces that belongs in a different phase, immediately record it as a cross-cutting note rather than trying to address it out of sequence. Notes are reviewed at relevant gates.
+- **Suggest Gap Analysis:** After completing needs or requirements phases, suggest running `/reqdev:gaps` to check for coverage gaps against the concept architecture before proceeding.

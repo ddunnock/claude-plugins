@@ -356,6 +356,41 @@ Each violation includes:
 7. **Use active voice** -- "The system shall..." not "It shall be..."
 8. **No escape clauses** -- "where possible" or "if practical" weaken requirements
 
+## Gap Analysis
+
+```
+/reqdev:gaps
+```
+
+Gap analysis discovers what is **missing** from your needs and requirements by comparing coverage against the concept architecture. It can be run after any phase gate.
+
+**When to run:**
+
+| After Phase | What it Checks |
+|-------------|---------------|
+| `/reqdev:needs` | Concept-to-need coverage, blocks without needs, stakeholder balance |
+| `/reqdev:requirements` | All checks: block×type matrix, V&V coverage, priority alignment, need sufficiency |
+| `/reqdev:deliver` | Full gap assessment before validation/decomposition |
+
+**How it works:**
+
+1. Deterministic metrics are computed by `gap_analyzer.py` (block×type matrix, concept traceability, priority alignment, V&V coverage, need sufficiency)
+2. The gap-analyst agent (Sonnet) interprets these metrics semantically — distinguishing intentional gaps from oversights
+3. Findings are presented by severity with suggested actions
+4. For each finding, you choose: create a need, create a requirement, add a cross-cutting note, accept the gap, or defer
+
+**CLI:**
+
+| Action | Command |
+|--------|---------|
+| Full analysis | `python3 scripts/gap_analyzer.py --workspace .requirements-dev/ analyze` |
+| Block filter | `python3 scripts/gap_analyzer.py --workspace .requirements-dev/ analyze --block auth` |
+| Block×type matrix | `python3 scripts/gap_analyzer.py --workspace .requirements-dev/ block-type-matrix` |
+| Concept coverage | `python3 scripts/gap_analyzer.py --workspace .requirements-dev/ concept-coverage` |
+| V&V coverage | `python3 scripts/gap_analyzer.py --workspace .requirements-dev/ vv-coverage` |
+| Priority alignment | `python3 scripts/gap_analyzer.py --workspace .requirements-dev/ priority-alignment` |
+| Need sufficiency | `python3 scripts/gap_analyzer.py --workspace .requirements-dev/ need-sufficiency` |
+
 ## Cross-Cutting Notes
 
 During any phase, you may identify observations that belong to a different phase (e.g., a performance concern surfacing during functional needs formalization). The cross-cutting notes registry captures these so they are not lost.
