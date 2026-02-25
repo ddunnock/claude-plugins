@@ -5,10 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.0] - 2026-02-23
+## [1.2.0] - 2026-02-25
 
 ### Changed
 
+- **requirements-dev v1.4.0** — XML markup refactoring for agent clarity and context preservation
+  - Refactored SKILL.md, all 10 commands, and 2 agents to use structured XML markup (`<security>`, `<paths>`, `<workflow>`, `<step>`, `<branch>`, `<context>`, `<extract>`, etc.) removing prose ambiguity for LLM agents
+  - Added `<context>` blocks with required reads below YAML headers in all commands, ensuring critical skill-level context is not lost when invoked via `/reqdev:*` directly
+  - Broadened skill trigger description to catch casual phrases
+  - Net reduction of ~30 lines while adding structural clarity
+- **requirements-dev v1.3.1** — Bug fix, adds escape in regex in update-state-on-write.sh
 - **requirements-dev v1.3.0** — Cross-skill remediation addressing 16 findings (3 bugs, 8 structural gaps, 5 missed opportunities) from concept-dev → requirements-dev integration analysis
   - **Bug fixes:** Gate schema mismatch with concept-dev state format, wrong ingestion keys in gap_analyzer concept_coverage, empty gates falsely reporting all_passed
   - **Enriched ingestion:** Carries forward research gaps, ungrounded claims, citations, confidence levels, and skeptic findings from concept-dev

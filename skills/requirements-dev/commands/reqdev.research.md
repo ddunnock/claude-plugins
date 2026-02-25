@@ -3,6 +3,10 @@ name: reqdev:research
 description: Research performance benchmarks and comparable system data for measurable requirements. Launches the tpm-researcher agent with tiered research tools.
 ---
 
+<context>
+    <read required="true">${CLAUDE_PLUGIN_ROOT}/SKILL.md</read>
+</context>
+
 # /reqdev:research - TPM Research
 
 Researches performance benchmarks and comparable system data for measurable requirements. Launches the `tpm-researcher` agent with context about the requirement and available tools.

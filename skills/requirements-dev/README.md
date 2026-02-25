@@ -239,6 +239,15 @@ python3 -m pytest tests/ -k needs # Filter by keyword
 
 ## Version History
 
+### v1.4.0
+- **XML markup refactoring:** Refactored SKILL.md, all 10 commands, and 2 agents to use structured XML markup (`<security>`, `<paths>`, `<workflow>`, `<step>`, `<branch>`, `<context>`, `<extract>`, `<presentation>`, etc.) to remove ambiguity for LLM agents.
+- **Context preservation:** Added `<context>` blocks with required reads below YAML headers in all commands, ensuring critical skill-level context (security rules, path patterns, behavioral rules) is not lost when commands are invoked directly via `/reqdev:*` rather than through SKILL.md loading.
+- **Improved trigger description:** Broadened skill description to catch casual phrases like "I need to write some reqs".
+- Net reduction of ~30 lines while adding structural clarity.
+
+### v1.3.1
+- **Bug fix:** Fixes hyphen ambiguity in update-state-on-write.sh regex by adding `\` escape.
+
 ### v1.3.0
 - **Critical bug fixes:** Fixed gate schema mismatch (BUG-1: concept-dev stores gates in `phases.{name}.gate_passed`, not flat `gates` object), fixed `gap_analyzer.py` concept_coverage using wrong ingestion keys (BUG-2: `source_refs`/`assumption_refs` not `sources`/`assumptions`), added empty gates guard (BUG-3).
 - **Enriched ingestion:** `ingest_concept.py` now carries forward research gaps, ungrounded claims, citations, confidence levels, and skeptic findings from concept-dev artifacts.

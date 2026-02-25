@@ -3,6 +3,10 @@ name: reqdev:status
 description: Display session status dashboard showing current phase, block progress, requirement counts, traceability coverage, TBD/TBR counts, and quality check pass rate
 ---
 
+<context>
+    <read required="true">${CLAUDE_PLUGIN_ROOT}/SKILL.md</read>
+</context>
+
 # /reqdev:status -- Session Status Dashboard
 
 ## Step 1: Load State

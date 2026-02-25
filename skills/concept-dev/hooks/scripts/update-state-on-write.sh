@@ -18,7 +18,7 @@ SCRIPTS_DIR="${CLAUDE_PLUGIN_ROOT}/scripts"
 
 # Validate input path contains only safe characters
 # Allow: alphanumeric, hyphens, underscores, dots, forward slashes, spaces
-if [[ "$WRITTEN_PATH" =~ [^a-zA-Z0-9_./ -] ]]; then
+if [[ "$WRITTEN_PATH" =~ [^a-zA-Z0-9_./\ \-] ]]; then
     echo "Error: Path contains unexpected characters, skipping." >&2
     exit 0
 fi

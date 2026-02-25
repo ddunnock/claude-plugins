@@ -1,9 +1,6 @@
 ---
 name: concept-dev
 description: This skill should be used when the user asks to "develop a concept", "explore a new idea", "brainstorm a system concept", "do concept development", "create a concept document", "run Phase A", "define the problem and architecture", or mentions concept exploration, feasibility studies, concept of operations, system concept, architecture exploration, solution landscape, or NASA Phase A.
-version: 1.0.0
-tools: WebSearch, WebFetch, Read, Write, Edit, Bash, Grep, Glob, Task, AskUserQuestion
-model: sonnet
 ---
 
 # Concept Development (NASA Phase A)
