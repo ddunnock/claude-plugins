@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 ## Current Position
 
 Phase: 1 of 7 (Design Registry Core + Skill Scaffold)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: Executing
-Last activity: 2026-02-28 -- Completed 01-01-PLAN.md (skill scaffold, schemas, workspace init)
+Last activity: 2026-02-28 -- Completed 01-02-PLAN.md (slot storage engine, schema validator, slot API)
 
-Progress: [#.........] 5%
+Progress: [##........] 10%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
+- Total plans completed: 2
 - Average duration: 4 min
-- Total execution time: 0.07 hours
+- Total execution time: 0.12 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01 | 1 | 4 min | 4 min |
+| 01 | 2 | 7 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (4 min)
-- Trend: -
+- Last 5 plans: 01-01 (4 min), 01-02 (3 min)
+- Trend: stable
 
 *Updated after each plan completion*
 
@@ -48,6 +48,10 @@ Recent decisions affecting current work:
 - [01-01]: SKILL.md at 94 lines with security XML tags and path XML tags matching requirements-dev pattern
 - [01-01]: JSON Schema Draft 2020-12 with additionalProperties: false for all slot types
 - [01-01]: Atomic write via NamedTemporaryFile + fsync + rename in same directory
+- [01-02]: SchemaValidator sorts errors by path for deterministic output ordering
+- [01-02]: SlotAPI sets all system fields before validation so schemas see complete objects
+- [01-02]: Update preserves immutable fields (slot_id, slot_type, created_at) from current slot
+- [01-02]: ConflictError carries expected_version and actual_version for caller diagnostics
 
 ### Pending Todos
 
@@ -62,5 +66,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 01-01-PLAN.md
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None

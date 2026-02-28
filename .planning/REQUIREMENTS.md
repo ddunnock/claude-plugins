@@ -18,9 +18,9 @@
 Foundation — all agents depend on this. Includes slot storage, schema validation, versioning, change journal.
 
 - [x] **DREG-01**: Design Registry with named/typed slots, pure storage and query semantics — REQ-001..008, REQ-149..189 (design-registry: 31 reqs)
-- [ ] **DREG-02**: Slot storage engine with atomic writes, crash recovery, git integration, partitioning — REQ-149..189, REQ-396..406 (slot-storage-engine: 42 reqs)
-- [ ] **DREG-03**: Slot API providing read/write/query interface for all agents — REQ-190..206 (slot-api: 14 reqs)
-- [ ] **DREG-04**: Schema validation on every write, schema versioning — REQ-007..008, REQ-215..224, REQ-414..418 (schema-validator: 17 reqs)
+- [x] **DREG-02**: Slot storage engine with atomic writes, crash recovery, git integration, partitioning — REQ-149..189, REQ-396..406 (slot-storage-engine: 42 reqs)
+- [x] **DREG-03**: Slot API providing read/write/query interface for all agents — REQ-190..206 (slot-api: 14 reqs)
+- [x] **DREG-04**: Schema validation on every write, schema versioning — REQ-007..008, REQ-215..224, REQ-414..418 (schema-validator: 17 reqs)
 - [ ] **DREG-05**: Version history per slot, temporal queries — REQ-003..005, REQ-225..233 (version-manager: 10 reqs)
 - [ ] **DREG-06**: Change journal with append-only entries, time-range queries — REQ-207..214, REQ-406, REQ-471, REQ-479 (change-journal: 11 reqs)
 
