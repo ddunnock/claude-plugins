@@ -32,12 +32,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. The change journal records every mutation and supports time-range queries to reconstruct history
   4. SKILL.md exists under 500 lines with progressive disclosure to commands/, agents/, and references/ directories
   5. The .system-dev/ workspace directory is created on first use with proper path conventions using ${CLAUDE_PLUGIN_ROOT}
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
-- [ ] 01-03: TBD
+- [ ] 01-01-PLAN.md -- Skill scaffold, JSON schemas, and workspace initialization
+- [ ] 01-02-PLAN.md -- Slot storage engine, schema validator, and slot API
+- [ ] 01-03-PLAN.md -- Change journal, version manager, and SlotAPI integration
 
 ### Phase 2: Requirements Ingestion Pipeline
 **Goal**: Developers can ingest all requirements-dev outputs (needs, requirements, traceability, sources, assumptions) into the Design Registry, with delta detection for re-ingestion when upstream changes
@@ -144,7 +144,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Design Registry Core + Skill Scaffold | 0/3 | Not started | - |
+| 1. Design Registry Core + Skill Scaffold | 0/3 | Planned | - |
 | 2. Requirements Ingestion Pipeline | 0/1 | Not started | - |
 | 3. Structural Decomposition + Approval Gate | 0/2 | Not started | - |
 | 4. Interface Resolution + Behavioral Contracts | 0/2 | Not started | - |
