@@ -2,6 +2,8 @@
 
 Provides SlotStorageEngine for atomic persistence with index management,
 and SlotAPI as the single entry point for all slot CRUD operations (XCUT-04).
+Every mutation is automatically journaled with RFC 6902 diffs (DREG-06),
+and version history is queryable (DREG-05).
 """
 
 import json
@@ -9,8 +11,10 @@ import os
 from datetime import datetime, timezone
 from uuid import uuid4
 
+from scripts.change_journal import ChangeJournal
 from scripts.schema_validator import SchemaValidationError, SchemaValidator
 from scripts.shared_io import atomic_write, ensure_directory, validate_path
+from scripts.version_manager import VersionManager
 
 # Maps slot types to their registry subdirectory names
 SLOT_TYPE_DIRS: dict[str, str] = {
@@ -263,27 +267,45 @@ class SlotAPI:
     """Single entry point for all slot CRUD operations (XCUT-04).
 
     Enforces validate-before-persist on every write, generates typed IDs,
-    and handles optimistic locking for concurrent access.
+    handles optimistic locking, and automatically journals every mutation
+    with RFC 6902 diffs. Supports version history queries and past-version
+    reconstruction.
 
     Args:
         workspace_root: Path to the .system-dev/ directory.
         schemas_dir: Path to the schemas/ directory with JSON Schema files.
+        journal_path: Optional path to journal.jsonl (defaults to
+            workspace_root/journal.jsonl).
     """
 
-    def __init__(self, workspace_root: str, schemas_dir: str):
-        """Initialize all subsystems.
+    def __init__(
+        self,
+        workspace_root: str,
+        schemas_dir: str,
+        journal_path: str | None = None,
+    ):
+        """Initialize all subsystems including journal and version manager.
 
         Args:
             workspace_root: Absolute path to .system-dev/ directory.
             schemas_dir: Absolute path to schemas/ directory.
+            journal_path: Optional override for journal file location.
         """
         self._storage = SlotStorageEngine(workspace_root)
         self._validator = SchemaValidator(schemas_dir)
+
+        if journal_path is None:
+            journal_path = os.path.join(workspace_root, "journal.jsonl")
+        self._journal = ChangeJournal(journal_path)
+        self._versions = VersionManager(self._journal)
 
     def create(
         self, slot_type: str, content: dict, agent_id: str = "user"
     ) -> dict:
         """Create a new slot with generated ID and version 1.
+
+        Validates content, persists to storage, and appends a journal entry
+        with the full object as an RFC 6902 add operation.
 
         Args:
             slot_type: The type of slot to create (e.g., "component").
@@ -317,6 +339,18 @@ class SlotAPI:
         self._validator.validate_or_raise(slot_type, content)
         self._storage.write(slot_id, slot_type, content)
 
+        self._journal.append(
+            slot_id,
+            slot_type,
+            "create",
+            0,
+            1,
+            agent_id,
+            f"Created {slot_type} '{content.get('name', slot_id)}'",
+            None,
+            content,
+        )
+
         return {"status": "created", "slot_id": slot_id, "version": 1}
 
     def read(self, slot_id: str) -> dict | None:
@@ -338,6 +372,9 @@ class SlotAPI:
         agent_id: str = "user",
     ) -> dict:
         """Update an existing slot with optimistic locking.
+
+        Captures old content before write, persists the update, then
+        appends a journal entry with the field-level RFC 6902 diff.
 
         Args:
             slot_id: The unique slot identifier.
@@ -362,6 +399,9 @@ class SlotAPI:
         if expected_version is not None and expected_version != current_version:
             raise ConflictError(slot_id, expected_version, current_version)
 
+        # Capture old content for diff before mutation
+        old_content = dict(current)
+
         new_version = current_version + 1
         now = datetime.now(timezone.utc).isoformat()
 
@@ -375,10 +415,25 @@ class SlotAPI:
         self._validator.validate_or_raise(current["slot_type"], content)
         self._storage.write(slot_id, current["slot_type"], content)
 
+        self._journal.append(
+            slot_id,
+            current["slot_type"],
+            "update",
+            current_version,
+            new_version,
+            agent_id,
+            f"Updated {current['slot_type']} '{slot_id}' to v{new_version}",
+            old_content,
+            content,
+        )
+
         return {"status": "updated", "slot_id": slot_id, "version": new_version}
 
     def delete(self, slot_id: str, agent_id: str = "user") -> dict:
         """Delete a slot by ID.
+
+        Reads the slot before deletion to capture content and version
+        for the journal entry, then deletes and journals.
 
         Args:
             slot_id: The unique slot identifier.
@@ -390,9 +445,31 @@ class SlotAPI:
         Raises:
             KeyError: If slot_id does not exist.
         """
+        # Read before delete to capture content for journal
+        current = self._storage.read(slot_id)
+        if current is None:
+            raise KeyError(f"Slot not found: '{slot_id}'")
+
+        slot_type = current["slot_type"]
+        version = current["version"]
+        old_content = dict(current)
+
         deleted = self._storage.delete(slot_id)
         if not deleted:
             raise KeyError(f"Slot not found: '{slot_id}'")
+
+        self._journal.append(
+            slot_id,
+            slot_type,
+            "delete",
+            version,
+            0,
+            agent_id,
+            f"Deleted {slot_type} '{slot_id}'",
+            old_content,
+            None,
+        )
+
         return {"status": "deleted", "slot_id": slot_id}
 
     def query(self, slot_type: str, filters: dict | None = None) -> list[dict]:
@@ -406,3 +483,50 @@ class SlotAPI:
             List of matching slot dicts.
         """
         return self._storage.query(slot_type, filters)
+
+    def history(self, slot_id: str) -> list[dict]:
+        """Return version history for a slot.
+
+        Args:
+            slot_id: The unique slot identifier.
+
+        Returns:
+            List of version metadata dicts with version, timestamp,
+            agent_id, summary, and operation.
+        """
+        return self._versions.get_history(slot_id)
+
+    def get_version(self, slot_id: str, version: int) -> dict | None:
+        """Reconstruct a specific past version of a slot.
+
+        Reads the current content from storage, then delegates to the
+        version manager for reconstruction via journal diffs.
+
+        Args:
+            slot_id: The unique slot identifier.
+            version: The target version number to reconstruct.
+
+        Returns:
+            The reconstructed slot content dict, or None if the slot
+            does not exist or reconstruction is not possible.
+        """
+        current = self._storage.read(slot_id)
+        if current is None:
+            return None
+        return self._versions.get_version(slot_id, version, current)
+
+    def journal_query(
+        self, start: str | None = None, end: str | None = None
+    ) -> list[dict]:
+        """Query journal entries, optionally filtered by time range.
+
+        Args:
+            start: ISO 8601 UTC timestamp for range start (inclusive).
+            end: ISO 8601 UTC timestamp for range end (inclusive).
+
+        Returns:
+            List of journal entry dicts matching the criteria.
+        """
+        if start is not None and end is not None:
+            return self._journal.query_time_range(start, end)
+        return self._journal.query_all()
