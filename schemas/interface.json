@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://system-dev.local/schemas/interface.json",
+  "title": "Interface Slot",
+  "type": "object",
+  "required": ["slot_id", "slot_type", "name", "version", "created_at", "updated_at"],
+  "properties": {
+    "slot_id": {
+      "type": "string",
+      "pattern": "^intf-[a-f0-9-]+$"
+    },
+    "slot_type": {
+      "const": "interface"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "description": {
+      "type": "string"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_component": {
+      "type": "string"
+    },
+    "target_component": {
+      "type": "string"
+    },
+    "protocol": {
+      "type": "string"
+    },
+    "data_format": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["proposed", "approved", "rejected", "modified", "deprecated"]
+    },
+    "parent_requirements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "extensions": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://system-dev.local/schemas/contract.json",
+  "title": "Contract Slot",
+  "type": "object",
+  "required": ["slot_id", "slot_type", "name", "version", "created_at", "updated_at"],
+  "properties": {
+    "slot_id": {
+      "type": "string",
+      "pattern": "^cntr-[a-f0-9-]+$"
+    },
+    "slot_type": {
+      "const": "contract"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "description": {
+      "type": "string"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "component_id": {
+      "type": "string"
+    },
+    "interface_id": {
+      "type": "string"
+    },
+    "obligations": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "vv_method": {
+      "type": "string",
+      "enum": ["test", "analysis", "inspection", "demonstration"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["proposed", "approved", "rejected", "modified", "deprecated"]
+    },
+    "parent_requirements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "extensions": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}
