@@ -17,7 +17,7 @@
 
 Foundation — all agents depend on this. Includes slot storage, schema validation, versioning, change journal.
 
-- [ ] **DREG-01**: Design Registry with named/typed slots, pure storage and query semantics — REQ-001..008, REQ-149..189 (design-registry: 31 reqs)
+- [x] **DREG-01**: Design Registry with named/typed slots, pure storage and query semantics — REQ-001..008, REQ-149..189 (design-registry: 31 reqs)
 - [ ] **DREG-02**: Slot storage engine with atomic writes, crash recovery, git integration, partitioning — REQ-149..189, REQ-396..406 (slot-storage-engine: 42 reqs)
 - [ ] **DREG-03**: Slot API providing read/write/query interface for all agents — REQ-190..206 (slot-api: 14 reqs)
 - [ ] **DREG-04**: Schema validation on every write, schema versioning — REQ-007..008, REQ-215..224, REQ-414..418 (schema-validator: 17 reqs)
@@ -28,11 +28,11 @@ Foundation — all agents depend on this. Includes slot storage, schema validati
 
 Plugin structure, SKILL.md, command routing, security rules.
 
-- [ ] **SCAF-01**: SKILL.md under 500 lines with progressive disclosure to commands/agents/references
-- [ ] **SCAF-02**: Plugin directory structure consistent with requirements-dev (commands/, agents/, scripts/, references/, templates/, data/)
-- [ ] **SCAF-03**: Security rules: content-as-data, path validation, local scripts, external isolation
-- [ ] **SCAF-04**: ${CLAUDE_PLUGIN_ROOT} path patterns for all file access
-- [ ] **SCAF-05**: .system-dev/ workspace directory for user design state
+- [x] **SCAF-01**: SKILL.md under 500 lines with progressive disclosure to commands/agents/references
+- [x] **SCAF-02**: Plugin directory structure consistent with requirements-dev (commands/, agents/, scripts/, references/, templates/, data/)
+- [x] **SCAF-03**: Security rules: content-as-data, path validation, local scripts, external isolation
+- [x] **SCAF-04**: ${CLAUDE_PLUGIN_ROOT} path patterns for all file access
+- [x] **SCAF-05**: .system-dev/ workspace directory for user design state
 
 ### Requirements Ingestion
 
