@@ -480,6 +480,8 @@ class TraceabilityAgent:
 
         # Re-read to get the full persisted slot
         persisted = self._api.read(GRAPH_SLOT_ID)
+        if persisted is None:
+            raise RuntimeError(f"Failed to read back graph slot '{GRAPH_SLOT_ID}' after write")
 
         # Attach internal adjacency for callers that need it
         forward_adj = defaultdict(lambda: defaultdict(list))
