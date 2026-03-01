@@ -66,8 +66,8 @@ Component boundary contracts and protocol definitions.
 
 - [x] **INTF-01**: Interface identification between connected components — REQ-034..037, REQ-267..272 (interface-resolution-agent: 13 reqs)
 - [x] **INTF-02**: Contract generation with data formats and protocols — REQ-267..272 (contract-generator: 7 reqs)
-- [ ] **INTF-03**: Interface proposal sub-agent — REQ-267..272 (interface-proposer: 8 reqs)
-- [ ] **INTF-04**: Change-reactive contract re-proposal on boundary changes — REQ-273..282 (change-responder: 8 reqs)
+- [x] **INTF-03**: Interface proposal sub-agent — REQ-267..272 (interface-proposer: 8 reqs)
+- [x] **INTF-04**: Change-reactive contract re-proposal on boundary changes — REQ-273..282 (change-responder: 8 reqs)
 
 ### Behavioral Contracts & V&V
 
