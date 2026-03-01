@@ -93,11 +93,12 @@ Plans:
   2. Broken chain segments are detected and reported with specific gap identification (which link is missing)
   3. The impact command computes forward and backward propagation paths from any design element with configurable depth limits
   4. Traceability is enforced on write (mandatory trace fields in schemas) not just checked after the fact
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 05-01: TBD
-- [ ] 05-02: TBD
+- [ ] 05-01-PLAN.md -- Write-time trace enforcement, new slot type schemas, SlotAPI integration
+- [ ] 05-02-PLAN.md -- Traceability graph construction, chain validation, trace command
+- [ ] 05-03-PLAN.md -- Impact analysis computation, impact command, result persistence
 
 ### Phase 6: Views, Diagrams, Risk & Volatility
 **Goal**: Developers can generate contextual design views for different audiences, produce D2/Mermaid diagrams at multiple abstraction levels, track design risks with composite scoring and FMEA, and monitor requirement/design change velocity
@@ -150,6 +151,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 2. Requirements Ingestion Pipeline | 0/1 | Not started | - |
 | 3. Structural Decomposition + Approval Gate | 0/2 | Not started | - |
 | 4. Interface Resolution + Behavioral Contracts | 0/3 | Not started | - |
-| 5. Traceability Weaving + Impact Analysis | 0/2 | Not started | - |
+| 5. Traceability Weaving + Impact Analysis | 0/3 | Not started | - |
 | 6. Views, Diagrams, Risk & Volatility | 0/3 | Not started | - |
 | 7. Orchestration + Coherence Review | 0/2 | Not started | - |
