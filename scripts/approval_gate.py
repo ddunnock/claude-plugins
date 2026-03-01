@@ -173,6 +173,11 @@ class ApprovalGate:
         )
         return result
 
+    # Fields managed by SlotAPI -- never copy to committed slot
+    _SYSTEM_FIELDS = {"slot_id", "slot_type", "version", "created_at", "updated_at"}
+    # Fields specific to proposal lifecycle -- not part of committed content
+    _PROPOSAL_ONLY_FIELDS = {"decision", "proposal_session_id", "status"}
+
     def _handle_accept(
         self, proposal: dict, decision_data: dict, now: str, agent_id: str
     ) -> dict:
@@ -181,15 +186,19 @@ class ApprovalGate:
         The committed slot is created before the proposal is updated to ensure
         atomic ordering -- if the proposal update fails, the committed slot
         still exists (Pitfall 2 prevention).
+
+        Uses generic field-copy: all proposal fields except system fields and
+        proposal-only fields are passed through to the committed slot. This
+        means interface-proposal fields (direction, data_format_schema, etc.)
+        and contract-proposal fields (obligations, vv_assignments, etc.)
+        automatically transfer without hardcoded mapping.
         """
-        # Build committed slot content from proposal fields
+        # Build committed slot content via generic field-copy
+        excluded = self._SYSTEM_FIELDS | self._PROPOSAL_ONLY_FIELDS
         committed_content = {
-            "name": proposal["name"],
-            "description": proposal.get("description", ""),
-            "status": "approved",
-            "parent_requirements": proposal.get("requirement_ids", []),
-            "rationale": proposal.get("rationale", {}).get("narrative", ""),
+            k: v for k, v in proposal.items() if k not in excluded
         }
+        committed_content["status"] = "approved"
 
         # Create committed slot FIRST (atomic ordering)
         create_result = self._api.create(

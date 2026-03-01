@@ -113,7 +113,7 @@ def check_stale_components(api: SlotAPI) -> list[dict]:
         comp_id = comp["slot_id"]
         comp_name = comp.get("name", comp_id)
         comp_updated_at = comp.get("updated_at", "")
-        parent_reqs = comp.get("parent_requirements", [])
+        parent_reqs = comp.get("requirement_ids", comp.get("parent_requirements", []))
 
         if not parent_reqs:
             continue

@@ -306,7 +306,7 @@ class TestEndToEndDecomposeApprove:
 
         # Get a requirement referenced by this component
         comp = api.read(committed_id)
-        parent_reqs = comp["parent_requirements"]
+        parent_reqs = comp.get("requirement_ids", comp.get("parent_requirements", []))
         assert len(parent_reqs) > 0
 
         # Update one of the referenced requirements (simulate re-ingestion)

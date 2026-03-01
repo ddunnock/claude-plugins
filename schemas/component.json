@@ -45,8 +45,26 @@
         "type": "string"
       }
     },
+    "requirement_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "rationale": {
-      "type": "string"
+      "type": ["string", "object"]
+    },
+    "gap_markers": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "relationships": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
     },
     "extensions": {
       "type": "object"

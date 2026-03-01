@@ -354,6 +354,185 @@ class TestGenericTypeHandling:
         assert gate._committed_type == "component"
 
 
+# --- Interface and contract proposal acceptance tests ---
+
+
+def _make_interface_proposal(api, name="Auth API", session_id="session-intf-001"):
+    """Helper to create an interface-proposal via SlotAPI."""
+    content = {
+        "name": name,
+        "description": f"Interface for {name.lower()}",
+        "status": "proposed",
+        "source_component": "comp-aaa",
+        "target_component": "comp-bbb",
+        "direction": "unidirectional",
+        "protocol": "REST",
+        "data_format_schema": {"type": "object", "properties": {"token": {"type": "string"}}},
+        "error_categories": [
+            {
+                "name": "auth_failure",
+                "description": "Authentication failed",
+                "expected_behavior": "Return 401 with error message",
+            }
+        ],
+        "rationale": {"narrative": f"{name} connects auth to gateway"},
+        "requirement_ids": ["requirement:REQ-010"],
+        "gap_markers": [],
+        "decision": {
+            "action": None,
+            "decided_by": None,
+            "decided_at": None,
+            "notes": None,
+            "rejection_rationale": None,
+            "modifications": None,
+            "committed_slot_id": None,
+        },
+        "proposal_session_id": session_id,
+        "extensions": {},
+    }
+    result = api.create("interface-proposal", content)
+    return result["slot_id"]
+
+
+def _make_contract_proposal(api, name="Auth Contract", session_id="session-cntr-001"):
+    """Helper to create a contract-proposal via SlotAPI."""
+    content = {
+        "name": name,
+        "description": f"Contract for {name.lower()}",
+        "status": "proposed",
+        "component_id": "comp-aaa",
+        "interface_id": "intf-bbb",
+        "obligations": [
+            {
+                "id": "obl-001",
+                "statement": "Must validate JWT tokens",
+                "obligation_type": "data_processing",
+                "source_requirement_ids": ["requirement:REQ-010"],
+            }
+        ],
+        "vv_assignments": [
+            {
+                "obligation_id": "obl-001",
+                "method": "test",
+                "rationale": "JWT validation is testable",
+            }
+        ],
+        "rationale": {"narrative": f"{name} enforces auth obligations"},
+        "requirement_ids": ["requirement:REQ-010"],
+        "gap_markers": [],
+        "decision": {
+            "action": None,
+            "decided_by": None,
+            "decided_at": None,
+            "notes": None,
+            "rejection_rationale": None,
+            "modifications": None,
+            "committed_slot_id": None,
+        },
+        "proposal_session_id": session_id,
+        "extensions": {},
+    }
+    result = api.create("contract-proposal", content)
+    return result["slot_id"]
+
+
+class TestInterfaceProposalAcceptance:
+    def test_accept_interface_proposal(self, api):
+        """Accepting an interface-proposal creates a committed interface with all proposal fields."""
+        gate = ApprovalGate(api, RULES_PATH, "interface-proposal")
+        proposal_id = _make_interface_proposal(api)
+
+        result = gate.decide(proposal_id, "accept", {"notes": "Good interface"})
+        assert result["new_status"] == "accepted"
+        assert "committed_slot_id" in result
+
+        committed = api.read(result["committed_slot_id"])
+        assert committed is not None
+        assert committed["slot_type"] == "interface"
+        assert committed["status"] == "approved"
+        assert committed["name"] == "Auth API"
+        assert committed["source_component"] == "comp-aaa"
+        assert committed["target_component"] == "comp-bbb"
+        assert committed["direction"] == "unidirectional"
+        assert committed["protocol"] == "REST"
+        assert committed["data_format_schema"] == {
+            "type": "object",
+            "properties": {"token": {"type": "string"}},
+        }
+        assert len(committed["error_categories"]) == 1
+        assert committed["error_categories"][0]["name"] == "auth_failure"
+        assert committed["rationale"] == {"narrative": "Auth API connects auth to gateway"}
+        assert committed["requirement_ids"] == ["requirement:REQ-010"]
+
+
+class TestContractProposalAcceptance:
+    def test_accept_contract_proposal(self, api):
+        """Accepting a contract-proposal creates a committed contract with obligations and vv_assignments."""
+        gate = ApprovalGate(api, RULES_PATH, "contract-proposal")
+        proposal_id = _make_contract_proposal(api)
+
+        result = gate.decide(proposal_id, "accept", {"notes": "Good contract"})
+        assert result["new_status"] == "accepted"
+        assert "committed_slot_id" in result
+
+        committed = api.read(result["committed_slot_id"])
+        assert committed is not None
+        assert committed["slot_type"] == "contract"
+        assert committed["status"] == "approved"
+        assert committed["name"] == "Auth Contract"
+        assert committed["component_id"] == "comp-aaa"
+        assert committed["interface_id"] == "intf-bbb"
+        assert len(committed["obligations"]) == 1
+        assert committed["obligations"][0]["id"] == "obl-001"
+        assert committed["obligations"][0]["obligation_type"] == "data_processing"
+        assert len(committed["vv_assignments"]) == 1
+        assert committed["vv_assignments"][0]["obligation_id"] == "obl-001"
+        assert committed["vv_assignments"][0]["method"] == "test"
+
+
+class TestGenericFieldCopy:
+    def test_excludes_system_fields(self, api):
+        """Generic field-copy excludes slot_id, slot_type, version, created_at, updated_at."""
+        gate = ApprovalGate(api, RULES_PATH, "interface-proposal")
+        proposal_id = _make_interface_proposal(api)
+
+        result = gate.decide(proposal_id, "accept", {})
+        committed = api.read(result["committed_slot_id"])
+
+        # System fields should be set by SlotAPI.create, not copied from proposal
+        assert committed["slot_id"].startswith("intf-")  # new ID, not iprop-
+        assert committed["slot_type"] == "interface"
+        assert committed["version"] == 1
+
+    def test_excludes_proposal_only_fields(self, api):
+        """Generic field-copy excludes decision and proposal_session_id."""
+        gate = ApprovalGate(api, RULES_PATH, "interface-proposal")
+        proposal_id = _make_interface_proposal(api)
+
+        result = gate.decide(proposal_id, "accept", {})
+        committed = api.read(result["committed_slot_id"])
+
+        assert "decision" not in committed or committed.get("decision") is None
+        assert "proposal_session_id" not in committed
+
+    def test_existing_component_proposal_still_works(self, gate, api):
+        """Component-proposal accept flow produces a valid committed component (regression)."""
+        proposal_id = _make_proposal(api, name="Regression Service")
+
+        result = gate.decide(proposal_id, "accept", {"notes": "Regression check"})
+        assert result["new_status"] == "accepted"
+
+        committed = api.read(result["committed_slot_id"])
+        assert committed is not None
+        assert committed["slot_type"] == "component"
+        assert committed["status"] == "approved"
+        assert committed["name"] == "Regression Service"
+        # Generic copy preserves requirement_ids as-is (not mapped to parent_requirements)
+        assert committed["requirement_ids"] == ["requirement:REQ-001", "requirement:REQ-002"]
+        # Generic copy preserves rationale as full object (not just narrative string)
+        assert committed["rationale"]["narrative"] == "Regression Service groups authentication concerns"
+
+
 # --- Performance test ---
 
 

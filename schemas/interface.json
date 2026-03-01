@@ -79,6 +79,12 @@
         "type": "string"
       }
     },
+    "gap_markers": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
     "status": {
       "type": "string",
       "enum": ["proposed", "approved", "rejected", "modified", "deprecated"]
