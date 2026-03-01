@@ -77,11 +77,12 @@ Plans:
   2. The contract command derives behavioral obligations per component from requirements and interface definitions, with V&V method assignments (test/analysis/inspection/demonstration)
   3. When a component boundary changes, the change-responder re-proposes affected contracts automatically
   4. All interface and contract proposals go through the approval gate with accept/reject/modify
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
+- [ ] 04-01-PLAN.md -- Proposal schemas, committed schema extensions, ApprovalGate generalization, vv-rules config
+- [ ] 04-02-PLAN.md -- Interface resolution agent, interface command, stale detection, integration tests
+- [ ] 04-03-PLAN.md -- Behavioral contract agent, contract command, V&V assignment, integration tests
 
 ### Phase 5: Traceability Weaving + Impact Analysis
 **Goal**: Developers can view and query complete traceability chains (need to requirement to component to interface to contract to V&V) and compute change impact (blast radius) across the design graph
@@ -148,7 +149,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 1. Design Registry Core + Skill Scaffold | 0/3 | Planned | - |
 | 2. Requirements Ingestion Pipeline | 0/1 | Not started | - |
 | 3. Structural Decomposition + Approval Gate | 0/2 | Not started | - |
-| 4. Interface Resolution + Behavioral Contracts | 0/2 | Not started | - |
+| 4. Interface Resolution + Behavioral Contracts | 0/3 | Not started | - |
 | 5. Traceability Weaving + Impact Analysis | 0/2 | Not started | - |
 | 6. Views, Diagrams, Risk & Volatility | 0/3 | Not started | - |
 | 7. Orchestration + Coherence Review | 0/2 | Not started | - |
