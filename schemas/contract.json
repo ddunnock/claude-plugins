@@ -41,7 +41,59 @@
     "obligations": {
       "type": "array",
       "items": {
-        "type": "object"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "statement": {
+            "type": "string"
+          },
+          "obligation_type": {
+            "type": "string"
+          },
+          "source_requirement_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error_category": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "vv_assignments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "obligation_id": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string",
+            "enum": ["test", "analysis", "inspection", "demonstration"]
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "is_override": {
+            "type": "boolean"
+          }
+        },
+        "required": ["obligation_id", "method", "rationale"],
+        "additionalProperties": false
+      }
+    },
+    "rationale": {
+      "type": ["string", "object"]
+    },
+    "requirement_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
       }
     },
     "vv_method": {

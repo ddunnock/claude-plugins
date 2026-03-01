@@ -28,6 +28,8 @@ SLOT_TYPE_DIRS: dict[str, str] = {
     "assumption": "assumptions",
     "traceability-link": "traceability-links",
     "component-proposal": "component-proposals",
+    "interface-proposal": "interface-proposals",
+    "contract-proposal": "contract-proposals",
 }
 
 # Maps slot types to their ID prefixes
@@ -42,6 +44,8 @@ SLOT_ID_PREFIXES: dict[str, str] = {
     "assumption": "assumption",
     "traceability-link": "trace",
     "component-proposal": "cprop",
+    "interface-proposal": "iprop",
+    "contract-proposal": "ctprop",
 }
 
 

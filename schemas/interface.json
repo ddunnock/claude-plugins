@@ -44,6 +44,41 @@
     "data_format": {
       "type": "string"
     },
+    "direction": {
+      "type": "string",
+      "enum": ["unidirectional", "bidirectional"]
+    },
+    "data_format_schema": {
+      "type": "object"
+    },
+    "error_categories": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "expected_behavior": {
+            "type": "string"
+          }
+        },
+        "required": ["name", "description", "expected_behavior"],
+        "additionalProperties": false
+      }
+    },
+    "rationale": {
+      "type": ["string", "object"]
+    },
+    "requirement_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "status": {
       "type": "string",
       "enum": ["proposed", "approved", "rejected", "modified", "deprecated"]
