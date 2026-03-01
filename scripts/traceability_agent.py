@@ -12,7 +12,7 @@ Follows the established agent pattern: data prep only, no AI calls.
 from __future__ import annotations
 
 import logging
-from collections import defaultdict
+from collections import defaultdict, deque
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
@@ -574,3 +574,324 @@ class TraceabilityAgent:
             lines.append("")
 
         return "\n".join(lines)
+
+    # ============================================================
+    # Impact analysis methods
+    # ============================================================
+
+    def compute_impact(
+        self,
+        start_id: str,
+        direction: str = "forward",
+        depth_limit: int | None = None,
+        type_filter: list[str] | None = None,
+    ) -> dict:
+        """Compute change impact (blast radius) from a design element.
+
+        Uses BFS with a visited set for cycle safety. Traverses all node
+        types internally even when type_filter restricts output paths.
+
+        Args:
+            start_id: Slot ID to analyze impact from.
+            direction: "forward", "backward", or "both".
+            depth_limit: Max BFS depth (None = unlimited).
+            type_filter: If set, only include these types in output paths.
+
+        Returns:
+            Dict matching impact-analysis schema structure.
+        """
+        graph_slot = self.build_or_refresh()
+        nodes = graph_slot.get("nodes", {})
+        total_nodes = len(nodes)
+
+        # Handle nonexistent start_id
+        if start_id not in nodes:
+            return {
+                "source_element": start_id,
+                "direction": direction,
+                "depth_limit": depth_limit,
+                "type_filter": type_filter,
+                "paths": [],
+                "affected_count": 0,
+                "uncertainty_markers": [],
+                "graph_coverage_percent": 0.0,
+                "gap_markers": [
+                    {
+                        "type": "missing_data",
+                        "finding_ref": f"IMPACT-{start_id}",
+                        "severity": "high",
+                        "description": f"Element '{start_id}' not found in design registry",
+                    }
+                ],
+            }
+
+        forward_adj = graph_slot.get("_forward_adj", {})
+        reverse_adj = graph_slot.get("_reverse_adj", {})
+
+        if direction == "both":
+            fwd_visited, fwd_parent = self._bfs(start_id, forward_adj, depth_limit)
+            bwd_visited, bwd_parent = self._bfs(start_id, reverse_adj, depth_limit)
+            all_visited = fwd_visited | bwd_visited
+            fwd_tree = self._build_tree(start_id, fwd_parent, nodes, forward_adj, type_filter)
+            bwd_tree = self._build_tree(start_id, bwd_parent, nodes, reverse_adj, type_filter)
+            paths = fwd_tree + bwd_tree
+        elif direction == "backward":
+            all_visited, parent_map = self._bfs(start_id, reverse_adj, depth_limit)
+            paths = self._build_tree(start_id, parent_map, nodes, reverse_adj, type_filter)
+        else:  # forward
+            all_visited, parent_map = self._bfs(start_id, forward_adj, depth_limit)
+            paths = self._build_tree(start_id, parent_map, nodes, forward_adj, type_filter)
+
+        # affected_count = all reachable nodes (excluding start), regardless of type_filter
+        affected_count = len(all_visited) - 1  # exclude start_id itself
+
+        # Coverage and uncertainty
+        coverage = (len(all_visited) / total_nodes * 100) if total_nodes > 0 else 0.0
+        uncertainty_markers = []
+        if coverage < 100:
+            unreachable = set(nodes.keys()) - all_visited
+            for uid in unreachable:
+                uncertainty_markers.append({
+                    "element_id": uid,
+                    "reason": f"Not reachable from '{start_id}' via {direction} traversal",
+                })
+
+        return {
+            "source_element": start_id,
+            "direction": direction,
+            "depth_limit": depth_limit,
+            "type_filter": type_filter,
+            "paths": paths,
+            "affected_count": affected_count,
+            "uncertainty_markers": uncertainty_markers,
+            "graph_coverage_percent": round(coverage, 2),
+            "gap_markers": [],
+        }
+
+    def _bfs(
+        self,
+        start_id: str,
+        adj: dict[str, dict[str, list[str]]],
+        depth_limit: int | None,
+    ) -> tuple[set[str], dict[str, str]]:
+        """BFS traversal with cycle-safe visited set.
+
+        Returns:
+            Tuple of (visited set, parent_map {child_id: parent_id}).
+        """
+        visited: set[str] = {start_id}
+        parent_map: dict[str, str] = {}
+        queue: deque[tuple[str, int]] = deque([(start_id, 0)])
+
+        while queue:
+            node_id, depth = queue.popleft()
+            if depth_limit is not None and depth >= depth_limit:
+                continue
+
+            neighbors = adj.get(node_id, {})
+            for neighbor_id in neighbors:
+                if neighbor_id not in visited:
+                    visited.add(neighbor_id)
+                    parent_map[neighbor_id] = node_id
+                    queue.append((neighbor_id, depth + 1))
+
+        return visited, parent_map
+
+    def _build_tree(
+        self,
+        start_id: str,
+        parent_map: dict[str, str],
+        nodes: dict[str, dict],
+        adj: dict[str, dict[str, list[str]]],
+        type_filter: list[str] | None,
+    ) -> list[dict]:
+        """Build tree-structured paths from BFS parent map.
+
+        Returns list of root-level tree nodes (direct children of start_id).
+        """
+        # Build children map from parent_map
+        children_map: dict[str, list[str]] = defaultdict(list)
+        for child, parent in parent_map.items():
+            children_map[parent].append(child)
+
+        def build_node(node_id: str, depth: int, rel_from_parent: str) -> dict | None:
+            node_info = nodes.get(node_id, {})
+            node_type = node_info.get("type", "unknown")
+            node_name = node_info.get("name", node_id)
+
+            child_nodes = []
+            for child_id in children_map.get(node_id, []):
+                # Get relationship type
+                edge_types = adj.get(node_id, {}).get(child_id, [])
+                rel = edge_types[0] if edge_types else "related_to"
+                child_node = build_node(child_id, depth + 1, rel)
+                if child_node is not None:
+                    child_nodes.append(child_node)
+
+            # Apply type filter: include node if it matches filter OR has matching descendants
+            if type_filter is not None:
+                if node_type not in type_filter and not child_nodes:
+                    return None
+                if node_type not in type_filter and child_nodes:
+                    # Skip this node but promote its children
+                    return None  # Will be handled by parent
+
+            return {
+                "element_id": node_id,
+                "element_type": node_type,
+                "element_name": node_name,
+                "depth": depth,
+                "relationship": rel_from_parent,
+                "children": child_nodes,
+            }
+
+        # Build from start_id's direct children
+        result = []
+        for child_id in children_map.get(start_id, []):
+            edge_types = adj.get(start_id, {}).get(child_id, [])
+            rel = edge_types[0] if edge_types else "related_to"
+            node = build_node(child_id, 1, rel)
+            if node is not None:
+                result.append(node)
+            elif type_filter is not None:
+                # Node filtered out but might have descendants that match
+                # Promote matching descendants
+                for desc in self._find_filtered_descendants(
+                    child_id, children_map, nodes, adj, type_filter, 1
+                ):
+                    result.append(desc)
+
+        return result
+
+    def _find_filtered_descendants(
+        self,
+        node_id: str,
+        children_map: dict[str, list[str]],
+        nodes: dict[str, dict],
+        adj: dict[str, dict[str, list[str]]],
+        type_filter: list[str],
+        depth: int,
+    ) -> list[dict]:
+        """Find descendants matching type_filter when intermediate nodes are filtered out."""
+        result = []
+        for child_id in children_map.get(node_id, []):
+            node_info = nodes.get(child_id, {})
+            node_type = node_info.get("type", "unknown")
+            if node_type in type_filter:
+                edge_types = adj.get(node_id, {}).get(child_id, [])
+                rel = edge_types[0] if edge_types else "related_to"
+                result.append({
+                    "element_id": child_id,
+                    "element_type": node_type,
+                    "element_name": node_info.get("name", child_id),
+                    "depth": depth + 1,
+                    "relationship": rel,
+                    "children": [],
+                })
+            else:
+                result.extend(self._find_filtered_descendants(
+                    child_id, children_map, nodes, adj, type_filter, depth + 1
+                ))
+        return result
+
+    def persist_impact(self, impact_result: dict) -> dict:
+        """Persist an impact analysis result as an impact-analysis slot.
+
+        Args:
+            impact_result: Dict from compute_impact().
+
+        Returns:
+            The created slot dict with slot_id.
+        """
+        content = {
+            "source_element": impact_result["source_element"],
+            "direction": impact_result["direction"],
+            "depth_limit": impact_result.get("depth_limit"),
+            "type_filter": impact_result.get("type_filter"),
+            "paths": impact_result["paths"],
+            "affected_count": impact_result["affected_count"],
+            "uncertainty_markers": impact_result.get("uncertainty_markers", []),
+            "graph_coverage_percent": impact_result.get("graph_coverage_percent", 0.0),
+            "gap_markers": impact_result.get("gap_markers", []),
+        }
+        result = self._api.create("impact-analysis", content)
+        slot_id = result["slot_id"]
+        # Read back the full persisted slot
+        persisted = self._api.read(slot_id)
+        if persisted is None:
+            raise RuntimeError(f"Failed to read back impact-analysis slot '{slot_id}' after create")
+        return persisted
+
+    def format_impact_output(self, impact_result: dict) -> str:
+        """Format impact analysis result as a hierarchical tree view.
+
+        Args:
+            impact_result: Dict from compute_impact().
+
+        Returns:
+            Human-readable tree view string.
+        """
+        lines: list[str] = []
+        source = impact_result["source_element"]
+        direction = impact_result["direction"]
+        affected = impact_result["affected_count"]
+        coverage = impact_result.get("graph_coverage_percent", 0.0)
+        type_filter = impact_result.get("type_filter")
+
+        lines.append(f"# Impact Analysis: {source}")
+        lines.append("")
+        lines.append(f"**Direction:** {direction}")
+        depth_limit = impact_result.get("depth_limit")
+        if depth_limit is not None:
+            lines.append(f"**Depth limit:** {depth_limit}")
+        if type_filter:
+            lines.append(f"**Type filter:** {', '.join(type_filter)}")
+        lines.append(f"**Graph coverage:** {coverage:.1f}%")
+        lines.append("")
+
+        # Tree view
+        paths = impact_result.get("paths", [])
+        if paths:
+            lines.append(f"{source}")
+            for i, child in enumerate(paths):
+                is_last = i == len(paths) - 1
+                self._format_tree_node(child, lines, "", is_last)
+        else:
+            lines.append("No impact paths found.")
+
+        lines.append("")
+        lines.append(f"**Total affected elements:** {affected}")
+
+        # Uncertainty markers
+        markers = impact_result.get("uncertainty_markers", [])
+        if markers:
+            lines.append("")
+            lines.append(f"**Uncertainty:** {len(markers)} elements not reachable (coverage {coverage:.1f}%)")
+
+        # Gap markers
+        gaps = impact_result.get("gap_markers", [])
+        if gaps:
+            lines.append("")
+            lines.append("**Gaps:**")
+            for gap in gaps:
+                lines.append(f"  - [{gap['severity']}] {gap['description']}")
+
+        return "\n".join(lines)
+
+    def _format_tree_node(
+        self, node: dict, lines: list[str], prefix: str, is_last: bool
+    ) -> None:
+        """Recursively format a tree node for display."""
+        connector = "`-- " if is_last else "|-- "
+        el_id = node["element_id"]
+        el_type = node["element_type"]
+        el_name = node["element_name"]
+        rel = node.get("relationship", "")
+
+        lines.append(f"{prefix}{connector}{el_id} ({el_type}: {el_name}) [{rel}]")
+
+        child_prefix = prefix + ("    " if is_last else "|   ")
+        children = node.get("children", [])
+        for i, child in enumerate(children):
+            child_is_last = i == len(children) - 1
+            self._format_tree_node(child, lines, child_prefix, child_is_last)
