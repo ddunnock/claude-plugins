@@ -91,9 +91,9 @@ End-to-end need→requirement→component→interface→contract→V&V chains.
 
 Change propagation and blast radius computation.
 
-- [ ] **IMPT-01**: Forward/backward impact path computation — REQ-045..047, REQ-310..320 (impact-analysis-agent: 12 reqs)
-- [ ] **IMPT-02**: Path computation with configurable depth limits — REQ-310..315 (path-computer: 8 reqs)
-- [ ] **IMPT-03**: Change tracing from modification to affected elements — REQ-316..320 (change-tracer: 8 reqs)
+- [x] **IMPT-01**: Forward/backward impact path computation — REQ-045..047, REQ-310..320 (impact-analysis-agent: 12 reqs)
+- [x] **IMPT-02**: Path computation with configurable depth limits — REQ-310..315 (path-computer: 8 reqs)
+- [x] **IMPT-03**: Change tracing from modification to affected elements — REQ-316..320 (change-tracer: 8 reqs)
 
 ### Risk Registry & Volatility
 
@@ -175,7 +175,7 @@ Partial-state tolerance, structured logging, configurable rules.
 | INTF-01..04 | Phase 4 | REQ-034..037, REQ-267..282 | Pending |
 | BHVR-01..04 | Phase 4 | REQ-038..041, REQ-283..298, REQ-407 | Pending |
 | TRAC-01..04 | Phase 5 | REQ-042..044, REQ-299..309, REQ-452 | TRAC-01..04 Complete |
-| IMPT-01..03 | Phase 5 | REQ-045..047, REQ-310..320 | Pending |
+| IMPT-01..03 | Phase 5 | REQ-045..047, REQ-310..320 | IMPT-01..03 Complete |
 | RISK-01..07 | Phase 6 | REQ-048..050, REQ-066..069, REQ-321..331, REQ-381..395 | Pending |
 | VIEW-01..03, DIAG-01..03 | Phase 6 | REQ-058..065, REQ-354..380 | Pending |
 | ORCH-01..05 | Phase 7 | REQ-051..057, REQ-332..353 | Pending |
