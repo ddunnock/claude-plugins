@@ -76,6 +76,7 @@ def init_workspace(project_root: str) -> dict:
         "registry/sources",
         "registry/assumptions",
         "registry/traceability-links",
+        "registry/component-proposals",
     ]
 
     created_paths = []

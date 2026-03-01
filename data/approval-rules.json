@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0.0",
+  "proposal_type_overrides": {},
+  "states": {
+    "proposed": {
+      "terminal": false,
+      "transitions": {
+        "accept": {
+          "target": "accepted",
+          "required_fields": [],
+          "side_effects": ["create_committed_slot"]
+        },
+        "reject": {
+          "target": "rejected",
+          "required_fields": ["rejection_rationale"],
+          "side_effects": ["trigger_re_proposal"]
+        },
+        "modify": {
+          "target": "modified",
+          "required_fields": ["modifications"],
+          "side_effects": ["apply_modifications"]
+        }
+      }
+    },
+    "accepted": {
+      "terminal": true,
+      "transitions": {}
+    },
+    "rejected": {
+      "terminal": false,
+      "transitions": {
+        "re_propose": {
+          "target": "proposed",
+          "required_fields": [],
+          "side_effects": ["clear_decision"]
+        }
+      }
+    },
+    "modified": {
+      "terminal": false,
+      "transitions": {
+        "accept": {
+          "target": "accepted",
+          "required_fields": [],
+          "side_effects": ["create_committed_slot"]
+        },
+        "reject": {
+          "target": "rejected",
+          "required_fields": ["rejection_rationale"],
+          "side_effects": ["trigger_re_proposal"]
+        }
+      }
+    }
+  }
+}
