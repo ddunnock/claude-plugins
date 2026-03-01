@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-02-28T21:37:18.579Z"
+last_updated: "2026-03-01T14:33:02Z"
 progress:
-  total_phases: 1
+  total_phases: 2
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 5
+  completed_plans: 4
 ---
 
 # Project State
@@ -18,32 +18,33 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Design decisions captured as explicit, reviewable, traceable records in a Design Registry
-**Current focus:** Phase 1 - Design Registry Core + Skill Scaffold
+**Current focus:** Phase 2 - Requirements Ingestion Pipeline
 
 ## Current Position
 
-Phase: 1 of 7 (Design Registry Core + Skill Scaffold)
-Plan: 3 of 3 in current phase (PHASE COMPLETE)
-Status: Phase 1 Complete
-Last activity: 2026-02-28 -- Completed 01-03-PLAN.md (change journal, version manager, integration)
+Phase: 2 of 7 (Requirements Ingestion Pipeline)
+Plan: 1 of 2 in current phase
+Status: In Progress
+Last activity: 2026-03-01 -- Completed 02-01-PLAN.md (ingestion slot types, upstream mapping)
 
-Progress: [##........] 14%
+Progress: [###.......] 29%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
+- Total plans completed: 4
 - Average duration: 4 min
-- Total execution time: 0.20 hours
+- Total execution time: 0.27 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 | 3 | 12 min | 4 min |
+| 02 | 1 | 4 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (4 min), 01-02 (3 min), 01-03 (5 min)
+- Last 5 plans: 01-01 (4 min), 01-02 (3 min), 01-03 (5 min), 02-01 (4 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -67,6 +68,10 @@ Recent decisions affecting current work:
 - [01-02]: ConflictError carries expected_version and actual_version for caller diagnostics
 - [01-03]: Forward-replay reconstruction instead of reverse-apply: journal diffs are old->new, reverse-apply lacks old values for replace ops
 - [01-03]: Journal-after-storage pattern: journal.append only after successful storage write, so failed ops produce no journal entries
+- [02-01]: Ingested slot IDs use type:upstream-id convention with colon separator (e.g., need:NEED-001)
+- [02-01]: SlotAPI.ingest() is separate from create() -- no per-item journaling, accepts pre-determined IDs
+- [02-01]: content_hash excludes timestamps by default for delta-detection stability
+- [02-01]: Gap markers reference CROSS-SKILL-ANALYSIS finding IDs for machine-readable downstream processing
 
 ### Pending Todos
 
@@ -80,6 +85,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-28
-Stopped at: Completed 01-03-PLAN.md (Phase 1 complete)
+Last session: 2026-03-01
+Stopped at: Completed 02-01-PLAN.md
 Resume file: None
