@@ -151,6 +151,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 2. Requirements Ingestion Pipeline | 0/1 | Not started | - |
 | 3. Structural Decomposition + Approval Gate | 0/2 | Not started | - |
 | 4. Interface Resolution + Behavioral Contracts | 0/3 | Not started | - |
-| 5. Traceability Weaving + Impact Analysis | 0/3 | Not started | - |
+| 5. Traceability Weaving + Impact Analysis | 2/3 | In progress | - |
 | 6. Views, Diagrams, Risk & Volatility | 0/3 | Not started | - |
 | 7. Orchestration + Coherence Review | 0/2 | Not started | - |

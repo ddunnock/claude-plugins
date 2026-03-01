@@ -82,9 +82,9 @@ Verification planning at design time per INCOSE principles.
 
 End-to-end need→requirement→component→interface→contract→V&V chains.
 
-- [ ] **TRAC-01**: Graph construction from registry slots — REQ-042..044, REQ-299..309 (traceability-weaver: 11 reqs)
-- [ ] **TRAC-02**: Graph builder with traversal and query — REQ-304..309 (graph-builder: 8 reqs)
-- [ ] **TRAC-03**: Chain validation detecting broken segments — REQ-299..303, REQ-452 (chain-maintainer: 6 reqs)
+- [x] **TRAC-01**: Graph construction from registry slots — REQ-042..044, REQ-299..309 (traceability-weaver: 11 reqs)
+- [x] **TRAC-02**: Graph builder with traversal and query — REQ-304..309 (graph-builder: 8 reqs)
+- [x] **TRAC-03**: Chain validation detecting broken segments — REQ-299..303, REQ-452 (chain-maintainer: 6 reqs)
 - [x] **TRAC-04**: Traceability enforced on write, not just checked after — per PITFALLS.md
 
 ### Impact Analysis
@@ -174,7 +174,7 @@ Partial-state tolerance, structured logging, configurable rules.
 | APPR-01..04 | Phase 3 | REQ-259..266, REQ-450, REQ-470, REQ-474 | Pending |
 | INTF-01..04 | Phase 4 | REQ-034..037, REQ-267..282 | Pending |
 | BHVR-01..04 | Phase 4 | REQ-038..041, REQ-283..298, REQ-407 | Pending |
-| TRAC-01..04 | Phase 5 | REQ-042..044, REQ-299..309, REQ-452 | Pending |
+| TRAC-01..04 | Phase 5 | REQ-042..044, REQ-299..309, REQ-452 | TRAC-01..04 Complete |
 | IMPT-01..03 | Phase 5 | REQ-045..047, REQ-310..320 | Pending |
 | RISK-01..07 | Phase 6 | REQ-048..050, REQ-066..069, REQ-321..331, REQ-381..395 | Pending |
 | VIEW-01..03, DIAG-01..03 | Phase 6 | REQ-058..065, REQ-354..380 | Pending |
