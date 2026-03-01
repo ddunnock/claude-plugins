@@ -47,9 +47,9 @@ Bridge from requirements-dev outputs to Design Registry.
 
 AI-proposed component groupings from requirements.
 
-- [ ] **STRC-01**: Component proposal from requirements with functional coherence/data affinity rationale — REQ-031..033, REQ-251..258 (structural-decomposition-agent: 11 reqs)
-- [ ] **STRC-02**: Component proposer sub-agent with grouping algorithms — REQ-251..258 (component-proposer: 8 reqs)
-- [ ] **STRC-03**: Partial decomposition with gap markers when requirements are incomplete — REQ-090..092
+- [x] **STRC-01**: Component proposal from requirements with functional coherence/data affinity rationale — REQ-031..033, REQ-251..258 (structural-decomposition-agent: 11 reqs)
+- [x] **STRC-02**: Component proposer sub-agent with grouping algorithms — REQ-251..258 (component-proposer: 8 reqs)
+- [x] **STRC-03**: Partial decomposition with gap markers when requirements are incomplete — REQ-090..092
 
 ### Approval Gate
 
