@@ -30,6 +30,8 @@ SLOT_TYPE_DIRS: dict[str, str] = {
     "component-proposal": "component-proposals",
     "interface-proposal": "interface-proposals",
     "contract-proposal": "contract-proposals",
+    "traceability-graph": "traceability-graphs",
+    "impact-analysis": "impact-analyses",
 }
 
 # Maps slot types to their ID prefixes
@@ -46,6 +48,8 @@ SLOT_ID_PREFIXES: dict[str, str] = {
     "component-proposal": "cprop",
     "interface-proposal": "iprop",
     "contract-proposal": "ctprop",
+    "traceability-graph": "tgraph",
+    "impact-analysis": "impact",
 }
 
 
@@ -206,7 +210,7 @@ class SlotStorageEngine:
         index = self._load_index()
         results = []
 
-        for slot_id, entry in index.get("slots", {}).items():
+        for _slot_id, entry in index.get("slots", {}).items():
             if entry["slot_type"] != slot_type:
                 continue
 
