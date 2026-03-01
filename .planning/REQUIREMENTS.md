@@ -85,7 +85,7 @@ End-to-end need→requirement→component→interface→contract→V&V chains.
 - [ ] **TRAC-01**: Graph construction from registry slots — REQ-042..044, REQ-299..309 (traceability-weaver: 11 reqs)
 - [ ] **TRAC-02**: Graph builder with traversal and query — REQ-304..309 (graph-builder: 8 reqs)
 - [ ] **TRAC-03**: Chain validation detecting broken segments — REQ-299..303, REQ-452 (chain-maintainer: 6 reqs)
-- [ ] **TRAC-04**: Traceability enforced on write, not just checked after — per PITFALLS.md
+- [x] **TRAC-04**: Traceability enforced on write, not just checked after — per PITFALLS.md
 
 ### Impact Analysis
 
