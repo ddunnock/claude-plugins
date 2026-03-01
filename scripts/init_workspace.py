@@ -71,6 +71,11 @@ def init_workspace(project_root: str) -> dict:
         "registry/interfaces",
         "registry/contracts",
         "registry/requirement-refs",
+        "registry/needs",
+        "registry/requirements",
+        "registry/sources",
+        "registry/assumptions",
+        "registry/traceability-links",
     ]
 
     created_paths = []

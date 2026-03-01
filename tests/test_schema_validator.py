@@ -97,10 +97,20 @@ class TestSchemaValidator:
         with pytest.raises(ValueError, match="Unknown slot type: 'nonexistent'"):
             validator.validate("nonexistent", {})
 
-    def test_all_four_slot_types_load(self, validator):
-        """Validator loads all 4 slot type schemas."""
+    def test_all_slot_types_load(self, validator):
+        """Validator loads all 9 slot type schemas (4 original + 5 ingestion)."""
         types = validator.supported_types
-        assert types == ["component", "contract", "interface", "requirement-ref"]
+        assert types == [
+            "assumption",
+            "component",
+            "contract",
+            "interface",
+            "need",
+            "requirement",
+            "requirement-ref",
+            "source",
+            "traceability-link",
+        ]
 
     def test_validate_or_raise_passes_on_valid(self, validator):
         """validate_or_raise does not raise for valid content."""

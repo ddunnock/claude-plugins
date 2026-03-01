@@ -22,6 +22,11 @@ SLOT_TYPE_DIRS: dict[str, str] = {
     "interface": "interfaces",
     "contract": "contracts",
     "requirement-ref": "requirement-refs",
+    "need": "needs",
+    "requirement": "requirements",
+    "source": "sources",
+    "assumption": "assumptions",
+    "traceability-link": "traceability-links",
 }
 
 # Maps slot types to their ID prefixes
@@ -30,6 +35,11 @@ SLOT_ID_PREFIXES: dict[str, str] = {
     "interface": "intf",
     "contract": "cntr",
     "requirement-ref": "rref",
+    "need": "need",
+    "requirement": "requirement",
+    "source": "source",
+    "assumption": "assumption",
+    "traceability-link": "trace",
 }
 
 
@@ -350,6 +360,92 @@ class SlotAPI:
             None,
             content,
         )
+
+        return {"status": "created", "slot_id": slot_id, "version": 1}
+
+    def ingest(
+        self,
+        slot_id: str,
+        slot_type: str,
+        content: dict,
+        agent_id: str = "ingestion-engine",
+    ) -> dict:
+        """Ingest an upstream entity as a slot with a deterministic ID.
+
+        Unlike create(), this method accepts a pre-determined slot_id
+        (e.g., "need:NEED-001") rather than auto-generating one. It is
+        designed for bulk ingestion from upstream registries.
+
+        Conflict handling:
+        - If slot exists with version > 1 (manually edited), SKIP to
+          preserve local edits. Returns status "conflict".
+        - If slot exists with version 1 (still at ingested version),
+          treat as update: increment version, preserve created_at.
+        - If slot does not exist, create with version 1.
+
+        Does NOT write individual journal entries -- the caller writes
+        a batch summary entry after all ingestion is complete.
+
+        Args:
+            slot_id: Deterministic slot ID (e.g., "need:NEED-001").
+            slot_type: The slot type (e.g., "need", "requirement").
+            content: Mapped slot content (without system fields).
+            agent_id: Identifier of the ingesting agent.
+
+        Returns:
+            Dict with status ("created", "updated", or "conflict"),
+            slot_id, and version.
+
+        Raises:
+            ValueError: If slot_type is unknown.
+            SchemaValidationError: If content fails schema validation.
+        """
+        if slot_type not in SLOT_TYPE_DIRS:
+            raise ValueError(
+                f"Unknown slot type: '{slot_type}'. "
+                f"Supported types: {sorted(SLOT_TYPE_DIRS.keys())}"
+            )
+
+        now = datetime.now(timezone.utc).isoformat()
+
+        # Check if slot already exists
+        existing = self._storage.read(slot_id)
+
+        if existing is not None:
+            if existing["version"] > 1:
+                # Manually edited -- do not overwrite
+                return {
+                    "status": "conflict",
+                    "slot_id": slot_id,
+                    "version": existing["version"],
+                }
+
+            # Still at ingested version -- update in place
+            new_version = existing["version"] + 1
+            content["slot_id"] = slot_id
+            content["slot_type"] = slot_type
+            content["version"] = new_version
+            content["created_at"] = existing["created_at"]
+            content["updated_at"] = now
+
+            self._validator.validate_or_raise(slot_type, content)
+            self._storage.write(slot_id, slot_type, content)
+
+            return {
+                "status": "updated",
+                "slot_id": slot_id,
+                "version": new_version,
+            }
+
+        # New slot -- create with version 1
+        content["slot_id"] = slot_id
+        content["slot_type"] = slot_type
+        content["version"] = 1
+        content["created_at"] = now
+        content["updated_at"] = now
+
+        self._validator.validate_or_raise(slot_type, content)
+        self._storage.write(slot_id, slot_type, content)
 
         return {"status": "created", "slot_id": slot_id, "version": 1}
 

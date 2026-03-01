@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://system-dev.local/schemas/requirement.json",
+  "title": "Requirement Slot",
+  "type": "object",
+  "required": ["slot_id", "slot_type", "version", "created_at", "updated_at", "upstream_id", "description"],
+  "properties": {
+    "slot_id": {
+      "type": "string",
+      "pattern": "^requirement:.+$"
+    },
+    "slot_type": {
+      "const": "requirement"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "upstream_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string"
+    },
+    "requirement_type": {
+      "type": "string"
+    },
+    "priority": {
+      "type": "string"
+    },
+    "upstream_status": {
+      "type": "string"
+    },
+    "parent_need": {
+      "type": "string"
+    },
+    "source_block": {
+      "type": "string"
+    },
+    "decomposition_level": {
+      "type": "string"
+    },
+    "upstream_attributes": {
+      "type": "object"
+    },
+    "quality_checks": {
+      "type": "object"
+    },
+    "rationale": {
+      "type": "string"
+    },
+    "upstream_registered_at": {
+      "type": "string"
+    },
+    "upstream_baselined_at": {
+      "type": "string"
+    },
+    "derives_from": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "source": { "type": "string" },
+        "upstream_file": { "type": "string" },
+        "ingested_at": { "type": "string", "format": "date-time" },
+        "hash": { "type": "string" }
+      }
+    },
+    "gap_markers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "finding_ref", "severity", "description"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["missing_data", "schema_mismatch", "known_bug"]
+          },
+          "finding_ref": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["low", "medium", "high"]
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "extensions": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}

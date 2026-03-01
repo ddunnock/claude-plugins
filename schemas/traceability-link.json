@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://system-dev.local/schemas/traceability-link.json",
+  "title": "Traceability Link Slot",
+  "type": "object",
+  "required": ["slot_id", "slot_type", "version", "created_at", "updated_at", "link_type", "from_id", "to_id"],
+  "properties": {
+    "slot_id": {
+      "type": "string",
+      "pattern": "^trace:.+$"
+    },
+    "slot_type": {
+      "const": "traceability-link"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "link_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "from_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "to_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rationale": {
+      "type": "string"
+    },
+    "upstream_registered_at": {
+      "type": "string"
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "source": { "type": "string" },
+        "upstream_file": { "type": "string" },
+        "ingested_at": { "type": "string", "format": "date-time" },
+        "hash": { "type": "string" }
+      }
+    },
+    "gap_markers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "finding_ref", "severity", "description"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["missing_data", "schema_mismatch", "known_bug"]
+          },
+          "finding_ref": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["low", "medium", "high"]
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "extensions": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}
