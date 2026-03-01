@@ -74,8 +74,8 @@ Component boundary contracts and protocol definitions.
 Verification planning at design time per INCOSE principles.
 
 - [x] **BHVR-01**: Behavioral obligation derivation per component — REQ-038..041, REQ-283..298 (behavioral-contract-agent: 14 reqs)
-- [ ] **BHVR-02**: Obligation deriver sub-agent — REQ-283..288 (obligation-deriver: 7 reqs)
-- [ ] **BHVR-03**: Contract proposal with accept/reject/modify — REQ-283..298 (contract-proposer: 8 reqs)
+- [x] **BHVR-02**: Obligation deriver sub-agent — REQ-283..288 (obligation-deriver: 7 reqs)
+- [x] **BHVR-03**: Contract proposal with accept/reject/modify — REQ-283..298 (contract-proposer: 8 reqs)
 - [x] **BHVR-04**: V&V method assignment (test/analysis/inspection/demonstration) — REQ-040, REQ-289..293, REQ-407 (vv-planner: 7 reqs)
 
 ### Traceability Weaving
