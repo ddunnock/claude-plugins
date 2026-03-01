@@ -62,11 +62,11 @@ Plans:
   2. The developer can accept, reject, or modify each component proposal, and the decision is persisted atomically (no partial state)
   3. When requirements are incomplete, decomposition produces partial results with explicit gap markers indicating what is missing
   4. The approval gate workflow is reusable -- its state-transition rules are externalizable for use by subsequent agents
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
+- [ ] 03-01-PLAN.md -- Component-proposal schema, declarative approval-rules config, generic approval gate engine
+- [ ] 03-02-PLAN.md -- Decomposition agent with gap detection, command workflows, agent definition, integration tests
 
 ### Phase 4: Interface Resolution + Behavioral Contracts
 **Goal**: Developers can identify interfaces between approved components, generate protocol/data-format contracts, derive behavioral obligations per component, and assign V&V methods -- all through the proven approval gate
