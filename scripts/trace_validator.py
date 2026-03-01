@@ -82,7 +82,7 @@ class TraceValidator:
                 continue
 
             # Check reference existence for non-empty values
-            if field in _SINGLE_REF_FIELDS:
+            if field in _SINGLE_REF_FIELDS and isinstance(value, str):
                 if api.read(value) is None:
                     warnings.append({
                         "type": "broken_reference",
