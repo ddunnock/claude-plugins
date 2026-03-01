@@ -6,15 +6,24 @@ Every mutation is automatically journaled with RFC 6902 diffs (DREG-06),
 and version history is queryable (DREG-05).
 """
 
+from __future__ import annotations
+
 import json
+import logging
 import os
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from scripts.change_journal import ChangeJournal
 from scripts.schema_validator import SchemaValidationError, SchemaValidator
 from scripts.shared_io import atomic_write, ensure_directory, validate_path
 from scripts.version_manager import VersionManager
+
+if TYPE_CHECKING:
+    from scripts.trace_validator import TraceValidator
+
+logger = logging.getLogger(__name__)
 
 # Maps slot types to their registry subdirectory names
 SLOT_TYPE_DIRS: dict[str, str] = {
@@ -303,6 +312,7 @@ class SlotAPI:
         workspace_root: str,
         schemas_dir: str,
         journal_path: str | None = None,
+        trace_validator: TraceValidator | None = None,
     ):
         """Initialize all subsystems including journal and version manager.
 
@@ -310,14 +320,50 @@ class SlotAPI:
             workspace_root: Absolute path to .system-dev/ directory.
             schemas_dir: Absolute path to schemas/ directory.
             journal_path: Optional override for journal file location.
+            trace_validator: Optional TraceValidator for write-time trace
+                enforcement. When None (default), no trace validation occurs.
         """
         self._storage = SlotStorageEngine(workspace_root)
         self._validator = SchemaValidator(schemas_dir)
+        self._trace_validator = trace_validator
 
         if journal_path is None:
             journal_path = os.path.join(workspace_root, "journal.jsonl")
         self._journal = ChangeJournal(journal_path)
         self._versions = VersionManager(self._journal)
+
+    def _apply_trace_validation(self, slot_type: str, content: dict) -> None:
+        """Run trace validation and auto-inject gap_markers for warnings.
+
+        Called after schema validation passes but before storage write.
+        Modifies content in-place by appending gap_markers if trace
+        warnings are found. Never raises exceptions.
+
+        Args:
+            slot_type: The type of slot being written.
+            content: The slot content dict (modified in-place).
+        """
+        if self._trace_validator is None:
+            return
+
+        trace_warnings = self._trace_validator.validate(slot_type, content, self)
+        if not trace_warnings:
+            return
+
+        existing_markers = content.get("gap_markers", [])
+        for warning in trace_warnings:
+            existing_markers.append({
+                "type": warning["type"],
+                "finding_ref": f"TRACE-{warning['field']}",
+                "severity": "medium",
+                "description": warning["message"],
+            })
+        content["gap_markers"] = existing_markers
+        logger.warning(
+            "Trace warnings for %s: %s",
+            content.get("slot_id", "unknown"),
+            trace_warnings,
+        )
 
     def create(
         self, slot_type: str, content: dict, agent_id: str = "user"
@@ -357,6 +403,7 @@ class SlotAPI:
         content["updated_at"] = now
 
         self._validator.validate_or_raise(slot_type, content)
+        self._apply_trace_validation(slot_type, content)
         self._storage.write(slot_id, slot_type, content)
 
         self._journal.append(
@@ -519,6 +566,7 @@ class SlotAPI:
         content["updated_at"] = now
 
         self._validator.validate_or_raise(current["slot_type"], content)
+        self._apply_trace_validation(current["slot_type"], content)
         self._storage.write(slot_id, current["slot_type"], content)
 
         self._journal.append(
