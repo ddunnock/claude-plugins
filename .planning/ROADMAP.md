@@ -47,10 +47,11 @@ Plans:
   1. Running the init command reads requirements-dev registries and populates Design Registry slots with the ingested data
   2. Re-running ingestion after upstream changes detects deltas and reports what changed without clobbering manual design work
   3. Known upstream schema gaps (from CROSS-SKILL-ANALYSIS.md) produce gap markers instead of crashes
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: TBD
+- [ ] 02-01-PLAN.md -- New slot type schemas, registry extension, upstream field mapping, gap markers
+- [ ] 02-02-PLAN.md -- Ingestion engine, delta detector, reports, comprehensive tests
 
 ### Phase 3: Structural Decomposition + Approval Gate
 **Goal**: Developers can request AI-driven component proposals from ingested requirements, review rationale, and accept/reject/modify proposals through an approval gate that persists decisions atomically
