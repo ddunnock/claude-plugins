@@ -417,3 +417,252 @@ class TestFormatOutput:
         lines = output.strip().split("\n")
         top_section = "\n".join(lines[:5])
         assert "%" in top_section
+
+
+# ============================================================
+# compute_impact() tests
+# ============================================================
+
+def _build_full_graph(api):
+    """Build a full design graph for impact tests.
+
+    Creates: 2 needs, 3 reqs, 2 components, 1 interface, 1 contract with V&V.
+    Returns dict with all slot IDs.
+    """
+    _ingest_need(api, "NEED-001", "Authentication need")
+    _ingest_need(api, "NEED-002", "Authorization need")
+    _ingest_requirement(api, "REQ-001", "Login requirement")
+    _ingest_requirement(api, "REQ-002", "Session requirement")
+    _ingest_requirement(api, "REQ-003", "Access control requirement")
+
+    _ingest_trace_link(api, "need:NEED-001", "requirement:REQ-001", "satisfies")
+    _ingest_trace_link(api, "need:NEED-001", "requirement:REQ-002", "satisfies")
+    _ingest_trace_link(api, "need:NEED-002", "requirement:REQ-003", "satisfies")
+
+    comp_a = _create_component(api, "Auth Service", req_ids=["requirement:REQ-001", "requirement:REQ-002"])
+    comp_b = _create_component(api, "Access Service", req_ids=["requirement:REQ-003"])
+
+    intf_id = _create_interface(api, "Auth-Access API", source_comp=comp_a, target_comp=comp_b)
+
+    cntr_id = _create_contract(
+        api, "Auth Protocol", comp_id=comp_a, intf_id=intf_id,
+        obligations=[
+            {"id": "OBL-001", "statement": "Validate tokens", "obligation_type": "data_processing"},
+        ],
+        vv_assignments=[
+            {"obligation_id": "OBL-001", "method": "test", "rationale": "Unit testable"},
+        ],
+    )
+
+    return {
+        "need_001": "need:NEED-001",
+        "need_002": "need:NEED-002",
+        "req_001": "requirement:REQ-001",
+        "req_002": "requirement:REQ-002",
+        "req_003": "requirement:REQ-003",
+        "comp_a": comp_a,
+        "comp_b": comp_b,
+        "intf": intf_id,
+        "cntr": cntr_id,
+        "vv_node": f"vv:{cntr_id}:OBL-001",
+    }
+
+
+class TestComputeImpact:
+    """Tests for TraceabilityAgent.compute_impact()."""
+
+    def test_forward_impact_returns_downstream(self, api, agent):
+        """compute_impact forward from a requirement returns all downstream elements."""
+        ids = _build_full_graph(api)
+        result = agent.compute_impact(ids["req_001"], direction="forward")
+
+        assert result["source_element"] == ids["req_001"]
+        assert result["direction"] == "forward"
+        assert result["affected_count"] >= 1
+        # Should reach comp_a at minimum
+        all_ids = _collect_element_ids(result["paths"])
+        assert ids["comp_a"] in all_ids
+
+    def test_backward_impact_returns_upstream(self, api, agent):
+        """compute_impact backward from a contract returns all upstream elements."""
+        ids = _build_full_graph(api)
+        result = agent.compute_impact(ids["cntr"], direction="backward")
+
+        assert result["direction"] == "backward"
+        all_ids = _collect_element_ids(result["paths"])
+        # Should reach at least the interface or component upstream
+        assert ids["comp_a"] in all_ids or ids["intf"] in all_ids
+
+    def test_both_direction_returns_union(self, api, agent):
+        """compute_impact with direction='both' returns union of forward and backward."""
+        ids = _build_full_graph(api)
+        result = agent.compute_impact(ids["comp_a"], direction="both")
+
+        assert result["direction"] == "both"
+        all_ids = _collect_element_ids(result["paths"])
+        # Should have both upstream (requirements) and downstream (interface, contract)
+        assert len(all_ids) >= 2
+
+    def test_depth_limit_1_returns_direct_neighbors(self, api, agent):
+        """compute_impact with depth_limit=1 returns only direct neighbors."""
+        ids = _build_full_graph(api)
+        result = agent.compute_impact(ids["req_001"], direction="forward", depth_limit=1)
+
+        all_ids = _collect_element_ids(result["paths"])
+        # With depth 1, should get direct downstream (comp_a) but NOT deeper (intf, cntr, vv)
+        assert ids["comp_a"] in all_ids
+        # Contract is 3+ hops from requirement, should NOT be in depth-1 result
+        assert ids["cntr"] not in all_ids
+
+    def test_depth_limit_2_returns_neighbors_and_their_neighbors(self, api, agent):
+        """compute_impact with depth_limit=2 goes two levels deep."""
+        ids = _build_full_graph(api)
+        result = agent.compute_impact(ids["req_001"], direction="forward", depth_limit=2)
+
+        all_ids = _collect_element_ids(result["paths"])
+        assert ids["comp_a"] in all_ids
+        # Interface is 2 hops from requirement via component
+        assert ids["intf"] in all_ids
+
+    def test_depth_limit_none_traverses_entire_graph(self, api, agent):
+        """compute_impact with depth_limit=None traverses entire reachable graph."""
+        ids = _build_full_graph(api)
+        result = agent.compute_impact(ids["req_001"], direction="forward", depth_limit=None)
+
+        all_ids = _collect_element_ids(result["paths"])
+        # Should eventually reach V&V node
+        assert ids["vv_node"] in all_ids
+
+    def test_type_filter_restricts_output_not_traversal(self, api, agent):
+        """compute_impact with type_filter shows only filtered types but traverses all internally."""
+        ids = _build_full_graph(api)
+        result = agent.compute_impact(ids["req_001"], direction="forward", type_filter=["component"])
+
+        # Output paths should only contain component nodes
+        all_types = _collect_element_types(result["paths"])
+        assert all(t == "component" for t in all_types)
+        # But affected_count should reflect full traversal (all reachable nodes)
+        assert result["affected_count"] >= 2  # At least comp + intf or more
+
+    def test_cyclic_graph_terminates(self, api, agent):
+        """compute_impact on a cyclic graph terminates and returns correct results."""
+        ids = _build_full_graph(api)
+        # Create a cycle: add traceability link from contract back to requirement
+        _ingest_trace_link(api, ids["cntr"], ids["req_001"], "derives_from", "cycle-edge")
+
+        result = agent.compute_impact(ids["req_001"], direction="forward")
+
+        # Should terminate (not infinite loop) and have results
+        assert result["affected_count"] >= 1
+        assert result["source_element"] == ids["req_001"]
+
+    def test_uncertainty_markers_when_orphan_nodes(self, api, agent):
+        """compute_impact includes uncertainty markers when graph has unreachable nodes."""
+        ids = _build_full_graph(api)
+        # Create an orphan component not connected to anything from start_id
+        _create_component(api, "Orphan Module", req_ids=[])
+
+        result = agent.compute_impact(ids["req_001"], direction="forward")
+
+        # Graph coverage < 100% because orphan is unreachable
+        assert result["graph_coverage_percent"] < 100
+        assert len(result["uncertainty_markers"]) >= 1
+
+    def test_tree_structured_paths(self, api, agent):
+        """compute_impact returns tree-structured paths with children arrays."""
+        ids = _build_full_graph(api)
+        result = agent.compute_impact(ids["req_001"], direction="forward")
+
+        assert isinstance(result["paths"], list)
+        assert len(result["paths"]) >= 1
+        # Root should have children
+        root = result["paths"][0]
+        assert "children" in root
+        assert "element_id" in root
+        assert "element_type" in root
+        assert "depth" in root
+
+    def test_nonexistent_start_id_returns_empty_with_gap(self, api, agent):
+        """compute_impact on nonexistent start_id returns empty result with gap_marker."""
+        _build_full_graph(api)
+        result = agent.compute_impact("nonexistent-id-xyz", direction="forward")
+
+        assert result["affected_count"] == 0
+        assert len(result["paths"]) == 0
+        assert len(result["gap_markers"]) >= 1
+        assert result["gap_markers"][0]["type"] == "missing_data"
+
+
+class TestPersistImpact:
+    """Tests for TraceabilityAgent.persist_impact()."""
+
+    def test_persist_creates_impact_analysis_slot(self, api, agent):
+        """persist_impact creates an impact-analysis slot in registry."""
+        ids = _build_full_graph(api)
+        impact_result = agent.compute_impact(ids["req_001"], direction="forward")
+
+        persisted = agent.persist_impact(impact_result)
+
+        assert persisted["slot_type"] == "impact-analysis"
+        assert persisted["slot_id"].startswith("impact-")
+
+        # Should be readable from API
+        read_back = api.read(persisted["slot_id"])
+        assert read_back is not None
+        assert read_back["source_element"] == ids["req_001"]
+
+
+class TestFormatImpactOutput:
+    """Tests for TraceabilityAgent.format_impact_output()."""
+
+    def test_format_impact_produces_tree_view(self, api, agent):
+        """format_impact_output produces hierarchical tree view string."""
+        ids = _build_full_graph(api)
+        result = agent.compute_impact(ids["req_001"], direction="forward")
+        output = agent.format_impact_output(result)
+
+        assert isinstance(output, str)
+        assert len(output) > 0
+        # Should contain element IDs in the tree
+        assert ids["req_001"] in output
+        # Should contain affected count summary
+        assert "affected" in output.lower() or "impact" in output.lower()
+
+    def test_format_impact_shows_uncertainty_markers(self, api, agent):
+        """format_impact_output shows uncertainty markers when present."""
+        ids = _build_full_graph(api)
+        _create_component(api, "Orphan", req_ids=[])
+        result = agent.compute_impact(ids["req_001"], direction="forward")
+        output = agent.format_impact_output(result)
+
+        assert "uncertainty" in output.lower() or "coverage" in output.lower()
+
+    def test_format_impact_notes_type_filter(self, api, agent):
+        """format_impact_output notes which types were filtered when type_filter used."""
+        ids = _build_full_graph(api)
+        result = agent.compute_impact(ids["req_001"], direction="forward", type_filter=["component"])
+        output = agent.format_impact_output(result)
+
+        assert "filter" in output.lower() or "component" in output.lower()
+
+
+# -- Test helpers for impact tests --
+
+def _collect_element_ids(paths: list[dict]) -> set[str]:
+    """Recursively collect all element_ids from tree-structured paths."""
+    ids = set()
+    for node in paths:
+        ids.add(node["element_id"])
+        if "children" in node and node["children"]:
+            ids.update(_collect_element_ids(node["children"]))
+    return ids
+
+
+def _collect_element_types(paths: list[dict]) -> list[str]:
+    """Recursively collect all element_types from tree-structured paths."""
+    types = []
+    for node in paths:
+        types.append(node["element_type"])
+        if "children" in node and node["children"]:
+            types.extend(_collect_element_types(node["children"]))
+    return types
