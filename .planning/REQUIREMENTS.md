@@ -40,7 +40,7 @@ Bridge from requirements-dev outputs to Design Registry.
 
 - [x] **INGS-01**: Ingest requirements-dev registries (needs, requirements, traceability, sources, assumptions) — REQ-026..030, REQ-141..145 (requirements-synchronizer: 12 reqs)
 - [x] **INGS-02**: Ingestion engine parsing upstream JSON registries into design-registry slots — REQ-234..250 (ingestion-engine: 10 reqs)
-- [ ] **INGS-03**: Delta detection for re-ingestion (upstream requirement changes) — REQ-234..250 (delta-detector: 10 reqs)
+- [x] **INGS-03**: Delta detection for re-ingestion (upstream requirement changes) — REQ-234..250 (delta-detector: 10 reqs)
 - [x] **INGS-04**: Graceful handling of upstream schema gaps (known bugs accepted, gap markers produced)
 
 ### Structural Decomposition
