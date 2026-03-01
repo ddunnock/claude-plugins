@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-01T14:49:35.644Z"
+last_updated: "2026-03-01T15:17:16Z"
 progress:
-  total_phases: 2
+  total_phases: 3
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 7
+  completed_plans: 6
 ---
 
 # Project State
@@ -18,23 +18,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Design decisions captured as explicit, reviewable, traceable records in a Design Registry
-**Current focus:** Phase 2 - Requirements Ingestion Pipeline
+**Current focus:** Phase 3 - Structural Decomposition & Approval Gate
 
 ## Current Position
 
-Phase: 2 of 7 (Requirements Ingestion Pipeline) -- COMPLETE
-Plan: 2 of 2 in current phase (all done)
-Status: Phase 2 Complete
-Last activity: 2026-03-01 -- Completed 02-02-PLAN.md (ingestion engine, delta detection)
+Phase: 3 of 7 (Structural Decomposition & Approval Gate)
+Plan: 1 of 2 in current phase
+Status: Plan 03-01 Complete
+Last activity: 2026-03-01 -- Completed 03-01-PLAN.md (approval gate engine)
 
-Progress: [####......] 36%
+Progress: [######....] 57%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
+- Total plans completed: 6
 - Average duration: 4 min
-- Total execution time: 0.35 hours
+- Total execution time: 0.40 hours
 
 **By Phase:**
 
@@ -42,9 +42,10 @@ Progress: [####......] 36%
 |-------|-------|-------|----------|
 | 01 | 3 | 12 min | 4 min |
 | 02 | 2 | 9 min | 4.5 min |
+| 03 | 1 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-02 (3 min), 01-03 (5 min), 02-01 (4 min), 02-02 (5 min)
+- Last 5 plans: 01-03 (5 min), 02-01 (4 min), 02-02 (5 min), 03-01 (3 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -77,6 +78,10 @@ Recent decisions affecting current work:
 - [02-02]: Removed upstream entries get gap markers instead of deletion to preserve downstream refs
 - [02-02]: Batch journal entry per ingestion run, not per-item, to avoid journal flooding
 - [02-02]: Registries processed in dependency order: needs, sources, assumptions, requirements, links
+- [03-01]: Accept creates committed slot BEFORE updating proposal for atomic ordering (Pitfall 2 prevention)
+- [03-01]: Gate is generic: uses proposal_type parameter, derives committed type by stripping '-proposal' suffix
+- [03-01]: Shallow merge for modify operation -- does not allow overwriting system fields
+- [03-01]: batch_decide stops on first error and returns partial results for caller control
 
 ### Pending Todos
 
@@ -91,5 +96,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 02-02-PLAN.md (Phase 2 complete)
+Stopped at: Completed 03-01-PLAN.md (approval gate engine)
 Resume file: None

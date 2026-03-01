@@ -55,10 +55,10 @@ AI-proposed component groupings from requirements.
 
 Developer accept/reject/modify for all agent proposals.
 
-- [ ] **APPR-01**: Accept/reject/modify workflow for component proposals — REQ-259..266 (approval-gate: 11 reqs)
-- [ ] **APPR-02**: Atomic transactions (no partial state on accept/reject) — REQ-470
-- [ ] **APPR-03**: Decision persistence before response — REQ-450
-- [ ] **APPR-04**: Externalizable workflow state-transition rules — REQ-474
+- [x] **APPR-01**: Accept/reject/modify workflow for component proposals — REQ-259..266 (approval-gate: 11 reqs)
+- [x] **APPR-02**: Atomic transactions (no partial state on accept/reject) — REQ-470
+- [x] **APPR-03**: Decision persistence before response — REQ-450
+- [x] **APPR-04**: Externalizable workflow state-transition rules — REQ-474
 
 ### Interface Resolution
 
