@@ -64,8 +64,8 @@ Developer accept/reject/modify for all agent proposals.
 
 Component boundary contracts and protocol definitions.
 
-- [ ] **INTF-01**: Interface identification between connected components — REQ-034..037, REQ-267..272 (interface-resolution-agent: 13 reqs)
-- [ ] **INTF-02**: Contract generation with data formats and protocols — REQ-267..272 (contract-generator: 7 reqs)
+- [x] **INTF-01**: Interface identification between connected components — REQ-034..037, REQ-267..272 (interface-resolution-agent: 13 reqs)
+- [x] **INTF-02**: Contract generation with data formats and protocols — REQ-267..272 (contract-generator: 7 reqs)
 - [ ] **INTF-03**: Interface proposal sub-agent — REQ-267..272 (interface-proposer: 8 reqs)
 - [ ] **INTF-04**: Change-reactive contract re-proposal on boundary changes — REQ-273..282 (change-responder: 8 reqs)
 
@@ -73,10 +73,10 @@ Component boundary contracts and protocol definitions.
 
 Verification planning at design time per INCOSE principles.
 
-- [ ] **BHVR-01**: Behavioral obligation derivation per component — REQ-038..041, REQ-283..298 (behavioral-contract-agent: 14 reqs)
+- [x] **BHVR-01**: Behavioral obligation derivation per component — REQ-038..041, REQ-283..298 (behavioral-contract-agent: 14 reqs)
 - [ ] **BHVR-02**: Obligation deriver sub-agent — REQ-283..288 (obligation-deriver: 7 reqs)
 - [ ] **BHVR-03**: Contract proposal with accept/reject/modify — REQ-283..298 (contract-proposer: 8 reqs)
-- [ ] **BHVR-04**: V&V method assignment (test/analysis/inspection/demonstration) — REQ-040, REQ-289..293, REQ-407 (vv-planner: 7 reqs)
+- [x] **BHVR-04**: V&V method assignment (test/analysis/inspection/demonstration) — REQ-040, REQ-289..293, REQ-407 (vv-planner: 7 reqs)
 
 ### Traceability Weaving
 

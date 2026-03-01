@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: unknown
-last_updated: "2026-03-01T15:30:13.411Z"
+status: in-progress
+last_updated: "2026-03-01T16:04:00.000Z"
 progress:
-  total_phases: 3
+  total_phases: 7
   completed_phases: 3
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 10
+  completed_plans: 8
 ---
 
 # Project State
@@ -18,23 +18,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Design decisions captured as explicit, reviewable, traceable records in a Design Registry
-**Current focus:** Phase 3 - Structural Decomposition & Approval Gate
+**Current focus:** Phase 4 - Interface Resolution & Behavioral Contracts
 
 ## Current Position
 
-Phase: 3 of 7 (Structural Decomposition & Approval Gate) -- COMPLETE
-Plan: 2 of 2 in current phase
-Status: Phase 03 Complete
-Last activity: 2026-03-01 -- Completed 03-02-PLAN.md (decomposition agent)
+Phase: 4 of 7 (Interface Resolution & Behavioral Contracts)
+Plan: 1 of 3 in current phase
+Status: Executing Phase 04
+Last activity: 2026-03-01 -- Completed 04-01-PLAN.md (registry extension)
 
-Progress: [##########] 100% (Phase 3 of 7 complete)
+Progress: [########--] 80% (8 of 10 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
+- Total plans completed: 8
 - Average duration: 4 min
-- Total execution time: 0.50 hours
+- Total execution time: 0.57 hours
 
 **By Phase:**
 
@@ -43,9 +43,10 @@ Progress: [##########] 100% (Phase 3 of 7 complete)
 | 01 | 3 | 12 min | 4 min |
 | 02 | 2 | 9 min | 4.5 min |
 | 03 | 2 | 9 min | 4.5 min |
+| 04 | 1 | 4 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (4 min), 02-02 (5 min), 03-01 (3 min), 03-02 (6 min)
+- Last 5 plans: 02-02 (5 min), 03-01 (3 min), 03-02 (6 min), 04-01 (4 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -86,6 +87,10 @@ Recent decisions affecting current work:
 - [03-02]: Gap detection runs BEFORE decomposition with severity-based proceed/warn/block
 - [03-02]: Stale component detection at START of decompose workflow, before creating new proposals
 - [03-02]: String rationale auto-converted to dict with narrative key for schema compatibility
+- [04-01]: Generic field-copy in ApprovalGate: SYSTEM_FIELDS and PROPOSAL_ONLY_FIELDS exclusion sets replace hardcoded mapping
+- [04-01]: Committed schemas extended with gap_markers, requirement_ids, object rationale for generic copy passthrough
+- [04-01]: component.json accepts both parent_requirements (legacy) and requirement_ids (new) for backward compat
+- [04-01]: decomposition_agent updated to check requirement_ids before parent_requirements
 
 ### Pending Todos
 
@@ -100,5 +105,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 03-02-PLAN.md (decomposition agent) -- Phase 03 complete
+Stopped at: Completed 04-01-PLAN.md (registry extension)
 Resume file: None
