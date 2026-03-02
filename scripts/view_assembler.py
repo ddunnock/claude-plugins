@@ -431,3 +431,225 @@ def assemble_view(
     validator.validate_or_raise("view", assembled)
 
     return assembled
+
+
+# ---------------------------------------------------------------------------
+# Built-in view specifications (VIEW-08)
+# ---------------------------------------------------------------------------
+
+BUILTIN_SPECS: dict[str, dict] = {
+    "system-overview": {
+        "name": "system-overview",
+        "description": "High-level view of all components and their interfaces.",
+        "scope_patterns": [
+            {"pattern": "component:*", "slot_type": "component"},
+            {"pattern": "interface:*", "slot_type": "interface"},
+        ],
+    },
+    "traceability-chain": {
+        "name": "traceability-chain",
+        "description": "Full traceability from requirements through components, interfaces, and contracts.",
+        "scope_patterns": [
+            {"pattern": "requirement-ref:*", "slot_type": "requirement-ref"},
+            {"pattern": "component:*", "slot_type": "component"},
+            {"pattern": "interface:*", "slot_type": "interface"},
+            {"pattern": "contract:*", "slot_type": "contract"},
+        ],
+    },
+    "component-detail": {
+        "name": "component-detail",
+        "description": "Detailed view of a single component and all related interfaces and contracts.",
+        "scope_patterns": [
+            {"pattern": "component:{component_id}", "slot_type": "component"},
+            {"pattern": "interface:*", "slot_type": "interface"},
+            {"pattern": "contract:*", "slot_type": "contract"},
+        ],
+        "parameters": {"component_id": ""},
+    },
+    "interface-map": {
+        "name": "interface-map",
+        "description": "All interfaces grouped by component pairs.",
+        "scope_patterns": [
+            {"pattern": "interface:*", "slot_type": "interface"},
+        ],
+    },
+    "gap-report": {
+        "name": "gap-report",
+        "description": "Comprehensive gap analysis across all slot types in the design.",
+        "scope_patterns": [
+            {"pattern": "component:*", "slot_type": "component"},
+            {"pattern": "interface:*", "slot_type": "interface"},
+            {"pattern": "contract:*", "slot_type": "contract"},
+            {"pattern": "requirement-ref:*", "slot_type": "requirement-ref"},
+            {"pattern": "traceability-link:*", "slot_type": "traceability-link"},
+        ],
+    },
+}
+
+
+def get_builtin_spec(name: str, parameters: dict | None = None) -> dict:
+    """Look up a built-in view spec by name and resolve parameters.
+
+    Args:
+        name: Name of the built-in spec (e.g., "system-overview").
+        parameters: Optional dict of parameter values for parameterized specs.
+
+    Returns:
+        A deep copy of the spec dict with parameters resolved.
+
+    Raises:
+        ValueError: If name is not a recognized built-in spec.
+    """
+    if name not in BUILTIN_SPECS:
+        available = sorted(BUILTIN_SPECS.keys())
+        raise ValueError(
+            f"Unknown built-in spec: '{name}'. "
+            f"Available specs: {available}"
+        )
+
+    spec = copy.deepcopy(BUILTIN_SPECS[name])
+
+    # Resolve parameters if any
+    merged_params = dict(spec.get("parameters", {}))
+    if parameters:
+        merged_params.update(parameters)
+
+    for scope_pattern in spec.get("scope_patterns", []):
+        pattern_str = scope_pattern.get("pattern", "")
+        placeholders = re.findall(r"\{(\w+)\}", pattern_str)
+
+        for placeholder in placeholders:
+            if placeholder not in merged_params or not merged_params[placeholder]:
+                raise ValueError(
+                    f"Missing required parameter '{placeholder}' "
+                    f"for spec '{name}'. "
+                    f"Provide via --param {placeholder}=<value>"
+                )
+            pattern_str = pattern_str.replace(
+                f"{{{placeholder}}}", merged_params[placeholder]
+            )
+
+        scope_pattern["pattern"] = pattern_str
+
+    # Remove parameters from resolved spec (they are now inlined)
+    spec.pop("parameters", None)
+
+    return spec
+
+
+def create_ad_hoc_spec(patterns: list[str]) -> dict:
+    """Create a transient view spec from ad-hoc inline scope patterns.
+
+    Each pattern string is parsed as ``<slot_type>:<name_glob>``.
+
+    Args:
+        patterns: List of pattern strings (e.g., ["component:Auth*", "interface:*"]).
+
+    Returns:
+        A valid view spec dict suitable for passing to assemble_view().
+
+    Raises:
+        ValueError: If any pattern does not contain a colon separator.
+    """
+    scope_patterns = []
+
+    for p in patterns:
+        parts = p.split(":", 1)
+        if len(parts) != 2:
+            raise ValueError(
+                f"Invalid ad-hoc pattern: '{p}'. "
+                "Expected format: <slot_type>:<name_glob> (e.g., 'component:Auth*')"
+            )
+        slot_type, _name_glob = parts
+        scope_patterns.append({"pattern": p, "slot_type": slot_type})
+
+    return {
+        "name": "ad-hoc",
+        "description": f"Ad-hoc view from patterns: {', '.join(patterns)}",
+        "scope_patterns": scope_patterns,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Tree renderer
+# ---------------------------------------------------------------------------
+
+# Unicode box-drawing characters for tree connectors
+_BRANCH = "+-- "
+_PIPE = "|   "
+_LAST = "+-- "
+_INDENT = "    "
+
+
+def render_tree(view: dict) -> str:
+    """Render an assembled view as a human-readable indented tree.
+
+    Produces output with:
+    - Header: spec name, assembled at, slot/gap totals
+    - Sections: slot_type headings with indented slot entries
+    - Gap indicators: prefixed with [GAP] marker and severity
+    - Gap summary at bottom
+
+    Args:
+        view: An assembled view dict (output of assemble_view).
+
+    Returns:
+        Multi-line string with tree-formatted view output.
+    """
+    lines: list[str] = []
+
+    # Header
+    lines.append(f"View: {view['spec_name']}")
+    lines.append(f"Assembled: {view['assembled_at']}")
+    lines.append(f"Slots: {view['total_slots']}  Gaps: {view['total_gaps']}")
+    lines.append("")
+
+    # Sections
+    for section in view.get("sections", []):
+        slot_type = section["slot_type"]
+        slots = section["slots"]
+
+        lines.append(f"{slot_type}/ ({len(slots)})")
+
+        for i, slot in enumerate(slots):
+            is_last = i == len(slots) - 1
+            connector = _LAST if is_last else _BRANCH
+            name = slot.get("name", slot.get("slot_id", "unknown"))
+            slot_id = slot.get("slot_id", "")
+
+            # Show key fields inline
+            key_parts = [f"id={slot_id}"]
+            if "version" in slot:
+                key_parts.append(f"v{slot['version']}")
+            if "status" in slot:
+                key_parts.append(slot["status"])
+
+            detail = ", ".join(key_parts)
+            lines.append(f"{connector}{name} ({detail})")
+
+        lines.append("")
+
+    # Gaps
+    if view.get("gaps"):
+        lines.append("Gaps:")
+        for i, gap in enumerate(view["gaps"]):
+            is_last = i == len(view["gaps"]) - 1
+            connector = _LAST if is_last else _BRANCH
+            severity = gap["severity"].upper()
+            lines.append(
+                f"{connector}[GAP] [{severity}] {gap['slot_type']}: {gap['reason']}"
+            )
+            indent = _INDENT if is_last else _PIPE
+            lines.append(f"{indent}Suggestion: {gap['suggestion']}")
+        lines.append("")
+
+    # Gap summary
+    gs = view.get("gap_summary", {})
+    if any(gs.get(s, 0) > 0 for s in ("info", "warning", "error")):
+        lines.append("Gap Summary:")
+        for severity in ("error", "warning", "info"):
+            count = gs.get(severity, 0)
+            if count > 0:
+                lines.append(f"  {severity}: {count}")
+
+    return "\n".join(lines)

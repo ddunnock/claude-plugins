@@ -11,14 +11,18 @@ from scripts.init_workspace import init_workspace
 from scripts.registry import SlotAPI
 from scripts.schema_validator import SchemaValidator
 from scripts.view_assembler import (
+    BUILTIN_SPECS,
     _apply_field_selection,
     _organize_hierarchically,
     assemble_view,
     build_gap_indicator,
     capture_snapshot,
+    create_ad_hoc_spec,
+    get_builtin_spec,
     load_gap_rules,
     load_view_spec,
     match_scope_pattern,
+    render_tree,
 )
 
 # Resolve schemas/ relative to the project root
@@ -663,3 +667,173 @@ class TestOrganizeHierarchically:
         result = _organize_hierarchically(sections)
         total_slots = sum(len(s["slots"]) for s in result)
         assert total_slots == 1
+
+
+# ---------------------------------------------------------------------------
+# Task 2 (Plan 02): Built-in specs, render_tree, ad-hoc specs
+# ---------------------------------------------------------------------------
+
+
+class TestBuiltinSpecs:
+    """Tests for BUILTIN_SPECS and get_builtin_spec()."""
+
+    def test_five_builtin_specs_exist(self):
+        """Exactly 5 built-in view specs are available."""
+        assert len(BUILTIN_SPECS) == 5
+
+    def test_all_spec_names_resolve(self):
+        """All 5 built-in spec names resolve via get_builtin_spec."""
+        for name in ("system-overview", "traceability-chain", "interface-map", "gap-report"):
+            spec = get_builtin_spec(name)
+            assert spec["name"] == name
+            assert "scope_patterns" in spec
+
+    def test_component_detail_requires_parameter(self):
+        """component-detail raises ValueError without component_id."""
+        with pytest.raises(ValueError, match="component_id"):
+            get_builtin_spec("component-detail")
+
+    def test_component_detail_with_parameter(self):
+        """component-detail resolves when parameter is provided."""
+        spec = get_builtin_spec("component-detail", {"component_id": "Auth Service"})
+        assert spec["name"] == "component-detail"
+        patterns = [sp["pattern"] for sp in spec["scope_patterns"]]
+        assert "component:Auth Service" in patterns
+
+    def test_unknown_spec_raises(self):
+        """Unknown spec name raises ValueError."""
+        with pytest.raises(ValueError, match="nonexistent"):
+            get_builtin_spec("nonexistent")
+
+    def test_get_builtin_returns_deep_copy(self):
+        """get_builtin_spec returns a copy, not a reference to BUILTIN_SPECS."""
+        spec1 = get_builtin_spec("system-overview")
+        spec1["name"] = "mutated"
+        spec2 = get_builtin_spec("system-overview")
+        assert spec2["name"] == "system-overview"
+
+
+class TestCreateAdHocSpec:
+    """Tests for create_ad_hoc_spec()."""
+
+    def test_valid_patterns(self):
+        """Ad-hoc spec from valid patterns produces a valid spec dict."""
+        spec = create_ad_hoc_spec(["component:Auth*", "interface:*"])
+        assert spec["name"] == "ad-hoc"
+        assert len(spec["scope_patterns"]) == 2
+        assert spec["scope_patterns"][0]["slot_type"] == "component"
+        assert spec["scope_patterns"][0]["pattern"] == "component:Auth*"
+
+    def test_invalid_pattern_raises(self):
+        """Pattern without colon separator raises ValueError."""
+        with pytest.raises(ValueError, match="Invalid ad-hoc pattern"):
+            create_ad_hoc_spec(["invalidpattern"])
+
+    def test_single_pattern(self):
+        """Single ad-hoc pattern works."""
+        spec = create_ad_hoc_spec(["contract:*"])
+        assert len(spec["scope_patterns"]) == 1
+        assert spec["scope_patterns"][0]["slot_type"] == "contract"
+
+
+class TestRenderTree:
+    """Tests for render_tree()."""
+
+    @pytest.fixture
+    def sample_view(self):
+        """A sample assembled view dict for rendering tests."""
+        return {
+            "spec_name": "test-view",
+            "assembled_at": "2026-03-02T14:30:00Z",
+            "snapshot_id": "snap-abc",
+            "total_slots": 3,
+            "total_gaps": 1,
+            "gap_summary": {"info": 0, "warning": 1, "error": 0},
+            "sections": [
+                {
+                    "slot_type": "component",
+                    "slots": [
+                        {"slot_id": "comp-1", "name": "Auth Service", "version": 2, "status": "approved"},
+                        {"slot_id": "comp-2", "name": "DB Service", "version": 1},
+                    ],
+                },
+                {
+                    "slot_type": "interface",
+                    "slots": [
+                        {"slot_id": "intf-1", "name": "Auth API", "version": 1},
+                    ],
+                },
+            ],
+            "gaps": [
+                {
+                    "scope_pattern": "contract:*",
+                    "slot_type": "contract",
+                    "severity": "warning",
+                    "reason": "No contract slots matching 'contract:*' found",
+                    "suggestion": "Run /system-dev:contract to define contracts.",
+                },
+            ],
+        }
+
+    def test_returns_string(self, sample_view):
+        """render_tree returns a non-empty string."""
+        output = render_tree(sample_view)
+        assert isinstance(output, str)
+        assert len(output) > 0
+
+    def test_contains_spec_name(self, sample_view):
+        """Output contains the spec name."""
+        output = render_tree(sample_view)
+        assert "test-view" in output
+
+    def test_contains_slot_counts(self, sample_view):
+        """Output contains slot and gap counts."""
+        output = render_tree(sample_view)
+        assert "Slots: 3" in output
+        assert "Gaps: 1" in output
+
+    def test_contains_section_headings(self, sample_view):
+        """Output contains section headings with slot type."""
+        output = render_tree(sample_view)
+        assert "component/" in output
+        assert "interface/" in output
+
+    def test_contains_slot_names(self, sample_view):
+        """Output contains slot names."""
+        output = render_tree(sample_view)
+        assert "Auth Service" in output
+        assert "DB Service" in output
+        assert "Auth API" in output
+
+    def test_contains_gap_markers(self, sample_view):
+        """Output contains [GAP] markers with severity."""
+        output = render_tree(sample_view)
+        assert "[GAP]" in output
+        assert "[WARNING]" in output
+
+    def test_contains_gap_suggestion(self, sample_view):
+        """Output contains gap suggestions."""
+        output = render_tree(sample_view)
+        assert "Suggestion:" in output
+        assert "/system-dev:contract" in output
+
+    def test_contains_gap_summary(self, sample_view):
+        """Output contains gap summary section."""
+        output = render_tree(sample_view)
+        assert "Gap Summary:" in output
+
+    def test_empty_view_renders(self):
+        """Empty view (no slots, no gaps) renders without errors."""
+        view = {
+            "spec_name": "empty",
+            "assembled_at": "2026-03-02T00:00:00Z",
+            "snapshot_id": "snap-empty",
+            "total_slots": 0,
+            "total_gaps": 0,
+            "gap_summary": {"info": 0, "warning": 0, "error": 0},
+            "sections": [],
+            "gaps": [],
+        }
+        output = render_tree(view)
+        assert "empty" in output
+        assert "Slots: 0" in output

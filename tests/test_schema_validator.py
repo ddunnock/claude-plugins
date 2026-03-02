@@ -98,7 +98,7 @@ class TestSchemaValidator:
             validator.validate("nonexistent", {})
 
     def test_all_slot_types_load(self, validator):
-        """Validator loads all 14 slot type schemas (4 original + 5 ingestion + 3 proposals + 2 phase-5)."""
+        """Validator loads all 16 schemas (14 slot types + 2 view schemas from phase 6)."""
         types = validator.supported_types
         assert types == [
             "assumption",
@@ -115,6 +115,8 @@ class TestSchemaValidator:
             "source",
             "traceability-graph",
             "traceability-link",
+            "view",
+            "view-spec",
         ]
 
     def test_validate_or_raise_passes_on_valid(self, validator):
