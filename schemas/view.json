@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://system-dev.local/schemas/view.json",
+  "title": "Assembled View Output",
+  "description": "Structured output from view assembly with slot sections and gap indicators.",
+  "type": "object",
+  "required": ["spec_name", "assembled_at", "snapshot_id", "total_slots", "total_gaps", "gap_summary", "sections", "gaps"],
+  "properties": {
+    "spec_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "assembled_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "snapshot_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "total_slots": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "total_gaps": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "gap_summary": {
+      "type": "object",
+      "required": ["info", "warning", "error"],
+      "properties": {
+        "info": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "warning": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "error": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["slot_type", "slots"],
+        "properties": {
+          "slot_type": {
+            "type": "string"
+          },
+          "slots": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["scope_pattern", "slot_type", "severity", "reason", "suggestion"],
+        "properties": {
+          "scope_pattern": {
+            "type": "string"
+          },
+          "slot_type": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["info", "warning", "error"]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "suggestion": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
