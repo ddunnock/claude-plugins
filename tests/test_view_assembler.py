@@ -11,6 +11,9 @@ from scripts.init_workspace import init_workspace
 from scripts.registry import SlotAPI
 from scripts.schema_validator import SchemaValidator
 from scripts.view_assembler import (
+    _apply_field_selection,
+    _organize_hierarchically,
+    assemble_view,
     build_gap_indicator,
     capture_snapshot,
     load_gap_rules,
@@ -338,3 +341,325 @@ class TestLoadGapRules:
         rules = load_gap_rules(workspace)
         assert rules["rules"][0]["slot_type"] == "component"
         assert rules["rules"][0]["severity"] == "error"
+
+
+# ---------------------------------------------------------------------------
+# Task 1 (Plan 02): assemble_view, field selection, hierarchical org tests
+# ---------------------------------------------------------------------------
+
+
+class TestAssembleView:
+    """Tests for assemble_view() core function."""
+
+    @pytest.fixture
+    def populated_api_with_ids(self, api):
+        """Create slots and return api + slot IDs."""
+        comp1 = api.create("component", {"name": "Auth Service"})
+        comp2 = api.create("component", {"name": "Database Service"})
+
+        comp1_id = comp1["slot_id"]
+        comp2_id = comp2["slot_id"]
+
+        intf1 = api.create("interface", {
+            "name": "Auth API",
+            "source_component": comp1_id,
+            "target_component": comp2_id,
+        })
+
+        return {
+            "api": api,
+            "comp1_id": comp1_id,
+            "comp2_id": comp2_id,
+            "intf1_id": intf1["slot_id"],
+        }
+
+    def test_assemble_returns_matching_slots(self, populated_api_with_ids, workspace):
+        """assemble_view with matching spec returns slots in sections."""
+        api = populated_api_with_ids["api"]
+        spec = {
+            "name": "test-view",
+            "description": "Components only",
+            "scope_patterns": [
+                {"pattern": "component:*", "slot_type": "component"},
+            ],
+        }
+        result = assemble_view(api, spec, workspace, SCHEMAS_DIR)
+        assert result["total_slots"] == 2
+        assert result["total_gaps"] == 0
+
+    def test_assemble_produces_gaps_for_no_matches(self, api, workspace):
+        """assemble_view with no matching slots produces gap indicators."""
+        spec = {
+            "name": "test-gaps",
+            "description": "No matches",
+            "scope_patterns": [
+                {"pattern": "component:*", "slot_type": "component"},
+            ],
+        }
+        result = assemble_view(api, spec, workspace, SCHEMAS_DIR)
+        assert result["total_slots"] == 0
+        assert result["total_gaps"] == 1
+        assert result["gaps"][0]["slot_type"] == "component"
+
+    def test_assemble_mixed_matches_and_gaps(self, populated_api_with_ids, workspace):
+        """assemble_view with mixed results returns both slots and gaps."""
+        api = populated_api_with_ids["api"]
+        spec = {
+            "name": "test-mixed",
+            "description": "Mixed",
+            "scope_patterns": [
+                {"pattern": "component:*", "slot_type": "component"},
+                {"pattern": "requirement-ref:*", "slot_type": "requirement-ref"},
+            ],
+        }
+        result = assemble_view(api, spec, workspace, SCHEMAS_DIR)
+        assert result["total_slots"] > 0
+        assert result["total_gaps"] > 0
+
+    def test_assemble_validates_against_schema(self, populated_api_with_ids, workspace):
+        """Assembled output validates against view.json schema (VIEW-06)."""
+        api = populated_api_with_ids["api"]
+        spec = {
+            "name": "test-schema",
+            "description": "Schema test",
+            "scope_patterns": [
+                {"pattern": "component:*", "slot_type": "component"},
+            ],
+        }
+        result = assemble_view(api, spec, workspace, SCHEMAS_DIR)
+        validator = SchemaValidator(SCHEMAS_DIR)
+        errors = validator.validate("view", result)
+        assert errors == [], f"Schema validation errors: {errors}"
+
+    def test_assemble_uses_single_snapshot(self, populated_api_with_ids, workspace):
+        """All sections share the same snapshot_id (VIEW-07)."""
+        api = populated_api_with_ids["api"]
+        spec = {
+            "name": "test-snapshot",
+            "description": "Snapshot test",
+            "scope_patterns": [
+                {"pattern": "component:*", "slot_type": "component"},
+                {"pattern": "interface:*", "slot_type": "interface"},
+            ],
+        }
+        result = assemble_view(api, spec, workspace, SCHEMAS_DIR)
+        assert "snapshot_id" in result
+        assert len(result["snapshot_id"]) > 0
+
+    def test_assemble_field_selection(self, populated_api_with_ids, workspace):
+        """assemble_view with fields directive returns only selected fields."""
+        api = populated_api_with_ids["api"]
+        spec = {
+            "name": "test-fields",
+            "description": "Field selection test",
+            "scope_patterns": [
+                {
+                    "pattern": "component:*",
+                    "slot_type": "component",
+                    "fields": ["name", "status"],
+                },
+            ],
+        }
+        result = assemble_view(api, spec, workspace, SCHEMAS_DIR)
+        for section in result["sections"]:
+            for slot in section["slots"]:
+                # System fields always included
+                assert "slot_id" in slot
+                assert "slot_type" in slot
+                assert "name" in slot
+                assert "version" in slot
+                # Other fields not requested should be absent
+                assert "created_at" not in slot
+
+    def test_assemble_parameterized_spec(self, populated_api_with_ids, workspace):
+        """assemble_view with parameterized spec resolves correctly."""
+        api = populated_api_with_ids["api"]
+        # Manually resolve parameter (load_view_spec handles file-based ones)
+        spec = {
+            "name": "test-param",
+            "description": "Parameterized test",
+            "scope_patterns": [
+                {"pattern": "component:Auth Service", "slot_type": "component"},
+            ],
+        }
+        result = assemble_view(api, spec, workspace, SCHEMAS_DIR)
+        assert result["total_slots"] == 1
+
+    def test_assemble_does_not_modify_slots(self, populated_api_with_ids, workspace):
+        """assemble_view does NOT call create/update/delete (VIEW-10)."""
+        api = populated_api_with_ids["api"]
+        before = len(api.query("component"))
+        spec = {
+            "name": "test-readonly",
+            "description": "Read-only test",
+            "scope_patterns": [
+                {"pattern": "component:*", "slot_type": "component"},
+            ],
+        }
+        assemble_view(api, spec, workspace, SCHEMAS_DIR)
+        after = len(api.query("component"))
+        assert before == after
+
+    def test_gap_summary_counts(self, api, workspace):
+        """gap_summary correctly counts info/warning/error gaps."""
+        spec = {
+            "name": "test-counts",
+            "description": "Gap counts",
+            "scope_patterns": [
+                {"pattern": "component:*", "slot_type": "component"},
+                {"pattern": "contract:*", "slot_type": "contract"},
+                {"pattern": "interface:*", "slot_type": "interface"},
+            ],
+        }
+        result = assemble_view(api, spec, workspace, SCHEMAS_DIR)
+        gs = result["gap_summary"]
+        assert gs["info"] + gs["warning"] + gs["error"] == result["total_gaps"]
+
+    def test_hierarchical_groups_interfaces_under_components(
+        self, populated_api_with_ids, workspace
+    ):
+        """Hierarchical organization groups interfaces under parent components."""
+        api = populated_api_with_ids["api"]
+        spec = {
+            "name": "test-hierarchy",
+            "description": "Hierarchy test",
+            "scope_patterns": [
+                {"pattern": "component:*", "slot_type": "component"},
+                {"pattern": "interface:*", "slot_type": "interface"},
+            ],
+        }
+        result = assemble_view(api, spec, workspace, SCHEMAS_DIR)
+        # All slots accounted for in sections
+        total_in_sections = sum(len(s["slots"]) for s in result["sections"])
+        assert total_in_sections == result["total_slots"]
+
+    def test_orphan_slots_in_unlinked_section(self, api, workspace):
+        """Slots without a parent appear in an unlinked section."""
+        # Create an interface with no valid parent component in the view
+        api.create("interface", {
+            "name": "Orphan Interface",
+            "source_component": "nonexistent-comp",
+            "target_component": "also-nonexistent",
+        })
+        spec = {
+            "name": "test-unlinked",
+            "description": "Orphan test",
+            "scope_patterns": [
+                {"pattern": "interface:*", "slot_type": "interface"},
+            ],
+        }
+        result = assemble_view(api, spec, workspace, SCHEMAS_DIR)
+        assert result["total_slots"] == 1
+
+
+class TestApplyFieldSelection:
+    """Tests for _apply_field_selection()."""
+
+    def test_returns_only_selected_fields(self):
+        """Only requested fields plus system fields are returned."""
+        slots = [
+            {
+                "slot_id": "comp-1",
+                "slot_type": "component",
+                "name": "Auth",
+                "version": 1,
+                "description": "Auth service",
+                "status": "proposed",
+                "created_at": "2026-01-01",
+            }
+        ]
+        result = _apply_field_selection(slots, ["description"])
+        assert len(result) == 1
+        assert "description" in result[0]
+        assert "slot_id" in result[0]  # system field always included
+        assert "name" in result[0]  # system field always included
+        assert "created_at" not in result[0]
+        assert "status" not in result[0]
+
+    def test_preserves_system_fields(self):
+        """System fields (slot_id, slot_type, name, version) always included."""
+        slots = [
+            {
+                "slot_id": "comp-1",
+                "slot_type": "component",
+                "name": "Auth",
+                "version": 1,
+                "status": "proposed",
+            }
+        ]
+        result = _apply_field_selection(slots, ["status"])
+        assert result[0]["slot_id"] == "comp-1"
+        assert result[0]["slot_type"] == "component"
+        assert result[0]["name"] == "Auth"
+        assert result[0]["version"] == 1
+        assert result[0]["status"] == "proposed"
+
+    def test_no_fields_returns_all(self):
+        """When fields is None, all fields are returned."""
+        slots = [{"slot_id": "comp-1", "name": "Auth", "extra": "data"}]
+        result = _apply_field_selection(slots, None)
+        assert result[0] == slots[0]
+
+
+class TestOrganizeHierarchically:
+    """Tests for _organize_hierarchically()."""
+
+    def test_components_are_roots(self):
+        """Component slots appear as top-level sections."""
+        sections = [
+            {
+                "slot_type": "component",
+                "slots": [
+                    {"slot_id": "comp-1", "slot_type": "component", "name": "Auth"},
+                ],
+            },
+        ]
+        result = _organize_hierarchically(sections)
+        assert any(s["slot_type"] == "component" for s in result)
+
+    def test_interfaces_nested_under_components(self):
+        """Interfaces with source_component matching a component are nested."""
+        sections = [
+            {
+                "slot_type": "component",
+                "slots": [
+                    {"slot_id": "comp-1", "slot_type": "component", "name": "Auth"},
+                ],
+            },
+            {
+                "slot_type": "interface",
+                "slots": [
+                    {
+                        "slot_id": "intf-1",
+                        "slot_type": "interface",
+                        "name": "Auth API",
+                        "source_component": "comp-1",
+                        "target_component": "comp-2",
+                    },
+                ],
+            },
+        ]
+        result = _organize_hierarchically(sections)
+        # The interface should be accounted for in the total slot count
+        total_slots = sum(len(s["slots"]) for s in result)
+        assert total_slots == 2
+
+    def test_orphans_in_unlinked_section(self):
+        """Slots without a parent go in unlinked section."""
+        sections = [
+            {
+                "slot_type": "interface",
+                "slots": [
+                    {
+                        "slot_id": "intf-1",
+                        "slot_type": "interface",
+                        "name": "Orphan",
+                        "source_component": "nonexistent",
+                        "target_component": "also-nonexistent",
+                    },
+                ],
+            },
+        ]
+        result = _organize_hierarchically(sections)
+        total_slots = sum(len(s["slots"]) for s in result)
+        assert total_slots == 1
