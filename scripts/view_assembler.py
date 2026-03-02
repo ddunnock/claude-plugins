@@ -19,6 +19,7 @@ from fnmatch import fnmatch
 from uuid import uuid4
 
 from scripts.registry import SLOT_TYPE_DIRS, SlotAPI
+from scripts.schema_validator import SchemaValidator
 
 logger = logging.getLogger(__name__)
 
@@ -217,3 +218,216 @@ def load_gap_rules(workspace_root: str) -> dict:
             return json.load(f)
 
     return copy.deepcopy(_DEFAULT_GAP_RULES)
+
+
+# System fields always included in field selection output
+_SYSTEM_FIELDS = {"slot_id", "slot_type", "name", "version"}
+
+
+def _apply_field_selection(
+    slots: list[dict], fields: list[str] | None
+) -> list[dict]:
+    """Filter each slot dict to only include specified fields plus system fields.
+
+    System fields (slot_id, slot_type, name, version) are always included
+    regardless of the fields list.
+
+    Args:
+        slots: List of slot dicts to filter.
+        fields: List of field names to include, or None to include all.
+
+    Returns:
+        List of filtered slot dicts (new dicts, originals unchanged).
+    """
+    if fields is None:
+        return slots
+
+    include = _SYSTEM_FIELDS | set(fields)
+    return [
+        {k: v for k, v in slot.items() if k in include}
+        for slot in slots
+    ]
+
+
+def _organize_hierarchically(sections: list[dict]) -> list[dict]:
+    """Reorganize flat section lists into a hierarchical tree structure.
+
+    Components are roots. Interfaces with source_component or target_component
+    matching a component's slot_id are nested under that component. Contracts
+    with interface_id matching an interface are nested under that interface.
+    Everything else goes in an "unlinked" section.
+
+    Args:
+        sections: List of section dicts, each with "slot_type" and "slots".
+
+    Returns:
+        Reorganized list of section dicts. The hierarchy is flattened back
+        into sections format (compatible with view.json schema) but slots
+        are grouped logically: component sections contain their related
+        interfaces and contracts.
+    """
+    # Collect all slots by type
+    components: list[dict] = []
+    interfaces: list[dict] = []
+    contracts: list[dict] = []
+    other_slots: dict[str, list[dict]] = {}
+
+    for section in sections:
+        st = section["slot_type"]
+        if st == "component":
+            components.extend(section["slots"])
+        elif st == "interface":
+            interfaces.extend(section["slots"])
+        elif st == "contract":
+            contracts.extend(section["slots"])
+        else:
+            other_slots.setdefault(st, []).extend(section["slots"])
+
+    # Build component ID set for parent matching
+    comp_ids = {c["slot_id"] for c in components}
+
+    # Match interfaces to components
+    linked_interfaces: set[str] = set()
+    comp_interface_map: dict[str, list[dict]] = {cid: [] for cid in comp_ids}
+
+    for intf in interfaces:
+        src = intf.get("source_component", "")
+        tgt = intf.get("target_component", "")
+        parent = None
+        if src in comp_ids:
+            parent = src
+        elif tgt in comp_ids:
+            parent = tgt
+
+        if parent is not None:
+            comp_interface_map[parent].append(intf)
+            linked_interfaces.add(intf["slot_id"])
+
+    # Match contracts to interfaces (within view scope)
+    intf_ids = {i["slot_id"] for i in interfaces}
+    linked_contracts: set[str] = set()
+    intf_contract_map: dict[str, list[dict]] = {iid: [] for iid in intf_ids}
+
+    for cntr in contracts:
+        iid = cntr.get("interface_id", "")
+        if iid in intf_ids:
+            intf_contract_map[iid].append(cntr)
+            linked_contracts.add(cntr["slot_id"])
+
+    # Build result sections
+    result: list[dict] = []
+
+    # Component section with all components
+    if components:
+        result.append({"slot_type": "component", "slots": components})
+
+    # Interface section: linked interfaces
+    linked_intf_list = [i for i in interfaces if i["slot_id"] in linked_interfaces]
+    if linked_intf_list:
+        result.append({"slot_type": "interface", "slots": linked_intf_list})
+
+    # Contract section: linked contracts
+    linked_cntr_list = [c for c in contracts if c["slot_id"] in linked_contracts]
+    if linked_cntr_list:
+        result.append({"slot_type": "contract", "slots": linked_cntr_list})
+
+    # Other typed sections
+    for st, slots in other_slots.items():
+        if slots:
+            result.append({"slot_type": st, "slots": slots})
+
+    # Unlinked: orphan interfaces and contracts
+    unlinked: list[dict] = []
+    unlinked.extend(i for i in interfaces if i["slot_id"] not in linked_interfaces)
+    unlinked.extend(c for c in contracts if c["slot_id"] not in linked_contracts)
+
+    if unlinked:
+        result.append({"slot_type": "unlinked", "slots": unlinked})
+
+    return result
+
+
+def assemble_view(
+    api: SlotAPI,
+    spec: dict,
+    workspace_root: str,
+    schemas_dir: str,
+) -> dict:
+    """Assemble a contextual view from registry slots based on a view spec.
+
+    This is the main assembly function. It captures a single snapshot for
+    consistency (VIEW-07), matches scope patterns, builds gap indicators for
+    missing slots, organizes results hierarchically, and validates the output
+    against the view.json schema (VIEW-06).
+
+    CRITICAL: This function ONLY reads from SlotAPI. It does NOT create,
+    update, or delete any slots (VIEW-10).
+
+    Args:
+        api: A SlotAPI instance for registry access (read-only usage).
+        spec: A view spec dict (must have name, description, scope_patterns).
+        workspace_root: Path to the .system-dev/ directory.
+        schemas_dir: Path to the schemas/ directory with JSON Schema files.
+
+    Returns:
+        Assembled view dict conforming to view.json schema.
+    """
+    # 1. Capture a single snapshot for consistent state (VIEW-07)
+    snapshot = capture_snapshot(api)
+
+    # 2. Load gap rules
+    gap_rules = load_gap_rules(workspace_root)
+
+    # 3. Process each scope pattern
+    raw_sections: list[dict] = []
+    gaps: list[dict] = []
+
+    for scope_pattern in spec.get("scope_patterns", []):
+        pattern = scope_pattern["pattern"]
+        slot_type = scope_pattern["slot_type"]
+        fields = scope_pattern.get("fields")
+
+        matches = match_scope_pattern(pattern, slot_type, snapshot)
+
+        if matches:
+            # Apply field selection if specified
+            filtered = _apply_field_selection(matches, fields)
+            raw_sections.append({"slot_type": slot_type, "slots": filtered})
+        else:
+            gap = build_gap_indicator(
+                scope_pattern=pattern,
+                slot_type=slot_type,
+                reason=f"No {slot_type} slots matching '{pattern}' found",
+                gap_rules=gap_rules,
+            )
+            gaps.append(gap)
+
+    # 4. Organize hierarchically
+    sections = _organize_hierarchically(raw_sections)
+
+    # 5. Build metadata
+    total_slots = sum(len(s["slots"]) for s in sections)
+    total_gaps = len(gaps)
+
+    gap_summary = {"info": 0, "warning": 0, "error": 0}
+    for gap in gaps:
+        severity = gap.get("severity", "warning")
+        if severity in gap_summary:
+            gap_summary[severity] += 1
+
+    assembled = {
+        "spec_name": spec["name"],
+        "assembled_at": datetime.now(timezone.utc).isoformat(),
+        "snapshot_id": snapshot["snapshot_id"],
+        "total_slots": total_slots,
+        "total_gaps": total_gaps,
+        "gap_summary": gap_summary,
+        "sections": sections,
+        "gaps": gaps,
+    }
+
+    # 6. Validate against view.json schema (VIEW-06)
+    validator = SchemaValidator(schemas_dir)
+    validator.validate_or_raise("view", assembled)
+
+    return assembled
