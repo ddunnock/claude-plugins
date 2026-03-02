@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: "AI-Assisted Systems Design Platform"
-status: shipped
-last_updated: "2026-03-02T14:34:27.857Z"
+milestone: v1.1
+milestone_name: "Views & Diagrams"
+status: active
+last_updated: "2026-03-02"
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 13
-  completed_plans: 13
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
@@ -18,31 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-02)
 
 **Core value:** Design decisions captured as explicit, reviewable, traceable records in a Design Registry
-**Current focus:** v1.0 shipped; planning next milestone (phases 6-7)
+**Current focus:** v1.1 Views & Diagrams — making design state visible
 
 ## Current Position
 
-Milestone: v1.0 — SHIPPED 2026-03-02
-Phases: 5 phases, 13 plans, all complete
-Tests: 303 passing
-Audit: PASSED (37/37 requirements, 64/64 must-haves, 7/7 E2E flows)
-
-## Performance Metrics
-
-**Velocity:**
-- Total plans completed: 13
-- Average duration: 4 min
-- Total execution time: 0.95 hours
-
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 01 | 3 | 12 min | 4 min |
-| 02 | 2 | 9 min | 4.5 min |
-| 03 | 2 | 9 min | 4.5 min |
-| 04 | 3 | 14 min | 4.7 min |
-| 05 | 3 | 13 min | 4.3 min |
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-02 — Milestone v1.1 started
 
 ## Accumulated Context
 
@@ -56,10 +39,4 @@ None.
 
 ### Blockers/Concerns
 
-- Phase 7 orchestration has no upstream pattern to copy — novel design needed
-
-## Session Continuity
-
-Last session: 2026-03-02
-Stopped at: v1.0 milestone shipped
-Resume file: None
+- Phase 7 orchestration has no upstream pattern to copy — novel design needed (deferred to future milestone)

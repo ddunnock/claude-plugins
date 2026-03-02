@@ -8,6 +8,16 @@ A Claude Code skill implementing the System Design phase (#3) of the INCOSE SE l
 
 The developer's design decisions are captured as explicit, reviewable, traceable records in a Design Registry — so architectural choices are visible, auditable, and consistent across AI agent sessions (NEED-001, NEED-002).
 
+## Current Milestone: v1.1 Views & Diagrams
+
+**Goal:** Make design state visible through contextual views and D2/Mermaid diagrams
+
+**Target features:**
+- View synthesizer: on-demand contextual views from registry slot subsets with gap indicators
+- View assembler: snapshot-consistent assembly with declarative view specifications
+- Diagram renderer: D2 structural and Mermaid behavioral diagram output
+- Diagram generator: template-driven generation with abstraction layers
+
 ## Current State
 
 **Shipped:** v1.0 (2026-03-02)
@@ -16,7 +26,7 @@ The developer's design decisions are captured as explicit, reviewable, traceable
 
 v1.0 delivers the complete design pipeline: requirements ingestion → structural decomposition → interface resolution → behavioral contracts → traceability weaving → impact analysis. All design artifacts are traceable from stakeholder needs through V&V assignments.
 
-**Not yet built:** Views/diagrams (phase 6), risk/volatility tracking (phase 6), orchestration/coherence review (phase 7).
+**Not yet built:** Views/diagrams (v1.1), risk/volatility tracking (future), orchestration/coherence review (future).
 
 ## Requirements
 
@@ -59,15 +69,18 @@ v1.0 delivers the complete design pipeline: requirements ingestion → structura
 - ✓ Impact analysis with forward/backward BFS and configurable depth limits — v1.0
 - ✓ Write-time trace enforcement (warn-but-allow with gap markers) — v1.0
 
-### Active
+### Active (v1.1)
 
-Remaining scope for future milestones:
-- [ ] Context-sensitive view synthesis from registry subsets
-- [ ] D2/Mermaid diagram generation at multiple abstraction levels
+- [ ] Context-sensitive view synthesis from registry subsets (view-synthesizer, view-assembler — 20 reqs)
+- [ ] D2/Mermaid diagram generation at multiple abstraction levels (diagram-renderer, diagram-generator — 18 reqs)
+
+### Future
+
 - [ ] Risk registry with composite scoring and FMEA
 - [ ] Volatility tracking with stability metrics
 - [ ] Chief-systems-engineer orchestration and coherence review
 - [ ] Milestone gating and agent resilience
+- [ ] Coherence reviewer (cross-concern consistency checking)
 
 ### Out of Scope
 
@@ -145,4 +158,4 @@ Design artifacts in the Design Registry:
 | One-level stale cascade (interface→contract only) | Prevents cascade explosion; each agent checks independently | ✓ Good |
 
 ---
-*Last updated: 2026-03-02 after v1.0 milestone*
+*Last updated: 2026-03-02 after v1.1 milestone start*
