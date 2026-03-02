@@ -63,36 +63,36 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| VIEW-01 | — | Pending |
-| VIEW-02 | — | Pending |
-| VIEW-03 | — | Pending |
-| VIEW-04 | — | Pending |
-| VIEW-05 | — | Pending |
-| VIEW-06 | — | Pending |
-| VIEW-07 | — | Pending |
-| VIEW-08 | — | Pending |
-| VIEW-09 | — | Pending |
-| VIEW-10 | — | Pending |
-| VIEW-11 | — | Pending |
-| VIEW-12 | — | Pending |
-| DIAG-01 | — | Pending |
-| DIAG-02 | — | Pending |
-| DIAG-03 | — | Pending |
-| DIAG-04 | — | Pending |
-| DIAG-05 | — | Pending |
-| DIAG-06 | — | Pending |
-| DIAG-07 | — | Pending |
-| DIAG-08 | — | Pending |
-| DIAG-09 | — | Pending |
-| DIAG-10 | — | Pending |
+| VIEW-01 | Phase 6 | Pending |
+| VIEW-02 | Phase 6 | Pending |
+| VIEW-03 | Phase 7 | Pending |
+| VIEW-04 | Phase 7 | Pending |
+| VIEW-05 | Phase 6 | Pending |
+| VIEW-06 | Phase 6 | Pending |
+| VIEW-07 | Phase 6 | Pending |
+| VIEW-08 | Phase 6 | Pending |
+| VIEW-09 | Phase 7 | Pending |
+| VIEW-10 | Phase 6 | Pending |
+| VIEW-11 | Phase 7 | Pending |
+| VIEW-12 | Phase 7 | Pending |
+| DIAG-01 | Phase 8 | Pending |
+| DIAG-02 | Phase 8 | Pending |
+| DIAG-03 | Phase 8 | Pending |
+| DIAG-04 | Phase 8 | Pending |
+| DIAG-05 | Phase 9 | Pending |
+| DIAG-06 | Phase 8 | Pending |
+| DIAG-07 | Phase 9 | Pending |
+| DIAG-08 | Phase 9 | Pending |
+| DIAG-09 | Phase 8 | Pending |
+| DIAG-10 | Phase 9 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 22 total
-- Mapped to phases: 0
-- Unmapped: 22 (pending roadmap creation)
+- Mapped to phases: 22
+- Unmapped: 0
 
 **Upstream REQ-ID mapping:** 38 upstream requirements consolidated into 22 GSD requirements
 
 ---
 *Requirements defined: 2026-03-02*
-*Last updated: 2026-03-02 after initial definition*
+*Last updated: 2026-03-02 after roadmap creation*
