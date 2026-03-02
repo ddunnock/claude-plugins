@@ -153,8 +153,8 @@ def populated_api(api):
     api.create("component", {"name": "Auth Service"})
     api.create("component", {"name": "Auth Gateway"})
     api.create("component", {"name": "Database Service"})
-    api.create("interface", {"name": "Auth API", "provided_by": "comp-x", "consumed_by": ["comp-y"]})
-    api.create("interface", {"name": "DB Connection", "provided_by": "comp-x", "consumed_by": ["comp-y"]})
+    api.create("interface", {"name": "Auth API", "source_component": "comp-x", "target_component": "comp-y"})
+    api.create("interface", {"name": "DB Connection", "source_component": "comp-x", "target_component": "comp-y"})
     return api
 
 
