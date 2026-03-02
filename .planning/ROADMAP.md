@@ -45,11 +45,11 @@ See `.planning/milestones/v1.0-ROADMAP.md` for full phase details.
   3. Views are assembled from a single consistent registry snapshot (no mid-assembly state changes)
   4. View compositions are defined via declarative view-specification configs, not hardcoded logic
   5. Assembling a view does not modify or delete existing slots outside the view type
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 06-01: TBD
-- [ ] 06-02: TBD
+- [ ] 06-01-PLAN.md — View schemas, scope pattern matcher, snapshot reader, gap builder
+- [ ] 06-02-PLAN.md — View assembler engine, built-in specs, command file, tree renderer
 
 ### Phase 7: View Quality & Handoff
 **Goal**: Views are ranked by relevance, deterministic, performant, and produce output that diagram generation can consume
@@ -117,7 +117,7 @@ Plans:
 | 3. Structural Decomposition + Approval Gate | v1.0 | 2/2 | Complete | 2026-03-01 |
 | 4. Interface Resolution + Behavioral Contracts | v1.0 | 3/3 | Complete | 2026-03-01 |
 | 5. Traceability Weaving + Impact Analysis | v1.0 | 3/3 | Complete | 2026-03-01 |
-| 6. View Assembly Core | v1.1 | 0/TBD | Not started | - |
+| 6. View Assembly Core | v1.1 | 0/2 | Planned | - |
 | 7. View Quality & Handoff | v1.1 | 0/TBD | Not started | - |
 | 8. Diagram Generation Core | v1.1 | 0/TBD | Not started | - |
 | 9. Diagram Templates & Quality | v1.1 | 0/TBD | Not started | - |
