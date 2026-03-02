@@ -45,11 +45,12 @@ See `.planning/milestones/v1.0-ROADMAP.md` for full phase details.
   3. Views are assembled from a single consistent registry snapshot (no mid-assembly state changes)
   4. View compositions are defined via declarative view-specification configs, not hardcoded logic
   5. Assembling a view does not modify or delete existing slots outside the view type
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
 - [x] 06-01-PLAN.md — View schemas, scope pattern matcher, snapshot reader, gap builder
 - [x] 06-02-PLAN.md — View assembler engine, built-in specs, command file, tree renderer
+- [ ] 06-03-PLAN.md — Gap closure: add view-spec schema validation to load_view_spec()
 
 ### Phase 7: View Quality & Handoff
 **Goal**: Views are ranked by relevance, deterministic, performant, and produce output that diagram generation can consume
