@@ -2,11 +2,21 @@
 
 ## What This Is
 
-A Claude Code skill implementing the System Design phase (#3) of the INCOSE SE lifecycle. It ingests requirements-dev outputs (needs, requirements, traceability, V&V plans) and guides the developer through structured system design: structural decomposition, interface resolution, behavioral contracts, diagram generation, impact analysis, and traceability weaving. All design artifacts persist in a central Design Registry accessible by 6 top-level agents and 33 sub-blocks, producing design artifacts that feed into design-impl (skill #4).
+A Claude Code skill implementing the System Design phase (#3) of the INCOSE SE lifecycle. It ingests requirements-dev outputs (needs, requirements, traceability, V&V plans) and guides the developer through structured system design: structural decomposition, interface resolution, behavioral contracts, traceability weaving, and impact analysis. All design artifacts persist in a central Design Registry with schema validation, version history, and change journaling. The skill produces traceable design artifacts that feed into design-impl (skill #4).
 
 ## Core Value
 
 The developer's design decisions are captured as explicit, reviewable, traceable records in a Design Registry — so architectural choices are visible, auditable, and consistent across AI agent sessions (NEED-001, NEED-002).
+
+## Current State
+
+**Shipped:** v1.0 (2026-03-02)
+**Codebase:** 12,498 LOC Python, 14 JSON schemas, 303 tests
+**Architecture:** SlotAPI central hub with 14 slot types, 3 agents, generic approval gate
+
+v1.0 delivers the complete design pipeline: requirements ingestion → structural decomposition → interface resolution → behavioral contracts → traceability weaving → impact analysis. All design artifacts are traceable from stakeholder needs through V&V assignments.
+
+**Not yet built:** Views/diagrams (phase 6), risk/volatility tracking (phase 6), orchestration/coherence review (phase 7).
 
 ## Requirements
 
@@ -36,28 +46,36 @@ The developer's design decisions are captured as explicit, reviewable, traceable
 | risk-registry | 3 | 14 | Design risk identification and tracking |
 | volatility-tracker | 2 | 11 | Requirement/design change velocity |
 
-### Sub-Blocks (33)
-
-slot-storage-engine (42 reqs), schema-validator (17), slot-api (14), approval-gate (11), change-journal (11), delta-detector (10), ingestion-engine (10), version-manager (10), coherence-reviewer (9), change-tracer (8), change-responder (8), component-proposer (8), contract-proposer (8), graph-builder (8), interface-proposer (8), path-computer (8), relevance-ranker (8), view-assembler (8), abstraction-manager (8), orchestrator (8), contract-generator (7), diagram-generator (7), obligation-deriver (7), output-formatter (7), resilience-handler (7), snapshot-manager (7), trend-tracker (7), vv-planner (7), chain-maintainer (6), fmea-engine (6), metric-computer (6), risk-calculator (6), governance-authority (5)
-
-### Requirement Distribution
-
-- **By type:** Functional (153), Quality (156), Interface (74), Constraint (66), Performance (30)
-- **By priority:** High (287), Medium (182), Low (10)
-
 ### Validated
 
-(None yet — ship to validate)
+- ✓ Design Registry with named/typed slots, CRUD, schema validation, versioning, change journal — v1.0
+- ✓ Slot storage engine with atomic writes, crash recovery, optimistic locking — v1.0
+- ✓ Requirements ingestion from upstream registries with delta detection — v1.0
+- ✓ Structural decomposition agent with gap detection and stale flagging — v1.0
+- ✓ Generic approval gate (accept/reject/modify) for all proposal types — v1.0
+- ✓ Interface resolution agent with boundary discovery and protocol enrichment — v1.0
+- ✓ Behavioral contract agent with INCOSE obligations and V&V assignment — v1.0
+- ✓ Traceability graph with chain validation (need→req→comp→intf→cntr→V&V) — v1.0
+- ✓ Impact analysis with forward/backward BFS and configurable depth limits — v1.0
+- ✓ Write-time trace enforcement (warn-but-allow with gap markers) — v1.0
 
 ### Active
 
-All 478 requirements are active scope for this skill.
+Remaining scope for future milestones:
+- [ ] Context-sensitive view synthesis from registry subsets
+- [ ] D2/Mermaid diagram generation at multiple abstraction levels
+- [ ] Risk registry with composite scoring and FMEA
+- [ ] Volatility tracking with stability metrics
+- [ ] Chief-systems-engineer orchestration and coherence review
+- [ ] Milestone gating and agent resilience
 
 ### Out of Scope
 
 - Fixing upstream concept-dev ↔ requirements-dev schema bugs (CROSS-SKILL-ANALYSIS.md) — address separately
 - Mobile/web UI — this is a Claude Code CLI skill
 - Real-time collaboration — single-developer workflow
+- Code generation — that's design-impl (skill #4)
+- Full SysML v2 engine — JSON schemas inspired by SysML concepts instead
 
 ## Context
 
@@ -76,9 +94,6 @@ concept-dev (#1) → requirements-dev (#2) → system-dev (#3) → design-impl (
 | traceability_registry.json | .requirements-dev/ | Bidirectional need→req→V&V links |
 | source_registry.json | .requirements-dev/ | Sources with confidence levels |
 | assumption_registry.json | .requirements-dev/ | Assumptions (active/challenged/invalidated) |
-| REQUIREMENTS-SPECIFICATION.md | .requirements-dev/deliverables/ | Human-readable spec |
-| TRACEABILITY-MATRIX.md | .requirements-dev/deliverables/ | Traceability tables |
-| VERIFICATION-MATRIX.md | .requirements-dev/deliverables/ | V&V method assignments |
 
 ### Downstream Outputs (to design-impl)
 
@@ -87,22 +102,19 @@ Design artifacts in the Design Registry:
 - Interface definitions (protocols, data formats, contracts)
 - Behavioral contracts (obligations, verification approaches)
 - Traceability chains (need → requirement → component → interface → contract → V&V)
-- Diagrams (system overview, block detail, sub-block detail)
-- Risk registry entries
 - Impact analysis results
 
 ### Architecture Patterns
 
-- **Agent model:** Hybrid — some agents spawn as Claude Code subagents for parallel work (like GSD), others are interactive sequential phases. Classification based on independence analysis.
-- **Design Registry:** Central hub — all agents read/write through slot-api, no direct agent-to-agent calls (NEED-007)
-- **Gate discipline:** Developer approval at each phase boundary (NEED-013, REQ-259–266)
-- **Consistency with upstream:** Follow requirements-dev patterns (JSON registries, ${CLAUDE_PLUGIN_ROOT} paths, security rules, cross-cutting notes)
+- **Agent model:** Data-prep-then-AI-reasoning — agents prepare data via SlotAPI, Claude reasons in command workflows
+- **Design Registry:** Central hub — all agents read/write through SlotAPI, no direct agent-to-agent calls (NEED-007)
+- **Gate discipline:** Developer approval at each phase boundary via generic ApprovalGate (NEED-013, REQ-259–266)
+- **Consistency with upstream:** Follow requirements-dev patterns (JSON registries, ${CLAUDE_PLUGIN_ROOT} paths, security rules)
 
 ### Reference Materials
 
 - `~/projects/claude-plugins/_references/skill-authoring-best-practices.md` — Anthropic skill authoring guide
 - `~/projects/claude-plugins/_references/SKILL.md` — Example multi-phase skill (spec-validator)
-- `~/projects/claude-plugins/_references/claude-cookbooks/skills/` — Skills API cookbook
 - `~/projects/claude-plugins/skills/requirements-dev/` — Upstream skill (pattern reference)
 - `~/projects/claude-plugins/skills/requirements-dev/CROSS-SKILL-ANALYSIS.md` — Known integration gaps
 
@@ -117,11 +129,20 @@ Design artifacts in the Design Registry:
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| 478 reqs are design reqs FOR the skill, not user data | Requirements define what to build, not what the skill processes | — Pending |
-| GSD REQUIREMENTS.md summarizes categories with REQ-ID refs | 478 reqs too many for inline display; JSON is queryable source of truth | — Pending |
-| Hybrid agent model (parallel + sequential) | Matches GSD operational pattern; agents classified by independence | — Pending |
-| Work with current requirements-dev output | Don't fix upstream bugs in this skill's scope | — Pending |
-| Design Registry as JSON files | Consistent with upstream skills; LLM-editable; no external dependencies | — Pending |
+| 478 reqs are design reqs FOR the skill, not user data | Requirements define what to build, not what the skill processes | ✓ Good |
+| GSD REQUIREMENTS.md summarizes categories with REQ-ID refs | 478 reqs too many for inline display; JSON is queryable source of truth | ✓ Good |
+| Design Registry as JSON files | Consistent with upstream skills; LLM-editable; no external dependencies | ✓ Good |
+| Work with current requirements-dev output | Don't fix upstream bugs in this skill's scope | ✓ Good — gap markers handle all known bugs |
+| Data-prep-then-AI-reasoning agent model | Agents prepare data and format output; AI reasoning stays in command workflows | ✓ Good — testable without AI, clean separation |
+| Generic ApprovalGate via config-driven state machine | One engine for all proposal types; declarative rules in approval-rules.json | ✓ Good — zero code changes for new proposal types |
+| JSON Schema Draft 2020-12 with additionalProperties: false | Strict validation catches field typos; all slot types use same standard | ✓ Good |
+| Atomic write via temp-file + fsync + rename | Crash recovery with no corrupt files; proven pattern | ✓ Good |
+| Forward-replay version reconstruction | Journal diffs are old→new; replay is simpler than reverse-apply | ✓ Good |
+| Singleton tgraph-current for traceability graph | One materialized graph with staleness detection; auto-rebuild when stale | ✓ Good |
+| Warn-but-allow trace enforcement | Never blocks writes; injects gap markers for broken references | ✓ Good — zero impact on existing tests |
+| BFS with visited set for impact analysis | Cycle-safe traversal; depth limits and type filtering | ✓ Good |
+| Deterministic slot IDs (type:upstream-id) for ingestion | SlotAPI.ingest() accepts pre-determined IDs; enables delta detection | ✓ Good |
+| One-level stale cascade (interface→contract only) | Prevents cascade explosion; each agent checks independently | ✓ Good |
 
 ---
-*Last updated: 2026-02-28 after initialization*
+*Last updated: 2026-03-02 after v1.0 milestone*
