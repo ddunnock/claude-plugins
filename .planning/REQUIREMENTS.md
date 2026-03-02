@@ -9,7 +9,7 @@ Requirements for making design state visible through contextual views and diagra
 
 ### View Assembly
 
-- [ ] **VIEW-01**: View assembler constructs contextual views from registry slot subsets on demand without persisting as separate source of truth *(REQ-058, REQ-354)*
+- [x] **VIEW-01**: View assembler constructs contextual views from registry slot subsets on demand without persisting as separate source of truth *(REQ-058, REQ-354)*
 - [x] **VIEW-02**: View assembler produces honest gap indicators for unpopulated slots rather than errors *(REQ-059, REQ-355)*
 - [ ] **VIEW-03**: View assembler supports relevance-ranked retrieval for contextual views *(REQ-060)*
 - [ ] **VIEW-04**: View assembler outputs views in a defined handoff format compatible with diagram-renderer *(REQ-061)*
@@ -18,7 +18,7 @@ Requirements for making design state visible through contextual views and diagra
 - [x] **VIEW-07**: View assembler constructs views from a single consistent registry snapshot *(REQ-428)*
 - [x] **VIEW-08**: View compositions defined as declarative view-specifications *(REQ-448, REQ-356)*
 - [ ] **VIEW-09**: View assembler produces deterministic output for same input state *(REQ-108, REQ-128, REQ-359)*
-- [ ] **VIEW-10**: View assembler preserves existing slots outside view type during execution *(REQ-118)*
+- [x] **VIEW-10**: View assembler preserves existing slots outside view type during execution *(REQ-118)*
 - [ ] **VIEW-11**: View assembler emits structured log entries for assembly operations *(REQ-140, REQ-358)*
 - [ ] **VIEW-12**: View assembler meets performance target for contextual view assembly *(REQ-401)*
 
@@ -63,7 +63,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| VIEW-01 | Phase 6 | Pending |
+| VIEW-01 | Phase 6 | Complete |
 | VIEW-02 | Phase 6 | Complete |
 | VIEW-03 | Phase 7 | Pending |
 | VIEW-04 | Phase 7 | Pending |
@@ -72,7 +72,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VIEW-07 | Phase 6 | Complete |
 | VIEW-08 | Phase 6 | Complete |
 | VIEW-09 | Phase 7 | Pending |
-| VIEW-10 | Phase 6 | Pending |
+| VIEW-10 | Phase 6 | Complete |
 | VIEW-11 | Phase 7 | Pending |
 | VIEW-12 | Phase 7 | Pending |
 | DIAG-01 | Phase 8 | Pending |
