@@ -203,10 +203,10 @@ class TestPrepareObligationData:
         _ingest_requirement(api, "REQ-A2", description="Auth req 2")
         _ingest_requirement(api, "REQ-B1", description="Data req 1")
 
-        comp_a = _create_approved_component(
+        _create_approved_component(
             api, "Auth Service", ["requirement:REQ-A1", "requirement:REQ-A2"]
         )
-        comp_b = _create_approved_component(
+        _create_approved_component(
             api, "Data Service", ["requirement:REQ-B1"]
         )
 
@@ -226,7 +226,7 @@ class TestPrepareObligationData:
     def test_includes_interfaces(self, api):
         """Approved interfaces appear in component data."""
         comp_id = _create_approved_component(api, "Comp A")
-        intf_id = _create_approved_interface(api, "API Endpoint", source_comp=comp_id)
+        _create_approved_interface(api, "API Endpoint", source_comp=comp_id)
 
         data = prepare_obligation_data(api)
         assert data["total_interfaces"] == 1

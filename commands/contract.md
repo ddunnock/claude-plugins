@@ -20,13 +20,14 @@ Derive behavioral contracts with INCOSE-style obligations and V&V assignments fo
 ### Step 1: Initialize Workspace
 
 ```python
+import os
 from scripts.init_workspace import init_workspace
 from scripts.registry import SlotAPI
 from scripts.contract_agent import ContractAgent, check_stale_contracts
 
-import os
-
 project_root = os.getcwd()
+init_workspace(project_root)  # idempotent: creates if missing, cleans orphaned temps
+
 workspace_dir = os.path.join(project_root, ".system-dev")
 schemas_dir = os.path.join(os.path.dirname(__file__), "..", "schemas")
 vv_rules_path = os.path.join(os.path.dirname(__file__), "..", "data", "vv-rules.json")

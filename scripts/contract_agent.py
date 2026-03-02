@@ -153,9 +153,8 @@ def prepare_obligation_data(api: SlotAPI) -> dict:
 
         # Get interfaces for this component
         comp_interfaces = intf_by_component.get(comp_id, [])
-        extracted_interfaces: list[dict] = []
-        for intf in comp_interfaces:
-            extracted_interfaces.append({
+        extracted_interfaces: list[dict] = [
+            {
                 "slot_id": intf["slot_id"],
                 "name": intf.get("name", ""),
                 "description": intf.get("description", ""),
@@ -164,7 +163,9 @@ def prepare_obligation_data(api: SlotAPI) -> dict:
                 "direction": intf.get("direction", ""),
                 "data_format_schema": intf.get("data_format_schema", {}),
                 "error_categories": intf.get("error_categories", []),
-            })
+            }
+            for intf in comp_interfaces
+        ]
 
         # Group requirements by type for easier analysis
         reqs_by_type: dict[str, list[dict]] = defaultdict(list)
@@ -359,12 +360,12 @@ class ContractAgent:
             if "narrative" not in rationale:
                 rationale["narrative"] = ""
 
-            # Collect source requirement IDs from obligations
-            requirement_ids: list[str] = []
-            for ob in obligations:
-                for req_id in ob.get("source_requirement_ids", []):
-                    if req_id not in requirement_ids:
-                        requirement_ids.append(req_id)
+            # Collect deduplicated source requirement IDs from obligations (preserving order)
+            requirement_ids: list[str] = list(dict.fromkeys(
+                req_id
+                for ob in obligations
+                for req_id in ob.get("source_requirement_ids", [])
+            ))
 
             content = {
                 "name": contract["name"],
@@ -393,7 +394,8 @@ class ContractAgent:
                 "contract-proposal", content, agent_id
             )
             proposal = self._api.read(result["slot_id"])
-            created_proposals.append(proposal)
+            if proposal is not None:
+                created_proposals.append(proposal)
 
             override_count = sum(
                 1 for a in vv_assignments if a.get("is_override")

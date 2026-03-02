@@ -142,10 +142,10 @@ class TestDiscoverCandidatesFromRequirementCrossrefs:
     def test_discover_candidates_from_requirement_crossrefs(self, api):
         """Two components sharing requirement_ids produce 1 candidate."""
         shared_req = "requirement:REQ-SHARED"
-        comp_a_id = _create_approved_component(
+        _create_approved_component(
             api, "Service A", requirement_ids=[shared_req, "requirement:REQ-A"]
         )
-        comp_b_id = _create_approved_component(
+        _create_approved_component(
             api, "Service B", requirement_ids=[shared_req, "requirement:REQ-B"]
         )
 

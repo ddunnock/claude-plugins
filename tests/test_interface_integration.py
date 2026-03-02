@@ -9,7 +9,6 @@ from scripts.init_workspace import init_workspace
 from scripts.interface_agent import (
     InterfaceAgent,
     check_stale_interfaces,
-    detect_orphan_components,
     discover_interface_candidates,
 )
 from scripts.registry import SlotAPI
@@ -151,7 +150,7 @@ class TestFullInterfaceDiscoveryAndApproval:
         self, api, agent, interface_gate, component_gate
     ):
         """Set up 3 approved components with relationships, run discovery, create proposals, accept through gate."""
-        name_to_id = _setup_components_with_proposals(api, component_gate)
+        _setup_components_with_proposals(api, component_gate)
 
         # Discover interface candidates
         data = agent.prepare()
@@ -261,7 +260,7 @@ class TestStaleInterfaceDetection:
 class TestOrphanComponentReporting:
     def test_orphan_component_reporting(self, api, agent, component_gate):
         """Create component with no relationships, verify it appears in orphan list."""
-        name_to_id = _setup_components_with_proposals(api, component_gate)
+        _setup_components_with_proposals(api, component_gate)
 
         # Add an isolated component (no relationships, no shared requirements)
         isolated = api.create(
@@ -370,7 +369,7 @@ class TestApprovalGateWithInterfaceProposals:
 
 
 class TestDuplicatePairPrevention:
-    def test_duplicate_pair_prevention(self, api, component_gate):
+    def test_duplicate_pair_prevention(self, api):
         """Multiple discovery methods find same pair, only one candidate produced."""
         # Create components that share a requirement AND have a relationship
         shared_req = "requirement:REQ-SHARED"

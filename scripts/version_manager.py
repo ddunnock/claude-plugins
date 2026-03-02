@@ -48,18 +48,16 @@ class VersionManager:
             each with: version, timestamp, agent_id, summary, operation.
         """
         entries = self._journal.query_by_slot(slot_id)
-        history = []
-
-        for entry in entries:
-            history.append({
+        return [
+            {
                 "version": entry["version_after"],
                 "timestamp": entry["timestamp"],
                 "agent_id": entry["agent_id"],
                 "summary": entry["summary"],
                 "operation": entry["operation"],
-            })
-
-        return history
+            }
+            for entry in entries
+        ]
 
     def get_version(
         self, slot_id: str, version: int, current_content: dict

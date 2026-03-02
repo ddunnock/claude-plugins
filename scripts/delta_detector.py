@@ -9,13 +9,13 @@ References:
     INGS-03 (delta detection), REQ-237 (performance)
 """
 
+import json
 import logging
 import os
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 
 from scripts.shared_io import atomic_write
-from scripts.upstream_schemas import content_hash, generate_slot_id
+from scripts.upstream_schemas import content_hash, generate_slot_id, generate_trace_id
 
 logger = logging.getLogger(__name__)
 
@@ -62,8 +62,6 @@ def load_manifest(manifest_path: str) -> dict:
             "upstream_state": {"gates_status": None, "counts": {}},
             "hashes": {},
         }
-
-    import json
 
     with open(manifest_path) as f:
         return json.load(f)
@@ -116,8 +114,6 @@ def compute_deltas(
             slot_id = generate_id_fn(entry)
         elif id_field == "__trace__":
             # Traceability links use from->to as ID
-            from scripts.upstream_schemas import generate_trace_id
-
             slot_id = generate_trace_id(entry.get("from", ""), entry.get("to", ""))
         else:
             upstream_id = entry.get(id_field)

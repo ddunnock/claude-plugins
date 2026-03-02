@@ -209,7 +209,7 @@ class TestStaleContractDetection:
 
 
 class TestVvAssignmentsBundled:
-    def test_bundled_in_proposal(self, api, agent):
+    def test_bundled_in_proposal(self, agent):
         """Contract-proposal slot contains both obligations and vv_assignments."""
         contracts = [
             {

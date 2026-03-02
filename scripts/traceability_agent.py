@@ -47,6 +47,16 @@ _LEVEL_FORWARD_EDGES = {
 GRAPH_SLOT_ID = "tgraph-current"
 
 
+def _build_adjacency(edges: list[dict]) -> tuple[dict, dict]:
+    """Build forward and reverse adjacency dicts from edge list."""
+    forward: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
+    reverse: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
+    for edge in edges:
+        forward[edge["from_id"]][edge["to_id"]].append(edge["edge_type"])
+        reverse[edge["to_id"]][edge["from_id"]].append(edge["edge_type"])
+    return dict(forward), dict(reverse)
+
+
 class TraceabilityAgent:
     """Builds and validates traceability graphs from registry slots.
 
@@ -98,12 +108,7 @@ class TraceabilityAgent:
         edges, divergences = self._deduplicate_edges(raw_edges)
 
         # 5. Build adjacency dicts
-        forward_adj: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
-        reverse_adj: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
-
-        for edge in edges:
-            forward_adj[edge["from_id"]][edge["to_id"]].append(edge["edge_type"])
-            reverse_adj[edge["to_id"]][edge["from_id"]].append(edge["edge_type"])
+        forward_adj, reverse_adj = _build_adjacency(edges)
 
         now = datetime.now(timezone.utc).isoformat()
 
@@ -374,12 +379,7 @@ class TraceabilityAgent:
                 current_level_ids = next_level_ids
             else:
                 # Gap at this level -- record and stop walking
-                if max_level_reached == 0 and level == 0:
-                    severity = "critical"
-                elif target_level <= 2:
-                    severity = "critical"
-                else:
-                    severity = "warning"
+                severity = "critical" if target_level <= 2 else "warning"
 
                 chain_gaps.append({
                     "need_id": need_id,
@@ -484,13 +484,9 @@ class TraceabilityAgent:
             raise RuntimeError(f"Failed to read back graph slot '{GRAPH_SLOT_ID}' after write")
 
         # Attach internal adjacency for callers that need it
-        forward_adj = defaultdict(lambda: defaultdict(list))
-        reverse_adj = defaultdict(lambda: defaultdict(list))
-        for edge in persisted.get("edges", []):
-            forward_adj[edge["from_id"]][edge["to_id"]].append(edge["edge_type"])
-            reverse_adj[edge["to_id"]][edge["from_id"]].append(edge["edge_type"])
-        persisted["_forward_adj"] = dict(forward_adj)
-        persisted["_reverse_adj"] = dict(reverse_adj)
+        fwd, rev = _build_adjacency(persisted.get("edges", []))
+        persisted["_forward_adj"] = fwd
+        persisted["_reverse_adj"] = rev
 
         return persisted
 

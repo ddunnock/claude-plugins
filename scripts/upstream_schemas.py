@@ -8,13 +8,10 @@ needs updating. Handles known bugs (BUG-1, BUG-3) and schema gaps
 
 import hashlib
 import json
-import logging
 import os
 from datetime import datetime, timezone
 
 from scripts.registry import SLOT_ID_PREFIXES
-
-logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Field mapping dicts: upstream_field -> slot_field

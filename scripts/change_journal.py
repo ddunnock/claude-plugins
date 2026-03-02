@@ -149,18 +149,12 @@ class ChangeJournal:
             try:
                 entries.append(json.loads(line))
             except json.JSONDecodeError:
-                if i == len(lines) - 1:
-                    logger.warning(
-                        "Corrupt last line in journal at %s, skipping: %s",
-                        self._path,
-                        line[:100],
-                    )
-                else:
-                    logger.warning(
-                        "Corrupt line %d in journal at %s, skipping: %s",
-                        i + 1,
-                        self._path,
-                        line[:100],
-                    )
+                label = "last line" if i == len(lines) - 1 else f"line {i + 1}"
+                logger.warning(
+                    "Corrupt %s in journal at %s, skipping: %s",
+                    label,
+                    self._path,
+                    line[:100],
+                )
 
         return entries

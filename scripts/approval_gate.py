@@ -263,10 +263,9 @@ class ApprovalGate:
         modifications = decision_data["modifications"]
         updated_proposal = dict(proposal)
 
-        # Apply modifications as shallow merge on proposal fields
+        # Apply modifications as shallow merge, protecting system fields
         for key, value in modifications.items():
-            # Do not allow overwriting system fields
-            if key not in ("slot_id", "slot_type", "version", "created_at", "updated_at"):
+            if key not in self._SYSTEM_FIELDS:
                 updated_proposal[key] = value
 
         updated_proposal["status"] = "modified"
@@ -290,7 +289,7 @@ class ApprovalGate:
         return {"new_status": "modified"}
 
     def _handle_re_propose(
-        self, proposal: dict, decision_data: dict, now: str, agent_id: str
+        self, proposal: dict, _decision_data: dict, _now: str, agent_id: str
     ) -> dict:
         """Re-propose a rejected proposal: reset status and clear decision."""
         updated_proposal = dict(proposal)

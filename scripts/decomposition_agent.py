@@ -140,21 +140,15 @@ def check_stale_components(api: SlotAPI) -> list[dict]:
                 gap_markers = req.get("gap_markers", [])
                 req_status = req.get("upstream_status", "")
 
+                has_specific_reason = False
                 if gap_markers:
-                    stale_reasons.append(
-                        f"{req_id} has gap_markers"
-                    )
+                    stale_reasons.append(f"{req_id} has gap_markers")
+                    has_specific_reason = True
                 if req_status in ("deprecated", "modified"):
-                    stale_reasons.append(
-                        f"{req_id} status changed to {req_status}"
-                    )
-                if not stale_reasons or (
-                    f"{req_id} has gap_markers" not in stale_reasons
-                    and f"{req_id} status changed to {req_status}" not in stale_reasons
-                ):
-                    stale_reasons.append(
-                        f"{req_id} updated after component"
-                    )
+                    stale_reasons.append(f"{req_id} status changed to {req_status}")
+                    has_specific_reason = True
+                if not has_specific_reason:
+                    stale_reasons.append(f"{req_id} updated after component")
 
         if affected_req_ids:
             stale_entry = {
@@ -401,7 +395,7 @@ class DecompositionAgent:
 
             # Header: name + purpose + requirement count
             header = f"## {name}"
-            purpose = f"{description}" if description else ""
+            purpose = description or ""
             req_count = f"Requirements: {len(req_ids)}"
 
             lines = [header]

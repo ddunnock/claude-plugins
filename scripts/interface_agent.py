@@ -337,7 +337,8 @@ class InterfaceAgent:
                 "interface-proposal", content, agent_id
             )
             proposal = self._api.read(result["slot_id"])
-            created_proposals.append(proposal)
+            if proposal is not None:
+                created_proposals.append(proposal)
 
             logger.info(
                 "Created interface proposal: %s (%s) between %s and %s",

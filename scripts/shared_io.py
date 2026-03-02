@@ -9,77 +9,63 @@ import os
 from tempfile import NamedTemporaryFile
 
 
+def _atomic_rename(filepath: str, write_fn) -> None:
+    """Write content atomically via temp file + fsync + rename.
+
+    Args:
+        filepath: Target file path.
+        write_fn: Callable that receives the open file handle and writes content.
+
+    Raises:
+        OSError: If the write or rename operation fails.
+    """
+    target_dir = os.path.dirname(os.path.abspath(filepath))
+    fd = NamedTemporaryFile(
+        mode="w", dir=target_dir, suffix=".tmp", delete=False
+    )
+    try:
+        write_fn(fd)
+        fd.flush()
+        os.fsync(fd.fileno())
+        fd.close()
+        os.rename(fd.name, filepath)
+    except Exception:
+        fd.close()
+        try:
+            os.unlink(fd.name)
+        except OSError:
+            pass
+        raise
+
+
 def atomic_write(filepath: str, data: dict) -> None:
     """Write JSON data atomically via temp file + fsync + rename.
-
-    Creates a temporary file in the same directory as the target,
-    writes JSON content, syncs to disk, then atomically renames.
-    On failure, cleans up the temp file. Orphaned .tmp files from
-    crashes are handled by cleanup_orphaned_temps().
 
     Args:
         filepath: Absolute or relative path to the target JSON file.
         data: Dictionary to serialize as JSON.
 
-    Raises:
-        OSError: If the write or rename operation fails.
-
     References:
         SCAF-03 (path safety), DREG-02 (atomic writes)
     """
-    target_dir = os.path.dirname(os.path.abspath(filepath))
-    fd = NamedTemporaryFile(
-        mode="w", dir=target_dir, suffix=".tmp", delete=False
-    )
-    try:
+    def _write(fd):
         json.dump(data, fd, indent=2)
         fd.write("\n")
-        fd.flush()
-        os.fsync(fd.fileno())
-        fd.close()
-        os.rename(fd.name, filepath)
-    except Exception:
-        fd.close()
-        try:
-            os.unlink(fd.name)
-        except OSError:
-            pass
-        raise
+
+    _atomic_rename(filepath, _write)
 
 
 def atomic_write_text(filepath: str, text: str) -> None:
     """Write text atomically via temp file + fsync + rename.
 
-    Same pattern as atomic_write but for non-JSON text content,
-    used primarily for journal JSONL appends that need atomicity.
-
     Args:
         filepath: Absolute or relative path to the target file.
         text: Text content to write.
 
-    Raises:
-        OSError: If the write or rename operation fails.
-
     References:
         DREG-06 (change journal)
     """
-    target_dir = os.path.dirname(os.path.abspath(filepath))
-    fd = NamedTemporaryFile(
-        mode="w", dir=target_dir, suffix=".tmp", delete=False
-    )
-    try:
-        fd.write(text)
-        fd.flush()
-        os.fsync(fd.fileno())
-        fd.close()
-        os.rename(fd.name, filepath)
-    except Exception:
-        fd.close()
-        try:
-            os.unlink(fd.name)
-        except OSError:
-            pass
-        raise
+    _atomic_rename(filepath, lambda fd: fd.write(text))
 
 
 def cleanup_orphaned_temps(directory: str) -> list[str]:

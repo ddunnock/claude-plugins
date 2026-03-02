@@ -32,7 +32,7 @@ def json_diff(old: dict | None, new: dict, _prefix: str = "") -> list[dict]:
         return [{"op": "add", "path": "", "value": new}]
 
     ops: list[dict] = []
-    all_keys = sorted(set(list(old.keys()) + list(new.keys())))
+    all_keys = sorted(old.keys() | new.keys())
 
     for key in all_keys:
         path = f"{_prefix}/{key}"
@@ -82,12 +82,10 @@ def apply_patch(base: dict, patch: list[dict]) -> dict:
         # Split path into segments, skipping the leading empty string
         parts = [p for p in path.split("/") if p]
 
-        if op == "add":
+        if op in ("add", "replace"):
             _set_nested(result, parts, op_entry["value"])
         elif op == "remove":
             _remove_nested(result, parts)
-        elif op == "replace":
-            _set_nested(result, parts, op_entry["value"])
         else:
             raise ValueError(f"Unknown patch operation: '{op}'")
 

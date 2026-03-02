@@ -19,13 +19,14 @@ Build and display end-to-end traceability chains from stakeholder needs through 
 ### Step 1: Initialize Workspace
 
 ```python
+import os
 from scripts.init_workspace import init_workspace
 from scripts.registry import SlotAPI
 from scripts.traceability_agent import TraceabilityAgent
 
-import os
-
 project_root = os.getcwd()
+init_workspace(project_root)  # idempotent: creates if missing, cleans orphaned temps
+
 workspace_dir = os.path.join(project_root, ".system-dev")
 schemas_dir = os.path.join(os.path.dirname(__file__), "..", "schemas")
 
