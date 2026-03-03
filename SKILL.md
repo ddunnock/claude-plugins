@@ -52,6 +52,7 @@ The system-dev skill provides a structured workflow for AI-assisted systems desi
 | `/system-dev:update` | Update an existing slot | [commands/update.md](commands/update.md) |
 | `/system-dev:query` | List slots with filters | [commands/query.md](commands/query.md) |
 | `/system-dev:history` | Show slot version history | [commands/history.md](commands/history.md) |
+| `/system-dev:view` | Assemble a contextual view | [commands/view.md](commands/view.md) |
 
 ## Slot Types (Phase 1)
 
