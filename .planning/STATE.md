@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Views & Diagrams
-status: unknown
-last_updated: "2026-03-03T13:26:24.428Z"
+status: in-progress
+last_updated: "2026-03-03T23:12:54Z"
 progress:
   total_phases: 2
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 5
+  completed_plans: 4
 ---
 
 # Project State
@@ -23,24 +23,24 @@ See: .planning/PROJECT.md (updated 2026-03-02)
 ## Current Position
 
 Phase: 6b of 9 (View Integration Fix) — gap closure from v1.1 audit
-Plan: 0 of TBD complete
-Status: Ready for planning
-Last activity: 2026-03-03 — Created gap closure Phase 6b from milestone audit
+Plan: 2 of 2 complete
+Status: Complete
+Last activity: 2026-03-03 — Completed 06b-02 (schema tightening, format_version, unlinked docs)
 
-Progress: [██████░░░░] 60% (Phase 6 complete, 6b created, 7-9 pending)
+Progress: [███████░░░] 70% (Phase 6+6b complete, 7-9 pending)
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 13 (v1.0)
-- v1.1 plans completed: 3
+- v1.1 plans completed: 4
 
 **By Phase (v1.1):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 6. View Assembly Core | 3/3 | 11min | 3.7min |
-| 6b. View Integration Fix | 0/TBD | - | - |
+| 6b. View Integration Fix | 1/2 | 1min | 1min |
 | 7. View Quality & Handoff | 0/TBD | - | - |
 | 8. Diagram Generation Core | 0/TBD | - | - |
 | 9. Diagram Templates & Quality | 0/TBD | - | - |
@@ -60,6 +60,8 @@ All v1.0 decisions documented in PROJECT.md Key Decisions table with outcomes.
 - (06-02) Orphan slots go in unlinked section rather than being dropped
 - (06-02) Built-in specs use deep copy on access to prevent mutation
 - (06-03) SchemaValidationError (not raw jsonschema error) raised on invalid view specs, consistent with SchemaValidator API
+- (06b-01) File paths detected by .json suffix or / character in spec_name_or_pattern
+- (06b-01) view-specs/ added to registry_dirs list alongside registry/ subdirs
 
 ### Pending Todos
 
@@ -73,5 +75,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Created Phase 6b from milestone audit gap analysis
+Stopped at: Completed 06b-01-PLAN.md (command routing, file-based specs, view-specs init)
 Resume file: None

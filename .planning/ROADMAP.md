@@ -67,7 +67,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 06b-01-PLAN.md — Command routing, file-based spec flow, view-specs/ init
+- [x] 06b-01-PLAN.md — Command routing, file-based spec flow, view-specs/ init
 - [ ] 06b-02-PLAN.md — Schema hardening (slot required fields, format_version) and unlinked documentation
 
 ### Phase 7: View Quality & Handoff
@@ -137,7 +137,7 @@ Plans:
 | 4. Interface Resolution + Behavioral Contracts | v1.0 | 3/3 | Complete | 2026-03-01 |
 | 5. Traceability Weaving + Impact Analysis | v1.0 | 3/3 | Complete | 2026-03-01 |
 | 6. View Assembly Core | v1.1 | 3/3 | Complete | 2026-03-03 |
-| 6b. View Integration Fix | v1.1 | 0/2 | Not started | - |
+| 6b. View Integration Fix | v1.1 | 1/2 | In progress | - |
 | 7. View Quality & Handoff | v1.1 | 0/TBD | Not started | - |
 | 8. Diagram Generation Core | v1.1 | 0/TBD | Not started | - |
 | 9. Diagram Templates & Quality | v1.1 | 0/TBD | Not started | - |
