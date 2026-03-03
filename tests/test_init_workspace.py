@@ -78,6 +78,36 @@ class TestInitWorkspace:
         assert "created_at" in data
 
 
+class TestInitWorkspaceViewSpecs:
+    """Tests for view-specs directory creation in init_workspace."""
+
+    def test_init_creates_view_specs_directory(self, tmp_path):
+        """init_workspace creates .system-dev/view-specs/ directory."""
+        result = init_workspace(str(tmp_path))
+
+        assert result["status"] == "created"
+        workspace = tmp_path / ".system-dev"
+        assert (workspace / "view-specs").is_dir()
+
+    def test_init_view_specs_in_created_paths(self, tmp_path):
+        """init_workspace returns view-specs path in created paths list."""
+        result = init_workspace(str(tmp_path))
+
+        view_specs_path = str(tmp_path / ".system-dev" / "view-specs")
+        assert view_specs_path in result["paths"]
+
+    def test_existing_workspace_does_not_fail_with_view_specs(self, tmp_path):
+        """Existing workspace (status=exists) does not fail due to view-specs."""
+        # First init creates workspace
+        result1 = init_workspace(str(tmp_path))
+        assert result1["status"] == "created"
+
+        # Second init should return exists without error
+        result2 = init_workspace(str(tmp_path))
+        assert result2["status"] == "exists"
+        assert len(result2["warnings"]) > 0
+
+
 class TestAtomicWrite:
     """Tests for atomic_write function."""
 
