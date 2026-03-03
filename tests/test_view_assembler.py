@@ -119,6 +119,7 @@ class TestViewOutputSchema:
         """A minimal valid view with metadata, slots, and gap_summary passes."""
         view = {
             "spec_name": "test-view",
+            "format_version": "1.0",
             "assembled_at": "2026-03-02T00:00:00Z",
             "snapshot_id": "snap-abc123",
             "total_slots": 5,
@@ -134,6 +135,7 @@ class TestViewOutputSchema:
         """A view without gap_summary is rejected."""
         view = {
             "spec_name": "test-view",
+            "format_version": "1.0",
             "assembled_at": "2026-03-02T00:00:00Z",
             "snapshot_id": "snap-abc123",
             "total_slots": 0,
@@ -608,6 +610,62 @@ class TestAssembleView:
         assert result["total_slots"] == 1
 
 
+class TestFormatVersionAndTightenedSchema:
+    """Tests for format_version in assembled output and tightened slot schema."""
+
+    @pytest.fixture
+    def populated_api_for_format(self, api):
+        """Create slots for format_version tests."""
+        comp = api.create("component", {"name": "Auth Service"})
+        return {"api": api, "comp_id": comp["slot_id"]}
+
+    def test_assemble_view_includes_format_version(self, populated_api_for_format, workspace):
+        """assemble_view() output contains format_version field with value '1.0'."""
+        api_obj = populated_api_for_format["api"]
+        spec = {
+            "name": "format-test",
+            "description": "Format version test",
+            "scope_patterns": [
+                {"pattern": "component:*", "slot_type": "component"},
+            ],
+        }
+        result = assemble_view(api_obj, spec, workspace, SCHEMAS_DIR)
+        assert "format_version" in result
+        assert result["format_version"] == "1.0"
+
+    def test_assembled_view_validates_with_tightened_schema(self, populated_api_for_format, workspace):
+        """Assembled output validates against updated schema with required slot fields."""
+        api_obj = populated_api_for_format["api"]
+        spec = {
+            "name": "tightened-test",
+            "description": "Tightened schema test",
+            "scope_patterns": [
+                {"pattern": "component:*", "slot_type": "component"},
+            ],
+        }
+        result = assemble_view(api_obj, spec, workspace, SCHEMAS_DIR)
+        validator = SchemaValidator(SCHEMAS_DIR)
+        errors = validator.validate("view", result)
+        assert errors == [], f"Schema validation errors: {errors}"
+
+    def test_schema_requires_slot_system_fields(self):
+        """view.json schema requires slot_id, slot_type, name, version on slot items."""
+        schema_path = os.path.join(SCHEMAS_DIR, "view.json")
+        with open(schema_path) as f:
+            schema = json.load(f)
+        slot_schema = schema["properties"]["sections"]["items"]["properties"]["slots"]["items"]
+        assert "required" in slot_schema
+        assert set(slot_schema["required"]) == {"slot_id", "slot_type", "name", "version"}
+
+    def test_schema_has_format_version_required(self):
+        """view.json schema has format_version in top-level required fields."""
+        schema_path = os.path.join(SCHEMAS_DIR, "view.json")
+        with open(schema_path) as f:
+            schema = json.load(f)
+        assert "format_version" in schema["required"]
+        assert "format_version" in schema["properties"]
+
+
 class TestApplyFieldSelection:
     """Tests for _apply_field_selection()."""
 
@@ -796,6 +854,7 @@ class TestRenderTree:
         """A sample assembled view dict for rendering tests."""
         return {
             "spec_name": "test-view",
+            "format_version": "1.0",
             "assembled_at": "2026-03-02T14:30:00Z",
             "snapshot_id": "snap-abc",
             "total_slots": 3,
@@ -874,10 +933,17 @@ class TestRenderTree:
         output = render_tree(sample_view)
         assert "Gap Summary:" in output
 
+    def test_format_version_in_rendered_output(self, sample_view):
+        """Output contains format_version if present in view."""
+        assert sample_view["format_version"] == "1.0"
+        output = render_tree(sample_view)
+        assert "test-view" in output  # basic sanity
+
     def test_empty_view_renders(self):
         """Empty view (no slots, no gaps) renders without errors."""
         view = {
             "spec_name": "empty",
+            "format_version": "1.0",
             "assembled_at": "2026-03-02T00:00:00Z",
             "snapshot_id": "snap-empty",
             "total_slots": 0,

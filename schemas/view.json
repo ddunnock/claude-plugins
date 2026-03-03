@@ -4,11 +4,16 @@
   "title": "Assembled View Output",
   "description": "Structured output from view assembly with slot sections and gap indicators.",
   "type": "object",
-  "required": ["spec_name", "assembled_at", "snapshot_id", "total_slots", "total_gaps", "gap_summary", "sections", "gaps"],
+  "required": ["spec_name", "format_version", "assembled_at", "snapshot_id", "total_slots", "total_gaps", "gap_summary", "sections", "gaps"],
   "properties": {
     "spec_name": {
       "type": "string",
       "minLength": 1
+    },
+    "format_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$",
+      "description": "Schema format version for future evolution (e.g., '1.0')"
     },
     "assembled_at": {
       "type": "string",
@@ -57,7 +62,14 @@
           "slots": {
             "type": "array",
             "items": {
-              "type": "object"
+              "type": "object",
+              "required": ["slot_id", "slot_type", "name", "version"],
+              "properties": {
+                "slot_id": { "type": "string", "minLength": 1 },
+                "slot_type": { "type": "string", "minLength": 1 },
+                "name": { "type": "string", "minLength": 1 },
+                "version": { "type": "integer", "minimum": 1 }
+              }
             }
           }
         },

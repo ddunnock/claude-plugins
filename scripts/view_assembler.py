@@ -432,6 +432,7 @@ def assemble_view(
 
     assembled = {
         "spec_name": spec["name"],
+        "format_version": "1.0",
         "assembled_at": datetime.now(timezone.utc).isoformat(),
         "snapshot_id": snapshot["snapshot_id"],
         "total_slots": total_slots,
