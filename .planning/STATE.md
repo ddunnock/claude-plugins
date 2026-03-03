@@ -5,7 +5,7 @@ milestone_name: Views & Diagrams
 status: unknown
 last_updated: "2026-03-03T13:26:24.428Z"
 progress:
-  total_phases: 1
+  total_phases: 2
   completed_phases: 1
   total_plans: 3
   completed_plans: 3
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-02)
 
 **Core value:** Design decisions captured as explicit, reviewable, traceable records in a Design Registry
-**Current focus:** Phase 7 — View Quality & Handoff
+**Current focus:** Phase 6b — View Integration Fix
 
 ## Current Position
 
-Phase: 7 of 9 (View Quality & Handoff) — second phase of v1.1
+Phase: 6b of 9 (View Integration Fix) — gap closure from v1.1 audit
 Plan: 0 of TBD complete
 Status: Ready for planning
-Last activity: 2026-03-03 — Completed 06-03 (Gap Closure: view-spec validation)
+Last activity: 2026-03-03 — Created gap closure Phase 6b from milestone audit
 
-Progress: [██████████] 100% (Phase 6 complete, gap closure done)
+Progress: [██████░░░░] 60% (Phase 6 complete, 6b created, 7-9 pending)
 
 ## Performance Metrics
 
@@ -40,6 +40,7 @@ Progress: [██████████] 100% (Phase 6 complete, gap closure d
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 6. View Assembly Core | 3/3 | 11min | 3.7min |
+| 6b. View Integration Fix | 0/TBD | - | - |
 | 7. View Quality & Handoff | 0/TBD | - | - |
 | 8. Diagram Generation Core | 0/TBD | - | - |
 | 9. Diagram Templates & Quality | 0/TBD | - | - |
@@ -72,5 +73,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Completed 06-03-PLAN.md (gap closure)
+Stopped at: Created Phase 6b from milestone audit gap analysis
 Resume file: None

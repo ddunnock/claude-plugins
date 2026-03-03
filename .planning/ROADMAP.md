@@ -29,6 +29,7 @@ See `.planning/milestones/v1.0-ROADMAP.md` for full phase details.
 **Milestone Goal:** Make design state visible through contextual views and D2/Mermaid diagrams
 
 - [x] **Phase 6: View Assembly Core** - Construct contextual views from registry slot subsets with gap handling and snapshot consistency
+- [ ] **Phase 6b: View Integration Fix** - Close integration gaps, fix broken file-based spec flow, tighten view schemas
 - [ ] **Phase 7: View Quality & Handoff** - Relevance ranking, deterministic output, performance, and diagram-compatible handoff format
 - [ ] **Phase 8: Diagram Generation Core** - D2 structural and Mermaid behavioral diagram generation from view data
 - [ ] **Phase 9: Diagram Templates & Quality** - Template-driven generation with abstraction layers, determinism, and logging
@@ -52,9 +53,25 @@ Plans:
 - [x] 06-02-PLAN.md — View assembler engine, built-in specs, command file, tree renderer
 - [x] 06-03-PLAN.md — Gap closure: add view-spec schema validation to load_view_spec()
 
+### Phase 6b: View Integration Fix
+**Goal**: Close Phase 6 integration gaps so downstream phases have clean wiring to build on
+**Depends on**: Phase 6
+**Gap Closure**: Closes 4 integration gaps, 1 broken flow, 2 tech debt items from v1.1 audit
+**Success Criteria** (what must be TRUE):
+  1. `/system-dev:view` command is listed in SKILL.md command table and routable
+  2. `commands/view.md` supports file-based view specs that invoke `load_view_spec()` with schema validation
+  3. `init_workspace()` creates `.system-dev/view-specs/` directory for user-authored specs
+  4. `"unlinked"` sentinel slot_type is documented for Phase 8 diagram consumers
+  5. `view.json` schema enforces required fields on `sections[].slots` items
+  6. `view.json` schema includes `format_version` field for future evolution
+**Plans**: TBD
+
+Plans:
+- [ ] 06b-01: TBD
+
 ### Phase 7: View Quality & Handoff
 **Goal**: Views are ranked by relevance, deterministic, performant, and produce output that diagram generation can consume
-**Depends on**: Phase 6
+**Depends on**: Phase 6b
 **Requirements**: VIEW-03, VIEW-04, VIEW-09, VIEW-11, VIEW-12
 **Success Criteria** (what must be TRUE):
   1. View assembler returns relevance-ranked results when retrieving slots for contextual views
@@ -109,7 +126,7 @@ Plans:
 
 ## Progress
 
-**Execution Order:** Phases execute in numeric order: 6 -> 7 -> 8 -> 9
+**Execution Order:** Phases execute in numeric order: 6 -> 6b -> 7 -> 8 -> 9
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -119,6 +136,7 @@ Plans:
 | 4. Interface Resolution + Behavioral Contracts | v1.0 | 3/3 | Complete | 2026-03-01 |
 | 5. Traceability Weaving + Impact Analysis | v1.0 | 3/3 | Complete | 2026-03-01 |
 | 6. View Assembly Core | v1.1 | 3/3 | Complete | 2026-03-03 |
+| 6b. View Integration Fix | v1.1 | 0/TBD | Not started | - |
 | 7. View Quality & Handoff | v1.1 | 0/TBD | Not started | - |
 | 8. Diagram Generation Core | v1.1 | 0/TBD | Not started | - |
 | 9. Diagram Templates & Quality | v1.1 | 0/TBD | Not started | - |
