@@ -133,6 +133,22 @@ Catalog of Phase 1 slot types for the Design Registry. Each type has a JSON Sche
 
 ---
 
+## View-Only Slot Types
+
+These slot types appear only in assembled view output (not in the Design Registry).
+
+### unlinked
+
+**Purpose:** Contains orphan slots (interfaces and contracts) that could not be linked to a parent component within the view's scope.
+
+**When it appears:** During hierarchical view organization, interfaces without a matching `source_component` or `target_component` in the view, and contracts without a matching `interface_id`, are grouped into an `"unlinked"` section rather than being dropped.
+
+**For diagram consumers (Phase 8+):** When generating diagrams from view output, `slot_type: "unlinked"` sections should be rendered as a separate group or with visual distinction (e.g., dashed borders, "Unlinked" label) to indicate these slots lack structural connections in the current view scope.
+
+**Schema:** Unlinked section slots have the same fields as their original slot type (interface or contract). The `slot_type` field on each individual slot retains its original value (e.g., `"interface"`, `"contract"`); only the section-level `slot_type` is `"unlinked"`.
+
+---
+
 ## Future Slot Types
 
 Additional slot types will be added in later phases:
