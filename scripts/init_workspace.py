@@ -77,6 +77,7 @@ def init_workspace(project_root: str) -> dict:
         "registry/assumptions",
         "registry/traceability-links",
         "registry/component-proposals",
+        "view-specs",  # User-authored view specifications
     ]
 
     created_paths = []

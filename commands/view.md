@@ -9,13 +9,16 @@ Assemble a contextual view from registry slot subsets.
 ```
 
 **Parameters:**
-- `spec_name_or_pattern` (required): Name of a built-in spec OR an ad-hoc scope pattern (e.g., `component:Auth*`)
+- `spec_name_or_pattern` (required): Name of a built-in spec, a file path to a view-spec JSON file (e.g., `.system-dev/view-specs/my-spec.json`), OR an ad-hoc scope pattern (e.g., `component:Auth*`)
 - `--json` (optional): Output structured JSON instead of human-readable tree
 - `--param` (optional, repeatable): Parameter for parameterized specs (e.g., `--param component_id="Auth Service"`)
 
 ## Workflow
 
-1. **Determine spec**: If `spec_name_or_pattern` matches a built-in spec name, use `get_builtin_spec()`. Otherwise, treat it as an ad-hoc pattern and call `create_ad_hoc_spec()`.
+1. **Determine spec**:
+   a. If `spec_name_or_pattern` matches a built-in spec name (one of: system-overview, traceability-chain, component-detail, interface-map, gap-report), use `get_builtin_spec()`.
+   b. If `spec_name_or_pattern` is a file path (ends with `.json` or contains `/`), load it with `load_view_spec(spec_path, parameters, schemas_dir)` where `schemas_dir` is `${CLAUDE_PLUGIN_ROOT}/schemas`. This enables schema validation of user-authored specs.
+   c. Otherwise, treat it as an ad-hoc scope pattern and call `create_ad_hoc_spec()`.
 
 2. **Resolve parameters**: Apply `--param` values to parameterized specs via `get_builtin_spec(name, parameters)`.
 
@@ -36,6 +39,18 @@ Assemble a contextual view from registry slot subsets.
 | `component-detail` | Single component with related interfaces and contracts (requires `--param component_id=<name>`) |
 | `interface-map` | All interfaces grouped by component pairs |
 | `gap-report` | Comprehensive gap analysis across all slot types |
+
+## File-Based Specs
+
+Users can create custom view-spec JSON files in `.system-dev/view-specs/` and invoke them by path:
+
+```
+/system-dev:view .system-dev/view-specs/my-custom-view.json --param component_id="Auth Service"
+```
+
+File-based specs are validated against the `view-spec.json` schema (via `load_view_spec()` with `schemas_dir`) before assembly. This ensures user-authored specs conform to the same structure as built-in specs.
+
+To create a custom spec, copy one of the built-in specs from `${CLAUDE_PLUGIN_ROOT}/data/` as a starting point, then modify the scope patterns and options to match your needs.
 
 ## Output Format
 
