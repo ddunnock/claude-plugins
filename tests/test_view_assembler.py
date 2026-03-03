@@ -325,6 +325,58 @@ class TestLoadViewSpec:
         with pytest.raises(ValueError, match="component_id"):
             load_view_spec(spec_path, parameters={})
 
+    def test_schema_validation_valid_spec(self, tmp_path):
+        """load_view_spec with schemas_dir validates a valid spec successfully."""
+        spec_data = {
+            "name": "test-view",
+            "description": "A valid test view",
+            "scope_patterns": [
+                {"pattern": "component:*", "slot_type": "component"}
+            ],
+        }
+        spec_path = str(tmp_path / "valid-spec.json")
+        with open(spec_path, "w") as f:
+            json.dump(spec_data, f)
+
+        result = load_view_spec(spec_path, schemas_dir=SCHEMAS_DIR)
+        assert result["name"] == "test-view"
+        assert len(result["scope_patterns"]) == 1
+
+    def test_schema_validation_invalid_spec_raises(self, tmp_path):
+        """load_view_spec with schemas_dir and invalid spec raises ValidationError."""
+        from jsonschema.exceptions import ValidationError
+
+        # Missing required "name" field
+        spec_data = {
+            "description": "Missing name field",
+            "scope_patterns": [
+                {"pattern": "component:*", "slot_type": "component"}
+            ],
+        }
+        spec_path = str(tmp_path / "invalid-spec.json")
+        with open(spec_path, "w") as f:
+            json.dump(spec_data, f)
+
+        with pytest.raises(ValidationError):
+            load_view_spec(spec_path, schemas_dir=SCHEMAS_DIR)
+
+    def test_schema_validation_skipped_without_schemas_dir(self, tmp_path):
+        """load_view_spec without schemas_dir skips validation (backward compat)."""
+        spec_data = {
+            "name": "test-view",
+            "description": "A test view",
+            "scope_patterns": [
+                {"pattern": "component:*", "slot_type": "component"}
+            ],
+        }
+        spec_path = str(tmp_path / "compat-spec.json")
+        with open(spec_path, "w") as f:
+            json.dump(spec_data, f)
+
+        # Should work without schemas_dir (no validation)
+        result = load_view_spec(spec_path)
+        assert result["name"] == "test-view"
+
 
 class TestLoadGapRules:
     """Tests for load_gap_rules()."""
