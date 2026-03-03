@@ -50,7 +50,7 @@ See `.planning/milestones/v1.0-ROADMAP.md` for full phase details.
 Plans:
 - [x] 06-01-PLAN.md — View schemas, scope pattern matcher, snapshot reader, gap builder
 - [x] 06-02-PLAN.md — View assembler engine, built-in specs, command file, tree renderer
-- [ ] 06-03-PLAN.md — Gap closure: add view-spec schema validation to load_view_spec()
+- [x] 06-03-PLAN.md — Gap closure: add view-spec schema validation to load_view_spec()
 
 ### Phase 7: View Quality & Handoff
 **Goal**: Views are ranked by relevance, deterministic, performant, and produce output that diagram generation can consume
@@ -118,7 +118,7 @@ Plans:
 | 3. Structural Decomposition + Approval Gate | v1.0 | 2/2 | Complete | 2026-03-01 |
 | 4. Interface Resolution + Behavioral Contracts | v1.0 | 3/3 | Complete | 2026-03-01 |
 | 5. Traceability Weaving + Impact Analysis | v1.0 | 3/3 | Complete | 2026-03-01 |
-| 6. View Assembly Core | v1.1 | 2/2 | Complete | 2026-03-02 |
+| 6. View Assembly Core | v1.1 | 3/3 | Complete | 2026-03-03 |
 | 7. View Quality & Handoff | v1.1 | 0/TBD | Not started | - |
 | 8. Diagram Generation Core | v1.1 | 0/TBD | Not started | - |
 | 9. Diagram Templates & Quality | v1.1 | 0/TBD | Not started | - |

@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: "Views & Diagrams"
 status: active
-last_updated: "2026-03-02"
+last_updated: "2026-03-03"
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 3
+  completed_plans: 3
 ---
 
 # Project State
@@ -25,21 +25,21 @@ See: .planning/PROJECT.md (updated 2026-03-02)
 Phase: 7 of 9 (View Quality & Handoff) — second phase of v1.1
 Plan: 0 of TBD complete
 Status: Ready for planning
-Last activity: 2026-03-02 — Completed 06-02 (View Assembly Engine)
+Last activity: 2026-03-03 — Completed 06-03 (Gap Closure: view-spec validation)
 
-Progress: [██████████] 100% (Phase 6 complete)
+Progress: [██████████] 100% (Phase 6 complete, gap closure done)
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 13 (v1.0)
-- v1.1 plans completed: 2
+- v1.1 plans completed: 3
 
 **By Phase (v1.1):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 6. View Assembly Core | 2/2 | 9min | 4.5min |
+| 6. View Assembly Core | 3/3 | 11min | 3.7min |
 | 7. View Quality & Handoff | 0/TBD | - | - |
 | 8. Diagram Generation Core | 0/TBD | - | - |
 | 9. Diagram Templates & Quality | 0/TBD | - | - |
@@ -58,6 +58,7 @@ All v1.0 decisions documented in PROJECT.md Key Decisions table with outcomes.
 - (06-02) System fields (slot_id, slot_type, name, version) always preserved in field selection
 - (06-02) Orphan slots go in unlinked section rather than being dropped
 - (06-02) Built-in specs use deep copy on access to prevent mutation
+- (06-03) SchemaValidationError (not raw jsonschema error) raised on invalid view specs, consistent with SchemaValidator API
 
 ### Pending Todos
 
@@ -70,6 +71,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-02
-Stopped at: Completed 06-02-PLAN.md
+Last session: 2026-03-03
+Stopped at: Completed 06-03-PLAN.md (gap closure)
 Resume file: None
