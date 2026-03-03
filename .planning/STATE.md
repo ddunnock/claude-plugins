@@ -8,7 +8,7 @@ progress:
   total_phases: 2
   completed_phases: 1
   total_plans: 5
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -33,14 +33,14 @@ Progress: [███████░░░] 70% (Phase 6+6b complete, 7-9 pending
 
 **Velocity:**
 - Total plans completed: 13 (v1.0)
-- v1.1 plans completed: 4
+- v1.1 plans completed: 5
 
 **By Phase (v1.1):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 6. View Assembly Core | 3/3 | 11min | 3.7min |
-| 6b. View Integration Fix | 1/2 | 1min | 1min |
+| 6b. View Integration Fix | 2/2 | 3min | 1.5min |
 | 7. View Quality & Handoff | 0/TBD | - | - |
 | 8. Diagram Generation Core | 0/TBD | - | - |
 | 9. Diagram Templates & Quality | 0/TBD | - | - |
@@ -62,6 +62,8 @@ All v1.0 decisions documented in PROJECT.md Key Decisions table with outcomes.
 - (06-03) SchemaValidationError (not raw jsonschema error) raised on invalid view specs, consistent with SchemaValidator API
 - (06b-01) File paths detected by .json suffix or / character in spec_name_or_pattern
 - (06b-01) view-specs/ added to registry_dirs list alongside registry/ subdirs
+- (06b-02) format_version "1.0" string with X.Y pattern for schema evolution
+- (06b-02) No additionalProperties:false on slot items -- varying domain fields allowed
 
 ### Pending Todos
 
@@ -75,5 +77,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Completed 06b-01-PLAN.md (command routing, file-based specs, view-specs init)
+Stopped at: Completed 06b-02-PLAN.md (schema tightening, format_version, unlinked docs)
 Resume file: None
