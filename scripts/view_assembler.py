@@ -47,17 +47,25 @@ _DEFAULT_SUGGESTION = "Create the missing slot using the appropriate /system-dev
 
 
 def load_view_spec(
-    spec_path: str, parameters: dict | None = None
+    spec_path: str,
+    parameters: dict | None = None,
+    schemas_dir: str | None = None,
 ) -> dict:
     """Load a view-spec JSON file and resolve parameter placeholders.
 
     Reads the spec from disk, then substitutes any {variable} placeholders
-    in scope pattern strings with values from the parameters dict.
+    in scope pattern strings with values from the parameters dict. When
+    schemas_dir is provided, validates the resolved spec against the
+    view-spec.json schema before returning.
 
     Args:
         spec_path: Path to the view-spec JSON file.
         parameters: Dict of variable name -> value for substitution.
             Overrides any defaults in the spec's own parameters field.
+        schemas_dir: Path to the schemas/ directory. When provided,
+            the loaded spec is validated against view-spec.json schema.
+            When None (default), validation is skipped for backward
+            compatibility.
 
     Returns:
         The loaded and resolved view spec dict.
@@ -66,6 +74,8 @@ def load_view_spec(
         FileNotFoundError: If spec_path does not exist.
         ValueError: If a {variable} in a pattern has no value in parameters.
         json.JSONDecodeError: If the file is not valid JSON.
+        jsonschema.exceptions.ValidationError: If schemas_dir is provided
+            and the spec fails view-spec.json schema validation.
     """
     with open(spec_path) as f:
         spec = json.load(f)
@@ -92,6 +102,11 @@ def load_view_spec(
             )
 
         scope_pattern["pattern"] = pattern_str
+
+    # Validate against view-spec.json schema when schemas_dir is provided
+    if schemas_dir is not None:
+        validator = SchemaValidator(schemas_dir)
+        validator.validate_or_raise("view-spec", spec)
 
     return spec
 

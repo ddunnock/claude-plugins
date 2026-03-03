@@ -343,8 +343,8 @@ class TestLoadViewSpec:
         assert len(result["scope_patterns"]) == 1
 
     def test_schema_validation_invalid_spec_raises(self, tmp_path):
-        """load_view_spec with schemas_dir and invalid spec raises ValidationError."""
-        from jsonschema.exceptions import ValidationError
+        """load_view_spec with schemas_dir and invalid spec raises SchemaValidationError."""
+        from scripts.schema_validator import SchemaValidationError
 
         # Missing required "name" field
         spec_data = {
@@ -357,7 +357,7 @@ class TestLoadViewSpec:
         with open(spec_path, "w") as f:
             json.dump(spec_data, f)
 
-        with pytest.raises(ValidationError):
+        with pytest.raises(SchemaValidationError):
             load_view_spec(spec_path, schemas_dir=SCHEMAS_DIR)
 
     def test_schema_validation_skipped_without_schemas_dir(self, tmp_path):
