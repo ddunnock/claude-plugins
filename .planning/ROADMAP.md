@@ -95,11 +95,11 @@ Plans:
   3. Diagram generator reads view handoff format and writes diagram slots through SlotAPI
   4. Gap markers in view input appear as visually distinct placeholder elements in diagram output
   5. Generating diagrams does not modify or delete existing slots outside the diagram type
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 08-01: TBD
-- [ ] 08-02: TBD
+- [ ] 08-01-PLAN.md — Diagram schema, slot type registration, D2/Mermaid generation engines with gap placeholders
+- [ ] 08-02-PLAN.md — Orchestration layer (SlotAPI writes), diagram_hint on view specs, /system-dev:diagram command
 
 ### Phase 9: Diagram Templates & Quality
 **Goal**: Diagram generation is template-driven with configurable abstraction layers, deterministic output, and structured logging
@@ -138,6 +138,6 @@ Plans:
 | 5. Traceability Weaving + Impact Analysis | v1.0 | 3/3 | Complete | 2026-03-01 |
 | 6. View Assembly Core | v1.1 | 3/3 | Complete | 2026-03-03 |
 | 6b. View Integration Fix | v1.1 | 2/2 | Complete | 2026-03-03 |
-| 7. View Quality & Handoff | 2/2 | Complete   | 2026-03-07 | - |
-| 8. Diagram Generation Core | v1.1 | 0/TBD | Not started | - |
+| 7. View Quality & Handoff | v1.1 | 2/2 | Complete | 2026-03-07 |
+| 8. Diagram Generation Core | v1.1 | 0/2 | Not started | - |
 | 9. Diagram Templates & Quality | v1.1 | 0/TBD | Not started | - |
