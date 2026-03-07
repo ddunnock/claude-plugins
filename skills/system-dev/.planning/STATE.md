@@ -95,6 +95,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-07T18:10:39Z
-Stopped at: Completed 08-01 (diagram schema, D2/Mermaid generation engines)
-Resume file: .planning/phases/08-diagram-generation-core/08-01-SUMMARY.md
+Last session: 2026-03-07T18:16:53Z
+Stopped at: Completed 08-02 (diagram orchestration layer, command spec)
+Resume file: .planning/phases/08-diagram-generation-core/08-02-SUMMARY.md
