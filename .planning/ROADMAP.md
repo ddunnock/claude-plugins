@@ -79,11 +79,11 @@ Plans:
   2. View assembler outputs a defined handoff format that diagram-renderer can consume without transformation
   3. Given identical registry state and view-spec, the view assembler produces byte-identical output
   4. View assembly operations emit structured log entries with operation type, slot counts, and timing
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 07-01: TBD
-- [ ] 07-02: TBD
+- [ ] 07-01-PLAN.md — Schemas + ranking + determinism + performance (VIEW-03, VIEW-09, VIEW-12)
+- [ ] 07-02-PLAN.md — Edge extraction + structured logging + handoff format (VIEW-04, VIEW-11)
 
 ### Phase 8: Diagram Generation Core
 **Goal**: Users can generate valid D2 structural and Mermaid behavioral diagrams from view output, with gap markers rendered as placeholders
@@ -138,6 +138,6 @@ Plans:
 | 5. Traceability Weaving + Impact Analysis | v1.0 | 3/3 | Complete | 2026-03-01 |
 | 6. View Assembly Core | v1.1 | 3/3 | Complete | 2026-03-03 |
 | 6b. View Integration Fix | v1.1 | 2/2 | Complete | 2026-03-03 |
-| 7. View Quality & Handoff | v1.1 | 0/TBD | Not started | - |
+| 7. View Quality & Handoff | v1.1 | 0/2 | Not started | - |
 | 8. Diagram Generation Core | v1.1 | 0/TBD | Not started | - |
 | 9. Diagram Templates & Quality | v1.1 | 0/TBD | Not started | - |
