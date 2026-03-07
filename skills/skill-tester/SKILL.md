@@ -1,22 +1,11 @@
 ---
 name: skill-tester
-description: >
-  Deep test, analyze, and audit Claude skills. Use this skill whenever the user wants to test a
-  skill's behavior, analyze how it uses the Claude API, inspect inputs/outputs from scripts, or
-  run security and code review audits against skill scripts. Trigger on: "test my skill",
-  "analyze this skill", "audit skill scripts", "review skill for security issues", "what does
-  this skill actually do when it runs", "inspect API calls from skill", "run a skill through
-  its paces", "check my skill for bugs or vulnerabilities". Also trigger when the user shows
-  you a SKILL.md and asks you to evaluate, critique, or stress-test it.
-version: 0.6.0
+description: This skill should be used whenever the user wants to test a skill's behavior, analyze how it uses the Claude API, inspect inputs/outputs from scripts, or run security and code review audits against skill scripts. Even for casual phrases like "test my skill", "analyze this skill", "audit skill scripts", "review skill for security issues", "what does this skill actually do when it runs", "inspect API calls from skill", "run a skill through its paces", "check my skill for bugs or vulnerabilities". Also trigger when the user shows you a SKILL.md and asks you to evaluate, critique, or stress-test it.
 ---
 
 # Skill Tester & Analyzer
 
-A meta-skill for deeply testing and auditing other Claude skills. It instruments test runs to
-capture raw API call traces, records all script stdin/stdout/stderr with timing, and runs
-deterministic security scans followed by dedicated security and code review subagents against
-any scripts embedded in the skill.
+A meta-skill for deeply testing and auditing other Claude skills. It instruments test runs to capture raw API call traces, records all script stdin/stdout/stderr with timing, and runs deterministic security scans followed by dedicated security and code review subagents against any scripts embedded in the skill.
 
 ---
 
