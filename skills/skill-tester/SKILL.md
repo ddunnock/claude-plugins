@@ -8,7 +8,7 @@ description: >
   this skill actually do when it runs", "inspect API calls from skill", "run a skill through
   its paces", "check my skill for bugs or vulnerabilities". Also trigger when the user shows
   you a SKILL.md and asks you to evaluate, critique, or stress-test it.
-version: 0.2.0
+version: 0.3.0
 ---
 
 # Skill Tester & Analyzer
@@ -60,6 +60,8 @@ any scripts embedded in the skill.
   <pattern name="api-log">sessions/&lt;skill_name&gt;_&lt;timestamp&gt;/api_log.jsonl</pattern>
   <pattern name="script-runs">sessions/&lt;skill_name&gt;_&lt;timestamp&gt;/script_runs.jsonl</pattern>
   <pattern name="scan-results">sessions/&lt;skill_name&gt;_&lt;timestamp&gt;/scan_results.json</pattern>
+  <pattern name="prompt-lint">sessions/&lt;skill_name&gt;_&lt;timestamp&gt;/prompt_lint.json</pattern>
+  <pattern name="prompt-review">sessions/&lt;skill_name&gt;_&lt;timestamp&gt;/prompt_review.json</pattern>
   <pattern name="security-report">sessions/&lt;skill_name&gt;_&lt;timestamp&gt;/security_report.json</pattern>
   <pattern name="code-review">sessions/&lt;skill_name&gt;_&lt;timestamp&gt;/code_review.json</pattern>
   <pattern name="report">sessions/&lt;skill_name&gt;_&lt;timestamp&gt;/report.html</pattern>
@@ -72,7 +74,9 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
 ├── manifest.json          # Validation results and session metadata (created by setup_test_env.py)
 ├── sandbox/               # Isolated workspace for script execution
 ├── inventory.json         # Skill structure scan
-├── scan_results.json      # Deterministic tool findings (runs after inventory)
+├── scan_results.json      # Deterministic security findings (B9 — runs first)
+├── prompt_lint.json       # Deterministic prompt quality findings (B11 — runs first)
+├── prompt_review.json     # AI prompt quality analysis (receives prompt_lint as input)
 ├── api_log.jsonl          # All Claude API calls (one JSON object per line)
 ├── script_runs.jsonl      # All script executions with I/O
 ├── security_report.json   # AI security analysis (receives scan_results as input)
@@ -84,8 +88,8 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
 
 | Mode | Description | Phases Run |
 |---|---|---|
-| **Full** (default) | Complete analysis: scan → test → security → review → report | All |
-| **Audit** | Static analysis only, no test execution | inventory → scan → security → review → report |
+| **Full** (default) | Complete analysis: scan → prompt-lint → test → security → review → report | All |
+| **Audit** | Static analysis only, no test execution | inventory → scan → prompt-lint → security → review → report |
 | **Trace** | Runtime capture only, no security/code review | inventory → test → report |
 | **Report** | Re-generate HTML from existing session data | report only |
 
@@ -179,6 +183,7 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
         Display CRITICAL findings immediately. Ask user if they want to continue.
         <interaction tool="AskUserQuestion">
           <question>CRITICAL security findings detected. Continue analysis?</question>
+          <header>Critical Findings Gate</header>
           <options>["Yes, continue", "No, stop here"]</options>
           <multiSelect>false</multiSelect>
         </interaction>
@@ -187,29 +192,74 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
     <gate>scan_results.json must be written before proceeding to AI security review.</gate>
   </phase>
 
-  <phase name="test-execution" sequence="4" depends-on="deterministic-scan">
-    <objective>Execute skill scripts with full I/O capture (Full and Trace modes only).</objective>
+  <phase name="prompt-lint" sequence="4" depends-on="inventory">
+    <objective>Run deterministic prompt quality checks against SKILL.md and all agent/command files, then invoke AI deep review (Full and Audit modes).</objective>
     <step sequence="4.1">
-      <branch condition="mode is Audit or Report">Skip this phase entirely.</branch>
+      <branch condition="mode is Trace or Report">Skip this phase entirely.</branch>
     </step>
     <step sequence="4.2">
+      Run deterministic prompt linter:
+      <script>python3 ${CLAUDE_PLUGIN_ROOT}/scripts/prompt_linter.py --skill-path &lt;skill_path&gt; --session-dir &lt;session_dir&gt;</script>
+      Runs in order: (1) AskUserQuestion completeness, (2) dead collection,
+      (3) agent definition/invocation consistency, (4) workflow integrity,
+      (5) reference integrity, (6) context reads in agent files.
+      Writes findings to &lt;session_dir&gt;/prompt_lint.json.
+    </step>
+    <step sequence="4.3">
+      Report lint summary to user: ERROR and WARN counts by category.
+      <branch condition="ERROR findings found">
+        Display all ERROR findings immediately with their recommendations.
+        Ask user whether to continue to AI review.
+        <interaction tool="AskUserQuestion">
+          <question>Prompt lint found ERROR-level issues. Continue to AI prompt review?</question>
+          <header>Prompt Lint Gate</header>
+          <options>["Yes, continue", "No, stop here"]</options>
+          <multiSelect>false</multiSelect>
+        </interaction>
+      </branch>
+    </step>
+    <step sequence="4.4">
+      Read agent instructions:
+      <context>
+        <read required="true">${CLAUDE_PLUGIN_ROOT}/agents/prompt_reviewer.md</read>
+      </context>
+      Invoke the prompt-reviewer agent, providing:
+      - prompt_lint.json (deterministic findings — primary grounding)
+      - Full SKILL.md content
+      - Content of all agent .md files found in agents/
+      - Content of all command .md files found in commands/ (if present)
+      Write output to &lt;session_dir&gt;/prompt_review.json.
+    </step>
+    <step sequence="4.5">
+      In Claude.ai (no subagents): Read agents/prompt_reviewer.md then apply the rubric
+      inline, using prompt_lint.json as grounding. Write results to prompt_review.json directly.
+    </step>
+    <gate>prompt_lint.json must be written before invoking the prompt-reviewer agent.</gate>
+  </phase>
+
+  <phase name="test-execution" sequence="5" depends-on="deterministic-scan">
+    <objective>Execute skill scripts with full I/O capture (Full and Trace modes only).</objective>
+    <step sequence="5.1">
+      <branch condition="mode is Audit or Report">Skip this phase entirely.</branch>
+    </step>
+    <step sequence="5.2">
       For each test prompt, execute the skill and capture all observable behavior:
       <script>python3 ${CLAUDE_PLUGIN_ROOT}/scripts/script_runner.py skill &lt;skill_path&gt; --prompt "&lt;test_prompt&gt;" --session-dir &lt;session_dir&gt; --capture-api</script>
       Records one entry per script invocation to script_runs.jsonl.
       Records one entry per API call to api_log.jsonl.
     </step>
-    <step sequence="4.3">
+    <step sequence="5.3">
       If the skill's scripts make no direct anthropic API calls, note "API trace: N/A —
       skill uses native Claude tool use" in the report.
     </step>
   </phase>
 
-  <phase name="security-audit" sequence="5" depends-on="deterministic-scan">
+  <phase name="security-audit" sequence="6" depends-on="deterministic-scan">
     <objective>AI security analysis with scan_results.json as grounding input (Full and Audit modes only).</objective>
-    <step sequence="5.1">
+    <step sequence="6.1">
       <branch condition="mode is Trace or Report">Skip this phase entirely.</branch>
     </step>
-    <step sequence="5.2">
+    <step sequence="6.2">
       Read agent instructions:
       <context>
         <read required="true">${CLAUDE_PLUGIN_ROOT}/agents/security_review.md</read>
@@ -221,19 +271,19 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
       - Sensitivity level from intake
       Write output to &lt;session_dir&gt;/security_report.json.
     </step>
-    <step sequence="5.3">
+    <step sequence="6.3">
       In Claude.ai (no subagents): Read agents/security_review.md then apply the agent's
       rubric inline, using scan_results.json as the primary input. Write results to
       security_report.json directly.
     </step>
   </phase>
 
-  <phase name="code-review" sequence="6" depends-on="deterministic-scan">
+  <phase name="code-review" sequence="7" depends-on="deterministic-scan">
     <objective>AI code quality review (Full and Audit modes only).</objective>
-    <step sequence="6.1">
+    <step sequence="7.1">
       <branch condition="mode is Trace or Report">Skip this phase entirely.</branch>
     </step>
-    <step sequence="6.2">
+    <step sequence="7.2">
       Read agent instructions:
       <context>
         <read required="true">${CLAUDE_PLUGIN_ROOT}/agents/code_review.md</read>
@@ -245,26 +295,28 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
       - anti_patterns.md reference
       Write output to &lt;session_dir&gt;/code_review.json.
     </step>
-    <step sequence="6.3">
+    <step sequence="7.3">
       In Claude.ai (no subagents): Read agents/code_review.md then apply the rubric inline.
       Write results to code_review.json directly.
     </step>
   </phase>
 
-  <phase name="report" sequence="7" depends-on="code-review">
+  <phase name="report" sequence="8" depends-on="code-review">
     <objective>Generate unified interactive HTML report from all session data.</objective>
-    <step sequence="7.1">
+    <step sequence="8.1">
       Generate report:
       <script>python3 ${CLAUDE_PLUGIN_ROOT}/scripts/report_gen.py --session-dir &lt;session_dir&gt; --output &lt;session_dir&gt;/report.html</script>
     </step>
-    <step sequence="7.2">
+    <step sequence="8.2">
       Present report.html to the user. Provide a plain-language summary covering:
       - Mode run and skill name
       - Script count and API-calling scripts
       - Deterministic scan findings (CRITICAL/HIGH counts from scan_results.json)
+      - Prompt lint result (PASS/WARN/FAIL + top ERRORs from prompt_lint.json)
+      - Prompt quality score (from prompt_review.json)
       - Security risk rating
       - Code quality score (overall)
-      - Top 3 recommendations
+      - Top 3 recommendations across all analysis layers
     </step>
   </phase>
 </workflow>
@@ -298,7 +350,7 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
     a gap — it is the expected behavior for native-tool skills.
   </rule>
   <rule id="B6" priority="high" scope="inventory">
-    SCRIPTS-ONLY SKILL HANDLING: If a skill has no scripts, skip test-execution (phase 4).
+    SCRIPTS-ONLY SKILL HANDLING: If a skill has no scripts, skip test-execution (phase 5).
     Still run deterministic-scan against SKILL.md structure. Still run a lightweight code
     review of the SKILL.md instructions themselves for quality and compliance.
   </rule>
@@ -306,6 +358,7 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
     INLINE MODE (Claude.ai): In Claude.ai there are no subagents. Adapt as follows:
     - Security audit: Read agents/security_review.md, then apply the rubric inline.
     - Code review: Read agents/code_review.md, then apply the rubric inline.
+    - Prompt review: Read agents/prompt_reviewer.md, then apply the rubric inline.
     - Script runner: Works normally via subprocess.
     - API trace: Works if skill scripts call anthropic.Anthropic() directly.
     Always note which adaptations were applied in the report summary.
@@ -328,11 +381,30 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
     security-review agent. Pass it as a parameter — do not silently ignore it.
     Strict: flag MEDIUM and above. Standard: flag HIGH and above. Lenient: CRITICAL only.
   </rule>
+  <rule id="B11" priority="critical" scope="prompt-lint">
+    PROMPT LINT FIRST: prompt_linter.py MUST complete before the prompt-reviewer agent
+    is invoked. The agent receives prompt_lint.json as its primary grounding. Claude
+    does not independently assess prompt quality from raw text alone — it supplements
+    deterministic findings with qualitative analysis.
+  </rule>
 </behavior>
 
 ---
 
 <agents>
+  <agent name="prompt-reviewer" ref="${CLAUDE_PLUGIN_ROOT}/agents/prompt_reviewer.md" model="claude-sonnet-4-6">
+    <purpose>Perform deep qualitative analysis of SKILL.md and agent instruction quality using prompt_lint.json as grounding. Evaluates clarity, completeness, consistency, tool-use correctness, and agent design.</purpose>
+    <invoked-by>Phase 4 (prompt-lint), step 4.4, after prompt_lint.json is written</invoked-by>
+    <inputs>
+      prompt_lint.json — deterministic linter findings (primary grounding input);
+      SKILL.md content — full text for qualitative analysis;
+      agent file contents — all .md files in agents/;
+      command file contents — all .md files in commands/ (if present)
+    </inputs>
+    <outputs>prompt_review.json per the schema defined in agents/prompt_reviewer.md</outputs>
+    <blocking>Non-blocking — review results flow into report generation regardless of score.</blocking>
+  </agent>
+
   <agent name="security-review" ref="${CLAUDE_PLUGIN_ROOT}/agents/security_review.md" model="claude-opus-4-5">
     <purpose>Analyze deterministic scan findings and raw scripts to produce a grounded security report with actionable recommendations.</purpose>
     <invoked-by>Phase 5 (security-audit), step 5.2, after scan_results.json is written</invoked-by>
@@ -363,6 +435,7 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
 ---
 
 <references>
+  <file path="${CLAUDE_PLUGIN_ROOT}/agents/prompt_reviewer.md" load-when="mode:full,mode:audit"/>
   <file path="${CLAUDE_PLUGIN_ROOT}/agents/security_review.md" load-when="mode:full,mode:audit"/>
   <file path="${CLAUDE_PLUGIN_ROOT}/agents/code_review.md" load-when="mode:full,mode:audit"/>
   <file path="${CLAUDE_PLUGIN_ROOT}/references/anti_patterns.md" load-when="mode:full,mode:audit,mode:trace"/>

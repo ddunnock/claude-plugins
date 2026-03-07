@@ -46,6 +46,8 @@ def load_session(session_dir: str) -> dict:
     return {
         "inventory": _load_json(base / "inventory.json"),
         "scan_results": _load_json(base / "scan_results.json"),
+        "prompt_lint": _load_json(base / "prompt_lint.json"),
+        "prompt_review": _load_json(base / "prompt_review.json"),
         "api_calls": _load_jsonl(base / "api_log.jsonl"),
         "script_runs": _load_jsonl(base / "script_runs.jsonl"),
         "security": _load_json(base / "security_report.json"),
@@ -72,6 +74,12 @@ SCORE_COLORS = [
     (5, "#d97706"),
     (0, "#dc2626"),
 ]
+
+PROMPT_SEVERITY_COLORS = {
+    "ERROR": "#dc2626",
+    "WARN": "#d97706",
+    "INFO": "#6b7280",
+}
 
 
 def _score_color(score: float) -> str:
@@ -321,6 +329,7 @@ def _build_scan_results_section(scan: Optional[dict]) -> str:
     return header + _table(["Severity", "Script", "Line", "Check", "Message"], rows)
 
 
+def _build_security_section(sec: Optional[dict]) -> str:
     if not sec:
         return "<p><em>No security report. Run audit mode to generate.</em></p>"
 
@@ -341,6 +350,75 @@ def _build_scan_results_section(scan: Optional[dict]) -> str:
         ])
 
     return _table(["Severity", "Script", "Line", "Category", "Description"], rows)
+
+
+def _build_prompt_lint_section(lint: Optional[dict]) -> str:
+    if not lint:
+        return "<p><em>No prompt lint data. Run full or audit mode to generate.</em></p>"
+
+    findings = lint.get("findings") or []
+    summary = lint.get("summary") or {}
+    overall = summary.get("overall", "UNKNOWN")
+    overall_color = {"PASS": "#16a34a", "WARN": "#d97706", "FAIL": "#dc2626"}.get(overall, "#6b7280")
+
+    by_sev = summary.get("by_severity") or {}
+    header = f"""<div style="display:flex;gap:1.5rem;align-items:center;margin-bottom:1rem">
+  <div>Overall: <span style="font-weight:700;color:{overall_color}">{_esc(overall)}</span></div>
+  <div style="font-size:.8rem">
+    {_badge(f"ERROR: {by_sev.get('ERROR', 0)}", '#dc2626')}
+    {_badge(f"WARN: {by_sev.get('WARN', 0)}", '#d97706')}
+    {_badge(f"INFO: {by_sev.get('INFO', 0)}", '#6b7280')}
+  </div>
+</div>"""
+
+    if not findings:
+        return header + '<p style="color:#16a34a">No prompt lint findings.</p>'
+
+    rows = []
+    for f in findings:
+        sev = f.get("severity", "INFO")
+        color = PROMPT_SEVERITY_COLORS.get(sev, "#6b7280")
+        rows.append([
+            _badge(sev, color),
+            f'<code>{_esc(f.get("file", "?"))}</code>',
+            str(f.get("line", "—")),
+            _esc(f.get("category", "?")),
+            _esc(f.get("message", "")[:120]),
+        ])
+
+    return header + _table(["Severity", "File", "Line", "Category", "Message"], rows)
+
+
+def _build_prompt_review_section(review: Optional[dict]) -> str:
+    if not review:
+        return "<p><em>No prompt review data. Run full or audit mode to generate.</em></p>"
+
+    score = review.get("prompt_score") or {}
+    overall = score.get("overall", "N/A")
+    color = _score_color(float(overall)) if isinstance(overall, (int, float)) else "#6b7280"
+
+    header = f'<div style="font-size:2rem;font-weight:700;color:{color};margin-bottom:1rem">{overall}/10</div>'
+
+    dims = ["clarity", "completeness", "consistency", "tool_use_correctness", "agent_design"]
+    dim_rows = [[_esc(d.replace("_", " ").title()), str(score.get(d, "?"))] for d in dims if d in score]
+    dim_table = _table(["Dimension", "Score (0-10)"], dim_rows) if dim_rows else ""
+
+    findings = review.get("findings") or []
+    finding_rows = []
+    for f in findings:
+        sev = f.get("severity", "INFO")
+        color = PROMPT_SEVERITY_COLORS.get(sev, "#6b7280")
+        finding_rows.append([
+            _badge(sev, color),
+            _esc(f.get("category", "?")),
+            _esc(f.get("issue", "")[:150]),
+        ])
+    finding_table = _table(["Severity", "Category", "Issue"], finding_rows) if finding_rows else ""
+
+    summary_text = review.get("summary") or ""
+    summary_html = f"<p style='margin-top:1rem;font-size:.875rem'>{_esc(summary_text)}</p>" if summary_text else ""
+
+    return header + dim_table + finding_table + summary_html
 
 
 def _build_code_review_section(cr: Optional[dict]) -> str:
@@ -380,7 +458,8 @@ def generate_report(session_dir: str, output_path: str):
         f'<a href="#{id}" style="color:#3b82f6;text-decoration:none">{label}</a>'
         for label, id in [
             ("Summary", "summary"), ("Inventory", "inventory"),
-            ("Scan", "scan-results"), ("API Trace", "api-trace"),
+            ("Scan", "scan-results"), ("Prompt Lint", "prompt-lint"),
+            ("Prompt Review", "prompt-review"), ("API Trace", "api-trace"),
             ("Script I/O", "script-io"), ("Security", "security"), ("Code Review", "code-review"),
         ]
     )
@@ -389,6 +468,8 @@ def generate_report(session_dir: str, output_path: str):
 {_build_summary_card(data)}
 {_section("📦 Skill Inventory", _build_inventory_section(data.get("inventory")), "inventory")}
 {_section("🔍 Deterministic Scan", _build_scan_results_section(data.get("scan_results")), "scan-results")}
+{_section("📝 Prompt Lint", _build_prompt_lint_section(data.get("prompt_lint")), "prompt-lint")}
+{_section("🧠 Prompt Review", _build_prompt_review_section(data.get("prompt_review")), "prompt-review")}
 {_section("🔌 API Call Trace", _build_api_trace_section(data.get("api_calls") or []), "api-trace")}
 {_section("⚙️ Script I/O Capture", _build_script_runs_section(data.get("script_runs") or []), "script-io")}
 {_section("🔐 Security Audit", _build_security_section(data.get("security")), "security")}

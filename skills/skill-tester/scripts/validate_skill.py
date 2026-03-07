@@ -64,7 +64,7 @@ ANTI_PATTERNS = [
 
 REQUIRED_STRUCTURAL = [
     ("SKILL.md", "SKILL.md file present"),
-    ("plugin.json", "plugin.json manifest present"),
+    (".claude-plugin/plugin.json", "plugin.json manifest present"),
     ("SECURITY.md", "SECURITY.md documentation present"),
 ]
 
@@ -81,6 +81,12 @@ SKILL_MD_SECTIONS = [
 # ---------------------------------------------------------------------------
 
 _finding_counter = 0
+
+
+def _reset_counter() -> None:
+    """Reset the finding counter. Used by tests for deterministic IDs."""
+    global _finding_counter
+    _finding_counter = 0
 
 
 def _finding(
@@ -211,7 +217,9 @@ def check_sast(skill_root: Path) -> list:
     # Semgrep
     semgrep_available = shutil.which("semgrep") is not None
     if semgrep_available:
-        tmp_out = tempfile.mktemp(suffix=".json")
+        tmp_fd = tempfile.NamedTemporaryFile(suffix=".json", delete=False)
+        tmp_out = tmp_fd.name
+        tmp_fd.close()
         rc, stdout, stderr = _run_tool(
             ["semgrep", "--config=auto", "scripts/", "--json", "-o", tmp_out],
             cwd=str(skill_root),

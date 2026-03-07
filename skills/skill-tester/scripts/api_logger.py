@@ -17,7 +17,6 @@ Usage (patch, from Python):
 """
 
 import argparse
-import ast
 import json
 import os
 import re

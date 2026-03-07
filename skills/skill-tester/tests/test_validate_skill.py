@@ -172,7 +172,7 @@ class TestStructuralValidation(unittest.TestCase):
                 "---\nname: test\nversion: 0.1.0\n---\n"
                 "<security/>\n<paths/>\n<workflow/>\n<behavior/>\n"
             ),
-            "plugin.json": '{"name": "test"}',
+            ".claude-plugin/plugin.json": '{"name": "test"}',
             "SECURITY.md": "# Security\n",
         })
         findings = check_structure(skill)

@@ -49,6 +49,8 @@ VALID_MODES = {"full", "audit", "trace", "report"}
 PLACEHOLDER_FILES = [
     "inventory.json",
     "scan_results.json",
+    "prompt_lint.json",
+    "prompt_review.json",
     "api_log.jsonl",
     "script_runs.jsonl",
     "security_report.json",
@@ -103,9 +105,12 @@ def validate_skill_path(skill_path: str) -> tuple[str, list[str], list[str]]:
     if not os.access(resolved, os.X_OK):
         warnings.append(f"Skill directory is not executable (may affect directory listing)")
 
-    # Check for system directories (defensive check)
-    system_dirs = {"/", "/bin", "/usr", "/etc", "/var", "/sys", "/proc", "/dev"}
-    if resolved in system_dirs or any(resolved.startswith(d + os.sep) for d in system_dirs):
+    # Check for system directories (defensive check — exact match only)
+    system_dirs = {"/", "/bin", "/usr", "/etc", "/var", "/sys", "/proc", "/dev",
+                   "/sbin", "/lib", "/boot", "/root"}
+    system_dirs_resolved = {os.path.realpath(d) for d in system_dirs if os.path.exists(d)}
+    all_system_dirs = system_dirs | system_dirs_resolved
+    if resolved in all_system_dirs:
         errors.append(f"Refusing to test system directory: {resolved}")
 
     return resolved, errors, warnings
