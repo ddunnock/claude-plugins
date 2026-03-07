@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://system-dev.local/schemas/view.json",
+  "title": "Assembled View Output",
+  "description": "Structured output from view assembly with slot sections and gap indicators.",
+  "type": "object",
+  "required": ["spec_name", "format_version", "assembled_at", "snapshot_id", "total_slots", "total_gaps", "gap_summary", "sections", "gaps", "edges", "metadata"],
+  "properties": {
+    "spec_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "format_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$",
+      "description": "Schema format version for future evolution (e.g., '1.0')"
+    },
+    "assembled_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "snapshot_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "total_slots": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "total_gaps": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "gap_summary": {
+      "type": "object",
+      "required": ["info", "warning", "error"],
+      "properties": {
+        "info": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "warning": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "error": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["slot_type", "slots"],
+        "properties": {
+          "slot_type": {
+            "type": "string"
+          },
+          "slots": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["slot_id", "slot_type", "name", "version"],
+              "properties": {
+                "slot_id": { "type": "string", "minLength": 1 },
+                "slot_type": { "type": "string", "minLength": 1 },
+                "name": { "type": "string", "minLength": 1 },
+                "version": { "type": "integer", "minimum": 1 }
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["scope_pattern", "slot_type", "severity", "reason", "suggestion"],
+        "properties": {
+          "scope_pattern": {
+            "type": "string"
+          },
+          "slot_type": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["info", "warning", "error"]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "suggestion": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source_id", "target_id", "relationship_type"],
+        "properties": {
+          "source_id": {"type": "string", "minLength": 1},
+          "target_id": {"type": "string", "minLength": 1},
+          "relationship_type": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["elapsed_ms", "ranking_method", "section_counts"],
+      "properties": {
+        "elapsed_ms": {"type": "number", "minimum": 0},
+        "ranking_method": {"type": "string"},
+        "section_counts": {
+          "type": "object",
+          "additionalProperties": {"type": "integer", "minimum": 0}
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://system-dev.local/schemas/requirement-ref.json",
+  "title": "Requirement Reference Slot",
+  "type": "object",
+  "required": ["slot_id", "slot_type", "name", "version", "created_at", "updated_at"],
+  "properties": {
+    "slot_id": {
+      "type": "string",
+      "pattern": "^rref-[a-f0-9-]+$"
+    },
+    "slot_type": {
+      "const": "requirement-ref"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "description": {
+      "type": "string"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "upstream_id": {
+      "type": "string"
+    },
+    "upstream_source": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "priority": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["proposed", "approved", "rejected", "modified", "deprecated"]
+    },
+    "trace_links": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "extensions": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}

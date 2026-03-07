@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "description": "Default V&V method assignments per obligation type, following INCOSE V&V methodology.",
+  "default_methods": {
+    "data_processing": "test",
+    "state_management": "test",
+    "error_handling": "test",
+    "interface_protocol": "demonstration",
+    "configuration": "inspection",
+    "logging": "inspection",
+    "algorithmic": "analysis",
+    "performance": "analysis"
+  },
+  "override_policy": "ai_with_rationale",
+  "valid_methods": ["test", "analysis", "inspection", "demonstration"]
+}

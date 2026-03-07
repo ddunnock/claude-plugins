@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://system-dev.local/schemas/view-spec.json",
+  "title": "View Specification",
+  "description": "Declarative specification for assembling a contextual view from registry slots.",
+  "type": "object",
+  "required": ["name", "description", "scope_patterns"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "description": {
+      "type": "string"
+    },
+    "scope_patterns": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["pattern", "slot_type"],
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "minLength": 1
+          },
+          "slot_type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "parameters": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "ranking": {
+      "type": "string",
+      "enum": ["density", "alphabetical", "none"],
+      "description": "Ranking method for slots. Default is density if omitted."
+    }
+  },
+  "additionalProperties": false
+}

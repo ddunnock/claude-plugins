@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://system-dev.local/schemas/impact-analysis.json",
+  "title": "Impact Analysis Slot",
+  "type": "object",
+  "required": ["slot_id", "slot_type", "version", "created_at", "updated_at"],
+  "properties": {
+    "slot_id": {
+      "type": "string",
+      "pattern": "^impact-.+$"
+    },
+    "slot_type": {
+      "const": "impact-analysis"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_element": {
+      "type": "string"
+    },
+    "direction": {
+      "type": "string",
+      "enum": ["forward", "backward", "both"]
+    },
+    "depth_limit": {
+      "type": ["integer", "null"]
+    },
+    "type_filter": {
+      "type": ["array", "null"],
+      "items": { "type": "string" }
+    },
+    "paths": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "element_id": { "type": "string" },
+          "element_type": { "type": "string" },
+          "element_name": { "type": "string" },
+          "depth": { "type": "integer" },
+          "relationship": { "type": "string" },
+          "children": { "type": "array" }
+        }
+      }
+    },
+    "affected_count": {
+      "type": "integer"
+    },
+    "uncertainty_markers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "element_id": { "type": "string" },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "graph_coverage_percent": {
+      "type": "number"
+    },
+    "gap_markers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "finding_ref", "severity", "description"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["missing_data", "schema_mismatch", "known_bug", "missing_trace_field", "broken_reference"]
+          },
+          "finding_ref": { "type": "string" },
+          "severity": {
+            "type": "string",
+            "enum": ["low", "medium", "high"]
+          },
+          "description": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "extensions": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}

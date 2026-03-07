@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://system-dev.local/schemas/traceability-graph.json",
+  "title": "Traceability Graph Slot",
+  "type": "object",
+  "required": ["slot_id", "slot_type", "version", "created_at", "updated_at"],
+  "properties": {
+    "slot_id": {
+      "type": "string",
+      "pattern": "^tgraph-.+$"
+    },
+    "slot_type": {
+      "const": "traceability-graph"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "built_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "nodes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string" },
+          "name": { "type": "string" }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from_id", "to_id", "edge_type"],
+        "properties": {
+          "from_id": { "type": "string" },
+          "to_id": { "type": "string" },
+          "edge_type": { "type": "string" },
+          "source": { "type": "string" }
+        }
+      }
+    },
+    "completeness": {
+      "type": "object",
+      "properties": {
+        "total_chains": { "type": "integer" },
+        "complete_chains": { "type": "integer" },
+        "percentage": { "type": "number" },
+        "broken_chains": { "type": "integer" },
+        "orphan_count": { "type": "integer" }
+      }
+    },
+    "chain_report": {
+      "type": "object",
+      "properties": {
+        "chains": { "type": "array" },
+        "gaps": { "type": "array" },
+        "divergences": { "type": "array" }
+      }
+    },
+    "staleness_marker": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "gap_markers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "finding_ref", "severity", "description"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["missing_data", "schema_mismatch", "known_bug", "missing_trace_field", "broken_reference"]
+          },
+          "finding_ref": { "type": "string" },
+          "severity": {
+            "type": "string",
+            "enum": ["low", "medium", "high"]
+          },
+          "description": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "extensions": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}
