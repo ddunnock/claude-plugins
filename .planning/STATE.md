@@ -3,12 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Views & Diagrams
 status: in-progress
-last_updated: "2026-03-03T23:12:54Z"
+stopped_at: Completed 07-01-PLAN.md (ranking, determinism, performance)
+last_updated: "2026-03-07T16:24:00Z"
+last_activity: 2026-03-07 — Completed 07-01 (ranking, determinism, performance instrumentation)
 progress:
-  total_phases: 2
-  completed_phases: 1
-  total_plans: 5
-  completed_plans: 5
+  total_phases: 5
+  completed_phases: 2
+  total_plans: 7
+  completed_plans: 6
+  percent: 86
 ---
 
 # Project State
@@ -18,22 +21,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-02)
 
 **Core value:** Design decisions captured as explicit, reviewable, traceable records in a Design Registry
-**Current focus:** Phase 6b — View Integration Fix
+**Current focus:** Phase 7 — View Quality & Handoff
 
 ## Current Position
 
-Phase: 6b of 9 (View Integration Fix) — gap closure from v1.1 audit
-Plan: 2 of 2 complete
-Status: Complete
-Last activity: 2026-03-03 — Completed 06b-02 (schema tightening, format_version, unlinked docs)
+Phase: 7 of 9 (View Quality & Handoff)
+Plan: 1 of 2 complete
+Status: In Progress
+Last activity: 2026-03-07 — Completed 07-01 (ranking, determinism, performance instrumentation)
 
-Progress: [███████░░░] 70% (Phase 6+6b complete, 7-9 pending)
+Progress: [█████████░] 86% (Phase 6+6b+7p1 complete, 7p2+8+9 pending)
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 13 (v1.0)
-- v1.1 plans completed: 5
+- v1.1 plans completed: 6
 
 **By Phase (v1.1):**
 
@@ -41,7 +44,7 @@ Progress: [███████░░░] 70% (Phase 6+6b complete, 7-9 pending
 |-------|-------|-------|----------|
 | 6. View Assembly Core | 3/3 | 11min | 3.7min |
 | 6b. View Integration Fix | 2/2 | 3min | 1.5min |
-| 7. View Quality & Handoff | 0/TBD | - | - |
+| 7. View Quality & Handoff | 1/2 | 4min | 4min |
 | 8. Diagram Generation Core | 0/TBD | - | - |
 | 9. Diagram Templates & Quality | 0/TBD | - | - |
 
@@ -64,6 +67,10 @@ All v1.0 decisions documented in PROJECT.md Key Decisions table with outcomes.
 - (06b-01) view-specs/ added to registry_dirs list alongside registry/ subdirs
 - (06b-02) format_version "1.0" string with X.Y pattern for schema evolution
 - (06b-02) No additionalProperties:false on slot items -- varying domain fields allowed
+- (07-01) SHA-256 truncated to 16 hex chars for content-hash snapshot_id
+- (07-01) Density scores computed from full snapshot, not just matched view slots
+- (07-01) Ranking tiebreak: density desc, version desc, name asc
+- (07-01) Edges array as empty placeholder for Plan 02; metadata always populated
 
 ### Pending Todos
 
@@ -76,6 +83,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-03
-Stopped at: Completed 06b-02-PLAN.md (schema tightening, format_version, unlinked docs)
+Last session: 2026-03-07
+Stopped at: Completed 07-01-PLAN.md (ranking, determinism, performance instrumentation)
 Resume file: None
