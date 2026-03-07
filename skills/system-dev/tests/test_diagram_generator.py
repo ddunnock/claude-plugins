@@ -2,6 +2,8 @@
 
 import json
 import os
+import random
+import tempfile
 
 import jsonschema
 import pytest
@@ -965,3 +967,277 @@ class TestGenerateDiagramOrchestration:
         with open(schema_path) as f:
             diagram_schema = json.load(f)
         jsonschema.validate(slot, diagram_schema)
+
+
+# ===========================================================================
+# Phase 09-01: Template loading tests
+# ===========================================================================
+
+class TestTemplateLoading:
+    """Test _load_template() template resolution from manifest."""
+
+    def test_load_template_d2_structural(self):
+        from scripts.diagram_generator import _load_template
+        template = _load_template(None, "d2", "structural")
+        assert template is not None
+
+    def test_load_template_mermaid_behavioral(self):
+        from scripts.diagram_generator import _load_template
+        template = _load_template(None, "mermaid", "behavioral")
+        assert template is not None
+
+    def test_load_template_explicit_name(self):
+        from scripts.diagram_generator import _load_template
+        template = _load_template("d2-structural", "d2", "structural")
+        assert template is not None
+
+    def test_load_template_user_override(self):
+        from scripts.diagram_generator import _load_template
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create user override template
+            tpl_dir = os.path.join(tmpdir, "templates")
+            os.makedirs(tpl_dir)
+            override_content = "# OVERRIDE {{ spec_name }}"
+            with open(os.path.join(tpl_dir, "d2-structural.j2"), "w") as f:
+                f.write(override_content)
+
+            template = _load_template(None, "d2", "structural", workspace_root=tmpdir)
+            rendered = template.render(spec_name="test")
+            assert "OVERRIDE" in rendered
+
+    def test_load_template_missing_raises(self):
+        from scripts.diagram_generator import _load_template
+        with pytest.raises(ValueError, match="No template found"):
+            _load_template("nonexistent-template", "svg", "unknown")
+
+
+# ===========================================================================
+# Phase 09-01: Determinism tests (DIAG-08)
+# ===========================================================================
+
+class TestDeterminism:
+    """Test deterministic output from diagram generators."""
+
+    def test_determinism_d2(self):
+        from scripts.diagram_generator import generate_d2
+        view = _make_view()
+        out1 = generate_d2(view)
+        out2 = generate_d2(view)
+        assert out1 == out2
+
+    def test_determinism_mermaid(self):
+        from scripts.diagram_generator import generate_mermaid
+        view = _make_view()
+        out1 = generate_mermaid(view)
+        out2 = generate_mermaid(view)
+        assert out1 == out2
+
+    def test_determinism_with_shuffled_input(self):
+        """Build view with edges/slots in random order, verify identical output."""
+        from scripts.diagram_generator import generate_d2, generate_mermaid
+
+        slots = [
+            {"slot_id": f"comp-{c}", "slot_type": "component",
+             "name": f"Component {c}", "version": 1}
+            for c in ["charlie", "alpha", "bravo"]
+        ]
+        edges = [
+            {"source_id": "comp-charlie", "target_id": "comp-alpha",
+             "relationship_type": "uses"},
+            {"source_id": "comp-alpha", "target_id": "comp-bravo",
+             "relationship_type": "calls"},
+            {"source_id": "comp-bravo", "target_id": "comp-charlie",
+             "relationship_type": "depends"},
+        ]
+
+        # Shuffle multiple times and verify identical output
+        outputs_d2 = set()
+        outputs_mermaid = set()
+        for _ in range(5):
+            shuffled_slots = list(slots)
+            shuffled_edges = list(edges)
+            random.shuffle(shuffled_slots)
+            random.shuffle(shuffled_edges)
+            view = _make_view(
+                sections=[{"slot_type": "component", "slots": shuffled_slots}],
+                edges=shuffled_edges,
+            )
+            outputs_d2.add(generate_d2(view))
+            outputs_mermaid.add(generate_mermaid(view))
+
+        assert len(outputs_d2) == 1, "D2 output should be identical regardless of input order"
+        assert len(outputs_mermaid) == 1, "Mermaid output should be identical regardless of input order"
+
+
+# ===========================================================================
+# Phase 09-01: Template context tests
+# ===========================================================================
+
+class TestBuildTemplateContext:
+    """Test _build_template_context() sorting and convenience vars."""
+
+    def test_sorts_sections_by_slot_type(self):
+        from scripts.diagram_generator import _build_template_context
+        view = _make_view(sections=[
+            {"slot_type": "interface", "slots": [
+                {"slot_id": "intf-a", "name": "A", "version": 1}
+            ]},
+            {"slot_type": "component", "slots": [
+                {"slot_id": "comp-a", "name": "A", "version": 1}
+            ]},
+        ])
+        ctx = _build_template_context(view)
+        types = [s["slot_type"] for s in ctx["sections"]]
+        assert types == sorted(types)
+
+    def test_sorts_edges(self):
+        from scripts.diagram_generator import _build_template_context
+        view = _make_view(edges=[
+            {"source_id": "z", "target_id": "a", "relationship_type": "r1"},
+            {"source_id": "a", "target_id": "b", "relationship_type": "r2"},
+        ])
+        ctx = _build_template_context(view)
+        assert ctx["edges"][0]["source_id"] == "a"
+        assert ctx["edges"][1]["source_id"] == "z"
+
+    def test_sorts_gaps(self):
+        from scripts.diagram_generator import _build_template_context
+        view = _make_view(gaps=[
+            {"scope_pattern": "*", "slot_type": "interface", "severity": "warning",
+             "reason": "gap1"},
+            {"scope_pattern": "*", "slot_type": "component", "severity": "error",
+             "reason": "gap2"},
+        ])
+        ctx = _build_template_context(view)
+        assert ctx["gaps"][0]["slot_type"] == "component"
+        assert ctx["gaps"][1]["slot_type"] == "interface"
+
+
+# ===========================================================================
+# Phase 09-01: Schema tests for new fields
+# ===========================================================================
+
+class TestSchemaNewFields:
+    """Test schema updates for new fields added in 09-01."""
+
+    def _load_view_spec_schema(self) -> dict:
+        schema_path = os.path.join(
+            os.path.dirname(__file__), os.pardir, "schemas", "view-spec.json"
+        )
+        with open(schema_path) as f:
+            return json.load(f)
+
+    def test_diagram_schema_accepts_elapsed_ms(self):
+        schema = _load_schema()
+        slot = _make_diagram_slot(generation_elapsed_ms=42.5)
+        jsonschema.validate(slot, schema)  # should not raise
+
+    def test_view_spec_schema_accepts_abstraction_level(self):
+        schema = self._load_view_spec_schema()
+        spec = {
+            "name": "test",
+            "description": "test",
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+            "abstraction_level": "system",
+        }
+        jsonschema.validate(spec, schema)
+
+    def test_view_spec_schema_accepts_diagram_template(self):
+        schema = self._load_view_spec_schema()
+        spec = {
+            "name": "test",
+            "description": "test",
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+            "diagram_template": "d2-structural",
+        }
+        jsonschema.validate(spec, schema)
+
+
+# ===========================================================================
+# Phase 09-01: Migration parity test
+# ===========================================================================
+
+class TestMigrationParity:
+    """Verify template output structurally matches expectations."""
+
+    def test_template_output_matches_legacy(self):
+        """Build representative view and verify template output structure."""
+        from scripts.diagram_generator import generate_d2, generate_mermaid
+
+        view = _make_view(
+            sections=[
+                {
+                    "slot_type": "component",
+                    "slots": [
+                        {"slot_id": "comp-auth", "slot_type": "component",
+                         "name": "Auth Service", "version": 1},
+                        {"slot_id": "comp-db", "slot_type": "component",
+                         "name": "Database", "version": 1},
+                    ],
+                },
+                {
+                    "slot_type": "interface",
+                    "slots": [
+                        {"slot_id": "intf-api", "slot_type": "interface",
+                         "name": "REST API", "version": 1},
+                    ],
+                },
+                {
+                    "slot_type": "unlinked",
+                    "slots": [
+                        {"slot_id": "intf-orphan", "slot_type": "interface",
+                         "name": "Orphan", "version": 1},
+                    ],
+                },
+            ],
+            edges=[
+                {"source_id": "comp-auth", "target_id": "intf-api",
+                 "relationship_type": "component_interface"},
+                {"source_id": "comp-db", "target_id": "comp-auth",
+                 "relationship_type": "dependency"},
+            ],
+            gaps=[
+                {"scope_pattern": "contract:*", "slot_type": "contract",
+                 "severity": "warning", "reason": "No contracts",
+                 "suggestion": "Add contracts."},
+                {"scope_pattern": "requirement:*", "slot_type": "requirement",
+                 "severity": "error", "reason": "Missing reqs",
+                 "suggestion": "Define requirements."},
+            ],
+        )
+
+        # D2 structural checks
+        d2 = generate_d2(view)
+        assert "# Diagram: system-overview (structural)" in d2
+        assert "# Components" in d2
+        assert 'comp_auth: "Auth Service"' in d2
+        assert 'comp_db: "Database"' in d2
+        assert "shape: rectangle" in d2
+        assert "# Interfaces" in d2
+        assert 'intf_api: "REST API"' in d2
+        assert 'Unlinked: "Unlinked"' in d2
+        assert "# Connections" in d2
+        assert "comp_auth -> intf_api: component_interface" in d2
+        assert "# Gap placeholders" in d2
+        assert "[GAP] contract: No contracts" in d2
+        assert "[GAP] requirement: Missing reqs" in d2
+        assert "stroke-dash: 5" in d2
+        assert "#e6a117" in d2  # warning color
+        assert "#dc3545" in d2  # error color
+
+        # Mermaid behavioral checks
+        mermaid = generate_mermaid(view)
+        assert "%% Diagram: system-overview (behavioral)" in mermaid
+        assert "graph" in mermaid
+        assert "%% Nodes" in mermaid
+        assert 'comp_auth["Auth Service"]' in mermaid
+        assert 'comp_db["Database"]' in mermaid
+        assert 'intf_api["REST API"]' in mermaid
+        assert ':::unlinked' in mermaid
+        assert "%% Edges" in mermaid
+        assert "-->|component_interface|" in mermaid
+        assert "%% Gap placeholders" in mermaid
+        assert "classDef gapWarning" in mermaid
+        assert "classDef gapError" in mermaid
+        assert "stroke-dasharray: 5 5" in mermaid
+        assert "classDef unlinked" in mermaid

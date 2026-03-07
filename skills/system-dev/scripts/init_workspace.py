@@ -79,6 +79,7 @@ def init_workspace(project_root: str) -> dict:
         "registry/traceability-links",
         "registry/component-proposals",
         "view-specs",  # User-authored view specifications
+        "templates",  # User-authored template overrides (.j2 files)
     ]
 
     created_paths = []

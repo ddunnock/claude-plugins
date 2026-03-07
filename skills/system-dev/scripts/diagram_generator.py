@@ -217,6 +217,21 @@ def _load_template(
             f"diagram_type={diagram_type}, name={template_name}"
         )
 
+    # Verify the resolved file actually exists somewhere
+    builtin_path = os.path.join(_BUILTIN_TEMPLATES_DIR, template_file)
+    user_path = (
+        os.path.join(workspace_root, "templates", template_file)
+        if workspace_root
+        else None
+    )
+    if not os.path.isfile(builtin_path) and (
+        user_path is None or not os.path.isfile(user_path)
+    ):
+        raise ValueError(
+            f"No template found for format={fmt}, "
+            f"diagram_type={diagram_type}, name={template_name}"
+        )
+
     # Resolve template path: user override first, then built-in
     template_dir = _BUILTIN_TEMPLATES_DIR
     if workspace_root is not None:

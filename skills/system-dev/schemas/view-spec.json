@@ -54,6 +54,16 @@
       "type": "string",
       "enum": ["structural", "behavioral"],
       "description": "Hint for diagram format: structural -> D2, behavioral -> Mermaid"
+    },
+    "abstraction_level": {
+      "type": "string",
+      "enum": ["system", "component"],
+      "description": "Abstraction level for diagram rendering. system=collapsed, component=expanded."
+    },
+    "diagram_template": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Explicit template name to use for diagram generation, overriding auto-selection."
     }
   },
   "additionalProperties": false
