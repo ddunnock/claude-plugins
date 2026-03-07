@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Views & Diagrams
 status: in-progress
-stopped_at: Completed 08-01 (diagram schema, D2/Mermaid engines)
-last_updated: "2026-03-07T18:10:39Z"
-last_activity: 2026-03-07 — Completed 08-01 (diagram schema, D2/Mermaid generation engines)
+stopped_at: Completed 08-02 (diagram orchestration layer, command spec)
+last_updated: "2026-03-07T18:16:53Z"
+last_activity: 2026-03-07 — Completed 08-02 (diagram orchestration, diagram_hint, /system-dev:diagram command)
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 9
-  completed_plans: 8
-  percent: 89
+  completed_plans: 9
+  percent: 100
 ---
 
 # Project State
@@ -21,22 +21,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-02)
 
 **Core value:** Design decisions captured as explicit, reviewable, traceable records in a Design Registry
-**Current focus:** Phase 8 — Diagram Generation Core
+**Current focus:** Phase 9 — Diagram Templates & Quality
 
 ## Current Position
 
-Phase: 8 of 9 (Diagram Generation Core)
-Plan: 1 of 2 complete
-Status: Phase 8 In Progress
-Last activity: 2026-03-07 — Completed 08-01 (diagram schema, D2/Mermaid generation engines)
+Phase: 8 of 9 (Diagram Generation Core) -- COMPLETE
+Plan: 2 of 2 complete
+Status: Phase 8 Complete, Phase 9 Pending
+Last activity: 2026-03-07 — Completed 08-02 (diagram orchestration, diagram_hint, /system-dev:diagram command)
 
-Progress: [████████░░] 89% (Phase 6+6b+7 complete, 8 in progress, 9 pending)
+Progress: [██████████] 100% (Phase 6+6b+7+8 complete, 9 pending)
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 13 (v1.0)
-- v1.1 plans completed: 8
+- v1.1 plans completed: 9
 
 **By Phase (v1.1):**
 
@@ -45,7 +45,7 @@ Progress: [████████░░] 89% (Phase 6+6b+7 complete, 8 in prog
 | 6. View Assembly Core | 3/3 | 11min | 3.7min |
 | 6b. View Integration Fix | 2/2 | 3min | 1.5min |
 | 7. View Quality & Handoff | 2/2 | 7min | 3.5min |
-| 8. Diagram Generation Core | 1/2 | 4min | 4min |
+| 8. Diagram Generation Core | 2/2 | 8min | 4min |
 | 9. Diagram Templates & Quality | 0/TBD | - | - |
 
 ## Accumulated Context
@@ -80,6 +80,10 @@ All v1.0 decisions documented in PROJECT.md Key Decisions table with outcomes.
 - (08-01) Mermaid direction auto-selects LR when edge count > 2x node count, otherwise TD
 - (08-01) Unlinked slots: D2 wraps in 'Unlinked' container, Mermaid uses classDef unlinked with lighter fill
 - (08-01) Gap nodes connect to first slot of matching section type via dashed connection
+- (08-02) Format resolution: format_override > spec.diagram_hint > ValueError
+- (08-02) Hint mapping: structural->D2, behavioral->Mermaid; literal d2/mermaid also accepted
+- (08-02) Diagrams are intentional artifacts from named specs only -- no ad-hoc pattern support
+- (08-02) gap-report has no diagram_hint (requires explicit --format)
 
 ### Pending Todos
 
