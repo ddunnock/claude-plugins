@@ -2,6 +2,7 @@
 
 import copy
 import json
+import logging
 import os
 
 import pytest
@@ -1278,3 +1279,305 @@ class TestPerformance:
 
         assert result["total_slots"] == 100
         assert elapsed_ms < 500, f"Assembly took {elapsed_ms:.1f}ms, exceeds 500ms target"
+
+
+# ---------------------------------------------------------------------------
+# Phase 7 Plan 02: Edge extraction, inline relationships, structured logging
+# ---------------------------------------------------------------------------
+
+
+class TestEdges:
+    """Tests for _extract_edges() and edge population in assemble_view()."""
+
+    @pytest.fixture
+    def edge_api(self, api):
+        """Create slots with various relationship types for edge tests."""
+        comp_a = api.create("component", {"name": "Component A"})
+        comp_b = api.create("component", {"name": "Component B"})
+        comp_c = api.create("component", {"name": "Component C"})
+
+        intf1 = api.create("interface", {
+            "name": "API Alpha",
+            "source_component": comp_a["slot_id"],
+            "target_component": comp_b["slot_id"],
+        })
+
+        cntr1 = api.create("contract", {
+            "name": "Contract Alpha",
+            "interface_id": intf1["slot_id"],
+        })
+
+        return {
+            "api": api,
+            "comp_a": comp_a["slot_id"],
+            "comp_b": comp_b["slot_id"],
+            "comp_c": comp_c["slot_id"],
+            "intf1": intf1["slot_id"],
+            "cntr1": cntr1["slot_id"],
+        }
+
+    def test_edges_from_interface_source_component(self, edge_api):
+        """Interface with source_component produces component_interface edge."""
+        api = edge_api["api"]
+        snapshot = capture_snapshot(api)
+        in_view = {edge_api["comp_a"], edge_api["intf1"]}
+        edges = _extract_edges(snapshot, in_view)
+        source_edges = [e for e in edges if e["source_id"] == edge_api["comp_a"] and e["target_id"] == edge_api["intf1"]]
+        assert len(source_edges) == 1
+        assert source_edges[0]["relationship_type"] == "component_interface"
+
+    def test_edges_from_interface_target_component(self, edge_api):
+        """Interface with target_component produces component_interface edge in correct direction."""
+        api = edge_api["api"]
+        snapshot = capture_snapshot(api)
+        in_view = {edge_api["comp_b"], edge_api["intf1"]}
+        edges = _extract_edges(snapshot, in_view)
+        target_edges = [e for e in edges if e["source_id"] == edge_api["intf1"] and e["target_id"] == edge_api["comp_b"]]
+        assert len(target_edges) == 1
+        assert target_edges[0]["relationship_type"] == "component_interface"
+
+    def test_edges_from_contract_interface(self, edge_api):
+        """Contract with interface_id produces interface_contract edge."""
+        api = edge_api["api"]
+        snapshot = capture_snapshot(api)
+        in_view = {edge_api["intf1"], edge_api["cntr1"]}
+        edges = _extract_edges(snapshot, in_view)
+        contract_edges = [e for e in edges if e["relationship_type"] == "interface_contract"]
+        assert len(contract_edges) == 1
+        assert contract_edges[0]["source_id"] == edge_api["intf1"]
+        assert contract_edges[0]["target_id"] == edge_api["cntr1"]
+
+    def test_edges_filtered_to_in_view_only(self, edge_api):
+        """Edges where one endpoint is outside the view are excluded."""
+        api = edge_api["api"]
+        snapshot = capture_snapshot(api)
+        # Only include comp_a -- intf1 is NOT in view, so no edges should appear
+        in_view = {edge_api["comp_a"]}
+        edges = _extract_edges(snapshot, in_view)
+        assert len(edges) == 0
+
+    def test_edges_sorted_deterministically(self, edge_api):
+        """Edges array is sorted by (source_id, target_id, relationship_type)."""
+        api = edge_api["api"]
+        snapshot = capture_snapshot(api)
+        all_ids = {edge_api["comp_a"], edge_api["comp_b"], edge_api["intf1"], edge_api["cntr1"]}
+        edges = _extract_edges(snapshot, all_ids)
+        for i in range(len(edges) - 1):
+            key_a = (edges[i]["source_id"], edges[i]["target_id"], edges[i]["relationship_type"])
+            key_b = (edges[i + 1]["source_id"], edges[i + 1]["target_id"], edges[i + 1]["relationship_type"])
+            assert key_a <= key_b
+
+    def test_edges_from_traceability_link(self):
+        """Traceability link produces edge with link_type as relationship_type."""
+        snapshot = {
+            "snapshot_id": "test",
+            "captured_at": "2026-01-01T00:00:00Z",
+            "slots_by_type": {
+                "component": [
+                    {"slot_id": "comp-1", "slot_type": "component", "name": "A", "version": 1},
+                    {"slot_id": "comp-2", "slot_type": "component", "name": "B", "version": 1},
+                ],
+                "traceability-link": [
+                    {
+                        "slot_id": "trace:link-1",
+                        "slot_type": "traceability-link",
+                        "name": "Link1",
+                        "version": 1,
+                        "from_id": "comp-1",
+                        "to_id": "comp-2",
+                        "link_type": "satisfies",
+                    },
+                ],
+            },
+        }
+        edges = _extract_edges(snapshot, {"comp-1", "comp-2"})
+        assert len(edges) == 1
+        assert edges[0]["source_id"] == "comp-1"
+        assert edges[0]["target_id"] == "comp-2"
+        assert edges[0]["relationship_type"] == "satisfies"
+
+    def test_no_duplicate_edges(self):
+        """Same relationship does not produce duplicate edge entries."""
+        snapshot = {
+            "snapshot_id": "test",
+            "captured_at": "2026-01-01T00:00:00Z",
+            "slots_by_type": {
+                "component": [
+                    {"slot_id": "comp-1", "slot_type": "component", "name": "A", "version": 1},
+                ],
+                "interface": [
+                    {
+                        "slot_id": "intf-1",
+                        "slot_type": "interface",
+                        "name": "API",
+                        "version": 1,
+                        "source_component": "comp-1",
+                        "target_component": "comp-1",
+                    },
+                ],
+            },
+        }
+        edges = _extract_edges(snapshot, {"comp-1", "intf-1"})
+        # comp-1 -> intf-1 (source) and intf-1 -> comp-1 (target) are different directions
+        keys = [(e["source_id"], e["target_id"], e["relationship_type"]) for e in edges]
+        assert len(keys) == len(set(keys)), "Duplicate edges found"
+
+
+class TestInlineRelationships:
+    """Tests for inline relationships field on slots in assembled views."""
+
+    @pytest.fixture
+    def rel_api(self, api):
+        """Create slots for inline relationship tests."""
+        comp_a = api.create("component", {"name": "Component A"})
+        comp_b = api.create("component", {"name": "Component B"})
+        intf1 = api.create("interface", {
+            "name": "API Alpha",
+            "source_component": comp_a["slot_id"],
+            "target_component": comp_b["slot_id"],
+        })
+        return {
+            "api": api,
+            "comp_a": comp_a["slot_id"],
+            "comp_b": comp_b["slot_id"],
+            "intf1": intf1["slot_id"],
+        }
+
+    def test_inline_relationships_on_slots(self, rel_api, workspace):
+        """Each slot has relationships list of connected in-view slot IDs."""
+        api = rel_api["api"]
+        spec = {
+            "name": "rel-test",
+            "description": "Relationship test",
+            "scope_patterns": [
+                {"pattern": "component:*", "slot_type": "component"},
+                {"pattern": "interface:*", "slot_type": "interface"},
+            ],
+        }
+        result = assemble_view(api, spec, workspace, SCHEMAS_DIR)
+        for section in result["sections"]:
+            for slot in section["slots"]:
+                assert "relationships" in slot, f"Slot {slot['slot_id']} missing relationships"
+                assert isinstance(slot["relationships"], list)
+
+    def test_inline_relationships_deduplicated(self, rel_api, workspace):
+        """Relationships list has no duplicates and is sorted."""
+        api = rel_api["api"]
+        spec = {
+            "name": "dedup-test",
+            "description": "Dedup test",
+            "scope_patterns": [
+                {"pattern": "component:*", "slot_type": "component"},
+                {"pattern": "interface:*", "slot_type": "interface"},
+            ],
+        }
+        result = assemble_view(api, spec, workspace, SCHEMAS_DIR)
+        for section in result["sections"]:
+            for slot in section["slots"]:
+                rels = slot["relationships"]
+                assert rels == sorted(set(rels)), f"Relationships not deduplicated/sorted: {rels}"
+
+
+class TestStructuredLogging:
+    """Tests for structured logging in assemble_view() and capture_snapshot()."""
+
+    @pytest.fixture
+    def log_api(self, api):
+        """Create minimal slots for logging tests."""
+        api.create("component", {"name": "Log Test Component"})
+        return api
+
+    def test_logging_info_snapshot_capture(self, log_api, caplog):
+        """INFO log for snapshot capture includes view.operation and view.elapsed_ms."""
+        with caplog.at_level(logging.INFO, logger="scripts.view_assembler"):
+            capture_snapshot(log_api)
+        snap_records = [r for r in caplog.records if getattr(r, "view.operation", None) == "snapshot_capture"]
+        assert len(snap_records) >= 1
+        rec = snap_records[0]
+        assert hasattr(rec, "view.elapsed_ms")
+        assert getattr(rec, "view.elapsed_ms") >= 0
+
+    def test_logging_info_assembly_complete(self, log_api, workspace, caplog):
+        """INFO log for assembly complete includes view.total_slots, view.total_gaps, view.edge_count."""
+        spec = {
+            "name": "log-test",
+            "description": "Logging test",
+            "scope_patterns": [
+                {"pattern": "component:*", "slot_type": "component"},
+            ],
+        }
+        with caplog.at_level(logging.INFO, logger="scripts.view_assembler"):
+            assemble_view(log_api, spec, workspace, SCHEMAS_DIR)
+        complete_records = [r for r in caplog.records if getattr(r, "view.operation", None) == "assembly_complete"]
+        assert len(complete_records) >= 1
+        rec = complete_records[0]
+        assert hasattr(rec, "view.total_slots")
+        assert hasattr(rec, "view.total_gaps")
+        assert hasattr(rec, "view.edge_count")
+
+    def test_logging_debug_density_score(self, log_api, workspace, caplog):
+        """DEBUG log for density scores includes view.slot_id and view.score."""
+        spec = {
+            "name": "debug-log-test",
+            "description": "Debug logging test",
+            "scope_patterns": [
+                {"pattern": "component:*", "slot_type": "component"},
+            ],
+        }
+        with caplog.at_level(logging.DEBUG, logger="scripts.view_assembler"):
+            assemble_view(log_api, spec, workspace, SCHEMAS_DIR)
+        score_records = [r for r in caplog.records if getattr(r, "view.operation", None) == "density_score"]
+        assert len(score_records) >= 1
+        rec = score_records[0]
+        assert hasattr(rec, "view.slot_id")
+        assert hasattr(rec, "view.score")
+
+    def test_logging_namespaced_fields(self, log_api, workspace, caplog):
+        """All log extra fields use view.* prefix."""
+        spec = {
+            "name": "ns-test",
+            "description": "Namespace test",
+            "scope_patterns": [
+                {"pattern": "component:*", "slot_type": "component"},
+            ],
+        }
+        with caplog.at_level(logging.DEBUG, logger="scripts.view_assembler"):
+            assemble_view(log_api, spec, workspace, SCHEMAS_DIR)
+        # Check that all custom extra fields start with "view."
+        for rec in caplog.records:
+            if rec.name == "scripts.view_assembler":
+                extra_keys = [k for k in rec.__dict__ if k.startswith("view.")]
+                # If a record has view.* fields, verify no non-view.* custom fields
+                if extra_keys:
+                    # Standard LogRecord fields to exclude
+                    standard = {
+                        "name", "msg", "args", "created", "relativeCreated",
+                        "thread", "threadName", "msecs", "filename", "funcName",
+                        "levelno", "lineno", "module", "exc_info", "exc_text",
+                        "stack_info", "levelname", "message", "pathname",
+                        "process", "processName", "taskName",
+                    }
+                    custom_keys = [
+                        k for k in rec.__dict__
+                        if k not in standard and not k.startswith("_")
+                        and not k.startswith("view.")
+                    ]
+                    # No non-view.* custom fields
+                    assert all(
+                        k in standard or k.startswith("view.")
+                        for k in rec.__dict__
+                        if not k.startswith("_")
+                    ), f"Non-namespaced custom fields found: {custom_keys}"
+
+    def test_metadata_has_format_version(self, log_api, workspace):
+        """metadata section includes format_version reference in assembled output."""
+        spec = {
+            "name": "meta-fv-test",
+            "description": "Format version in metadata test",
+            "scope_patterns": [
+                {"pattern": "component:*", "slot_type": "component"},
+            ],
+        }
+        result = assemble_view(log_api, spec, workspace, SCHEMAS_DIR)
+        assert "format_version" in result
+        assert result["format_version"] == "1.1"
