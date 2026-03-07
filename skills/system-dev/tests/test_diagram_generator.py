@@ -587,3 +587,381 @@ class TestDiagramHint:
     def test_gap_report_has_no_hint(self):
         from scripts.view_assembler import BUILTIN_SPECS
         assert "diagram_hint" not in BUILTIN_SPECS["gap-report"]
+
+
+# ===========================================================================
+# Task 2 (08-02g): generate_diagram() orchestration integration tests
+# ===========================================================================
+
+def _setup_workspace(tmp_path):
+    """Create a minimal workspace with registry dirs, schemas, and component slots."""
+    workspace = tmp_path / ".system-dev"
+    workspace.mkdir()
+    registry = workspace / "registry"
+    registry.mkdir()
+
+    # Create all required registry subdirectories
+    for subdir in [
+        "components", "interfaces", "contracts", "diagram",
+        "requirement-refs", "needs", "requirements", "sources",
+        "assumptions", "traceability-links", "component-proposals",
+        "interface-proposals", "contract-proposals",
+        "traceability-graphs", "impact-analyses",
+    ]:
+        (registry / subdir).mkdir()
+
+    # Copy schemas dir
+    schemas_src = os.path.join(os.path.dirname(__file__), os.pardir, "schemas")
+    schemas_dir = str(tmp_path / "schemas")
+    import shutil
+    shutil.copytree(schemas_src, schemas_dir)
+
+    # Write an empty index
+    index_path = workspace / "index.json"
+    index_path.write_text(json.dumps({
+        "schema_version": "1.0.0",
+        "updated_at": "",
+        "slots": {},
+    }))
+
+    return str(workspace), schemas_dir
+
+
+def _create_component_slot(api, name="Auth Service", slot_id="comp-a0b1c2d3e4f5"):
+    """Ingest a minimal component slot."""
+    return api.ingest(
+        slot_id, "component",
+        {"name": name, "description": f"{name} component"},
+        agent_id="test",
+    )
+
+
+class TestGenerateDiagramOrchestration:
+    """Integration tests for generate_diagram() orchestration."""
+
+    def test_calls_assemble_view_and_returns_result(self, tmp_path):
+        from scripts.diagram_generator import generate_diagram
+        from scripts.registry import SlotAPI
+        workspace, schemas_dir = _setup_workspace(tmp_path)
+        api = SlotAPI(workspace, schemas_dir)
+        _create_component_slot(api)
+
+        spec = {
+            "name": "system-overview",
+            "description": "Test",
+            "diagram_hint": "structural",
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+        }
+        result = generate_diagram(api, spec, workspace, schemas_dir)
+        assert "source" in result
+        assert "slot_id" in result
+        assert "status" in result
+        assert len(result["source"]) > 0
+
+    def test_format_override_d2(self, tmp_path):
+        from scripts.diagram_generator import generate_diagram
+        from scripts.registry import SlotAPI
+        workspace, schemas_dir = _setup_workspace(tmp_path)
+        api = SlotAPI(workspace, schemas_dir)
+        _create_component_slot(api)
+
+        spec = {
+            "name": "test-spec",
+            "description": "Test",
+            "diagram_hint": "behavioral",  # hint says mermaid
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+        }
+        result = generate_diagram(api, spec, workspace, schemas_dir, format_override="d2")
+        assert result["format"] == "d2"
+        assert "# Diagram:" in result["source"]  # D2 comment style
+
+    def test_format_override_mermaid(self, tmp_path):
+        from scripts.diagram_generator import generate_diagram
+        from scripts.registry import SlotAPI
+        workspace, schemas_dir = _setup_workspace(tmp_path)
+        api = SlotAPI(workspace, schemas_dir)
+        _create_component_slot(api)
+
+        spec = {
+            "name": "test-spec",
+            "description": "Test",
+            "diagram_hint": "structural",  # hint says d2
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+        }
+        result = generate_diagram(api, spec, workspace, schemas_dir, format_override="mermaid")
+        assert result["format"] == "mermaid"
+        assert "%% Diagram:" in result["source"]  # Mermaid comment style
+
+    def test_structural_hint_resolves_to_d2(self, tmp_path):
+        from scripts.diagram_generator import generate_diagram
+        from scripts.registry import SlotAPI
+        workspace, schemas_dir = _setup_workspace(tmp_path)
+        api = SlotAPI(workspace, schemas_dir)
+        _create_component_slot(api)
+
+        spec = {
+            "name": "test-spec",
+            "description": "Test",
+            "diagram_hint": "structural",
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+        }
+        result = generate_diagram(api, spec, workspace, schemas_dir)
+        assert result["format"] == "d2"
+        assert result["diagram_type"] == "structural"
+
+    def test_behavioral_hint_resolves_to_mermaid(self, tmp_path):
+        from scripts.diagram_generator import generate_diagram
+        from scripts.registry import SlotAPI
+        workspace, schemas_dir = _setup_workspace(tmp_path)
+        api = SlotAPI(workspace, schemas_dir)
+        _create_component_slot(api)
+
+        spec = {
+            "name": "test-spec",
+            "description": "Test",
+            "diagram_hint": "behavioral",
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+        }
+        result = generate_diagram(api, spec, workspace, schemas_dir)
+        assert result["format"] == "mermaid"
+        assert result["diagram_type"] == "behavioral"
+
+    def test_no_hint_no_override_raises_valueerror(self, tmp_path):
+        from scripts.diagram_generator import generate_diagram
+        from scripts.registry import SlotAPI
+        workspace, schemas_dir = _setup_workspace(tmp_path)
+        api = SlotAPI(workspace, schemas_dir)
+        _create_component_slot(api)
+
+        spec = {
+            "name": "gap-report",
+            "description": "Test",
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+        }
+        with pytest.raises(ValueError, match="No diagram_hint"):
+            generate_diagram(api, spec, workspace, schemas_dir)
+
+    def test_writes_diagram_slot_via_ingest(self, tmp_path):
+        from scripts.diagram_generator import generate_diagram
+        from scripts.registry import SlotAPI
+        workspace, schemas_dir = _setup_workspace(tmp_path)
+        api = SlotAPI(workspace, schemas_dir)
+        _create_component_slot(api)
+
+        spec = {
+            "name": "system-overview",
+            "description": "Test",
+            "diagram_hint": "structural",
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+        }
+        result = generate_diagram(api, spec, workspace, schemas_dir)
+        assert result["status"] in ("created", "updated")
+
+        # Verify slot was actually written
+        slot = api.read(result["slot_id"])
+        assert slot is not None
+        assert slot["slot_type"] == "diagram"
+
+    def test_content_hash_slot_id(self, tmp_path):
+        from scripts.diagram_generator import generate_diagram
+        from scripts.registry import SlotAPI
+        workspace, schemas_dir = _setup_workspace(tmp_path)
+        api = SlotAPI(workspace, schemas_dir)
+        _create_component_slot(api)
+
+        spec = {
+            "name": "system-overview",
+            "description": "Test",
+            "diagram_hint": "structural",
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+        }
+        result = generate_diagram(api, spec, workspace, schemas_dir)
+        assert result["slot_id"].startswith("diag-system-overview-")
+
+    def test_unchanged_when_slot_already_exists(self, tmp_path):
+        """When slot with same content-hash ID already exists, return unchanged.
+
+        Uses unittest.mock to patch api.read to return a non-None value
+        for the computed slot_id, triggering the early-return path.
+        """
+        from unittest.mock import patch
+        from scripts.diagram_generator import generate_diagram
+        from scripts.registry import SlotAPI
+        workspace, schemas_dir = _setup_workspace(tmp_path)
+        api = SlotAPI(workspace, schemas_dir)
+        _create_component_slot(api)
+
+        spec = {
+            "name": "system-overview",
+            "description": "Test",
+            "diagram_hint": "structural",
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+        }
+
+        # First call creates the slot normally
+        result1 = generate_diagram(api, spec, workspace, schemas_dir)
+        assert result1["status"] == "created"
+
+        # Patch api.read to always return a fake slot (simulating existing slot)
+        original_read = api.read
+        def patched_read(slot_id):
+            return {"slot_id": slot_id, "exists": True}
+        api.read = patched_read
+
+        try:
+            result2 = generate_diagram(api, spec, workspace, schemas_dir)
+            assert result2["status"] == "unchanged"
+        finally:
+            api.read = original_read
+
+    def test_only_diagram_type_slots_written_diag09(self, tmp_path):
+        from scripts.diagram_generator import generate_diagram
+        from scripts.registry import SlotAPI
+        workspace, schemas_dir = _setup_workspace(tmp_path)
+        api = SlotAPI(workspace, schemas_dir)
+        _create_component_slot(api)
+
+        # Record pre-existing component slots
+        pre_components = api.query("component")
+        pre_comp_versions = {s["slot_id"]: s["version"] for s in pre_components}
+
+        spec = {
+            "name": "system-overview",
+            "description": "Test",
+            "diagram_hint": "structural",
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+        }
+        generate_diagram(api, spec, workspace, schemas_dir)
+
+        # Verify component slots unchanged (DIAG-09)
+        post_components = api.query("component")
+        post_comp_versions = {s["slot_id"]: s["version"] for s in post_components}
+        assert pre_comp_versions == post_comp_versions
+
+    def test_populates_all_diagram_schema_fields(self, tmp_path):
+        from scripts.diagram_generator import generate_diagram
+        from scripts.registry import SlotAPI
+        workspace, schemas_dir = _setup_workspace(tmp_path)
+        api = SlotAPI(workspace, schemas_dir)
+        _create_component_slot(api)
+
+        spec = {
+            "name": "system-overview",
+            "description": "Test",
+            "diagram_hint": "structural",
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+        }
+        result = generate_diagram(api, spec, workspace, schemas_dir)
+        slot = api.read(result["slot_id"])
+        assert slot is not None
+        for field in [
+            "format", "diagram_type", "source", "source_view_spec",
+            "source_snapshot_id", "slot_count", "gap_count",
+        ]:
+            assert field in slot, f"Missing field: {field}"
+
+    def test_literal_d2_hint_produces_d2(self, tmp_path):
+        from scripts.diagram_generator import generate_diagram
+        from scripts.registry import SlotAPI
+        workspace, schemas_dir = _setup_workspace(tmp_path)
+        api = SlotAPI(workspace, schemas_dir)
+        _create_component_slot(api)
+
+        spec = {
+            "name": "test-spec",
+            "description": "Test",
+            "diagram_hint": "d2",
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+        }
+        result = generate_diagram(api, spec, workspace, schemas_dir)
+        assert result["format"] == "d2"
+
+    def test_literal_mermaid_hint_produces_mermaid(self, tmp_path):
+        from scripts.diagram_generator import generate_diagram
+        from scripts.registry import SlotAPI
+        workspace, schemas_dir = _setup_workspace(tmp_path)
+        api = SlotAPI(workspace, schemas_dir)
+        _create_component_slot(api)
+
+        spec = {
+            "name": "test-spec",
+            "description": "Test",
+            "diagram_hint": "mermaid",
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+        }
+        result = generate_diagram(api, spec, workspace, schemas_dir)
+        assert result["format"] == "mermaid"
+
+    def test_returns_dict_with_required_keys(self, tmp_path):
+        from scripts.diagram_generator import generate_diagram
+        from scripts.registry import SlotAPI
+        workspace, schemas_dir = _setup_workspace(tmp_path)
+        api = SlotAPI(workspace, schemas_dir)
+        _create_component_slot(api)
+
+        spec = {
+            "name": "system-overview",
+            "description": "Test",
+            "diagram_hint": "structural",
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+        }
+        result = generate_diagram(api, spec, workspace, schemas_dir)
+        assert "source" in result
+        assert "slot_id" in result
+        assert "status" in result
+
+    def test_empty_view_produces_valid_diagram(self, tmp_path):
+        from scripts.diagram_generator import generate_diagram
+        from scripts.registry import SlotAPI
+        workspace, schemas_dir = _setup_workspace(tmp_path)
+        api = SlotAPI(workspace, schemas_dir)
+        # No slots created - view will have gaps only
+
+        spec = {
+            "name": "system-overview",
+            "description": "Test",
+            "diagram_hint": "structural",
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+        }
+        result = generate_diagram(api, spec, workspace, schemas_dir)
+        assert result["status"] in ("created", "updated")
+        assert len(result["source"]) > 0
+
+    def test_no_slots_still_produces_valid_diagram(self, tmp_path):
+        from scripts.diagram_generator import generate_diagram
+        from scripts.registry import SlotAPI
+        workspace, schemas_dir = _setup_workspace(tmp_path)
+        api = SlotAPI(workspace, schemas_dir)
+
+        spec = {
+            "name": "minimal",
+            "description": "Test",
+            "diagram_hint": "behavioral",
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+        }
+        result = generate_diagram(api, spec, workspace, schemas_dir)
+        assert result["status"] in ("created", "updated")
+
+    def test_schema_validation_before_write(self, tmp_path):
+        from scripts.diagram_generator import generate_diagram
+        from scripts.registry import SlotAPI
+        workspace, schemas_dir = _setup_workspace(tmp_path)
+        api = SlotAPI(workspace, schemas_dir)
+        _create_component_slot(api)
+
+        spec = {
+            "name": "system-overview",
+            "description": "Test",
+            "diagram_hint": "structural",
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+        }
+        result = generate_diagram(api, spec, workspace, schemas_dir)
+        # If we got here without error, schema validation passed
+        # Verify the stored slot passes diagram schema
+        slot = api.read(result["slot_id"])
+        schema_path = os.path.join(
+            os.path.dirname(__file__), os.pardir, "schemas", "diagram.json"
+        )
+        with open(schema_path) as f:
+            diagram_schema = json.load(f)
+        jsonschema.validate(slot, diagram_schema)

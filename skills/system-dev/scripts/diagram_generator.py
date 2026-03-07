@@ -10,6 +10,9 @@ from __future__ import annotations
 import hashlib
 import re
 
+from scripts.registry import SlotAPI
+from scripts.view_assembler import assemble_view
+
 # Severity -> color mapping for gap placeholders
 _GAP_COLORS: dict[str, str] = {
     "error": "#dc3545",
@@ -160,6 +163,120 @@ def generate_d2(view: dict) -> str:
                     lines.append("}")
 
     return "\n".join(lines)
+
+
+def _resolve_format(
+    format_override: str | None, spec: dict
+) -> tuple[str, str]:
+    """Resolve diagram output format from override or spec hint.
+
+    Args:
+        format_override: Explicit format ("d2" or "mermaid"), or None.
+        spec: View spec dict, may contain "diagram_hint" field.
+
+    Returns:
+        Tuple of (format_str, diagram_type_str) where format_str is
+        "d2" or "mermaid" and diagram_type_str is "structural" or
+        "behavioral".
+
+    Raises:
+        ValueError: If no hint on spec and no format_override provided.
+    """
+    if format_override is not None:
+        fmt = format_override.lower()
+        if fmt in ("d2", "structural"):
+            return ("d2", "structural")
+        return ("mermaid", "behavioral")
+
+    hint = spec.get("diagram_hint")
+    if hint in ("structural", "d2"):
+        return ("d2", "structural")
+    if hint in ("behavioral", "mermaid"):
+        return ("mermaid", "behavioral")
+
+    raise ValueError(
+        f"No diagram_hint on spec '{spec.get('name', 'unknown')}' "
+        "and no --format override provided"
+    )
+
+
+def generate_diagram(
+    api: SlotAPI,
+    spec: dict,
+    workspace_root: str,
+    schemas_dir: str,
+    format_override: str | None = None,
+) -> dict:
+    """Orchestrate diagram generation from a view spec.
+
+    Assembles a view, resolves the output format, generates D2 or Mermaid
+    source, and writes the result as a diagram slot via SlotAPI.ingest().
+
+    Only writes slots with slot_type="diagram" (DIAG-09 preservation).
+
+    Args:
+        api: A SlotAPI instance for registry access and diagram slot writes.
+        spec: A view spec dict (must have name, description, scope_patterns).
+        workspace_root: Path to the .system-dev/ directory.
+        schemas_dir: Path to the schemas/ directory with JSON Schema files.
+        format_override: Optional explicit format ("d2" or "mermaid").
+            When provided, overrides the spec's diagram_hint.
+
+    Returns:
+        Dict with keys: status, slot_id, source, format, diagram_type.
+        Status is "created", "updated", or "unchanged".
+
+    Raises:
+        ValueError: If no diagram_hint on spec and no format_override.
+    """
+    # 1. Assemble view from spec
+    view = assemble_view(api, spec, workspace_root, schemas_dir)
+
+    # 2. Resolve format
+    fmt, diagram_type = _resolve_format(format_override, spec)
+
+    # 3. Generate diagram source
+    if fmt == "d2":
+        source = generate_d2(view)
+    else:
+        source = generate_mermaid(view)
+
+    # 4. Compute content-hash slot ID
+    slot_id = _compute_diagram_slot_id(spec["name"], source)
+
+    # 5. Check if identical slot already exists (no-op optimization)
+    existing = api.read(slot_id)
+    if existing is not None:
+        return {
+            "status": "unchanged",
+            "slot_id": slot_id,
+            "source": source,
+            "format": fmt,
+            "diagram_type": diagram_type,
+        }
+
+    # 6. Build diagram slot content
+    content = {
+        "name": f"diagram-{spec['name']}",
+        "format": fmt,
+        "diagram_type": diagram_type,
+        "source": source,
+        "source_view_spec": spec["name"],
+        "source_snapshot_id": view["snapshot_id"],
+        "slot_count": view["total_slots"],
+        "gap_count": view["total_gaps"],
+    }
+
+    # 7. Write via SlotAPI.ingest() -- only "diagram" type (DIAG-09)
+    result = api.ingest(slot_id, "diagram", content, agent_id="diagram-generator")
+
+    return {
+        "status": result["status"],
+        "slot_id": slot_id,
+        "source": source,
+        "format": fmt,
+        "diagram_type": diagram_type,
+    }
 
 
 def generate_mermaid(view: dict) -> str:
