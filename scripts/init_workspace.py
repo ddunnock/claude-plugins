@@ -70,6 +70,7 @@ def init_workspace(project_root: str) -> dict:
         "registry/components",
         "registry/interfaces",
         "registry/contracts",
+        "registry/diagram",
         "registry/requirement-refs",
         "registry/needs",
         "registry/requirements",

@@ -98,7 +98,7 @@ class TestSchemaValidator:
             validator.validate("nonexistent", {})
 
     def test_all_slot_types_load(self, validator):
-        """Validator loads all 16 schemas (14 slot types + 2 view schemas from phase 6)."""
+        """Validator loads all 17 schemas (15 slot types + 2 view schemas from phase 6)."""
         types = validator.supported_types
         assert types == [
             "assumption",
@@ -106,6 +106,7 @@ class TestSchemaValidator:
             "component-proposal",
             "contract",
             "contract-proposal",
+            "diagram",
             "impact-analysis",
             "interface",
             "interface-proposal",

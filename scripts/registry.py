@@ -28,8 +28,9 @@ logger = logging.getLogger(__name__)
 # Maps slot types to their registry subdirectory names
 SLOT_TYPE_DIRS: dict[str, str] = {
     "component": "components",
-    "interface": "interfaces",
     "contract": "contracts",
+    "diagram": "diagram",
+    "interface": "interfaces",
     "requirement-ref": "requirement-refs",
     "need": "needs",
     "requirement": "requirements",
@@ -46,8 +47,9 @@ SLOT_TYPE_DIRS: dict[str, str] = {
 # Maps slot types to their ID prefixes
 SLOT_ID_PREFIXES: dict[str, str] = {
     "component": "comp",
-    "interface": "intf",
     "contract": "cntr",
+    "diagram": "diag",
+    "interface": "intf",
     "requirement-ref": "rref",
     "need": "need",
     "requirement": "requirement",

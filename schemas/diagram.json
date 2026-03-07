@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://system-dev.local/schemas/diagram.json",
+  "title": "Diagram Slot",
+  "description": "Generated diagram source from view assembly output.",
+  "type": "object",
+  "required": [
+    "slot_id", "slot_type", "name", "version",
+    "format", "diagram_type", "source",
+    "source_view_spec", "source_snapshot_id",
+    "slot_count", "gap_count",
+    "created_at", "updated_at"
+  ],
+  "properties": {
+    "slot_id": {"type": "string", "minLength": 1},
+    "slot_type": {"type": "string", "const": "diagram"},
+    "name": {"type": "string", "minLength": 1},
+    "version": {"type": "integer", "minimum": 1},
+    "format": {"type": "string", "enum": ["d2", "mermaid"]},
+    "diagram_type": {"type": "string", "enum": ["structural", "behavioral"]},
+    "source": {"type": "string", "minLength": 1},
+    "source_view_spec": {"type": "string", "minLength": 1},
+    "source_snapshot_id": {"type": "string", "minLength": 1},
+    "slot_count": {"type": "integer", "minimum": 0},
+    "gap_count": {"type": "integer", "minimum": 0},
+    "created_at": {"type": "string", "format": "date-time"},
+    "updated_at": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": false
+}
