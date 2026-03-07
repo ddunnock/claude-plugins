@@ -82,8 +82,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 07-01-PLAN.md — Schemas + ranking + determinism + performance (VIEW-03, VIEW-09, VIEW-12)
-- [ ] 07-02-PLAN.md — Edge extraction + structured logging + handoff format (VIEW-04, VIEW-11)
+- [x] 07-01-PLAN.md — Schemas + ranking + determinism + performance (VIEW-03, VIEW-09, VIEW-12)
+- [x] 07-02-PLAN.md — Edge extraction + structured logging + handoff format (VIEW-04, VIEW-11)
 
 ### Phase 8: Diagram Generation Core
 **Goal**: Users can generate valid D2 structural and Mermaid behavioral diagrams from view output, with gap markers rendered as placeholders
@@ -98,7 +98,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — Diagram schema, slot type registration, D2/Mermaid generation engines with gap placeholders
+- [x] 08-01-PLAN.md — Diagram schema, slot type registration, D2/Mermaid generation engines with gap placeholders
 - [ ] 08-02-PLAN.md — Orchestration layer (SlotAPI writes), diagram_hint on view specs, /system-dev:diagram command
 
 ### Phase 9: Diagram Templates & Quality
@@ -139,5 +139,5 @@ Plans:
 | 6. View Assembly Core | v1.1 | 3/3 | Complete | 2026-03-03 |
 | 6b. View Integration Fix | v1.1 | 2/2 | Complete | 2026-03-03 |
 | 7. View Quality & Handoff | v1.1 | 2/2 | Complete | 2026-03-07 |
-| 8. Diagram Generation Core | v1.1 | 0/2 | Not started | - |
+| 8. Diagram Generation Core | v1.1 | 1/2 | In progress | - |
 | 9. Diagram Templates & Quality | v1.1 | 0/TBD | Not started | - |

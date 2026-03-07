@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Views & Diagrams
-status: completed
-stopped_at: Phase 8 context gathered
-last_updated: "2026-03-07T17:19:39.709Z"
-last_activity: 2026-03-07 — Completed 07-02 (edge extraction, structured logging)
+status: in-progress
+stopped_at: Completed 08-01 (diagram schema, D2/Mermaid engines)
+last_updated: "2026-03-07T18:10:39Z"
+last_activity: 2026-03-07 — Completed 08-01 (diagram schema, D2/Mermaid generation engines)
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 7
-  completed_plans: 7
-  percent: 100
+  total_plans: 9
+  completed_plans: 8
+  percent: 89
 ---
 
 # Project State
@@ -21,22 +21,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-02)
 
 **Core value:** Design decisions captured as explicit, reviewable, traceable records in a Design Registry
-**Current focus:** Phase 7 — View Quality & Handoff
+**Current focus:** Phase 8 — Diagram Generation Core
 
 ## Current Position
 
-Phase: 7 of 9 (View Quality & Handoff)
-Plan: 2 of 2 complete
-Status: Phase 7 Complete
-Last activity: 2026-03-07 — Completed 07-02 (edge extraction, structured logging)
+Phase: 8 of 9 (Diagram Generation Core)
+Plan: 1 of 2 complete
+Status: Phase 8 In Progress
+Last activity: 2026-03-07 — Completed 08-01 (diagram schema, D2/Mermaid generation engines)
 
-Progress: [██████████] 100% (Phase 6+6b+7 complete, 8+9 pending)
+Progress: [████████░░] 89% (Phase 6+6b+7 complete, 8 in progress, 9 pending)
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 13 (v1.0)
-- v1.1 plans completed: 7
+- v1.1 plans completed: 8
 
 **By Phase (v1.1):**
 
@@ -45,7 +45,7 @@ Progress: [██████████] 100% (Phase 6+6b+7 complete, 8+9 pend
 | 6. View Assembly Core | 3/3 | 11min | 3.7min |
 | 6b. View Integration Fix | 2/2 | 3min | 1.5min |
 | 7. View Quality & Handoff | 2/2 | 7min | 3.5min |
-| 8. Diagram Generation Core | 0/TBD | - | - |
+| 8. Diagram Generation Core | 1/2 | 4min | 4min |
 | 9. Diagram Templates & Quality | 0/TBD | - | - |
 
 ## Accumulated Context
@@ -76,6 +76,10 @@ All v1.0 decisions documented in PROJECT.md Key Decisions table with outcomes.
 - (07-02) Inline relationships field deduplicated and sorted for determinism
 - (07-02) All structured log extra fields namespaced with view.* prefix
 - (07-02) DEBUG log guard with logger.isEnabledFor(logging.DEBUG) to avoid formatting overhead
+- (08-01) D2 components render as rectangle containers; non-component types as labeled nodes
+- (08-01) Mermaid direction auto-selects LR when edge count > 2x node count, otherwise TD
+- (08-01) Unlinked slots: D2 wraps in 'Unlinked' container, Mermaid uses classDef unlinked with lighter fill
+- (08-01) Gap nodes connect to first slot of matching section type via dashed connection
 
 ### Pending Todos
 
@@ -83,11 +87,10 @@ None.
 
 ### Blockers/Concerns
 
-- Phase 7 defines view handoff format that Phase 8 depends on — format design is critical path
-- D2 and Mermaid have different syntax constraints; diagram generator needs format-specific backends
+None.
 
 ## Session Continuity
 
-Last session: 2026-03-07T17:19:39.706Z
-Stopped at: Phase 8 context gathered
-Resume file: .planning/phases/08-diagram-generation-core/08-CONTEXT.md
+Last session: 2026-03-07T18:10:39Z
+Stopped at: Completed 08-01 (diagram schema, D2/Mermaid generation engines)
+Resume file: .planning/phases/08-diagram-generation-core/08-01-SUMMARY.md
