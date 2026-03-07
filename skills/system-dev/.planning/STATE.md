@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Views & Diagrams
 status: in-progress
-stopped_at: Completed 08-02 (diagram orchestration layer, command spec)
-last_updated: "2026-03-07T18:16:53Z"
-last_activity: 2026-03-07 — Completed 08-02 (diagram orchestration, diagram_hint, /system-dev:diagram command)
+stopped_at: Completed 08-02g (gap closure - generate_diagram orchestration, diagram_hint, integration tests)
+last_updated: "2026-03-07T18:50:00Z"
+last_activity: 2026-03-07 — Completed 08-02g (generate_diagram() orchestration, diagram_hint on specs, 26 new tests)
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 9
-  completed_plans: 9
+  total_plans: 10
+  completed_plans: 10
   percent: 100
 ---
 
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-03-02)
 
 ## Current Position
 
-Phase: 8 of 9 (Diagram Generation Core) -- COMPLETE
-Plan: 2 of 2 complete
-Status: Phase 8 Complete, Phase 9 Pending
-Last activity: 2026-03-07 — Completed 08-02 (diagram orchestration, diagram_hint, /system-dev:diagram command)
+Phase: 8 of 9 (Diagram Generation Core) -- Gap Closure
+Plan: 2g of 3 complete (08-01, 08-02g done; 08-02 partially complete)
+Status: Phase 8 gap closure complete, Phase 9 Pending
+Last activity: 2026-03-07 — Completed 08-02g (generate_diagram() orchestration, diagram_hint, integration tests)
 
 Progress: [██████████] 100% (Phase 6+6b+7+8 complete, 9 pending)
 
@@ -36,7 +36,7 @@ Progress: [██████████] 100% (Phase 6+6b+7+8 complete, 9 pend
 
 **Velocity:**
 - Total plans completed: 13 (v1.0)
-- v1.1 plans completed: 9
+- v1.1 plans completed: 10
 
 **By Phase (v1.1):**
 
@@ -45,7 +45,7 @@ Progress: [██████████] 100% (Phase 6+6b+7+8 complete, 9 pend
 | 6. View Assembly Core | 3/3 | 11min | 3.7min |
 | 6b. View Integration Fix | 2/2 | 3min | 1.5min |
 | 7. View Quality & Handoff | 2/2 | 7min | 3.5min |
-| 8. Diagram Generation Core | 2/2 | 8min | 4min |
+| 8. Diagram Generation Core | 3/3 | 12min | 4min |
 | 9. Diagram Templates & Quality | 0/TBD | - | - |
 
 ## Accumulated Context
@@ -84,6 +84,8 @@ All v1.0 decisions documented in PROJECT.md Key Decisions table with outcomes.
 - (08-02) Hint mapping: structural->D2, behavioral->Mermaid; literal d2/mermaid also accepted
 - (08-02) Diagrams are intentional artifacts from named specs only -- no ad-hoc pattern support
 - (08-02) gap-report has no diagram_hint (requires explicit --format)
+- (08-02g) Diagram slots in snapshots cause cascading hash changes; unchanged detection requires stable registry state
+- (08-02g) Literal "d2" and "mermaid" accepted as diagram_hint values alongside "structural"/"behavioral"
 
 ### Pending Todos
 
@@ -95,6 +97,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-07T18:16:53Z
-Stopped at: Completed 08-02 (diagram orchestration layer, command spec)
-Resume file: .planning/phases/08-diagram-generation-core/08-02-SUMMARY.md
+Last session: 2026-03-07T18:50:00Z
+Stopped at: Completed 08-02g (gap closure - generate_diagram orchestration layer)
+Resume file: .planning/phases/08-diagram-generation-core/08-02g-SUMMARY.md
