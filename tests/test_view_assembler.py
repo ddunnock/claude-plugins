@@ -14,6 +14,7 @@ from scripts.view_assembler import (
     BUILTIN_SPECS,
     _apply_field_selection,
     _compute_density_scores,
+    _extract_edges,
     _organize_hierarchically,
     _rank_slots,
     assemble_view,
@@ -1199,7 +1200,7 @@ class TestDeterminism:
         assert result["format_version"] == "1.1"
 
     def test_assembled_output_has_edges_array(self, det_api, workspace):
-        """Output contains edges key (empty array for now)."""
+        """Output contains edges key as a list."""
         spec = {
             "name": "edges-test",
             "description": "Edges test",
@@ -1210,7 +1211,6 @@ class TestDeterminism:
         result = assemble_view(det_api, spec, workspace, SCHEMAS_DIR)
         assert "edges" in result
         assert isinstance(result["edges"], list)
-        assert result["edges"] == []
 
     def test_assembled_output_has_metadata(self, det_api, workspace):
         """Output contains metadata with elapsed_ms, ranking_method, section_counts."""

@@ -157,6 +157,7 @@ def capture_snapshot(api: SlotAPI) -> dict:
         Dict with snapshot_id (uuid), captured_at (ISO timestamp),
         and slots_by_type (dict mapping slot_type to list of slot dicts).
     """
+    t_snap = time.perf_counter()
     captured_at = datetime.now(timezone.utc).isoformat()
 
     slots_by_type: dict[str, list[dict]] = {}
@@ -169,6 +170,19 @@ def capture_snapshot(api: SlotAPI) -> dict:
     # Content-hash snapshot_id for determinism (VIEW-09)
     serialized = json.dumps(slots_by_type, sort_keys=True, separators=(",", ":"))
     snapshot_id = hashlib.sha256(serialized.encode()).hexdigest()[:16]
+
+    total_slot_count = sum(len(v) for v in slots_by_type.values())
+    snap_elapsed = (time.perf_counter() - t_snap) * 1000
+    logger.info(
+        "Snapshot captured: %d slot types, %d total slots",
+        len(slots_by_type),
+        total_slot_count,
+        extra={
+            "view.operation": "snapshot_capture",
+            "view.slot_count": total_slot_count,
+            "view.elapsed_ms": round(snap_elapsed, 2),
+        },
+    )
 
     return {
         "snapshot_id": snapshot_id,
@@ -430,6 +444,66 @@ def _compute_density_scores(snapshot: dict) -> dict[str, int]:
     return scores
 
 
+def _extract_edges(snapshot: dict, in_view_ids: set[str]) -> list[dict]:
+    """Extract directed relationship edges from snapshot, filtered to in-view slots.
+
+    Walks interfaces, contracts, and traceability-links to build edge objects.
+    Only edges where BOTH source_id and target_id are in in_view_ids are included.
+    Edges are sorted by (source_id, target_id, relationship_type) for determinism.
+
+    Args:
+        snapshot: A snapshot dict from capture_snapshot().
+        in_view_ids: Set of slot_id values present in the assembled view.
+
+    Returns:
+        Sorted list of edge dicts with source_id, target_id, relationship_type.
+    """
+    edges: list[dict] = []
+    seen: set[tuple[str, str, str]] = set()
+
+    def _add_edge(src: str, tgt: str, rel: str) -> None:
+        if src in in_view_ids and tgt in in_view_ids:
+            key = (src, tgt, rel)
+            if key not in seen:
+                seen.add(key)
+                edges.append({
+                    "source_id": src,
+                    "target_id": tgt,
+                    "relationship_type": rel,
+                })
+
+    # Interfaces: source_component -> interface, interface -> target_component
+    for intf in snapshot["slots_by_type"].get("interface", []):
+        intf_id = intf["slot_id"]
+        src = intf.get("source_component", "")
+        tgt = intf.get("target_component", "")
+        if src:
+            _add_edge(src, intf_id, "component_interface")
+        if tgt:
+            _add_edge(intf_id, tgt, "component_interface")
+
+    # Contracts: interface_id -> contract, component_id -> contract (one-hop)
+    for cntr in snapshot["slots_by_type"].get("contract", []):
+        cntr_id = cntr["slot_id"]
+        iid = cntr.get("interface_id", "")
+        cid = cntr.get("component_id", "")
+        if iid:
+            _add_edge(iid, cntr_id, "interface_contract")
+        if cid:
+            _add_edge(cid, cntr_id, "component_contract")
+
+    # Traceability links: from_id -> to_id with link_type as relationship_type
+    for link in snapshot["slots_by_type"].get("traceability-link", []):
+        from_id = link.get("from_id", "")
+        to_id = link.get("to_id", "")
+        rel_type = link.get("link_type", "traces")
+        if from_id and to_id:
+            _add_edge(from_id, to_id, rel_type)
+
+    edges.sort(key=lambda e: (e["source_id"], e["target_id"], e["relationship_type"]))
+    return edges
+
+
 def _rank_slots(
     slots: list[dict], scores: dict[str, int], method: str = "density"
 ) -> list[dict]:
@@ -500,9 +574,22 @@ def assemble_view(
     gaps: list[dict] = []
 
     for scope_pattern in spec.get("scope_patterns", []):
+        t_pattern = time.perf_counter()
         pattern = scope_pattern["pattern"]
         slot_type = scope_pattern["slot_type"]
         fields = scope_pattern.get("fields")
+
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(
+                "Matching pattern '%s' against %s",
+                pattern,
+                slot_type,
+                extra={
+                    "view.operation": "pattern_match_attempt",
+                    "view.pattern": pattern,
+                    "view.slot_type": slot_type,
+                },
+            )
 
         matches = match_scope_pattern(pattern, slot_type, snapshot)
 
@@ -518,21 +605,106 @@ def assemble_view(
                 gap_rules=gap_rules,
             )
             gaps.append(gap)
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug(
+                    "Gap created for %s: %s",
+                    slot_type,
+                    gap["severity"],
+                    extra={
+                        "view.operation": "gap_decision",
+                        "view.slot_type": slot_type,
+                        "view.severity": gap["severity"],
+                    },
+                )
+
+        pattern_elapsed = (time.perf_counter() - t_pattern) * 1000
+        logger.info(
+            "Section '%s': %d slots matched",
+            slot_type,
+            len(matches),
+            extra={
+                "view.operation": "pattern_match",
+                "view.slot_type": slot_type,
+                "view.slot_count": len(matches),
+                "view.elapsed_ms": round(pattern_elapsed, 2),
+            },
+        )
+
+    # Gap detection summary
+    t_gap_summary = time.perf_counter()
+    total_gaps = len(gaps)
+    gap_types = ", ".join(g["slot_type"] for g in gaps) if gaps else "none"
+    gap_elapsed = (time.perf_counter() - t_gap_summary) * 1000
+    logger.info(
+        "Gaps detected: %d total (%s)",
+        total_gaps,
+        gap_types,
+        extra={
+            "view.operation": "gap_detection",
+            "view.gap_count": total_gaps,
+            "view.elapsed_ms": round(gap_elapsed, 2),
+        },
+    )
 
     # 4. Organize hierarchically
     sections = _organize_hierarchically(raw_sections)
 
     # 5. Compute density scores from full snapshot and rank slots (VIEW-03)
+    t_rank = time.perf_counter()
     density_scores = _compute_density_scores(snapshot)
+
+    if logger.isEnabledFor(logging.DEBUG):
+        for sid, score in density_scores.items():
+            logger.debug(
+                "Density score for %s: %d",
+                sid,
+                score,
+                extra={
+                    "view.operation": "density_score",
+                    "view.slot_id": sid,
+                    "view.score": score,
+                },
+            )
+
     ranking_method = spec.get("ranking", "density")
     for section in sections:
         section["slots"] = _rank_slots(
             section["slots"], density_scores, ranking_method
         )
 
-    # 6. Build output metadata
+    rank_elapsed = (time.perf_counter() - t_rank) * 1000
+    logger.info(
+        "Ranking applied: method=%s",
+        ranking_method,
+        extra={
+            "view.operation": "ranking",
+            "view.ranking_method": ranking_method,
+            "view.elapsed_ms": round(rank_elapsed, 2),
+        },
+    )
+
+    # 6. Extract edges and add inline relationships
+    in_view_ids: set[str] = set()
+    for section in sections:
+        for slot in section["slots"]:
+            in_view_ids.add(slot["slot_id"])
+
+    edges = _extract_edges(snapshot, in_view_ids)
+
+    # Add inline relationships to each slot
+    for section in sections:
+        for slot in section["slots"]:
+            sid = slot["slot_id"]
+            related = set()
+            for edge in edges:
+                if edge["source_id"] == sid:
+                    related.add(edge["target_id"])
+                if edge["target_id"] == sid:
+                    related.add(edge["source_id"])
+            slot["relationships"] = sorted(related)
+
+    # 7. Build output metadata
     total_slots = sum(len(s["slots"]) for s in sections)
-    total_gaps = len(gaps)
 
     gap_summary = {"info": 0, "warning": 0, "error": 0}
     for gap in gaps:
@@ -546,6 +718,20 @@ def assemble_view(
 
     elapsed_ms = (time.perf_counter() - t_start) * 1000
 
+    logger.info(
+        "Assembly complete: %d slots, %d gaps, %d edges",
+        total_slots,
+        total_gaps,
+        len(edges),
+        extra={
+            "view.operation": "assembly_complete",
+            "view.total_slots": total_slots,
+            "view.total_gaps": total_gaps,
+            "view.edge_count": len(edges),
+            "view.elapsed_ms": round(elapsed_ms, 2),
+        },
+    )
+
     assembled = {
         "spec_name": spec["name"],
         "format_version": "1.1",
@@ -556,7 +742,7 @@ def assemble_view(
         "gap_summary": gap_summary,
         "sections": sections,
         "gaps": gaps,
-        "edges": [],  # Empty placeholder -- Plan 02 populates
+        "edges": edges,
         "metadata": {
             "elapsed_ms": round(elapsed_ms, 2),
             "ranking_method": ranking_method,
@@ -564,7 +750,7 @@ def assemble_view(
         },
     }
 
-    # 7. Validate against view.json schema (VIEW-06)
+    # 8. Validate against view.json schema (VIEW-06)
     validator = SchemaValidator(schemas_dir)
     validator.validate_or_raise("view", assembled)
 
