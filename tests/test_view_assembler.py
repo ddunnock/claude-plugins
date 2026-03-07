@@ -13,7 +13,9 @@ from scripts.schema_validator import SchemaValidator
 from scripts.view_assembler import (
     BUILTIN_SPECS,
     _apply_field_selection,
+    _compute_density_scores,
     _organize_hierarchically,
+    _rank_slots,
     assemble_view,
     build_gap_indicator,
     capture_snapshot,
@@ -967,3 +969,312 @@ class TestRenderTree:
         output = render_tree(view)
         assert "empty" in output
         assert "Slots: 0" in output
+
+
+# ---------------------------------------------------------------------------
+# Phase 7 Plan 01: Ranking, determinism, and performance tests
+# ---------------------------------------------------------------------------
+
+
+def _deterministic_content(view: dict) -> dict:
+    """Strip volatile fields (assembled_at, elapsed_ms) for determinism comparison."""
+    result = copy.deepcopy(view)
+    result.pop("assembled_at", None)
+    if "metadata" in result:
+        result["metadata"].pop("elapsed_ms", None)
+    return result
+
+
+class TestRanking:
+    """Tests for density scoring, slot ranking, and ranking method override."""
+
+    @pytest.fixture
+    def ranking_api(self, api):
+        """Create an API with slots that have varying relationship density."""
+        # comp_a: 2 interfaces (high density)
+        comp_a = api.create("component", {"name": "Hub Component"})
+        # comp_b: 0 interfaces (low density)
+        comp_b = api.create("component", {"name": "Leaf Component"})
+        # comp_c: 1 interface (medium density)
+        comp_c = api.create("component", {"name": "Mid Component"})
+
+        intf1 = api.create("interface", {
+            "name": "API Alpha",
+            "source_component": comp_a["slot_id"],
+            "target_component": comp_c["slot_id"],
+        })
+        intf2 = api.create("interface", {
+            "name": "API Beta",
+            "source_component": comp_a["slot_id"],
+            "target_component": comp_b["slot_id"],
+        })
+
+        # Contract linked to intf1 -- gives one-hop credit to comp_a
+        cntr = api.create("contract", {
+            "name": "Contract Alpha",
+            "interface_id": intf1["slot_id"],
+        })
+
+        return {
+            "api": api,
+            "comp_a_id": comp_a["slot_id"],
+            "comp_b_id": comp_b["slot_id"],
+            "comp_c_id": comp_c["slot_id"],
+            "intf1_id": intf1["slot_id"],
+            "intf2_id": intf2["slot_id"],
+            "cntr_id": cntr["slot_id"],
+        }
+
+    def test_density_scores_count_interface_connections(self, ranking_api):
+        """Component with 2 interfaces scores higher than component with 0."""
+        api = ranking_api["api"]
+        snapshot = capture_snapshot(api)
+        scores = _compute_density_scores(snapshot)
+        # comp_a has 2 interfaces -> higher score
+        assert scores[ranking_api["comp_a_id"]] > scores[ranking_api["comp_b_id"]]
+
+    def test_density_scores_count_one_hop_contracts(self, ranking_api):
+        """Component with interface that has contracts gets one-hop credit."""
+        api = ranking_api["api"]
+        snapshot = capture_snapshot(api)
+        scores = _compute_density_scores(snapshot)
+        # comp_a has interface intf1 which has a contract -> one-hop credit
+        # comp_a score should be > comp_c score (comp_c has 1 intf, no contract hop credit)
+        assert scores[ranking_api["comp_a_id"]] > scores[ranking_api["comp_c_id"]]
+
+    def test_density_scores_count_traceability_links(self):
+        """Slots referenced by traceability-links get density credit."""
+        # Use a manually constructed snapshot to test traceability-link scoring
+        # (avoids schema validation issues with traceability-link slot_id pattern)
+        snapshot = {
+            "snapshot_id": "test-snap",
+            "captured_at": "2026-01-01T00:00:00Z",
+            "slots_by_type": {
+                "component": [
+                    {"slot_id": "comp-1", "slot_type": "component", "name": "Traced", "version": 1},
+                ],
+                "traceability-link": [
+                    {
+                        "slot_id": "trace:link-1",
+                        "slot_type": "traceability-link",
+                        "version": 1,
+                        "from_id": "comp-1",
+                        "to_id": "external-req-1",
+                        "link_type": "satisfies",
+                    },
+                ],
+            },
+        }
+        scores = _compute_density_scores(snapshot)
+        # The component should have score > 0 from traceability link
+        assert scores["comp-1"] > 0
+
+    def test_density_scores_computed_from_full_snapshot(self, ranking_api):
+        """Same component gets same score regardless of which view includes it."""
+        api = ranking_api["api"]
+        snapshot = capture_snapshot(api)
+        scores = _compute_density_scores(snapshot)
+        # Score is computed from full snapshot, not filtered view
+        comp_a_score = scores[ranking_api["comp_a_id"]]
+        assert comp_a_score > 0
+        # Same snapshot gives same score
+        scores2 = _compute_density_scores(snapshot)
+        assert scores2[ranking_api["comp_a_id"]] == comp_a_score
+
+    def test_rank_slots_density_ordering(self, ranking_api):
+        """Higher density slots appear first in section."""
+        api = ranking_api["api"]
+        snapshot = capture_snapshot(api)
+        scores = _compute_density_scores(snapshot)
+        slots = [
+            {"slot_id": ranking_api["comp_b_id"], "name": "Leaf Component", "version": 1},
+            {"slot_id": ranking_api["comp_a_id"], "name": "Hub Component", "version": 1},
+        ]
+        ranked = _rank_slots(slots, scores, "density")
+        assert ranked[0]["name"] == "Hub Component"
+        assert ranked[1]["name"] == "Leaf Component"
+
+    def test_rank_slots_tiebreak_version_then_name(self):
+        """Same density ties broken by version desc then name asc."""
+        scores = {"s1": 5, "s2": 5, "s3": 5}
+        slots = [
+            {"slot_id": "s1", "name": "Bravo", "version": 1},
+            {"slot_id": "s2", "name": "Alpha", "version": 2},
+            {"slot_id": "s3", "name": "Alpha", "version": 1},
+        ]
+        ranked = _rank_slots(slots, scores, "density")
+        # Same density -> higher version first -> then alphabetical
+        assert ranked[0]["name"] == "Alpha" and ranked[0]["version"] == 2
+        assert ranked[1]["name"] == "Alpha" and ranked[1]["version"] == 1
+        assert ranked[2]["name"] == "Bravo"
+
+    def test_rank_slots_alphabetical_method(self):
+        """ranking='alphabetical' sorts by name."""
+        scores = {"s1": 10, "s2": 1}
+        slots = [
+            {"slot_id": "s1", "name": "Zebra", "version": 1},
+            {"slot_id": "s2", "name": "Alpha", "version": 1},
+        ]
+        ranked = _rank_slots(slots, scores, "alphabetical")
+        assert ranked[0]["name"] == "Alpha"
+        assert ranked[1]["name"] == "Zebra"
+
+    def test_rank_slots_none_method(self):
+        """ranking='none' preserves original order."""
+        scores = {"s1": 10, "s2": 1}
+        slots = [
+            {"slot_id": "s1", "name": "Zebra", "version": 1},
+            {"slot_id": "s2", "name": "Alpha", "version": 1},
+        ]
+        ranked = _rank_slots(slots, scores, "none")
+        assert ranked[0]["name"] == "Zebra"
+        assert ranked[1]["name"] == "Alpha"
+
+    def test_ranking_override_in_spec(self, ranking_api, workspace):
+        """View-spec with 'ranking': 'alphabetical' uses alphabetical instead of density."""
+        api = ranking_api["api"]
+        spec = {
+            "name": "alpha-ranked",
+            "description": "Alphabetical ranking test",
+            "scope_patterns": [
+                {"pattern": "component:*", "slot_type": "component"},
+            ],
+            "ranking": "alphabetical",
+        }
+        result = assemble_view(api, spec, workspace, SCHEMAS_DIR)
+        comp_names = [
+            s["name"] for section in result["sections"]
+            if section["slot_type"] == "component"
+            for s in section["slots"]
+        ]
+        assert comp_names == sorted(comp_names)
+
+
+class TestDeterminism:
+    """Tests for content-hash snapshot_id and deterministic full output."""
+
+    @pytest.fixture
+    def det_api(self, api):
+        """Create an API with some fixed slots for determinism tests."""
+        api.create("component", {"name": "Auth Service"})
+        api.create("component", {"name": "Database Service"})
+        return api
+
+    def test_deterministic_snapshot_id(self, det_api):
+        """Same registry content produces same snapshot_id across calls."""
+        snap1 = capture_snapshot(det_api)
+        snap2 = capture_snapshot(det_api)
+        assert snap1["snapshot_id"] == snap2["snapshot_id"]
+
+    def test_deterministic_snapshot_id_different_content(self, det_api):
+        """Different content produces different snapshot_id."""
+        snap1 = capture_snapshot(det_api)
+        det_api.create("component", {"name": "New Service"})
+        snap2 = capture_snapshot(det_api)
+        assert snap1["snapshot_id"] != snap2["snapshot_id"]
+
+    def test_deterministic_output(self, det_api, workspace):
+        """Two assemble_view calls with same input produce identical output (excluding volatile fields)."""
+        spec = {
+            "name": "det-test",
+            "description": "Determinism test",
+            "scope_patterns": [
+                {"pattern": "component:*", "slot_type": "component"},
+            ],
+        }
+        result1 = assemble_view(det_api, spec, workspace, SCHEMAS_DIR)
+        result2 = assemble_view(det_api, spec, workspace, SCHEMAS_DIR)
+        assert _deterministic_content(result1) == _deterministic_content(result2)
+
+    def test_format_version_is_1_1(self, det_api, workspace):
+        """Assembled output has format_version '1.1'."""
+        spec = {
+            "name": "version-test",
+            "description": "Format version test",
+            "scope_patterns": [
+                {"pattern": "component:*", "slot_type": "component"},
+            ],
+        }
+        result = assemble_view(det_api, spec, workspace, SCHEMAS_DIR)
+        assert result["format_version"] == "1.1"
+
+    def test_assembled_output_has_edges_array(self, det_api, workspace):
+        """Output contains edges key (empty array for now)."""
+        spec = {
+            "name": "edges-test",
+            "description": "Edges test",
+            "scope_patterns": [
+                {"pattern": "component:*", "slot_type": "component"},
+            ],
+        }
+        result = assemble_view(det_api, spec, workspace, SCHEMAS_DIR)
+        assert "edges" in result
+        assert isinstance(result["edges"], list)
+        assert result["edges"] == []
+
+    def test_assembled_output_has_metadata(self, det_api, workspace):
+        """Output contains metadata with elapsed_ms, ranking_method, section_counts."""
+        spec = {
+            "name": "meta-test",
+            "description": "Metadata test",
+            "scope_patterns": [
+                {"pattern": "component:*", "slot_type": "component"},
+            ],
+        }
+        result = assemble_view(det_api, spec, workspace, SCHEMAS_DIR)
+        assert "metadata" in result
+        meta = result["metadata"]
+        assert "elapsed_ms" in meta
+        assert isinstance(meta["elapsed_ms"], float)
+        assert meta["elapsed_ms"] >= 0
+        assert meta["ranking_method"] == "density"
+        assert "section_counts" in meta
+        assert isinstance(meta["section_counts"], dict)
+
+
+class TestPerformance:
+    """Tests for assembly performance targets."""
+
+    def test_performance_100_slots(self, api, workspace):
+        """Assembly of 100-slot registry completes in under 500ms."""
+        import time
+
+        # Create 100 slots across component/interface/contract types
+        comp_ids = []
+        for i in range(40):
+            comp = api.create("component", {"name": f"Component-{i:03d}"})
+            comp_ids.append(comp["slot_id"])
+
+        intf_ids = []
+        for i in range(35):
+            src = comp_ids[i % len(comp_ids)]
+            tgt = comp_ids[(i + 1) % len(comp_ids)]
+            intf = api.create("interface", {
+                "name": f"Interface-{i:03d}",
+                "source_component": src,
+                "target_component": tgt,
+            })
+            intf_ids.append(intf["slot_id"])
+
+        for i in range(25):
+            iid = intf_ids[i % len(intf_ids)]
+            api.create("contract", {
+                "name": f"Contract-{i:03d}",
+                "interface_id": iid,
+            })
+
+        spec = {
+            "name": "perf-test",
+            "description": "Performance test with 100 slots",
+            "scope_patterns": [
+                {"pattern": "component:*", "slot_type": "component"},
+                {"pattern": "interface:*", "slot_type": "interface"},
+                {"pattern": "contract:*", "slot_type": "contract"},
+            ],
+        }
+        start = time.perf_counter()
+        result = assemble_view(api, spec, workspace, SCHEMAS_DIR)
+        elapsed_ms = (time.perf_counter() - start) * 1000
+
+        assert result["total_slots"] == 100
+        assert elapsed_ms < 500, f"Assembly took {elapsed_ms:.1f}ms, exceeds 500ms target"
