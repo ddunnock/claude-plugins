@@ -30,7 +30,7 @@ See `.planning/milestones/v1.0-ROADMAP.md` for full phase details.
 
 - [x] **Phase 6: View Assembly Core** - Construct contextual views from registry slot subsets with gap handling and snapshot consistency
 - [x] **Phase 6b: View Integration Fix** - Close integration gaps, fix broken file-based spec flow, tighten view schemas
-- [ ] **Phase 7: View Quality & Handoff** - Relevance ranking, deterministic output, performance, and diagram-compatible handoff format
+- [x] **Phase 7: View Quality & Handoff** - Relevance ranking, deterministic output, performance, and diagram-compatible handoff format (completed 2026-03-07)
 - [ ] **Phase 8: Diagram Generation Core** - D2 structural and Mermaid behavioral diagram generation from view data
 - [ ] **Phase 9: Diagram Templates & Quality** - Template-driven generation with abstraction layers, determinism, and logging
 
@@ -138,6 +138,6 @@ Plans:
 | 5. Traceability Weaving + Impact Analysis | v1.0 | 3/3 | Complete | 2026-03-01 |
 | 6. View Assembly Core | v1.1 | 3/3 | Complete | 2026-03-03 |
 | 6b. View Integration Fix | v1.1 | 2/2 | Complete | 2026-03-03 |
-| 7. View Quality & Handoff | 1/2 | In Progress|  | - |
+| 7. View Quality & Handoff | 2/2 | Complete   | 2026-03-07 | - |
 | 8. Diagram Generation Core | v1.1 | 0/TBD | Not started | - |
 | 9. Diagram Templates & Quality | v1.1 | 0/TBD | Not started | - |
