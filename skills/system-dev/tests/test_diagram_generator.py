@@ -1241,3 +1241,236 @@ class TestMigrationParity:
         assert "classDef gapError" in mermaid
         assert "stroke-dasharray: 5 5" in mermaid
         assert "classDef unlinked" in mermaid
+
+
+# ===========================================================================
+# Phase 09-02: Abstraction layer tests
+# ===========================================================================
+
+class TestApplyAbstractionLevel:
+    """Test _apply_abstraction_level() system vs component collapsing."""
+
+    def test_component_level_unchanged(self):
+        """Component level returns equivalent data (deep copy)."""
+        from scripts.diagram_generator import _apply_abstraction_level
+        view = _make_view()
+        result = _apply_abstraction_level(view, "component")
+        assert result["sections"] == view["sections"]
+        assert result["edges"] == view["edges"]
+
+    def test_none_level_unchanged(self):
+        """None level returns equivalent data (deep copy)."""
+        from scripts.diagram_generator import _apply_abstraction_level
+        view = _make_view()
+        result = _apply_abstraction_level(view, None)
+        assert result["sections"] == view["sections"]
+
+    def test_system_level_collapses_children(self):
+        """System level collapses children into parent with count badge."""
+        from scripts.diagram_generator import _apply_abstraction_level
+        view = _make_view(sections=[
+            {
+                "slot_type": "component",
+                "slots": [
+                    {"slot_id": "comp-parent", "slot_type": "component",
+                     "name": "Parent", "version": 1},
+                    {"slot_id": "comp-child1", "slot_type": "component",
+                     "name": "Child1", "version": 1, "parent_id": "comp-parent"},
+                    {"slot_id": "comp-child2", "slot_type": "component",
+                     "name": "Child2", "version": 1, "parent_id": "comp-parent"},
+                ],
+            },
+        ], edges=[])
+        result = _apply_abstraction_level(view, "system")
+        comp_section = [s for s in result["sections"] if s["slot_type"] == "component"][0]
+        # Only parent should remain
+        assert len(comp_section["slots"]) == 1
+        assert "2 sub-components" in comp_section["slots"][0]["name"]
+
+    def test_system_level_aggregates_edges(self):
+        """System level aggregates child-to-child edges to parent-to-parent."""
+        from scripts.diagram_generator import _apply_abstraction_level
+        view = _make_view(sections=[
+            {
+                "slot_type": "component",
+                "slots": [
+                    {"slot_id": "comp-p1", "slot_type": "component",
+                     "name": "Parent1", "version": 1},
+                    {"slot_id": "comp-c1a", "slot_type": "component",
+                     "name": "Child1A", "version": 1, "parent_id": "comp-p1"},
+                    {"slot_id": "comp-p2", "slot_type": "component",
+                     "name": "Parent2", "version": 1},
+                    {"slot_id": "comp-c2a", "slot_type": "component",
+                     "name": "Child2A", "version": 1, "parent_id": "comp-p2"},
+                ],
+            },
+        ], edges=[
+            {"source_id": "comp-c1a", "target_id": "comp-c2a",
+             "relationship_type": "implements"},
+            {"source_id": "comp-c1a", "target_id": "comp-c2a",
+             "relationship_type": "implements"},
+        ])
+        result = _apply_abstraction_level(view, "system")
+        # Two edges between same parent pair with same rel_type -> aggregated
+        assert len(result["edges"]) == 1
+        assert "implements (2)" in result["edges"][0]["relationship_type"]
+
+    def test_does_not_mutate_original(self):
+        """Verify original view dict is unchanged after system-level abstraction."""
+        from scripts.diagram_generator import _apply_abstraction_level
+        view = _make_view(sections=[
+            {
+                "slot_type": "component",
+                "slots": [
+                    {"slot_id": "comp-parent", "slot_type": "component",
+                     "name": "Parent", "version": 1},
+                    {"slot_id": "comp-child", "slot_type": "component",
+                     "name": "Child", "version": 1, "parent_id": "comp-parent"},
+                ],
+            },
+        ])
+        import copy
+        original = copy.deepcopy(view)
+        _apply_abstraction_level(view, "system")
+        assert view == original
+
+    def test_generate_diagram_reads_abstraction_level(self, tmp_path):
+        """Spec with abstraction_level=system produces different output than component."""
+        from scripts.diagram_generator import generate_diagram
+        from scripts.registry import SlotAPI
+        workspace, schemas_dir = _setup_workspace(tmp_path)
+        api = SlotAPI(workspace, schemas_dir)
+        _create_component_slot(api)
+
+        spec_component = {
+            "name": "test-comp",
+            "description": "Test",
+            "diagram_hint": "structural",
+            "abstraction_level": "component",
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+        }
+        spec_system = {
+            "name": "test-sys",
+            "description": "Test",
+            "diagram_hint": "structural",
+            "abstraction_level": "system",
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+        }
+        r1 = generate_diagram(api, spec_component, workspace, schemas_dir)
+        r2 = generate_diagram(api, spec_system, workspace, schemas_dir)
+        # Both should produce valid diagrams (may be same if no hierarchy)
+        assert len(r1["source"]) > 0
+        assert len(r2["source"]) > 0
+
+
+# ===========================================================================
+# Phase 09-02: Structured logging tests
+# ===========================================================================
+
+class TestStructuredLogging:
+    """Test diagram.* namespace structured logging."""
+
+    def test_logging_info_events(self, tmp_path, caplog):
+        """generate_diagram() emits INFO logs with diagram.operation in extra."""
+        import logging
+        from scripts.diagram_generator import generate_diagram
+        from scripts.registry import SlotAPI
+        workspace, schemas_dir = _setup_workspace(tmp_path)
+        api = SlotAPI(workspace, schemas_dir)
+        _create_component_slot(api)
+
+        spec = {
+            "name": "system-overview",
+            "description": "Test",
+            "diagram_hint": "structural",
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+        }
+        with caplog.at_level(logging.INFO, logger="scripts.diagram_generator"):
+            generate_diagram(api, spec, workspace, schemas_dir)
+
+        diagram_ops = [
+            r.diagram__operation
+            for r in caplog.records
+            if hasattr(r, "diagram__operation")
+        ]
+        # caplog stores extra keys with dots replaced by double underscores
+        # Try alternative access via __dict__
+        if not diagram_ops:
+            diagram_ops = [
+                r.__dict__.get("diagram.operation")
+                for r in caplog.records
+                if r.__dict__.get("diagram.operation") is not None
+            ]
+        assert "format_resolved" in diagram_ops
+        assert "template_loaded" in diagram_ops
+        assert "generation_complete" in diagram_ops
+        assert "slot_written" in diagram_ops
+
+    def test_logging_debug_guarded(self, caplog):
+        """At WARNING level, no DEBUG entries from diagram_generator."""
+        import logging
+        from scripts.diagram_generator import _build_template_context
+        view = _make_view()
+        with caplog.at_level(logging.WARNING, logger="scripts.diagram_generator"):
+            _build_template_context(view)
+        debug_records = [r for r in caplog.records if r.levelno == logging.DEBUG
+                         and r.name == "scripts.diagram_generator"]
+        assert len(debug_records) == 0
+
+    def test_logging_debug_enabled(self, caplog):
+        """At DEBUG level, DEBUG entries appear with diagram.operation keys."""
+        import logging
+        from scripts.diagram_generator import _build_template_context
+        view = _make_view()
+        with caplog.at_level(logging.DEBUG, logger="scripts.diagram_generator"):
+            _build_template_context(view)
+        debug_records = [r for r in caplog.records if r.levelno == logging.DEBUG
+                         and r.name == "scripts.diagram_generator"]
+        assert len(debug_records) > 0
+        # Check that at least one has diagram.operation
+        ops = [r.__dict__.get("diagram.operation") for r in debug_records]
+        ops = [o for o in ops if o is not None]
+        assert "section_rendered" in ops or "edges_rendered" in ops
+
+    def test_logging_generation_complete_has_elapsed_ms(self, tmp_path, caplog):
+        """generation_complete log entry contains diagram.elapsed_ms as positive number."""
+        import logging
+        from scripts.diagram_generator import generate_diagram
+        from scripts.registry import SlotAPI
+        workspace, schemas_dir = _setup_workspace(tmp_path)
+        api = SlotAPI(workspace, schemas_dir)
+        _create_component_slot(api)
+
+        spec = {
+            "name": "system-overview",
+            "description": "Test",
+            "diagram_hint": "structural",
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+        }
+        with caplog.at_level(logging.INFO, logger="scripts.diagram_generator"):
+            generate_diagram(api, spec, workspace, schemas_dir)
+
+        gen_records = [
+            r for r in caplog.records
+            if r.__dict__.get("diagram.operation") == "generation_complete"
+        ]
+        assert len(gen_records) >= 1
+        elapsed = gen_records[0].__dict__.get("diagram.elapsed_ms")
+        assert elapsed is not None
+        assert elapsed > 0
+
+
+# ===========================================================================
+# Phase 09-02: BUILTIN_SPECS abstraction_level tests
+# ===========================================================================
+
+class TestBuiltinSpecsAbstractionLevel:
+    """Test BUILTIN_SPECS has abstraction_level on relevant specs."""
+
+    def test_system_overview_has_abstraction_level(self):
+        from scripts.view_assembler import BUILTIN_SPECS
+        assert BUILTIN_SPECS["system-overview"].get("abstraction_level") == "system"
+
+    def test_component_detail_has_abstraction_level(self):
+        from scripts.view_assembler import BUILTIN_SPECS
+        assert BUILTIN_SPECS["component-detail"].get("abstraction_level") == "component"

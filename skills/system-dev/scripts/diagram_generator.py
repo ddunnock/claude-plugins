@@ -259,6 +259,36 @@ def _build_template_context(
         key=lambda g: g["slot_type"],
     )
 
+    # DEBUG: per-section rendering info
+    if logger.isEnabledFor(logging.DEBUG):
+        for section in sections:
+            logger.debug(
+                "Rendering section: %s (%d slots)",
+                section["slot_type"],
+                len(section.get("slots", [])),
+                extra={
+                    "diagram.operation": "section_rendered",
+                    "diagram.slot_type": section["slot_type"],
+                    "diagram.slot_count": len(section.get("slots", [])),
+                },
+            )
+        logger.debug(
+            "Rendering %d edges",
+            len(edges),
+            extra={
+                "diagram.operation": "edges_rendered",
+                "diagram.edge_count": len(edges),
+            },
+        )
+        logger.debug(
+            "Rendering %d gaps",
+            len(gaps),
+            extra={
+                "diagram.operation": "gaps_rendered",
+                "diagram.gap_count": len(gaps),
+            },
+        )
+
     # Compute convenience vars
     node_count = sum(len(s.get("slots", [])) for s in sections)
     edge_count = len(edges)
@@ -497,19 +527,49 @@ def generate_diagram(
 
     # 2. Resolve format
     fmt, diagram_type = _resolve_format(format_override, spec)
+    logger.info(
+        "Format resolved: %s (%s)",
+        fmt,
+        diagram_type,
+        extra={
+            "diagram.operation": "format_resolved",
+            "diagram.format": fmt,
+            "diagram.diagram_type": diagram_type,
+        },
+    )
 
     # Use template_name from spec if not explicitly provided
     if template_name is None:
         template_name = spec.get("diagram_template")
 
     # 3. Generate diagram source via template
+    resolved_template_name = template_name or "auto"
     context = _build_template_context(
         view, abstraction_level=spec.get("abstraction_level", "component")
     )
     template = _load_template(template_name, fmt, diagram_type, workspace_root)
+    logger.info(
+        "Template loaded: %s",
+        resolved_template_name,
+        extra={
+            "diagram.operation": "template_loaded",
+            "diagram.template": resolved_template_name,
+        },
+    )
     source = template.render(**context)
 
     elapsed_ms = (time.perf_counter() - t0) * 1000
+    line_count = source.count("\n") + 1
+    logger.info(
+        "Generation complete: %d lines",
+        line_count,
+        extra={
+            "diagram.operation": "generation_complete",
+            "diagram.elapsed_ms": round(elapsed_ms, 2),
+            "diagram.line_count": line_count,
+            "diagram.format": fmt,
+        },
+    )
 
     # 4. Compute content-hash slot ID
     slot_id = _compute_diagram_slot_id(spec["name"], source)
@@ -517,6 +577,16 @@ def generate_diagram(
     # 5. Check if identical slot already exists (no-op optimization)
     existing = api.read(slot_id)
     if existing is not None:
+        logger.info(
+            "Slot written: %s (%s)",
+            slot_id,
+            "unchanged",
+            extra={
+                "diagram.operation": "slot_written",
+                "diagram.slot_id": slot_id,
+                "diagram.status": "unchanged",
+            },
+        )
         return {
             "status": "unchanged",
             "slot_id": slot_id,
@@ -541,6 +611,17 @@ def generate_diagram(
 
     # 7. Write via SlotAPI.ingest() -- only "diagram" type (DIAG-09)
     result = api.ingest(slot_id, "diagram", content, agent_id="diagram-generator")
+
+    logger.info(
+        "Slot written: %s (%s)",
+        slot_id,
+        result["status"],
+        extra={
+            "diagram.operation": "slot_written",
+            "diagram.slot_id": slot_id,
+            "diagram.status": result["status"],
+        },
+    )
 
     return {
         "status": result["status"],
