@@ -1,0 +1,7 @@
+{
+  "templates": [
+    {"name": "d2-structural", "file": "d2-structural.j2", "format": "d2", "diagram_type": "structural"},
+    {"name": "d2-component", "file": "d2-component.j2", "format": "d2", "diagram_type": "structural"},
+    {"name": "mermaid-behavioral", "file": "mermaid-behavioral.j2", "format": "mermaid", "diagram_type": "behavioral"}
+  ]
+}

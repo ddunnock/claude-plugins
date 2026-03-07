@@ -1,17 +1,27 @@
 """D2 and Mermaid diagram generation engines.
 
-Pure functions that transform view handoff data (output of assemble_view())
-into valid D2 structural and Mermaid behavioral diagram source code.
+Template-driven diagram generation using Jinja2 templates loaded from a
+manifest-driven registry. Supports two-tier template resolution: user
+overrides in .system-dev/templates/ take precedence over built-in templates.
+
 Gap markers render as visually distinct dashed, color-coded placeholders.
 """
 
 from __future__ import annotations
 
 import hashlib
+import json
+import logging
+import os
 import re
+import time
+
+import jinja2
 
 from scripts.registry import SlotAPI
 from scripts.view_assembler import assemble_view
+
+logger = logging.getLogger(__name__)
 
 # Severity -> color mapping for gap placeholders
 _GAP_COLORS: dict[str, str] = {
@@ -19,6 +29,11 @@ _GAP_COLORS: dict[str, str] = {
     "warning": "#e6a117",
     "info": "#888888",
 }
+
+# Path to built-in templates directory (sibling of scripts/)
+_BUILTIN_TEMPLATES_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "templates"
+)
 
 
 def _sanitize_id(slot_id: str) -> str:
@@ -50,14 +65,191 @@ def _compute_diagram_slot_id(spec_name: str, source: str) -> str:
     return f"diag-{spec_name}-{content_hash}"
 
 
+def _build_template_context(
+    view: dict, abstraction_level: str = "component"
+) -> dict:
+    """Build a flat context dict for template rendering.
+
+    Pre-sorts all data for deterministic output (DIAG-08): sections by
+    slot_type, slots within sections by name, edges by (source_id,
+    target_id, relationship_type), gaps by (slot_type, index).
+
+    Args:
+        view: Assembled view dict (output of assemble_view()).
+        abstraction_level: Abstraction level ("system" or "component").
+
+    Returns:
+        Context dict with keys: spec_name, snapshot_id, sections, edges,
+        gaps, abstraction_level, node_count, edge_count, direction,
+        has_unlinked, has_nodes, gap_severities, section_types,
+        section_first_slot.
+    """
+    spec_name = view.get("spec_name", "unknown")
+    snapshot_id = view.get("snapshot_id", "unknown")
+
+    # Deep-copy and sort sections by slot_type for determinism
+    sections = sorted(
+        view.get("sections", []), key=lambda s: s["slot_type"]
+    )
+    # Sort slots within each section by name
+    for section in sections:
+        section["slots"] = sorted(
+            section.get("slots", []),
+            key=lambda s: s.get("name", s.get("slot_id", "")),
+        )
+
+    # Sort edges by (source_id, target_id, relationship_type)
+    edges = sorted(
+        view.get("edges", []),
+        key=lambda e: (
+            e["source_id"],
+            e["target_id"],
+            e["relationship_type"],
+        ),
+    )
+
+    # Sort gaps by (slot_type, original index preserved via enumerate)
+    gaps_raw = view.get("gaps", [])
+    gaps = sorted(
+        gaps_raw,
+        key=lambda g: g["slot_type"],
+    )
+
+    # Compute convenience vars
+    node_count = sum(len(s.get("slots", [])) for s in sections)
+    edge_count = len(edges)
+    direction = "LR" if node_count > 0 and edge_count > 2 * node_count else "TD"
+
+    has_unlinked = any(
+        s["slot_type"] == "unlinked" and s.get("slots")
+        for s in sections
+    )
+    has_nodes = any(s.get("slots") for s in sections)
+
+    gap_severities = sorted({g.get("severity", "warning") for g in gaps})
+
+    # Track section types and first slot per type (for gap connections)
+    section_types: set[str] = set()
+    section_first_slot: dict[str, str] = {}
+    for section in sections:
+        slot_type = section["slot_type"]
+        section_types.add(slot_type)
+        for slot in section.get("slots", []):
+            if slot_type not in section_first_slot:
+                section_first_slot[slot_type] = _sanitize_id(slot["slot_id"])
+
+    return {
+        "spec_name": spec_name,
+        "snapshot_id": snapshot_id,
+        "sections": sections,
+        "edges": edges,
+        "gaps": gaps,
+        "abstraction_level": abstraction_level,
+        "node_count": node_count,
+        "edge_count": edge_count,
+        "direction": direction,
+        "has_unlinked": has_unlinked,
+        "has_nodes": has_nodes,
+        "gap_severities": gap_severities,
+        "section_types": section_types,
+        "section_first_slot": section_first_slot,
+    }
+
+
+def _load_template(
+    template_name: str | None,
+    fmt: str,
+    diagram_type: str,
+    workspace_root: str | None = None,
+) -> jinja2.Template:
+    """Load a Jinja2 template from the manifest-driven registry.
+
+    Resolution order:
+    1. If template_name is provided, look for that exact .j2 file.
+    2. Otherwise auto-select from manifest using fmt + diagram_type match.
+    3. Check user override dir first, then fall back to built-in templates.
+
+    Custom Jinja2 filters registered: sanitize_id, gap_color, truncate_label.
+
+    Args:
+        template_name: Explicit template name (e.g., "d2-structural"),
+            or None for auto-selection.
+        fmt: Diagram format ("d2" or "mermaid").
+        diagram_type: Diagram type ("structural" or "behavioral").
+        workspace_root: Path to .system-dev/ dir for user override resolution.
+
+    Returns:
+        Loaded and configured jinja2.Template.
+
+    Raises:
+        ValueError: If no matching template found in manifest.
+    """
+    # Load manifest
+    manifest_path = os.path.join(_BUILTIN_TEMPLATES_DIR, "manifest.json")
+    with open(manifest_path) as f:
+        manifest = json.load(f)
+
+    # Find matching template entry
+    template_file = None
+    if template_name is not None:
+        # Look for exact name match
+        for entry in manifest["templates"]:
+            if entry["name"] == template_name:
+                template_file = entry["file"]
+                break
+        if template_file is None:
+            # Try as a direct filename
+            template_file = (
+                template_name
+                if template_name.endswith(".j2")
+                else f"{template_name}.j2"
+            )
+    else:
+        # Auto-select by fmt + diagram_type
+        for entry in manifest["templates"]:
+            if entry["format"] == fmt and entry["diagram_type"] == diagram_type:
+                template_file = entry["file"]
+                break
+
+    if template_file is None:
+        raise ValueError(
+            f"No template found for format={fmt}, "
+            f"diagram_type={diagram_type}, name={template_name}"
+        )
+
+    # Resolve template path: user override first, then built-in
+    template_dir = _BUILTIN_TEMPLATES_DIR
+    if workspace_root is not None:
+        user_template_path = os.path.join(
+            workspace_root, "templates", template_file
+        )
+        if os.path.isfile(user_template_path):
+            template_dir = os.path.join(workspace_root, "templates")
+            logger.info("Using user override template: %s", user_template_path)
+
+    # Create Jinja2 environment with custom filters
+    env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(template_dir),
+        keep_trailing_newline=False,
+        undefined=jinja2.StrictUndefined,
+    )
+
+    # Register custom filters
+    env.filters["sanitize_id"] = _sanitize_id
+    env.filters["gap_color"] = lambda severity: _GAP_COLORS.get(
+        severity, _GAP_COLORS["info"]
+    )
+    env.filters["truncate_label"] = lambda s, length=50: (
+        s[:length] + "..." if len(s) > length else s
+    )
+
+    return env.get_template(template_file)
+
+
 def generate_d2(view: dict) -> str:
     """Generate D2 structural diagram source from assembled view.
 
-    Pure function with no side effects. Produces D2 source with:
-    - Components as nested containers (rectangle shapes)
-    - Non-component slots as labeled nodes
-    - Edges as labeled connections
-    - Gap placeholders as dashed, color-coded shapes with [GAP] prefix
+    Uses the d2-structural Jinja2 template internally.
 
     Args:
         view: Assembled view dict (output of assemble_view()).
@@ -65,104 +257,9 @@ def generate_d2(view: dict) -> str:
     Returns:
         D2 source code string.
     """
-    spec_name = view.get("spec_name", "unknown")
-    snapshot_id = view.get("snapshot_id", "unknown")
-
-    lines: list[str] = [
-        f"# Diagram: {spec_name} (structural)",
-        f"# Generated from snapshot: {snapshot_id}",
-    ]
-
-    sections = view.get("sections", [])
-    edges = view.get("edges", [])
-    gaps = view.get("gaps", [])
-
-    # Track which section slot_types exist (for gap context connections)
-    section_types: set[str] = set()
-    # Track first slot_id per section type (for gap connections)
-    section_first_slot: dict[str, str] = {}
-
-    # Emit slots by section
-    for section in sections:
-        slot_type = section["slot_type"]
-        section_types.add(slot_type)
-        section_slots = section.get("slots", [])
-
-        if slot_type == "unlinked":
-            # Wrap unlinked slots in a container
-            if section_slots:
-                lines.append("")
-                lines.append('Unlinked: "Unlinked" {')
-                for slot in section_slots:
-                    safe_id = _sanitize_id(slot["slot_id"])
-                    name = slot.get("name", slot["slot_id"])
-                    lines.append(f'  {safe_id}: "{name}"')
-                lines.append("}")
-        elif slot_type == "component":
-            # Components as nested containers
-            lines.append("")
-            lines.append("# Components")
-            for slot in section_slots:
-                safe_id = _sanitize_id(slot["slot_id"])
-                name = slot.get("name", slot["slot_id"])
-                if safe_id not in section_first_slot.get("component", safe_id + "_"):
-                    section_first_slot.setdefault("component", safe_id)
-                lines.append(f'{safe_id}: "{name}" {{')
-                lines.append("  shape: rectangle")
-                lines.append("}")
-        else:
-            # Non-component slot types as labeled nodes
-            if section_slots:
-                lines.append("")
-                lines.append(f"# {slot_type.title()}s")
-                for slot in section_slots:
-                    safe_id = _sanitize_id(slot["slot_id"])
-                    name = slot.get("name", slot["slot_id"])
-                    section_first_slot.setdefault(slot_type, safe_id)
-                    lines.append(f'{safe_id}: "{name}"')
-
-    # Emit edges as connections
-    if edges:
-        lines.append("")
-        lines.append("# Connections")
-        for edge in edges:
-            src = _sanitize_id(edge["source_id"])
-            tgt = _sanitize_id(edge["target_id"])
-            rel = edge["relationship_type"]
-            lines.append(f"{src} -> {tgt}: {rel}")
-
-    # Emit gap placeholders
-    if gaps:
-        lines.append("")
-        lines.append("# Gap placeholders")
-        for i, gap in enumerate(gaps):
-            gap_id = _sanitize_id(f"gap_{gap['slot_type']}_{i}")
-            color = _GAP_COLORS.get(gap["severity"], _GAP_COLORS["info"])
-            reason = gap.get("reason", "Missing")
-            suggestion = gap.get("suggestion", "")
-
-            lines.append(f'{gap_id}: "[GAP] {gap["slot_type"]}: {reason}" {{')
-            lines.append("  shape: rectangle")
-            lines.append("  style: {")
-            lines.append(f'    stroke: "{color}"')
-            lines.append("    stroke-dash: 5")
-            lines.append(f'    font-color: "{color}"')
-            lines.append("  }")
-            lines.append("}")
-            if suggestion:
-                lines.append(f"# Suggestion: {suggestion}")
-
-            # Add dashed connection to context if gap slot_type matches a section
-            if gap["slot_type"] in section_types:
-                context_id = section_first_slot.get(gap["slot_type"])
-                if context_id:
-                    lines.append(
-                        f"{gap_id} -> {context_id}: missing {{"
-                    )
-                    lines.append("  style.stroke-dash: 5")
-                    lines.append("}")
-
-    return "\n".join(lines)
+    context = _build_template_context(view)
+    template = _load_template(None, "d2", "structural")
+    return template.render(**context)
 
 
 def _resolve_format(
@@ -206,11 +303,13 @@ def generate_diagram(
     workspace_root: str,
     schemas_dir: str,
     format_override: str | None = None,
+    template_name: str | None = None,
 ) -> dict:
     """Orchestrate diagram generation from a view spec.
 
     Assembles a view, resolves the output format, generates D2 or Mermaid
-    source, and writes the result as a diagram slot via SlotAPI.ingest().
+    source via Jinja2 template rendering, and writes the result as a
+    diagram slot via SlotAPI.ingest().
 
     Only writes slots with slot_type="diagram" (DIAG-09 preservation).
 
@@ -221,25 +320,37 @@ def generate_diagram(
         schemas_dir: Path to the schemas/ directory with JSON Schema files.
         format_override: Optional explicit format ("d2" or "mermaid").
             When provided, overrides the spec's diagram_hint.
+        template_name: Optional explicit template name from
+            spec.get("diagram_template"), overriding auto-selection.
 
     Returns:
-        Dict with keys: status, slot_id, source, format, diagram_type.
+        Dict with keys: status, slot_id, source, format, diagram_type,
+        generation_elapsed_ms.
         Status is "created", "updated", or "unchanged".
 
     Raises:
         ValueError: If no diagram_hint on spec and no format_override.
     """
+    t0 = time.perf_counter()
+
     # 1. Assemble view from spec
     view = assemble_view(api, spec, workspace_root, schemas_dir)
 
     # 2. Resolve format
     fmt, diagram_type = _resolve_format(format_override, spec)
 
-    # 3. Generate diagram source
-    if fmt == "d2":
-        source = generate_d2(view)
-    else:
-        source = generate_mermaid(view)
+    # Use template_name from spec if not explicitly provided
+    if template_name is None:
+        template_name = spec.get("diagram_template")
+
+    # 3. Generate diagram source via template
+    context = _build_template_context(
+        view, abstraction_level=spec.get("abstraction_level", "component")
+    )
+    template = _load_template(template_name, fmt, diagram_type, workspace_root)
+    source = template.render(**context)
+
+    elapsed_ms = (time.perf_counter() - t0) * 1000
 
     # 4. Compute content-hash slot ID
     slot_id = _compute_diagram_slot_id(spec["name"], source)
@@ -253,6 +364,7 @@ def generate_diagram(
             "source": source,
             "format": fmt,
             "diagram_type": diagram_type,
+            "generation_elapsed_ms": round(elapsed_ms, 3),
         }
 
     # 6. Build diagram slot content
@@ -265,6 +377,7 @@ def generate_diagram(
         "source_snapshot_id": view["snapshot_id"],
         "slot_count": view["total_slots"],
         "gap_count": view["total_gaps"],
+        "generation_elapsed_ms": round(elapsed_ms, 3),
     }
 
     # 7. Write via SlotAPI.ingest() -- only "diagram" type (DIAG-09)
@@ -276,17 +389,14 @@ def generate_diagram(
         "source": source,
         "format": fmt,
         "diagram_type": diagram_type,
+        "generation_elapsed_ms": round(elapsed_ms, 3),
     }
 
 
 def generate_mermaid(view: dict) -> str:
     """Generate Mermaid behavioral diagram source from assembled view.
 
-    Pure function with no side effects. Produces Mermaid flowchart with:
-    - Nodes for each slot (``safe_id["Label"]``)
-    - Labeled arrows for edges (``-->|relationship_type|``)
-    - classDef gap styles with stroke-dasharray (NO commas in value)
-    - Gap nodes with ``:::className``
+    Uses the mermaid-behavioral Jinja2 template internally.
 
     Args:
         view: Assembled view dict (output of assemble_view()).
@@ -294,95 +404,6 @@ def generate_mermaid(view: dict) -> str:
     Returns:
         Mermaid source code string.
     """
-    spec_name = view.get("spec_name", "unknown")
-    snapshot_id = view.get("snapshot_id", "unknown")
-
-    sections = view.get("sections", [])
-    edges = view.get("edges", [])
-    gaps = view.get("gaps", [])
-
-    # Count total nodes to determine direction
-    node_count = sum(len(s.get("slots", [])) for s in sections)
-    edge_count = len(edges)
-
-    # Use LR when edges >> nodes (wide graph)
-    direction = "LR" if node_count > 0 and edge_count > 2 * node_count else "TD"
-
-    lines: list[str] = [
-        f"%% Diagram: {spec_name} (behavioral)",
-        f"%% Generated from snapshot: {snapshot_id}",
-        "",
-        f"graph {direction}",
-    ]
-
-    has_unlinked = False
-
-    # Emit nodes
-    if any(s.get("slots") for s in sections):
-        lines.append("")
-        lines.append("%% Nodes")
-        for section in sections:
-            slot_type = section["slot_type"]
-            for slot in section.get("slots", []):
-                safe_id = _sanitize_id(slot["slot_id"])
-                name = slot.get("name", slot["slot_id"])
-                if slot_type == "unlinked":
-                    has_unlinked = True
-                    lines.append(f'{safe_id}["{name}"]:::unlinked')
-                else:
-                    lines.append(f'{safe_id}["{name}"]')
-
-    # Emit edges
-    if edges:
-        lines.append("")
-        lines.append("%% Edges")
-        for edge in edges:
-            src = _sanitize_id(edge["source_id"])
-            tgt = _sanitize_id(edge["target_id"])
-            rel = edge["relationship_type"]
-            lines.append(f"{src} -->|{rel}| {tgt}")
-
-    # Collect needed gap severity levels
-    gap_severities: set[str] = set()
-    for gap in gaps:
-        gap_severities.add(gap.get("severity", "warning"))
-
-    # Emit gap styles and nodes
-    if gaps:
-        lines.append("")
-        lines.append("%% Gap placeholders")
-
-        # Emit classDef for each severity level used
-        for severity in sorted(gap_severities):
-            color = _GAP_COLORS.get(severity, _GAP_COLORS["info"])
-            class_name = f"gap{severity.title()}"
-            lines.append(
-                f"classDef {class_name} "
-                f"stroke:{color},stroke-width:2px,"
-                f"stroke-dasharray: 5 5,color:{color}"
-            )
-
-        lines.append("")
-        for i, gap in enumerate(gaps):
-            gap_id = _sanitize_id(f"gap_{gap['slot_type']}_{i}")
-            severity = gap.get("severity", "warning")
-            class_name = f"gap{severity.title()}"
-            reason = gap.get("reason", "Missing")
-            suggestion = gap.get("suggestion", "")
-
-            lines.append(
-                f'{gap_id}["[GAP] {gap["slot_type"]}: {reason}"]'
-                f":::{class_name}"
-            )
-            if suggestion:
-                lines.append(f"%% Suggestion: {suggestion}")
-
-    # Emit unlinked classDef if needed
-    if has_unlinked:
-        lines.append("")
-        lines.append(
-            "classDef unlinked fill:#f8f8f8,stroke:#cccccc,"
-            "stroke-width:1px,color:#999999"
-        )
-
-    return "\n".join(lines)
+    context = _build_template_context(view)
+    template = _load_template(None, "mermaid", "behavioral")
+    return template.render(**context)

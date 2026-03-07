@@ -1,0 +1,42 @@
+%% Diagram: {{ spec_name }} (behavioral)
+%% Generated from snapshot: {{ snapshot_id }}
+
+graph {{ direction }}
+{%- if has_nodes %}
+
+%% Nodes
+{%- for section in sections %}
+{%- for slot in section.slots %}
+{%- if section.slot_type == "unlinked" %}
+{{ slot.slot_id | sanitize_id }}["{{ slot.name | default(slot.slot_id) }}"]:::unlinked
+{%- else %}
+{{ slot.slot_id | sanitize_id }}["{{ slot.name | default(slot.slot_id) }}"]
+{%- endif %}
+{%- endfor %}
+{%- endfor %}
+{%- endif %}
+{%- if edges %}
+
+%% Edges
+{%- for edge in edges %}
+{{ edge.source_id | sanitize_id }} -->|{{ edge.relationship_type }}| {{ edge.target_id | sanitize_id }}
+{%- endfor %}
+{%- endif %}
+{%- if gaps %}
+
+%% Gap placeholders
+{%- for severity in gap_severities %}
+classDef gap{{ severity | title }} stroke:{{ severity | gap_color }},stroke-width:2px,stroke-dasharray: 5 5,color:{{ severity | gap_color }}
+{%- endfor %}
+
+{%- for gap in gaps %}
+{{ ("gap_" ~ gap.slot_type ~ "_" ~ loop.index0) | sanitize_id }}["[GAP] {{ gap.slot_type }}: {{ gap.reason | default("Missing") }}"]:::gap{{ (gap.severity | default("warning")) | title }}
+{%- if gap.suggestion %}
+%% Suggestion: {{ gap.suggestion }}
+{%- endif %}
+{%- endfor %}
+{%- endif %}
+{%- if has_unlinked %}
+
+classDef unlinked fill:#f8f8f8,stroke:#cccccc,stroke-width:1px,color:#999999
+{%- endif %}

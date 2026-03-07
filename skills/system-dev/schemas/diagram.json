@@ -24,7 +24,8 @@
     "slot_count": {"type": "integer", "minimum": 0},
     "gap_count": {"type": "integer", "minimum": 0},
     "created_at": {"type": "string", "format": "date-time"},
-    "updated_at": {"type": "string", "format": "date-time"}
+    "updated_at": {"type": "string", "format": "date-time"},
+    "generation_elapsed_ms": {"type": "number", "minimum": 0, "description": "Time in milliseconds to generate the diagram source."}
   },
   "additionalProperties": false
 }

@@ -1,0 +1,63 @@
+# Diagram: {{ spec_name }} (structural)
+# Generated from snapshot: {{ snapshot_id }}
+{%- for section in sections %}
+{%- set slot_type = section.slot_type %}
+{%- set section_slots = section.slots %}
+{%- if slot_type == "unlinked" %}
+{%- if section_slots %}
+
+Unlinked: "Unlinked" {
+{%- for slot in section_slots %}
+  {{ slot.slot_id | sanitize_id }}: "{{ slot.name | default(slot.slot_id) }}"
+{%- endfor %}
+}
+{%- endif %}
+{%- elif slot_type == "component" %}
+
+# Components
+{%- for slot in section_slots %}
+{{ slot.slot_id | sanitize_id }}: "{{ slot.name | default(slot.slot_id) }}" {
+  shape: rectangle
+}
+{%- endfor %}
+{%- else %}
+{%- if section_slots %}
+
+# {{ slot_type | title }}s
+{%- for slot in section_slots %}
+{{ slot.slot_id | sanitize_id }}: "{{ slot.name | default(slot.slot_id) }}"
+{%- endfor %}
+{%- endif %}
+{%- endif %}
+{%- endfor %}
+{%- if edges %}
+
+# Connections
+{%- for edge in edges %}
+{{ edge.source_id | sanitize_id }} -> {{ edge.target_id | sanitize_id }}: {{ edge.relationship_type }}
+{%- endfor %}
+{%- endif %}
+{%- if gaps %}
+
+# Gap placeholders
+{%- for gap in gaps %}
+{{ ("gap_" ~ gap.slot_type ~ "_" ~ loop.index0) | sanitize_id }}: "[GAP] {{ gap.slot_type }}: {{ gap.reason | default("Missing") }}" {
+  shape: rectangle
+  style: {
+    stroke: "{{ gap.severity | gap_color }}"
+    stroke-dash: 5
+    font-color: "{{ gap.severity | gap_color }}"
+  }
+}
+{%- if gap.suggestion %}
+# Suggestion: {{ gap.suggestion }}
+{%- endif %}
+{%- if gap.slot_type in section_types %}
+{%- if section_first_slot[gap.slot_type] is defined %}
+{{ ("gap_" ~ gap.slot_type ~ "_" ~ loop.index0) | sanitize_id }} -> {{ section_first_slot[gap.slot_type] }}: missing {
+  style.stroke-dash: 5
+}
+{%- endif %}
+{%- endif %}
+{%- endfor %}
+{%- endif %}
