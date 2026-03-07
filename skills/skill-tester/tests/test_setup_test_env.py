@@ -259,7 +259,7 @@ def test_validate_plugin_json_missing_required_fields(tmp_path):
     is_valid, data, errors = validate_plugin_json(skill_dir)
 
     assert is_valid is False
-    assert len(errors) >= 3  # version, description, skill
+    assert len(errors) >= 2  # version, description
 
 
 def test_count_scripts_skips_test_files(tmp_path):

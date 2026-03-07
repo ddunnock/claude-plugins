@@ -19,7 +19,6 @@ Usage:
 
 import argparse
 import json
-import os
 import re
 import shutil
 import subprocess
@@ -81,12 +80,6 @@ SKILL_MD_SECTIONS = [
 # ---------------------------------------------------------------------------
 
 _finding_counter = 0
-
-
-def _reset_counter() -> None:
-    """Reset the finding counter. Used by tests for deterministic IDs."""
-    global _finding_counter
-    _finding_counter = 0
 
 
 def _finding(
@@ -212,7 +205,6 @@ def check_sast(skill_root: Path) -> list:
         List of finding dicts from SAST tools plus availability notices.
     """
     findings = []
-    scripts_dir = str(skill_root / "scripts")
 
     # Semgrep
     semgrep_available = shutil.which("semgrep") is not None

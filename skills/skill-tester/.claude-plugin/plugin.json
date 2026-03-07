@@ -1,6 +1,6 @@
 {
   "name": "skill-tester",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Deep test, analyze, and audit Claude skills. Use this skill whenever the user wants to test a skill's behavior, analyze how it uses the Claude API, inspect inputs/outputs from scripts, or run security and code review audits against skill scripts. Trigger on: \"test my skill\", \"analyze this skill\", \"audit skill scripts\", \"review skill for security issues\", \"what does this skill actually do when it runs\", \"inspect API calls from skill\", \"run a skill through its paces\", \"check my skill for bugs or vulnerabilities\". Also trigger when the user shows you a SKILL.md and asks you to evaluate, critique, or stress-test it.",
   "author": {
     "name": "dunnock"
@@ -15,7 +15,8 @@
     "scripts/setup_test_env.py",
     "scripts/shared_io.py",
     "scripts/schemas.py",
-    "scripts/prompt_linter.py"
+    "scripts/prompt_linter.py",
+    "scripts/session_analyzer.py"
   ],
   "agents": [
     "agents/security_review.md",

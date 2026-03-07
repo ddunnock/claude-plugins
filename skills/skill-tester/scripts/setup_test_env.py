@@ -49,8 +49,6 @@ VALID_MODES = {"full", "audit", "trace", "report"}
 PLACEHOLDER_FILES = [
     "inventory.json",
     "scan_results.json",
-    "prompt_lint.json",
-    "prompt_review.json",
     "api_log.jsonl",
     "script_runs.jsonl",
     "security_report.json",
@@ -105,12 +103,11 @@ def validate_skill_path(skill_path: str) -> tuple[str, list[str], list[str]]:
     if not os.access(resolved, os.X_OK):
         warnings.append(f"Skill directory is not executable (may affect directory listing)")
 
-    # Check for system directories (defensive check — exact match only)
-    system_dirs = {"/", "/bin", "/usr", "/etc", "/var", "/sys", "/proc", "/dev",
-                   "/sbin", "/lib", "/boot", "/root"}
-    system_dirs_resolved = {os.path.realpath(d) for d in system_dirs if os.path.exists(d)}
-    all_system_dirs = system_dirs | system_dirs_resolved
-    if resolved in all_system_dirs:
+    # Check for system directories (defensive check)
+    # Resolve system dirs too — macOS symlinks e.g. /var -> /private/var
+    system_dirs = {"/", "/bin", "/usr", "/etc", "/var", "/sys", "/proc", "/dev"}
+    resolved_system_dirs = {os.path.realpath(d) for d in system_dirs} | system_dirs
+    if resolved in resolved_system_dirs:
         errors.append(f"Refusing to test system directory: {resolved}")
 
     return resolved, errors, warnings
@@ -180,7 +177,7 @@ def validate_plugin_json(skill_root: Path) -> tuple[bool, dict, list[str]]:
         return False, {}, errors
 
     # Check required fields
-    required_fields = ["name", "version", "description", "skill"]
+    required_fields = ["name", "version", "description"]
     for field in required_fields:
         if field not in data:
             errors.append(f"plugin.json missing required field: '{field}'")

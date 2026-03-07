@@ -81,7 +81,6 @@ def run_script(
         env.update(extra_env)
 
     # Choose interpreter
-    tmpdir = None
     suffix = script.suffix.lower()
     if suffix == ".py":
         cmd = [sys.executable]
@@ -139,9 +138,6 @@ def run_script(
         stdout = ""
         stderr = f"[ERROR] Could not launch script: {e}"
         timed_out = False
-    finally:
-        if tmpdir:
-            shutil.rmtree(tmpdir, ignore_errors=True)
 
     duration_ms = int((time.monotonic() - t0) * 1000)
 
@@ -180,11 +176,6 @@ def run_skill_scripts(
 ) -> list[dict]:
     """
     Discover and run all scripts in a skill directory for a given prompt.
-
-    Each script is invoked with --help as a safe dry-run to capture its
-    interface. The prompt is passed via the SKILL_TESTER_PROMPT env var
-    for scripts that opt in to reading it.
-
     Returns a list of run entries.
     """
     root = Path(skill_path).resolve()
@@ -208,11 +199,11 @@ def run_skill_scripts(
             args=["--help"],   # dry-run: capture help/usage text without side effects
             session_dir=session_dir,
             run_id=run_id,
-            extra_env={"SKILL_TESTER_PROMPT": prompt},
             capture_api=capture_api,
             cwd=str(root),
             timeout=timeout,
         )
+        entry["test_prompt"] = prompt
         results.append(entry)
         status = "✓" if entry["exit_code"] == 0 else f"✗ (exit {entry['exit_code']})"
         print(f"  {status} {entry['duration_ms']}ms", file=sys.stderr)

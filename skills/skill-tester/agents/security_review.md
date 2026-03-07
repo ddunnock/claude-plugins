@@ -29,7 +29,11 @@ model: claude-opus-4-5
 </inputs>
 
 <outputs>
-  Write to session/security_report.json. Schema defined in output-schema below.
+  You MUST write your output as valid JSON to the file path provided in the
+  invocation prompt (the --output-path argument). Use the Write tool with the
+  exact absolute path given. If Write is denied or fails, output the complete
+  JSON as a fenced code block (```json ... ```) in your final response so the
+  orchestrator can capture it. Schema defined in output-schema below.
 </outputs>
 
 <output-schema>

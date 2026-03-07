@@ -8,7 +8,7 @@ description: >
   this skill actually do when it runs", "inspect API calls from skill", "run a skill through
   its paces", "check my skill for bugs or vulnerabilities". Also trigger when the user shows
   you a SKILL.md and asks you to evaluate, critique, or stress-test it.
-version: 0.3.0
+version: 0.4.0
 ---
 
 # Skill Tester & Analyzer
@@ -64,6 +64,7 @@ any scripts embedded in the skill.
   <pattern name="prompt-review">sessions/&lt;skill_name&gt;_&lt;timestamp&gt;/prompt_review.json</pattern>
   <pattern name="security-report">sessions/&lt;skill_name&gt;_&lt;timestamp&gt;/security_report.json</pattern>
   <pattern name="code-review">sessions/&lt;skill_name&gt;_&lt;timestamp&gt;/code_review.json</pattern>
+  <pattern name="session-report">sessions/&lt;skill_name&gt;_&lt;timestamp&gt;/session_report.html</pattern>
   <pattern name="report">sessions/&lt;skill_name&gt;_&lt;timestamp&gt;/report.html</pattern>
 </paths>
 
@@ -81,6 +82,7 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
 ├── script_runs.jsonl      # All script executions with I/O
 ├── security_report.json   # AI security analysis (receives scan_results as input)
 ├── code_review.json       # Code quality review
+├── session_report.html    # Claude Code session trace (API calls, tool use, conversation)
 └── report.html            # Unified interactive HTML report
 ```
 
@@ -223,12 +225,15 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
       <context>
         <read required="true">${CLAUDE_PLUGIN_ROOT}/agents/prompt_reviewer.md</read>
       </context>
-      Invoke the prompt-reviewer agent, providing:
+      Invoke the prompt-reviewer agent, providing in the prompt:
+      - --output-path: the absolute path to &lt;session_dir&gt;/prompt_review.json
       - prompt_lint.json (deterministic findings — primary grounding)
       - Full SKILL.md content
       - Content of all agent .md files found in agents/
       - Content of all command .md files found in commands/ (if present)
-      Write output to &lt;session_dir&gt;/prompt_review.json.
+      The agent will attempt to Write the file directly. If the agent's response
+      contains a ```json block instead (Write was denied), extract the JSON and
+      write it to &lt;session_dir&gt;/prompt_review.json from the orchestrator.
     </step>
     <step sequence="4.5">
       In Claude.ai (no subagents): Read agents/prompt_reviewer.md then apply the rubric
@@ -264,12 +269,15 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
       <context>
         <read required="true">${CLAUDE_PLUGIN_ROOT}/agents/security_review.md</read>
       </context>
-      Invoke the security-review agent, providing:
+      Invoke the security-review agent, providing in the prompt:
+      - --output-path: the absolute path to &lt;session_dir&gt;/security_report.json
       - scan_results.json (deterministic findings — primary grounding)
       - inventory.json (script paths and flags)
       - Raw script content for each script flagged in scan_results
       - Sensitivity level from intake
-      Write output to &lt;session_dir&gt;/security_report.json.
+      The agent will attempt to Write the file directly. If the agent's response
+      contains a ```json block instead (Write was denied), extract the JSON and
+      write it to &lt;session_dir&gt;/security_report.json from the orchestrator.
     </step>
     <step sequence="6.3">
       In Claude.ai (no subagents): Read agents/security_review.md then apply the agent's
@@ -288,12 +296,15 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
       <context>
         <read required="true">${CLAUDE_PLUGIN_ROOT}/agents/code_review.md</read>
       </context>
-      Invoke the code-review agent, providing:
+      Invoke the code-review agent, providing in the prompt:
+      - --output-path: the absolute path to &lt;session_dir&gt;/code_review.json
       - inventory.json
       - SKILL.md content
       - Raw script content for all discovered scripts
       - anti_patterns.md reference
-      Write output to &lt;session_dir&gt;/code_review.json.
+      The agent will attempt to Write the file directly. If the agent's response
+      contains a ```json block instead (Write was denied), extract the JSON and
+      write it to &lt;session_dir&gt;/code_review.json from the orchestrator.
     </step>
     <step sequence="7.3">
       In Claude.ai (no subagents): Read agents/code_review.md then apply the rubric inline.
@@ -301,14 +312,36 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
     </step>
   </phase>
 
-  <phase name="report" sequence="8" depends-on="code-review">
-    <objective>Generate unified interactive HTML report from all session data.</objective>
+  <phase name="session-trace" sequence="8" depends-on="code-review">
+    <objective>Capture Claude Code session trace from JSONL logs (Full and Trace modes only).</objective>
     <step sequence="8.1">
+      <branch condition="mode is Audit or Report">Skip this phase entirely.</branch>
+    </step>
+    <step sequence="8.2">
+      Generate session trace report from Claude Code's own JSONL conversation logs.
+      This captures API calls, tool usage, subagent spawns, and token consumption
+      that occur during skill execution — data invisible to api_logger.py since most
+      skills use native Claude tool use rather than calling the Anthropic SDK directly.
+      <script>python3 ${CLAUDE_PLUGIN_ROOT}/scripts/session_analyzer.py --output &lt;session_dir&gt;/session_report.html --format both</script>
+      The script auto-detects the project directory and latest session from ~/.claude/projects/.
+      Writes session_report.html (interactive conversation audit) and session_report.json (summary).
+    </step>
+    <step sequence="8.3">
+      If session_analyzer.py fails (e.g., no JSONL files found), note "Session trace: unavailable"
+      in the report. This is non-blocking — the rest of the pipeline continues normally.
+    </step>
+  </phase>
+
+  <phase name="report" sequence="9" depends-on="session-trace">
+    <objective>Generate unified interactive HTML report from all session data.</objective>
+    <step sequence="9.1">
       Generate report:
       <script>python3 ${CLAUDE_PLUGIN_ROOT}/scripts/report_gen.py --session-dir &lt;session_dir&gt; --output &lt;session_dir&gt;/report.html</script>
     </step>
-    <step sequence="8.2">
-      Present report.html to the user. Provide a plain-language summary covering:
+    <step sequence="9.2">
+      Present report.html to the user. If session_report.html was also generated (phase 8),
+      mention it as a companion report for detailed conversation and API usage audit.
+      Provide a plain-language summary covering:
       - Mode run and skill name
       - Script count and API-calling scripts
       - Deterministic scan findings (CRITICAL/HIGH counts from scan_results.json)
@@ -316,6 +349,7 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
       - Prompt quality score (from prompt_review.json)
       - Security risk rating
       - Code quality score (overall)
+      - Session trace summary (API calls, tokens, agents spawned — from session_report.json if available)
       - Top 3 recommendations across all analysis layers
     </step>
   </phase>
@@ -343,11 +377,17 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
     3 reasonable test prompts from the skill's description and name. Present them for user
     approval before executing. Never silently skip test execution.
   </rule>
-  <rule id="B5" priority="critical" scope="test-execution">
-    API TRACE SCOPE: API logging only captures calls where skill scripts explicitly call
-    anthropic.Anthropic() or anthropic.AsyncAnthropic(). For skills that rely on native Claude
-    tool use (no scripts calling the API), note "API trace: N/A" in the report. This is not
-    a gap — it is the expected behavior for native-tool skills.
+  <rule id="B5" priority="critical" scope="test-execution,session-trace">
+    API TRACE — THREE MODES:
+    (1) SDK capture: api_logger.py monkey-patches anthropic.Anthropic() for scripts that
+        call the SDK directly. Writes to api_log.jsonl.
+    (2) Native-tool skills: Most skills use Claude's native tool use and never call the SDK.
+        api_log.jsonl will be empty — this is expected, not a gap.
+    (3) Session trace: session_analyzer.py parses Claude Code's own JSONL logs from
+        ~/.claude/projects/ to capture API calls, tool usage, token consumption, and
+        subagent activity. This provides visibility into native-tool skill execution.
+    Always run session_analyzer.py in Full and Trace modes. If api_log.jsonl is empty
+    and session trace succeeds, present session trace as the primary API usage data.
   </rule>
   <rule id="B6" priority="high" scope="inventory">
     SCRIPTS-ONLY SKILL HANDLING: If a skill has no scripts, skip test-execution (phase 5).
@@ -386,6 +426,14 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
     is invoked. The agent receives prompt_lint.json as its primary grounding. Claude
     does not independently assess prompt quality from raw text alone — it supplements
     deterministic findings with qualitative analysis.
+  </rule>
+  <rule id="B12" priority="critical" scope="security-audit,code-review,prompt-lint">
+    SUBAGENT WRITE PATTERN: When invoking agents via the Agent tool, always pass the
+    absolute output file path as "--output-path: /absolute/path/to/output.json" in
+    the agent prompt. The agent will attempt to Write the file directly. If the agent
+    returns a ```json code block in its response instead (because Write was denied),
+    the orchestrator MUST extract that JSON and write it to the target path. Never
+    silently discard agent output — always check for the JSON fallback in the response.
   </rule>
 </behavior>
 

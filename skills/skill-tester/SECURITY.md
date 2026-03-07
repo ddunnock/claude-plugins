@@ -67,13 +67,9 @@ exist_ok=True)` — no destructive operations.
 
 | Category | Count | Status |
 |----------|-------|--------|
-| Unit tests (api_logger) | 9 | Pass |
-| Unit tests (script_runner) | 7 | Pass |
-| Unit tests (validate_skill) | 12 | Pass |
-| Unit tests (shared_io) | 21 | Pass |
-| Unit tests (setup_test_env) | 25 | Pass |
-| Security tests (path traversal) | 6 | Pass |
-| Edge case tests (empty skill, no scripts) | 8 | Pass |
-| Performance tests | 4 | Pass |
-| Chaos tests | 6 | Pass |
-| **Total** | **98** | **Pass** |
+| Unit tests (api_logger) | 8 | Pass |
+| Unit tests (script_runner) | 6 | Pass |
+| Unit tests (validate_skill) | 10 | Pass |
+| Security tests (path traversal) | 4 | Pass |
+| Edge case tests (empty skill, no scripts) | 5 | Pass |
+| **Total** | **33** | **Pass** |

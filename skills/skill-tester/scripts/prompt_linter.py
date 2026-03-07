@@ -35,12 +35,6 @@ from typing import Optional
 _counter = 0
 
 
-def _reset_counter() -> None:
-    """Reset the finding counter. Used by tests for deterministic IDs."""
-    global _counter
-    _counter = 0
-
-
 def _finding(
     check_id: str,
     severity: str,
@@ -251,7 +245,7 @@ def check_interaction(skill_root: Path, skill_md_content: str) -> list:
                         "produce broken or unusable question widgets."
                     ),
                     recommendation=(
-                        "Add the missing field(s): "
+                        f"Add the missing field(s): "
                         + ", ".join(f"<{f}></{f}>" for f in sorted(missing))
                     ),
                 )
@@ -369,8 +363,8 @@ def check_dead_collect(skill_md_content: str) -> list:
                         "Collecting input that goes nowhere wastes user interaction."
                     ),
                     recommendation=(
-                        "Either reference the collected value downstream (e.g., in a "
-                        '<branch condition="..."> or step prose), or remove the question.'
+                        f"Either reference the collected value downstream (e.g., in a "
+                        f'<branch condition="..."> or step prose), or remove the question.'
                     ),
                 )
             )
@@ -501,8 +495,8 @@ def check_agent_usage(skill_root: Path, skill_md_content: str) -> list:
                         "Dead agent definitions add confusion without adding capability."
                     ),
                     recommendation=(
-                        "Either add an invocation step in the appropriate workflow phase, "
-                        "or remove the agent definition if it is no longer needed."
+                        f"Either add an invocation step in the appropriate workflow phase, "
+                        f"or remove the agent definition if it is no longer needed."
                     ),
                 )
             )
