@@ -9,7 +9,7 @@ A collection of plugins that extend Claude's capabilities. Supports two plugin t
 
 ```
 claude-plugins/
-├── skills/                 # Skill plugins (18 skills)
+├── skills/                 # Skill plugins (19 skills)
 │   ├── concept-dev/
 │   ├── documentation-architect/
 │   ├── fault-tree-analysis/
@@ -23,6 +23,7 @@ claude-plugins/
 │   ├── rcca-master/
 │   ├── requirements-dev/
 │   ├── research-opportunity-investigator/
+│   ├── skill-tester/
 │   ├── specification-refiner/
 │   ├── speckit-generator/
 │   ├── streaming-output/
@@ -146,11 +147,12 @@ Then add to Claude Desktop config (`~/.config/claude/claude_desktop_config.json`
 | streaming-output | Stream long-form content to markdown files with resume capability |
 | streaming-output-mcp | Stream structured content to SQLite with multi-format export (Markdown, HTML, JSON, YAML, CSV) |
 
-#### Development (1 skill)
+#### Development (2 skills)
 
 | Skill | Description |
 |-------|-------------|
 | plugin-creator | Generate Claude plugins from user prompts with documentation and testing |
+| skill-tester | Deep test, analyze, and audit Claude skills with API tracing, script I/O capture, and security/code review agents |
 
 ### MCPs
 
