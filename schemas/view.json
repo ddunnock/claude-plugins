@@ -4,7 +4,7 @@
   "title": "Assembled View Output",
   "description": "Structured output from view assembly with slot sections and gap indicators.",
   "type": "object",
-  "required": ["spec_name", "format_version", "assembled_at", "snapshot_id", "total_slots", "total_gaps", "gap_summary", "sections", "gaps"],
+  "required": ["spec_name", "format_version", "assembled_at", "snapshot_id", "total_slots", "total_gaps", "gap_summary", "sections", "gaps", "edges", "metadata"],
   "properties": {
     "spec_name": {
       "type": "string",
@@ -101,6 +101,32 @@
         },
         "additionalProperties": false
       }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source_id", "target_id", "relationship_type"],
+        "properties": {
+          "source_id": {"type": "string", "minLength": 1},
+          "target_id": {"type": "string", "minLength": 1},
+          "relationship_type": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["elapsed_ms", "ranking_method", "section_counts"],
+      "properties": {
+        "elapsed_ms": {"type": "number", "minimum": 0},
+        "ranking_method": {"type": "string"},
+        "section_counts": {
+          "type": "object",
+          "additionalProperties": {"type": "integer", "minimum": 0}
+        }
+      },
+      "additionalProperties": true
     }
   },
   "additionalProperties": false

@@ -44,6 +44,11 @@
       "additionalProperties": {
         "type": "string"
       }
+    },
+    "ranking": {
+      "type": "string",
+      "enum": ["density", "alphabetical", "none"],
+      "description": "Ranking method for slots. Default is density if omitted."
     }
   },
   "additionalProperties": false

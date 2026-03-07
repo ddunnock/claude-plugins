@@ -10,13 +10,14 @@ All registry access is read-only through SlotAPI (XCUT-04, VIEW-10).
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import logging
 import os
 import re
+import time
 from datetime import datetime, timezone
 from fnmatch import fnmatch
-from uuid import uuid4
 
 from scripts.registry import SLOT_TYPE_DIRS, SlotAPI
 from scripts.schema_validator import SchemaValidator
@@ -156,7 +157,6 @@ def capture_snapshot(api: SlotAPI) -> dict:
         Dict with snapshot_id (uuid), captured_at (ISO timestamp),
         and slots_by_type (dict mapping slot_type to list of slot dicts).
     """
-    snapshot_id = str(uuid4())
     captured_at = datetime.now(timezone.utc).isoformat()
 
     slots_by_type: dict[str, list[dict]] = {}
@@ -165,6 +165,10 @@ def capture_snapshot(api: SlotAPI) -> dict:
         slots = api.query(slot_type)
         if slots:
             slots_by_type[slot_type] = copy.deepcopy(slots)
+
+    # Content-hash snapshot_id for determinism (VIEW-09)
+    serialized = json.dumps(slots_by_type, sort_keys=True, separators=(",", ":"))
+    snapshot_id = hashlib.sha256(serialized.encode()).hexdigest()[:16]
 
     return {
         "snapshot_id": snapshot_id,
@@ -362,6 +366,102 @@ def _organize_hierarchically(sections: list[dict]) -> list[dict]:
     return result
 
 
+def _compute_density_scores(snapshot: dict) -> dict[str, int]:
+    """Compute relationship density score for every slot in the snapshot.
+
+    Counts direct + one-hop connections from interfaces, contracts, and
+    traceability-links across the FULL snapshot (not just matched slots).
+    Uses a separate {slot_id: score} dict -- never mutates snapshot data.
+
+    Args:
+        snapshot: A snapshot dict from capture_snapshot().
+
+    Returns:
+        Dict mapping slot_id -> density_score.
+    """
+    scores: dict[str, int] = {}
+    all_slots: list[dict] = []
+    for slots in snapshot["slots_by_type"].values():
+        all_slots.extend(slots)
+
+    # Index: slot_id -> slot for quick lookup
+    slot_index = {s["slot_id"]: s for s in all_slots}
+
+    # Initialize all scores to 0
+    for sid in slot_index:
+        scores[sid] = 0
+
+    # Interfaces contribute to their source/target components
+    for intf in snapshot["slots_by_type"].get("interface", []):
+        intf_id = intf["slot_id"]
+        src = intf.get("source_component", "")
+        tgt = intf.get("target_component", "")
+        if src in scores:
+            scores[src] += 1  # direct connection
+        if tgt in scores:
+            scores[tgt] += 1  # direct connection
+        # Interface itself connects to its components
+        if src in slot_index:
+            scores[intf_id] += 1
+        if tgt in slot_index:
+            scores[intf_id] += 1
+
+    # Contracts contribute to their interface and component (one-hop)
+    for cntr in snapshot["slots_by_type"].get("contract", []):
+        cntr_id = cntr["slot_id"]
+        iid = cntr.get("interface_id", "")
+        cid = cntr.get("component_id", "")
+        if iid in scores:
+            scores[iid] += 1
+            scores[cntr_id] += 1
+        if cid in scores:
+            scores[cid] += 1  # one-hop: component -> interface -> contract
+            scores[cntr_id] += 1
+
+    # Traceability links contribute to both endpoints
+    for link in snapshot["slots_by_type"].get("traceability-link", []):
+        from_id = link.get("from_id", "")
+        to_id = link.get("to_id", "")
+        if from_id in scores:
+            scores[from_id] += 1
+        if to_id in scores:
+            scores[to_id] += 1
+
+    return scores
+
+
+def _rank_slots(
+    slots: list[dict], scores: dict[str, int], method: str = "density"
+) -> list[dict]:
+    """Sort slots by the specified ranking method.
+
+    Args:
+        slots: List of slot dicts to rank.
+        scores: Dict mapping slot_id -> density_score.
+        method: Ranking method -- "density", "alphabetical", or "none".
+
+    Returns:
+        A NEW list of slots sorted according to the ranking method.
+        Does not mutate the input list.
+    """
+    if method == "density":
+        return sorted(
+            slots,
+            key=lambda s: (
+                -scores.get(s["slot_id"], 0),
+                -s.get("version", 1),
+                s.get("name", ""),
+            ),
+        )
+    elif method == "alphabetical":
+        return sorted(
+            slots,
+            key=lambda s: (s.get("name", ""), s.get("slot_id", "")),
+        )
+    else:  # "none" or any unrecognized value
+        return list(slots)
+
+
 def assemble_view(
     api: SlotAPI,
     spec: dict,
@@ -387,6 +487,8 @@ def assemble_view(
     Returns:
         Assembled view dict conforming to view.json schema.
     """
+    t_start = time.perf_counter()
+
     # 1. Capture a single snapshot for consistent state (VIEW-07)
     snapshot = capture_snapshot(api)
 
@@ -420,7 +522,15 @@ def assemble_view(
     # 4. Organize hierarchically
     sections = _organize_hierarchically(raw_sections)
 
-    # 5. Build metadata
+    # 5. Compute density scores from full snapshot and rank slots (VIEW-03)
+    density_scores = _compute_density_scores(snapshot)
+    ranking_method = spec.get("ranking", "density")
+    for section in sections:
+        section["slots"] = _rank_slots(
+            section["slots"], density_scores, ranking_method
+        )
+
+    # 6. Build output metadata
     total_slots = sum(len(s["slots"]) for s in sections)
     total_gaps = len(gaps)
 
@@ -430,9 +540,15 @@ def assemble_view(
         if severity in gap_summary:
             gap_summary[severity] += 1
 
+    section_counts = {
+        section["slot_type"]: len(section["slots"]) for section in sections
+    }
+
+    elapsed_ms = (time.perf_counter() - t_start) * 1000
+
     assembled = {
         "spec_name": spec["name"],
-        "format_version": "1.0",
+        "format_version": "1.1",
         "assembled_at": datetime.now(timezone.utc).isoformat(),
         "snapshot_id": snapshot["snapshot_id"],
         "total_slots": total_slots,
@@ -440,9 +556,15 @@ def assemble_view(
         "gap_summary": gap_summary,
         "sections": sections,
         "gaps": gaps,
+        "edges": [],  # Empty placeholder -- Plan 02 populates
+        "metadata": {
+            "elapsed_ms": round(elapsed_ms, 2),
+            "ranking_method": ranking_method,
+            "section_counts": section_counts,
+        },
     }
 
-    # 6. Validate against view.json schema (VIEW-06)
+    # 7. Validate against view.json schema (VIEW-06)
     validator = SchemaValidator(schemas_dir)
     validator.validate_or_raise("view", assembled)
 

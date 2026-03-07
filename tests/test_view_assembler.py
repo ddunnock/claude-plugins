@@ -127,6 +127,12 @@ class TestViewOutputSchema:
             "gap_summary": {"info": 0, "warning": 1, "error": 0},
             "sections": [],
             "gaps": [],
+            "edges": [],
+            "metadata": {
+                "elapsed_ms": 1.5,
+                "ranking_method": "density",
+                "section_counts": {},
+            },
         }
         errors = list(self.validator.iter_errors(view))
         assert errors == [], f"Unexpected errors: {errors}"
@@ -142,6 +148,12 @@ class TestViewOutputSchema:
             "total_gaps": 0,
             "sections": [],
             "gaps": [],
+            "edges": [],
+            "metadata": {
+                "elapsed_ms": 0,
+                "ranking_method": "density",
+                "section_counts": {},
+            },
         }
         errors = list(self.validator.iter_errors(view))
         assert len(errors) > 0
@@ -631,7 +643,7 @@ class TestFormatVersionAndTightenedSchema:
         }
         result = assemble_view(api_obj, spec, workspace, SCHEMAS_DIR)
         assert "format_version" in result
-        assert result["format_version"] == "1.0"
+        assert result["format_version"] == "1.1"
 
     def test_assembled_view_validates_with_tightened_schema(self, populated_api_for_format, workspace):
         """Assembled output validates against updated schema with required slot fields."""
@@ -854,7 +866,7 @@ class TestRenderTree:
         """A sample assembled view dict for rendering tests."""
         return {
             "spec_name": "test-view",
-            "format_version": "1.0",
+            "format_version": "1.1",
             "assembled_at": "2026-03-02T14:30:00Z",
             "snapshot_id": "snap-abc",
             "total_slots": 3,
@@ -935,7 +947,7 @@ class TestRenderTree:
 
     def test_format_version_in_rendered_output(self, sample_view):
         """Output contains format_version if present in view."""
-        assert sample_view["format_version"] == "1.0"
+        assert sample_view["format_version"] == "1.1"
         output = render_tree(sample_view)
         assert "test-view" in output  # basic sanity
 
@@ -943,7 +955,7 @@ class TestRenderTree:
         """Empty view (no slots, no gaps) renders without errors."""
         view = {
             "spec_name": "empty",
-            "format_version": "1.0",
+            "format_version": "1.1",
             "assembled_at": "2026-03-02T00:00:00Z",
             "snapshot_id": "snap-empty",
             "total_slots": 0,
