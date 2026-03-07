@@ -141,4 +141,4 @@ Plans:
 | 6b. View Integration Fix | v1.1 | 2/2 | Complete | 2026-03-03 |
 | 7. View Quality & Handoff | v1.1 | 2/2 | Complete | 2026-03-07 |
 | 8. Diagram Generation Core | v1.1 | 2/3 | Gap closure | - |
-| 9. Diagram Templates & Quality | v1.1 | 0/2 | Planned | - |
+| 9. Diagram Templates & Quality | 1/2 | In Progress|  | - |

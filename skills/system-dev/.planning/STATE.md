@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Views & Diagrams
-status: completed
-stopped_at: Phase 9 context gathered
-last_updated: "2026-03-07T19:38:51.232Z"
-last_activity: 2026-03-07 — Completed 08-02g (generate_diagram() orchestration, diagram_hint, integration tests)
+status: in-progress
+stopped_at: Completed 09-01-PLAN.md
+last_updated: "2026-03-07T20:01:13Z"
+last_activity: 2026-03-07 — Completed 09-01 (Jinja2 template-driven diagram rendering with manifest registry)
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 10
-  completed_plans: 10
-  percent: 100
+  total_plans: 12
+  completed_plans: 11
+  percent: 92
 ---
 
 # Project State
@@ -25,18 +25,18 @@ See: .planning/PROJECT.md (updated 2026-03-02)
 
 ## Current Position
 
-Phase: 8 of 9 (Diagram Generation Core) -- Gap Closure
-Plan: 2g of 3 complete (08-01, 08-02g done; 08-02 partially complete)
-Status: Phase 8 gap closure complete, Phase 9 Pending
-Last activity: 2026-03-07 — Completed 08-02g (generate_diagram() orchestration, diagram_hint, integration tests)
+Phase: 9 of 9 (Diagram Templates & Quality)
+Plan: 1 of 2 complete (09-01 done)
+Status: Phase 9 in progress
+Last activity: 2026-03-07 — Completed 09-01 (Jinja2 template-driven diagram rendering with manifest registry)
 
-Progress: [██████████] 100% (Phase 6+6b+7+8 complete, 9 pending)
+Progress: [█████████░] 92% (Phase 6+6b+7+8 complete, 9 in progress)
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 13 (v1.0)
-- v1.1 plans completed: 10
+- v1.1 plans completed: 11
 
 **By Phase (v1.1):**
 
@@ -46,7 +46,7 @@ Progress: [██████████] 100% (Phase 6+6b+7+8 complete, 9 pend
 | 6b. View Integration Fix | 2/2 | 3min | 1.5min |
 | 7. View Quality & Handoff | 2/2 | 7min | 3.5min |
 | 8. Diagram Generation Core | 3/3 | 12min | 4min |
-| 9. Diagram Templates & Quality | 0/TBD | - | - |
+| 9. Diagram Templates & Quality | 1/2 | 3min | 3min |
 
 ## Accumulated Context
 
@@ -86,6 +86,10 @@ All v1.0 decisions documented in PROJECT.md Key Decisions table with outcomes.
 - (08-02) gap-report has no diagram_hint (requires explicit --format)
 - (08-02g) Diagram slots in snapshots cause cascading hash changes; unchanged detection requires stable registry state
 - (08-02g) Literal "d2" and "mermaid" accepted as diagram_hint values alongside "structural"/"behavioral"
+- (09-01) Jinja2 templates with custom filters (sanitize_id, gap_color, truncate_label) for diagram rendering
+- (09-01) Template context pre-sorts all data (sections, edges, gaps) before rendering for determinism (DIAG-08)
+- (09-01) d2-component.j2 initially identical to d2-structural.j2; differentiation deferred to Plan 02
+- (09-01) Two-tier template resolution: workspace_root/templates/ overrides built-in templates/ by filename
 
 ### Pending Todos
 
@@ -97,6 +101,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-07T19:38:51.229Z
-Stopped at: Phase 9 context gathered
-Resume file: .planning/phases/09-diagram-templates-quality/09-CONTEXT.md
+Last session: 2026-03-07T20:01:13Z
+Stopped at: Completed 09-01-PLAN.md
+Resume file: .planning/phases/09-diagram-templates-quality/09-01-SUMMARY.md
