@@ -8,7 +8,7 @@ description: >
   this skill actually do when it runs", "inspect API calls from skill", "run a skill through
   its paces", "check my skill for bugs or vulnerabilities". Also trigger when the user shows
   you a SKILL.md and asks you to evaluate, critique, or stress-test it.
-version: 0.5.0
+version: 0.6.0
 ---
 
 # Skill Tester & Analyzer
@@ -65,8 +65,9 @@ any scripts embedded in the skill.
   <pattern name="security-report">&lt;report_root&gt;/&lt;skill_name&gt;_&lt;timestamp&gt;/security_report.json</pattern>
   <pattern name="code-review">&lt;report_root&gt;/&lt;skill_name&gt;_&lt;timestamp&gt;/code_review.json</pattern>
   <pattern name="session-report">&lt;report_root&gt;/&lt;skill_name&gt;_&lt;timestamp&gt;/session_report.html</pattern>
+  <!-- session-report: Claude Code session trace (API calls, tool use, tokens). report: unified analysis report combining all phases. -->
   <pattern name="report">&lt;report_root&gt;/&lt;skill_name&gt;_&lt;timestamp&gt;/report.html</pattern>
-  <note>report_root defaults to sessions/ (legacy). User chooses ~/.claude/tests/ or .claude/tests/ via /skill-tester:init.</note>
+  <note>report_root defaults to sessions/ (legacy). User chooses ~/.claude/tests/ or .claude/tests/ via /st:init.</note>
 </paths>
 
 ## Session Directory Layout
@@ -91,22 +92,22 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
 
 | Mode | Description | Phases Run | Command |
 |---|---|---|---|
-| **Full** (default) | Complete analysis: scan → prompt-lint → test → security → review → report | All (2-9) | `/skill-tester:run` |
-| **Audit** | Static analysis only, no test execution | 2-4, 6-7, 9 | `/skill-tester:audit` |
-| **Trace** | Runtime capture only, no security/code review | 2, 5, 8, 9 | `/skill-tester:trace` |
-| **Report** | Re-generate HTML from existing session data | 9 only | `/skill-tester:report` |
+| **Full** (default) | Complete analysis: scan → prompt-lint → test → security → review → report | All (2-9) | `/st:run` |
+| **Audit** | Static analysis only, no test execution | 2-4, 6-7, 9 | `/st:audit` |
+| **Trace** | Runtime capture only, no security/code review | 2, 5, 8, 9 | `/st:trace` |
+| **Report** | Re-generate HTML from existing session data | 9 only | `/st:report` |
 
 ## Commands
 
 | Command | Mode | Phases | Purpose |
 |---------|------|--------|---------|
-| `/skill-tester:init` | All | 1 | Set up session: target, mode, prompts, report location |
-| `/skill-tester:run` | Full | 2-9 | Execute all analysis phases |
-| `/skill-tester:audit` | Audit | 2-4, 6-7, 9 | Static analysis only |
-| `/skill-tester:trace` | Trace | 2, 5, 8, 9 | Runtime capture only |
-| `/skill-tester:report` | Report | 9 | Regenerate HTML from session data |
-| `/skill-tester:status` | N/A | — | Show session state |
-| `/skill-tester:resume` | Any | Variable | Resume interrupted session |
+| `/st:init` | All | 1 | Set up session: target, mode, prompts, report location |
+| `/st:run` | Full | 2-9 | Execute all analysis phases |
+| `/st:audit` | Audit | 2-4, 6-7, 9 | Static analysis only |
+| `/st:trace` | Trace | 2, 5, 8, 9 | Runtime capture only |
+| `/st:report` | Report | 9 | Regenerate HTML from session data |
+| `/st:status` | N/A | — | Show session state |
+| `/st:resume` | Any | Variable | Resume interrupted session |
 
 ---
 
@@ -154,6 +155,8 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
     - Prompt review: Read agents/prompt_reviewer.md, then apply the rubric inline.
     - Script runner: Works normally via subprocess.
     - API trace: Works if skill scripts call anthropic.Anthropic() directly.
+    - AskUserQuestion: Not available in Claude.ai. Replace with direct prose questions
+      and wait for user response in the conversation flow.
     Always note which adaptations were applied in the report summary.
   </rule>
   <rule id="B8" priority="high" scope="report">
@@ -195,7 +198,7 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
 <agents>
   <agent name="prompt-reviewer" ref="${CLAUDE_PLUGIN_ROOT}/agents/prompt_reviewer.md" model="claude-sonnet-4-6">
     <purpose>Perform deep qualitative analysis of SKILL.md and agent instruction quality using prompt_lint.json as grounding. Evaluates clarity, completeness, consistency, tool-use correctness, and agent design.</purpose>
-    <invoked-by>Phase 4 (prompt-lint), step 4.4, after prompt_lint.json is written</invoked-by>
+    <invoked-by>st.run.md and st.audit.md, phase 4 step 4.3, after prompt_lint.json is written</invoked-by>
     <inputs>
       prompt_lint.json — deterministic linter findings (primary grounding input);
       SKILL.md content — full text for qualitative analysis;
@@ -208,7 +211,7 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
 
   <agent name="security-review" ref="${CLAUDE_PLUGIN_ROOT}/agents/security_review.md" model="claude-opus-4-5">
     <purpose>Analyze deterministic scan findings and raw scripts to produce a grounded security report with actionable recommendations.</purpose>
-    <invoked-by>Phase 5 (security-audit), step 5.2, after scan_results.json is written</invoked-by>
+    <invoked-by>st.run.md phase 6 step 6.1 and st.audit.md phase 6 step 6.1, after scan_results.json is written</invoked-by>
     <inputs>
       scan_results.json — deterministic tool findings (primary grounding input);
       inventory.json — script paths and metadata;
@@ -221,7 +224,7 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
 
   <agent name="code-review" ref="${CLAUDE_PLUGIN_ROOT}/agents/code_review.md" model="claude-sonnet-4-6">
     <purpose>Assess script quality, anti-pattern compliance, documentation, idempotency, and dependency hygiene. Produce a scored code review report.</purpose>
-    <invoked-by>Phase 6 (code-review), step 6.2, after inventory is complete</invoked-by>
+    <invoked-by>st.run.md phase 7 step 7.1 and st.audit.md phase 7 step 7.1, after inventory is complete</invoked-by>
     <inputs>
       inventory.json — script metadata;
       SKILL.md content — for SKILL.md/script drift detection;

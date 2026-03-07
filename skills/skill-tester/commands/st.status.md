@@ -1,5 +1,5 @@
 ---
-name: skill-tester:status
+name: st:status
 description: Display session state — skill path, mode, session dir, phase completion, and next action
 ---
 
@@ -7,7 +7,7 @@ description: Display session state — skill path, mode, session dir, phase comp
     <read required="true">${CLAUDE_PLUGIN_ROOT}/SKILL.md</read>
 </context>
 
-# /skill-tester:status -- Session Status
+# /st:status -- Session Status
 
 Display the current state of a skill-tester session.
 
@@ -19,7 +19,7 @@ If `$ARGUMENTS` provides a session directory path, use it.
 Otherwise, find the most recent session directory by scanning for manifest.json files
 under the report roots (sessions/, ~/.claude/tests/, .claude/tests/).
 
-If no session found: "No active session. Run `/skill-tester:init` to start."
+If no session found: "No active session. Run `/st:init` to start."
 
 ### Step 2: Read Manifest
 
@@ -82,6 +82,6 @@ Based on completion state:
 | State | Suggestion |
 |-------|-----------|
 | No phases complete after init | Run the appropriate mode command |
-| Some phases complete | `/skill-tester:resume` to continue |
+| Some phases complete | `/st:resume` to continue |
 | All phases complete | "Analysis complete. View report.html" |
-| Report missing but data exists | `/skill-tester:report` to regenerate |
+| Report missing but data exists | `/st:report` to regenerate |

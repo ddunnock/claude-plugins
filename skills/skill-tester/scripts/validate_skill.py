@@ -70,9 +70,11 @@ REQUIRED_STRUCTURAL = [
 SKILL_MD_SECTIONS = [
     ("<security", "SKILL.md contains <security> block"),
     ("<paths", "SKILL.md contains <paths> block"),
-    ("<workflow", "SKILL.md contains <workflow> block"),
     ("<behavior", "SKILL.md contains <behavior> block"),
 ]
+
+# <workflow> is required unless a commands/ directory exists (v0.5.0+ pattern)
+SKILL_MD_WORKFLOW_SECTION = ("<workflow", "SKILL.md contains <workflow> block")
 
 
 # ---------------------------------------------------------------------------
@@ -297,6 +299,8 @@ def check_anti_patterns(skill_root: Path) -> list:
     findings = []
     # Scripts exempt from subprocess checks (they use it intentionally)
     subprocess_exempt = {"script_runner.py", "validate_skill.py"}
+    # Scripts that define anti-pattern regexes (self-referential matches are expected)
+    anti_pattern_definers = {"validate_skill.py"}
 
     for script_path in sorted(skill_root.rglob("*")):
         if script_path.suffix not in SCRIPT_EXTS or not script_path.is_file():
@@ -315,6 +319,9 @@ def check_anti_patterns(skill_root: Path) -> list:
                 continue
             # Apply network exemption for api_logger (calls Anthropic intentionally)
             if "network" in check_id and basename == "api_logger.py":
+                continue
+            # Skip self-referential matches in scripts that define anti-pattern regexes
+            if basename in anti_pattern_definers and check_id.startswith("AP-"):
                 continue
 
             for match in pattern.finditer(text):
@@ -391,6 +398,20 @@ def check_structure(skill_root: Path) -> list:
                     script="SKILL.md",
                     message=f"Required XML section missing: {tag} — {description}",
                 ))
+
+        # <workflow> is required unless commands/ directory exists
+        wf_tag, wf_desc = SKILL_MD_WORKFLOW_SECTION
+        has_commands_dir = (skill_root / "commands").is_dir() and any(
+            (skill_root / "commands").glob("*.md")
+        )
+        if wf_tag not in content and not has_commands_dir:
+            findings.append(_finding(
+                check_id="missing-skill-section",
+                severity="MEDIUM",
+                category="STRUCTURAL",
+                script="SKILL.md",
+                message=f"Required XML section missing: {wf_tag} — {wf_desc}",
+            ))
 
         # Version check
         if "version:" not in content:

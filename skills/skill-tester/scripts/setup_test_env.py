@@ -338,6 +338,7 @@ def run_validation(skill_path: str, session_dir: str, mode: str,
         },
         "errors": all_errors,
         "warnings": all_warnings,
+        "mode": mode,
     }
 
     if report_root:

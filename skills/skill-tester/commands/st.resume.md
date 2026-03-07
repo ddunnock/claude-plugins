@@ -1,5 +1,5 @@
 ---
-name: skill-tester:resume
+name: st:resume
 description: Resume an interrupted skill-tester session from the last completed phase
 ---
 
@@ -7,7 +7,7 @@ description: Resume an interrupted skill-tester session from the last completed 
     <read required="true">${CLAUDE_PLUGIN_ROOT}/SKILL.md</read>
 </context>
 
-# /skill-tester:resume -- Resume Interrupted Session
+# /st:resume -- Resume Interrupted Session
 
 Resume a skill-tester session from the last completed phase.
 
@@ -19,7 +19,7 @@ If `$ARGUMENTS` provides a session directory path, use it.
 Otherwise, find the most recent session directory by scanning for manifest.json files
 under the report roots (sessions/, ~/.claude/tests/, .claude/tests/).
 
-If no session found: "No active session. Run `/skill-tester:init` to start."
+If no session found: "No active session. Run `/st:init` to start."
 
 ### Step 2: Load Manifest and Detect Mode
 
@@ -29,7 +29,7 @@ Read manifest.json. Determine the analysis mode from either:
 
 ### Step 3: Detect Completed Phases
 
-Check each phase's output file for existence and non-empty content (same checks as `/skill-tester:status` Step 3).
+Check each phase's output file for existence and non-empty content (same checks as `/st:status` Step 3).
 
 ### Step 4: Present Resume Point
 
@@ -51,7 +51,7 @@ Next Phase:  <next incomplete phase>
 Ask the user:
 - [A] Continue from the next incomplete phase
 - [B] Re-run from a specific phase
-- [C] Show full status (`/skill-tester:status`)
+- [C] Show full status (`/st:status`)
 
 ### Step 5: Resume Execution
 
@@ -60,9 +60,9 @@ using the logic from the appropriate mode command:
 
 | Mode | Command Logic |
 |------|--------------|
-| Full | Follow `/skill-tester:run` phases from resume point |
-| Audit | Follow `/skill-tester:audit` phases from resume point |
-| Trace | Follow `/skill-tester:trace` phases from resume point |
+| Full | Follow `/st:run` phases from resume point |
+| Audit | Follow `/st:audit` phases from resume point |
+| Trace | Follow `/st:trace` phases from resume point |
 
 Skip any phases that have already completed (files exist with valid content).
 Resume from the first incomplete phase.

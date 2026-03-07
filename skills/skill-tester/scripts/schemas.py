@@ -21,6 +21,7 @@ MANIFEST_SCHEMA = {
     "errors": {"required": True, "type": list},
     "warnings": {"required": True, "type": list},
     "report_root": {"required": False, "type": str},
+    "mode": {"required": False, "type": str},
 }
 
 VALIDATION_DETAIL_SCHEMA = {

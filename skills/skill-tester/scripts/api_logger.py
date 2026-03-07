@@ -163,13 +163,20 @@ def _log_call(call_id: str, run_id: Optional[str], request: dict,
     _append_jsonl(_LOG_PATH, entry, schema=API_LOG_ENTRY_SCHEMA)
 
 
+_INSTALLED = False
+
+
 def install(log_path: str, run_id: Optional[str] = None):
     """
     Monkey-patch anthropic.Anthropic and anthropic.AsyncAnthropic so all
     messages.create() calls are logged to `log_path`.
     """
-    global _LOG_PATH
+    global _LOG_PATH, _INSTALLED
+    if _INSTALLED:
+        _LOG_PATH = log_path
+        return
     _LOG_PATH = log_path
+    _INSTALLED = True
     Path(log_path).parent.mkdir(parents=True, exist_ok=True)
 
     try:

@@ -430,32 +430,51 @@ def _extract_defined_agents(text: str) -> dict[str, int]:
     return agents
 
 
-def _extract_workflow_agent_refs(text: str) -> list[tuple[str, int]]:
-    """Find agent name references in workflow phase content.
+def _extract_workflow_agent_refs(text: str, skill_root: Path | None = None) -> list[tuple[str, int]]:
+    """Find agent name references in workflow phases or command files.
+
+    Searches both <workflow> blocks in SKILL.md and command .md files in
+    commands/ (v0.5.0+ pattern where workflow moved to command files).
 
     Args:
         text: SKILL.md full content.
+        skill_root: Root of the skill directory (for command file search).
 
     Returns:
         List of (agent_name, line_number) tuples for each reference found.
     """
     refs = []
-    # Match patterns like "Invoke the X agent" or "invoke X-agent" or agent name in <context><read> agents/
     patterns = [
         re.compile(r"(?i)invoke\s+the\s+([a-z][a-z0-9\-]+)\s+agent"),
         re.compile(r"(?i)invoke\s+([a-z][a-z0-9\-]+)\s+agent"),
         re.compile(r"agents/([a-z][a-z0-9_\-]+)\.md"),
     ]
+
+    # Search <workflow> block in SKILL.md
     workflow_m = re.search(r"<workflow>(.*?)</workflow>", text, re.DOTALL)
-    if not workflow_m:
-        return refs
-    wf_text = workflow_m.group(1)
-    wf_start = workflow_m.start()
-    for pattern in patterns:
-        for m in pattern.finditer(wf_text):
-            name = m.group(1).replace("_", "-").rstrip(".md")
-            line_num = _line_of(text, wf_start + m.start())
-            refs.append((name, line_num))
+    if workflow_m:
+        wf_text = workflow_m.group(1)
+        wf_start = workflow_m.start()
+        for pattern in patterns:
+            for m in pattern.finditer(wf_text):
+                name = m.group(1).replace("_", "-").rstrip(".md")
+                line_num = _line_of(text, wf_start + m.start())
+                refs.append((name, line_num))
+
+    # Search command files in commands/ directory
+    if skill_root:
+        cmd_dir = skill_root / "commands"
+        if cmd_dir.is_dir():
+            for cmd_file in sorted(cmd_dir.glob("*.md")):
+                try:
+                    cmd_text = cmd_file.read_text(encoding="utf-8", errors="replace")
+                except OSError:
+                    continue
+                for pattern in patterns:
+                    for m in pattern.finditer(cmd_text):
+                        name = m.group(1).replace("_", "-").rstrip(".md")
+                        refs.append((name, 0))
+
     return refs
 
 
@@ -473,7 +492,7 @@ def check_agent_usage(skill_root: Path, skill_md_content: str) -> list:
     text = skill_md_content
 
     defined = _extract_defined_agents(text)
-    workflow_refs = _extract_workflow_agent_refs(text)
+    workflow_refs = _extract_workflow_agent_refs(text, skill_root)
     invoked_names = {name for name, _ in workflow_refs}
 
     # PL-agent-defined-not-invoked: defined but never referenced in workflow
@@ -594,11 +613,12 @@ def _extract_phases(text: str) -> dict[str, dict]:
     return phases
 
 
-def check_workflow(skill_md_content: str) -> list:
+def check_workflow(skill_md_content: str, skill_root: Path | None = None) -> list:
     """Check workflow phase integrity: depends-on, gates, branches, orphans.
 
     Args:
         skill_md_content: Full text of SKILL.md.
+        skill_root: Root of the skill directory (for commands/ detection).
 
     Returns:
         List of finding dicts.
@@ -694,7 +714,13 @@ def check_workflow(skill_md_content: str) -> list:
                 )
 
     # PL-no-workflow: no <workflow> block at all
-    if not phases:
+    # Skills with a commands/ directory (v0.5.0+) use command files instead of <workflow>
+    has_commands = (
+        skill_root is not None
+        and (skill_root / "commands").is_dir()
+        and any((skill_root / "commands").glob("*.md"))
+    )
+    if not phases and not has_commands:
         workflow_present = "<workflow>" in text or "<workflow " in text
         if not workflow_present:
             findings.append(
@@ -956,7 +982,7 @@ def run_lint(skill_path: str, session_dir: str) -> dict:
         print(f"  {len(f)} finding(s)", file=sys.stderr)
 
         print("[prompt_linter] Check 4/6: Workflow integrity...", file=sys.stderr)
-        f = check_workflow(skill_md_content)
+        f = check_workflow(skill_md_content, skill_root)
         all_findings.extend(f)
         print(f"  {len(f)} finding(s)", file=sys.stderr)
 

@@ -246,7 +246,7 @@ def analyze_session(project_dir: str, session_id: Optional[str] = None) -> dict:
             try:
                 meta = json.loads(meta_file.read_text())
             except Exception:
-                pass
+                pass  # meta.json is optional; missing/corrupt is non-fatal
 
             agent_records = _load_jsonl(jsonl_file)
             agent_conversation = _parse_conversation(agent_records)

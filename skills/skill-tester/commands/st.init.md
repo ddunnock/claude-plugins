@@ -1,5 +1,5 @@
 ---
-name: skill-tester:init
+name: st:init
 description: Initialize a skill-tester session — collect target skill, mode, sensitivity, test prompts, and report location
 ---
 
@@ -7,7 +7,7 @@ description: Initialize a skill-tester session — collect target skill, mode, s
     <read required="true">${CLAUDE_PLUGIN_ROOT}/SKILL.md</read>
 </context>
 
-# /skill-tester:init -- Initialize Skill Testing Session
+# /st:init -- Initialize Skill Testing Session
 
 This command collects all inputs and creates the session directory (Phase 1).
 
@@ -85,8 +85,8 @@ This command collects all inputs and creates the session directory (Phase 1).
     <objective>Guide the user to the next command based on selected mode.</objective>
     | Mode | Next Command |
     |------|-------------|
-    | Full | `/skill-tester:run` |
-    | Audit | `/skill-tester:audit` |
-    | Trace | `/skill-tester:trace` |
-    | Report | `/skill-tester:report` |
+    | Full | `/st:run` |
+    | Audit | `/st:audit` |
+    | Trace | `/st:trace` |
+    | Report | `/st:report` |
 </step>
