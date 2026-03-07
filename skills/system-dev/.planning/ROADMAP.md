@@ -31,7 +31,7 @@ See `.planning/milestones/v1.0-ROADMAP.md` for full phase details.
 - [x] **Phase 6: View Assembly Core** - Construct contextual views from registry slot subsets with gap handling and snapshot consistency
 - [x] **Phase 6b: View Integration Fix** - Close integration gaps, fix broken file-based spec flow, tighten view schemas
 - [x] **Phase 7: View Quality & Handoff** - Relevance ranking, deterministic output, performance, and diagram-compatible handoff format (completed 2026-03-07)
-- [x] **Phase 8: Diagram Generation Core** - D2 structural and Mermaid behavioral diagram generation from view data (completed 2026-03-07)
+- [ ] **Phase 8: Diagram Generation Core** - D2 structural and Mermaid behavioral diagram generation from view data (gap closure in progress)
 - [ ] **Phase 9: Diagram Templates & Quality** - Template-driven generation with abstraction layers, determinism, and logging
 
 ## Phase Details
@@ -95,11 +95,12 @@ Plans:
   3. Diagram generator reads view handoff format and writes diagram slots through SlotAPI
   4. Gap markers in view input appear as visually distinct placeholder elements in diagram output
   5. Generating diagrams does not modify or delete existing slots outside the diagram type
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
 - [x] 08-01-PLAN.md — Diagram schema, slot type registration, D2/Mermaid generation engines with gap placeholders
 - [ ] 08-02-PLAN.md — Orchestration layer (SlotAPI writes), diagram_hint on view specs, /system-dev:diagram command
+- [ ] 08-02g-PLAN.md — Gap closure: implement missing orchestration layer, diagram_hint, integration tests
 
 ### Phase 9: Diagram Templates & Quality
 **Goal**: Diagram generation is template-driven with configurable abstraction layers, deterministic output, and structured logging
@@ -139,5 +140,5 @@ Plans:
 | 6. View Assembly Core | v1.1 | 3/3 | Complete | 2026-03-03 |
 | 6b. View Integration Fix | v1.1 | 2/2 | Complete | 2026-03-03 |
 | 7. View Quality & Handoff | v1.1 | 2/2 | Complete | 2026-03-07 |
-| 8. Diagram Generation Core | 2/2 | Complete   | 2026-03-07 | - |
+| 8. Diagram Generation Core | v1.1 | 1/3 | Gap closure | - |
 | 9. Diagram Templates & Quality | v1.1 | 0/TBD | Not started | - |
