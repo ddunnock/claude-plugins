@@ -49,6 +49,11 @@
       "type": "string",
       "enum": ["density", "alphabetical", "none"],
       "description": "Ranking method for slots. Default is density if omitted."
+    },
+    "diagram_hint": {
+      "type": "string",
+      "enum": ["structural", "behavioral"],
+      "description": "Hint for diagram format: structural -> D2, behavioral -> Mermaid"
     }
   },
   "additionalProperties": false

@@ -765,6 +765,7 @@ BUILTIN_SPECS: dict[str, dict] = {
     "system-overview": {
         "name": "system-overview",
         "description": "High-level view of all components and their interfaces.",
+        "diagram_hint": "structural",
         "scope_patterns": [
             {"pattern": "component:*", "slot_type": "component"},
             {"pattern": "interface:*", "slot_type": "interface"},
@@ -773,6 +774,7 @@ BUILTIN_SPECS: dict[str, dict] = {
     "traceability-chain": {
         "name": "traceability-chain",
         "description": "Full traceability from requirements through components, interfaces, and contracts.",
+        "diagram_hint": "behavioral",
         "scope_patterns": [
             {"pattern": "requirement-ref:*", "slot_type": "requirement-ref"},
             {"pattern": "component:*", "slot_type": "component"},
@@ -783,6 +785,7 @@ BUILTIN_SPECS: dict[str, dict] = {
     "component-detail": {
         "name": "component-detail",
         "description": "Detailed view of a single component and all related interfaces and contracts.",
+        "diagram_hint": "structural",
         "scope_patterns": [
             {"pattern": "component:{component_id}", "slot_type": "component"},
             {"pattern": "interface:*", "slot_type": "interface"},
@@ -793,6 +796,7 @@ BUILTIN_SPECS: dict[str, dict] = {
     "interface-map": {
         "name": "interface-map",
         "description": "All interfaces grouped by component pairs.",
+        "diagram_hint": "structural",
         "scope_patterns": [
             {"pattern": "interface:*", "slot_type": "interface"},
         ],

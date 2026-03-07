@@ -512,3 +512,78 @@ class TestComputeDiagramSlotId:
         result = _compute_diagram_slot_id("spec", "source")
         hash_part = result.split("-", 2)[2]  # diag-spec-HASH
         assert len(hash_part) == 12
+
+
+# ===========================================================================
+# Task 1 (08-02g): diagram_hint on view-spec schema and BUILTIN_SPECS
+# ===========================================================================
+
+class TestDiagramHint:
+    """Test diagram_hint field on view-spec.json schema and BUILTIN_SPECS."""
+
+    def _load_view_spec_schema(self) -> dict:
+        schema_path = os.path.join(
+            os.path.dirname(__file__), os.pardir, "schemas", "view-spec.json"
+        )
+        with open(schema_path) as f:
+            return json.load(f)
+
+    def test_schema_accepts_structural_hint(self):
+        schema = self._load_view_spec_schema()
+        spec = {
+            "name": "test",
+            "description": "test",
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+            "diagram_hint": "structural",
+        }
+        jsonschema.validate(spec, schema)
+
+    def test_schema_accepts_behavioral_hint(self):
+        schema = self._load_view_spec_schema()
+        spec = {
+            "name": "test",
+            "description": "test",
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+            "diagram_hint": "behavioral",
+        }
+        jsonschema.validate(spec, schema)
+
+    def test_schema_accepts_no_hint_backward_compatible(self):
+        schema = self._load_view_spec_schema()
+        spec = {
+            "name": "test",
+            "description": "test",
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+        }
+        jsonschema.validate(spec, schema)
+
+    def test_schema_rejects_invalid_hint(self):
+        schema = self._load_view_spec_schema()
+        spec = {
+            "name": "test",
+            "description": "test",
+            "scope_patterns": [{"pattern": "component:*", "slot_type": "component"}],
+            "diagram_hint": "invalid",
+        }
+        with pytest.raises(jsonschema.ValidationError):
+            jsonschema.validate(spec, schema)
+
+    def test_system_overview_has_structural_hint(self):
+        from scripts.view_assembler import BUILTIN_SPECS
+        assert BUILTIN_SPECS["system-overview"].get("diagram_hint") == "structural"
+
+    def test_traceability_chain_has_behavioral_hint(self):
+        from scripts.view_assembler import BUILTIN_SPECS
+        assert BUILTIN_SPECS["traceability-chain"].get("diagram_hint") == "behavioral"
+
+    def test_component_detail_has_structural_hint(self):
+        from scripts.view_assembler import BUILTIN_SPECS
+        assert BUILTIN_SPECS["component-detail"].get("diagram_hint") == "structural"
+
+    def test_interface_map_has_structural_hint(self):
+        from scripts.view_assembler import BUILTIN_SPECS
+        assert BUILTIN_SPECS["interface-map"].get("diagram_hint") == "structural"
+
+    def test_gap_report_has_no_hint(self):
+        from scripts.view_assembler import BUILTIN_SPECS
+        assert "diagram_hint" not in BUILTIN_SPECS["gap-report"]
