@@ -28,6 +28,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
+from schemas import PROMPT_LINT_SCHEMA
+from shared_io import _save_json
+
 # ---------------------------------------------------------------------------
 # Finding builder
 # ---------------------------------------------------------------------------
@@ -1000,7 +1003,7 @@ def run_lint(skill_path: str, session_dir: str) -> dict:
     }
 
     output_path = session / "prompt_lint.json"
-    output_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
+    _save_json(str(output_path), result, schema=PROMPT_LINT_SCHEMA)
     print(
         f"[prompt_linter] prompt_lint.json written to {output_path} — overall: {overall}",
         file=sys.stderr,

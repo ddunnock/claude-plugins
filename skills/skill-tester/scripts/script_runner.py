@@ -36,6 +36,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
+from schemas import SCRIPT_RUN_ENTRY_SCHEMA
+from shared_io import _append_jsonl
+
 
 SCRIPT_EXTS = {".py", ".sh", ".js", ".ts"}
 SESSION_SCRIPT_LOG = "script_runs.jsonl"
@@ -161,8 +164,7 @@ def run_script(
     }
 
     log_path = session / SESSION_SCRIPT_LOG
-    with open(log_path, "a", encoding="utf-8") as f:
-        f.write(json.dumps(entry) + "\n")
+    _append_jsonl(str(log_path), entry, schema=SCRIPT_RUN_ENTRY_SCHEMA)
 
     return entry
 

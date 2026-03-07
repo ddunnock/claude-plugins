@@ -8,7 +8,7 @@ description: >
   this skill actually do when it runs", "inspect API calls from skill", "run a skill through
   its paces", "check my skill for bugs or vulnerabilities". Also trigger when the user shows
   you a SKILL.md and asks you to evaluate, critique, or stress-test it.
-version: 0.4.0
+version: 0.5.0
 ---
 
 # Skill Tester & Analyzer
@@ -53,19 +53,20 @@ any scripts embedded in the skill.
   <pattern name="script">python3 ${CLAUDE_PLUGIN_ROOT}/scripts/SCRIPT.py [args]</pattern>
   <pattern name="reference">${CLAUDE_PLUGIN_ROOT}/references/FILE.md</pattern>
   <pattern name="agent">${CLAUDE_PLUGIN_ROOT}/agents/FILE.md</pattern>
-  <pattern name="session">sessions/&lt;skill_name&gt;_&lt;YYYYMMDD_HHMMSS&gt;/</pattern>
-  <pattern name="manifest">sessions/&lt;skill_name&gt;_&lt;timestamp&gt;/manifest.json</pattern>
-  <pattern name="sandbox">sessions/&lt;skill_name&gt;_&lt;timestamp&gt;/sandbox/</pattern>
-  <pattern name="inventory">sessions/&lt;skill_name&gt;_&lt;timestamp&gt;/inventory.json</pattern>
-  <pattern name="api-log">sessions/&lt;skill_name&gt;_&lt;timestamp&gt;/api_log.jsonl</pattern>
-  <pattern name="script-runs">sessions/&lt;skill_name&gt;_&lt;timestamp&gt;/script_runs.jsonl</pattern>
-  <pattern name="scan-results">sessions/&lt;skill_name&gt;_&lt;timestamp&gt;/scan_results.json</pattern>
-  <pattern name="prompt-lint">sessions/&lt;skill_name&gt;_&lt;timestamp&gt;/prompt_lint.json</pattern>
-  <pattern name="prompt-review">sessions/&lt;skill_name&gt;_&lt;timestamp&gt;/prompt_review.json</pattern>
-  <pattern name="security-report">sessions/&lt;skill_name&gt;_&lt;timestamp&gt;/security_report.json</pattern>
-  <pattern name="code-review">sessions/&lt;skill_name&gt;_&lt;timestamp&gt;/code_review.json</pattern>
-  <pattern name="session-report">sessions/&lt;skill_name&gt;_&lt;timestamp&gt;/session_report.html</pattern>
-  <pattern name="report">sessions/&lt;skill_name&gt;_&lt;timestamp&gt;/report.html</pattern>
+  <pattern name="session">&lt;report_root&gt;/&lt;skill_name&gt;_&lt;YYYYMMDD_HHMMSS&gt;/</pattern>
+  <pattern name="manifest">&lt;report_root&gt;/&lt;skill_name&gt;_&lt;timestamp&gt;/manifest.json</pattern>
+  <pattern name="sandbox">&lt;report_root&gt;/&lt;skill_name&gt;_&lt;timestamp&gt;/sandbox/</pattern>
+  <pattern name="inventory">&lt;report_root&gt;/&lt;skill_name&gt;_&lt;timestamp&gt;/inventory.json</pattern>
+  <pattern name="api-log">&lt;report_root&gt;/&lt;skill_name&gt;_&lt;timestamp&gt;/api_log.jsonl</pattern>
+  <pattern name="script-runs">&lt;report_root&gt;/&lt;skill_name&gt;_&lt;timestamp&gt;/script_runs.jsonl</pattern>
+  <pattern name="scan-results">&lt;report_root&gt;/&lt;skill_name&gt;_&lt;timestamp&gt;/scan_results.json</pattern>
+  <pattern name="prompt-lint">&lt;report_root&gt;/&lt;skill_name&gt;_&lt;timestamp&gt;/prompt_lint.json</pattern>
+  <pattern name="prompt-review">&lt;report_root&gt;/&lt;skill_name&gt;_&lt;timestamp&gt;/prompt_review.json</pattern>
+  <pattern name="security-report">&lt;report_root&gt;/&lt;skill_name&gt;_&lt;timestamp&gt;/security_report.json</pattern>
+  <pattern name="code-review">&lt;report_root&gt;/&lt;skill_name&gt;_&lt;timestamp&gt;/code_review.json</pattern>
+  <pattern name="session-report">&lt;report_root&gt;/&lt;skill_name&gt;_&lt;timestamp&gt;/session_report.html</pattern>
+  <pattern name="report">&lt;report_root&gt;/&lt;skill_name&gt;_&lt;timestamp&gt;/report.html</pattern>
+  <note>report_root defaults to sessions/ (legacy). User chooses ~/.claude/tests/ or .claude/tests/ via /skill-tester:init.</note>
 </paths>
 
 ## Session Directory Layout
@@ -88,272 +89,24 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
 
 ## Modes
 
-| Mode | Description | Phases Run |
-|---|---|---|
-| **Full** (default) | Complete analysis: scan → prompt-lint → test → security → review → report | All |
-| **Audit** | Static analysis only, no test execution | inventory → scan → prompt-lint → security → review → report |
-| **Trace** | Runtime capture only, no security/code review | inventory → test → report |
-| **Report** | Re-generate HTML from existing session data | report only |
+| Mode | Description | Phases Run | Command |
+|---|---|---|---|
+| **Full** (default) | Complete analysis: scan → prompt-lint → test → security → review → report | All (2-9) | `/skill-tester:run` |
+| **Audit** | Static analysis only, no test execution | 2-4, 6-7, 9 | `/skill-tester:audit` |
+| **Trace** | Runtime capture only, no security/code review | 2, 5, 8, 9 | `/skill-tester:trace` |
+| **Report** | Re-generate HTML from existing session data | 9 only | `/skill-tester:report` |
 
----
+## Commands
 
-<workflow>
-  <phase name="intake" sequence="1">
-    <objective>Collect analysis target and configuration. Create namespaced session directory.</objective>
-    <step sequence="1.1">
-      Greet the user and collect four inputs. Use AskUserQuestion for bounded choices:
-      <interaction tool="AskUserQuestion">
-        <question>What skill would you like to analyze?</question>
-        <header>Skill Path or Content</header>
-        <options>["I'll paste the SKILL.md", "Provide a directory path", "Use a skill I have open"]</options>
-        <multiSelect>false</multiSelect>
-      </interaction>
-    </step>
-    <step sequence="1.2">
-      If a directory path is provided, validate it (no ".." segments, must exist).
-      <gate>If path is invalid or not found, report the error and stop.</gate>
-    </step>
-    <step sequence="1.3">
-      <interaction tool="AskUserQuestion">
-        <question>Which analysis mode?</question>
-        <header>Analysis Mode</header>
-        <options>["Full (default)", "Audit only (no test execution)", "Trace only (runtime capture)", "Report only (re-generate from session)"]</options>
-        <multiSelect>false</multiSelect>
-      </interaction>
-    </step>
-    <step sequence="1.4">
-      <interaction tool="AskUserQuestion">
-        <question>Security review sensitivity?</question>
-        <header>Sensitivity Level</header>
-        <options>["Standard (default)", "Strict (flag more)", "Lenient (critical only)"]</options>
-        <multiSelect>false</multiSelect>
-      </interaction>
-    </step>
-    <step sequence="1.5">
-      Collect 1–3 test prompts (required for Full and Trace modes). If the user doesn't
-      provide them, auto-generate 3 reasonable prompts from the skill's description and
-      present them for approval before proceeding.
-      <gate>Full and Trace modes require at least one test prompt. Stop if none provided or approved.</gate>
-    </step>
-    <step sequence="1.6">
-      Determine session directory name:
-      Session dir name: sessions/&lt;skill_name&gt;_&lt;YYYYMMDD_HHMMSS&gt;/
-      Confirm session path to user before proceeding.
-    </step>
-    <step sequence="1.7">
-      Run comprehensive validation and sandbox setup:
-      <script>python3 ${CLAUDE_PLUGIN_ROOT}/scripts/setup_test_env.py --skill-path &lt;skill_path&gt; --session-dir &lt;session_dir&gt; --mode &lt;mode&gt;</script>
-      This validates the skill path, checks for required files (SKILL.md, plugin.json, SECURITY.md),
-      creates the full session directory structure with placeholders, and initializes the sandbox
-      environment for isolated script execution. Writes manifest.json to the session directory.
-      <gate>setup_test_env.py must succeed before proceeding to inventory. If validation fails with
-      errors, report them to the user and stop. Warnings are acceptable and should be noted.</gate>
-    </step>
-  </phase>
-
-  <phase name="inventory" sequence="2" depends-on="intake">
-    <objective>Scan the skill directory and produce structured inventory.json.</objective>
-    <step sequence="2.1">
-      Run inventory scan:
-      <script>python3 ${CLAUDE_PLUGIN_ROOT}/scripts/api_logger.py inventory &lt;skill_path&gt; --output &lt;session_dir&gt;/inventory.json</script>
-    </step>
-    <step sequence="2.2">
-      Report inventory summary to user: script count, reference count, any hardcoded URLs
-      or potential secrets flagged by the scanner.
-    </step>
-    <step sequence="2.3">
-      <branch condition="skill has no scripts">
-        Note "No scripts — SKILL.md-only skill" in session. Skip phases 3 and 4.
-        Proceed directly to phase 5 (security review of SKILL.md only) then phase 6.
-      </branch>
-    </step>
-    <gate>inventory.json must be written before proceeding. If scan fails, report error and stop.</gate>
-  </phase>
-
-  <phase name="deterministic-scan" sequence="3" depends-on="inventory">
-    <objective>Run deterministic tools against skill scripts BEFORE any AI analysis (Rule B9).</objective>
-    <step sequence="3.1">
-      Run deterministic security scan:
-      <script>python3 ${CLAUDE_PLUGIN_ROOT}/scripts/validate_skill.py --skill-path &lt;skill_path&gt; --session-dir &lt;session_dir&gt; --sensitivity &lt;sensitivity&gt;</script>
-      This runs in order: (1) secret pattern detection, (2) Semgrep/Bandit if installed,
-      (3) anti-pattern checks, (4) structural validation against SKILL.md.
-      Writes findings to &lt;session_dir&gt;/scan_results.json.
-    </step>
-    <step sequence="3.2">
-      Report scan summary to user: total findings by severity. Note which tools were available.
-      <branch condition="CRITICAL findings found">
-        Display CRITICAL findings immediately. Ask user if they want to continue.
-        <interaction tool="AskUserQuestion">
-          <question>CRITICAL security findings detected. Continue analysis?</question>
-          <header>Critical Findings Gate</header>
-          <options>["Yes, continue", "No, stop here"]</options>
-          <multiSelect>false</multiSelect>
-        </interaction>
-      </branch>
-    </step>
-    <gate>scan_results.json must be written before proceeding to AI security review.</gate>
-  </phase>
-
-  <phase name="prompt-lint" sequence="4" depends-on="inventory">
-    <objective>Run deterministic prompt quality checks against SKILL.md and all agent/command files, then invoke AI deep review (Full and Audit modes).</objective>
-    <step sequence="4.1">
-      <branch condition="mode is Trace or Report">Skip this phase entirely.</branch>
-    </step>
-    <step sequence="4.2">
-      Run deterministic prompt linter:
-      <script>python3 ${CLAUDE_PLUGIN_ROOT}/scripts/prompt_linter.py --skill-path &lt;skill_path&gt; --session-dir &lt;session_dir&gt;</script>
-      Runs in order: (1) AskUserQuestion completeness, (2) dead collection,
-      (3) agent definition/invocation consistency, (4) workflow integrity,
-      (5) reference integrity, (6) context reads in agent files.
-      Writes findings to &lt;session_dir&gt;/prompt_lint.json.
-    </step>
-    <step sequence="4.3">
-      Report lint summary to user: ERROR and WARN counts by category.
-      <branch condition="ERROR findings found">
-        Display all ERROR findings immediately with their recommendations.
-        Ask user whether to continue to AI review.
-        <interaction tool="AskUserQuestion">
-          <question>Prompt lint found ERROR-level issues. Continue to AI prompt review?</question>
-          <header>Prompt Lint Gate</header>
-          <options>["Yes, continue", "No, stop here"]</options>
-          <multiSelect>false</multiSelect>
-        </interaction>
-      </branch>
-    </step>
-    <step sequence="4.4">
-      Read agent instructions:
-      <context>
-        <read required="true">${CLAUDE_PLUGIN_ROOT}/agents/prompt_reviewer.md</read>
-      </context>
-      Invoke the prompt-reviewer agent, providing in the prompt:
-      - --output-path: the absolute path to &lt;session_dir&gt;/prompt_review.json
-      - prompt_lint.json (deterministic findings — primary grounding)
-      - Full SKILL.md content
-      - Content of all agent .md files found in agents/
-      - Content of all command .md files found in commands/ (if present)
-      The agent will attempt to Write the file directly. If the agent's response
-      contains a ```json block instead (Write was denied), extract the JSON and
-      write it to &lt;session_dir&gt;/prompt_review.json from the orchestrator.
-    </step>
-    <step sequence="4.5">
-      In Claude.ai (no subagents): Read agents/prompt_reviewer.md then apply the rubric
-      inline, using prompt_lint.json as grounding. Write results to prompt_review.json directly.
-    </step>
-    <gate>prompt_lint.json must be written before invoking the prompt-reviewer agent.</gate>
-  </phase>
-
-  <phase name="test-execution" sequence="5" depends-on="deterministic-scan">
-    <objective>Execute skill scripts with full I/O capture (Full and Trace modes only).</objective>
-    <step sequence="5.1">
-      <branch condition="mode is Audit or Report">Skip this phase entirely.</branch>
-    </step>
-    <step sequence="5.2">
-      For each test prompt, execute the skill and capture all observable behavior:
-      <script>python3 ${CLAUDE_PLUGIN_ROOT}/scripts/script_runner.py skill &lt;skill_path&gt; --prompt "&lt;test_prompt&gt;" --session-dir &lt;session_dir&gt; --capture-api</script>
-      Records one entry per script invocation to script_runs.jsonl.
-      Records one entry per API call to api_log.jsonl.
-    </step>
-    <step sequence="5.3">
-      If the skill's scripts make no direct anthropic API calls, note "API trace: N/A —
-      skill uses native Claude tool use" in the report.
-    </step>
-  </phase>
-
-  <phase name="security-audit" sequence="6" depends-on="deterministic-scan">
-    <objective>AI security analysis with scan_results.json as grounding input (Full and Audit modes only).</objective>
-    <step sequence="6.1">
-      <branch condition="mode is Trace or Report">Skip this phase entirely.</branch>
-    </step>
-    <step sequence="6.2">
-      Read agent instructions:
-      <context>
-        <read required="true">${CLAUDE_PLUGIN_ROOT}/agents/security_review.md</read>
-      </context>
-      Invoke the security-review agent, providing in the prompt:
-      - --output-path: the absolute path to &lt;session_dir&gt;/security_report.json
-      - scan_results.json (deterministic findings — primary grounding)
-      - inventory.json (script paths and flags)
-      - Raw script content for each script flagged in scan_results
-      - Sensitivity level from intake
-      The agent will attempt to Write the file directly. If the agent's response
-      contains a ```json block instead (Write was denied), extract the JSON and
-      write it to &lt;session_dir&gt;/security_report.json from the orchestrator.
-    </step>
-    <step sequence="6.3">
-      In Claude.ai (no subagents): Read agents/security_review.md then apply the agent's
-      rubric inline, using scan_results.json as the primary input. Write results to
-      security_report.json directly.
-    </step>
-  </phase>
-
-  <phase name="code-review" sequence="7" depends-on="deterministic-scan">
-    <objective>AI code quality review (Full and Audit modes only).</objective>
-    <step sequence="7.1">
-      <branch condition="mode is Trace or Report">Skip this phase entirely.</branch>
-    </step>
-    <step sequence="7.2">
-      Read agent instructions:
-      <context>
-        <read required="true">${CLAUDE_PLUGIN_ROOT}/agents/code_review.md</read>
-      </context>
-      Invoke the code-review agent, providing in the prompt:
-      - --output-path: the absolute path to &lt;session_dir&gt;/code_review.json
-      - inventory.json
-      - SKILL.md content
-      - Raw script content for all discovered scripts
-      - anti_patterns.md reference
-      The agent will attempt to Write the file directly. If the agent's response
-      contains a ```json block instead (Write was denied), extract the JSON and
-      write it to &lt;session_dir&gt;/code_review.json from the orchestrator.
-    </step>
-    <step sequence="7.3">
-      In Claude.ai (no subagents): Read agents/code_review.md then apply the rubric inline.
-      Write results to code_review.json directly.
-    </step>
-  </phase>
-
-  <phase name="session-trace" sequence="8" depends-on="code-review">
-    <objective>Capture Claude Code session trace from JSONL logs (Full and Trace modes only).</objective>
-    <step sequence="8.1">
-      <branch condition="mode is Audit or Report">Skip this phase entirely.</branch>
-    </step>
-    <step sequence="8.2">
-      Generate session trace report from Claude Code's own JSONL conversation logs.
-      This captures API calls, tool usage, subagent spawns, and token consumption
-      that occur during skill execution — data invisible to api_logger.py since most
-      skills use native Claude tool use rather than calling the Anthropic SDK directly.
-      <script>python3 ${CLAUDE_PLUGIN_ROOT}/scripts/session_analyzer.py --output &lt;session_dir&gt;/session_report.html --format both</script>
-      The script auto-detects the project directory and latest session from ~/.claude/projects/.
-      Writes session_report.html (interactive conversation audit) and session_report.json (summary).
-    </step>
-    <step sequence="8.3">
-      If session_analyzer.py fails (e.g., no JSONL files found), note "Session trace: unavailable"
-      in the report. This is non-blocking — the rest of the pipeline continues normally.
-    </step>
-  </phase>
-
-  <phase name="report" sequence="9" depends-on="session-trace">
-    <objective>Generate unified interactive HTML report from all session data.</objective>
-    <step sequence="9.1">
-      Generate report:
-      <script>python3 ${CLAUDE_PLUGIN_ROOT}/scripts/report_gen.py --session-dir &lt;session_dir&gt; --output &lt;session_dir&gt;/report.html</script>
-    </step>
-    <step sequence="9.2">
-      Present report.html to the user. If session_report.html was also generated (phase 8),
-      mention it as a companion report for detailed conversation and API usage audit.
-      Provide a plain-language summary covering:
-      - Mode run and skill name
-      - Script count and API-calling scripts
-      - Deterministic scan findings (CRITICAL/HIGH counts from scan_results.json)
-      - Prompt lint result (PASS/WARN/FAIL + top ERRORs from prompt_lint.json)
-      - Prompt quality score (from prompt_review.json)
-      - Security risk rating
-      - Code quality score (overall)
-      - Session trace summary (API calls, tokens, agents spawned — from session_report.json if available)
-      - Top 3 recommendations across all analysis layers
-    </step>
-  </phase>
-</workflow>
+| Command | Mode | Phases | Purpose |
+|---------|------|--------|---------|
+| `/skill-tester:init` | All | 1 | Set up session: target, mode, prompts, report location |
+| `/skill-tester:run` | Full | 2-9 | Execute all analysis phases |
+| `/skill-tester:audit` | Audit | 2-4, 6-7, 9 | Static analysis only |
+| `/skill-tester:trace` | Trace | 2, 5, 8, 9 | Runtime capture only |
+| `/skill-tester:report` | Report | 9 | Regenerate HTML from session data |
+| `/skill-tester:status` | N/A | — | Show session state |
+| `/skill-tester:resume` | Any | Variable | Resume interrupted session |
 
 ---
 

@@ -24,6 +24,7 @@ from shared_io import (
     _validate_json_schema,
     _load_json,
     _save_json,
+    _append_jsonl,
 )
 
 
@@ -378,3 +379,60 @@ def test_save_json_non_serializable_data(tmp_path):
 
     # Verify file was NOT created
     assert not target.exists()
+
+
+# ---------------------------------------------------------------------------
+# _append_jsonl Tests
+# ---------------------------------------------------------------------------
+
+def test_append_jsonl_creates_and_appends(tmp_path):
+    """_append_jsonl creates file on first call, appends on subsequent calls."""
+    target = tmp_path / "log.jsonl"
+    entry1 = {"run_id": "run_001", "status": "ok"}
+    entry2 = {"run_id": "run_002", "status": "fail"}
+
+    _append_jsonl(str(target), entry1)
+    _append_jsonl(str(target), entry2)
+
+    lines = target.read_text().strip().splitlines()
+    assert len(lines) == 2
+    assert json.loads(lines[0]) == entry1
+    assert json.loads(lines[1]) == entry2
+
+
+def test_append_jsonl_with_valid_schema(tmp_path):
+    """_append_jsonl writes without warning when schema passes."""
+    target = tmp_path / "log.jsonl"
+    schema = {"name": {"required": True, "type": str}}
+    entry = {"name": "test"}
+
+    _append_jsonl(str(target), entry, schema=schema)
+
+    lines = target.read_text().strip().splitlines()
+    assert len(lines) == 1
+    assert json.loads(lines[0]) == entry
+
+
+def test_append_jsonl_schema_warning_still_writes(tmp_path, caplog):
+    """_append_jsonl warns on schema failure but still writes the entry."""
+    import logging
+    target = tmp_path / "log.jsonl"
+    schema = {"name": {"required": True, "type": str}}
+    entry = {"wrong_field": "test"}  # missing required 'name'
+
+    with caplog.at_level(logging.WARNING):
+        _append_jsonl(str(target), entry, schema=schema)
+
+    # Entry should still be written
+    lines = target.read_text().strip().splitlines()
+    assert len(lines) == 1
+    assert json.loads(lines[0]) == entry
+
+    # Warning should have been logged
+    assert any("Schema validation warning" in r.message for r in caplog.records)
+
+
+def test_append_jsonl_rejects_traversal_path():
+    """_append_jsonl rejects paths containing '..'."""
+    with pytest.raises(ValueError, match="traversal"):
+        _append_jsonl("../secret/log.jsonl", {"data": "test"})

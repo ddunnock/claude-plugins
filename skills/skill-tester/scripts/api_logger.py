@@ -17,7 +17,6 @@ Usage (patch, from Python):
 """
 
 import argparse
-import ast
 import json
 import os
 import re
@@ -27,6 +26,9 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
+
+from schemas import API_LOG_ENTRY_SCHEMA
+from shared_io import _append_jsonl
 
 
 # ---------------------------------------------------------------------------
@@ -158,8 +160,7 @@ def _log_call(call_id: str, run_id: Optional[str], request: dict,
         "latency_ms": latency_ms,
         "error": error,
     }
-    with open(_LOG_PATH, "a", encoding="utf-8") as f:
-        f.write(json.dumps(entry) + "\n")
+    _append_jsonl(_LOG_PATH, entry, schema=API_LOG_ENTRY_SCHEMA)
 
 
 def install(log_path: str, run_id: Optional[str] = None):

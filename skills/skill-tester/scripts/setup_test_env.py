@@ -53,8 +53,12 @@ PLACEHOLDER_FILES = [
     "script_runs.jsonl",
     "security_report.json",
     "code_review.json",
+    "prompt_lint.json",
+    "prompt_review.json",
     "report.html",
 ]
+
+REPORT_ROOT_CHOICES = ["sessions/", "~/.claude/tests/", ".claude/tests/"]
 
 
 # ---------------------------------------------------------------------------
@@ -263,13 +267,15 @@ def create_session_structure(session_dir: str, sandbox_subdir: str = "sandbox") 
 # Main Validation Flow
 # ---------------------------------------------------------------------------
 
-def run_validation(skill_path: str, session_dir: str, mode: str) -> dict:
+def run_validation(skill_path: str, session_dir: str, mode: str,
+                   report_root: str | None = None) -> dict:
     """Execute all validation checks and set up test environment.
 
     Args:
         skill_path: User-supplied path to skill directory.
         session_dir: Path to session directory for output.
         mode: Analysis mode (full, audit, trace, report).
+        report_root: Optional report root choice (e.g. "~/.claude/tests/").
 
     Returns:
         Manifest dictionary with validation results.
@@ -334,6 +340,9 @@ def run_validation(skill_path: str, session_dir: str, mode: str) -> dict:
         "warnings": all_warnings,
     }
 
+    if report_root:
+        manifest["report_root"] = report_root
+
     # Write manifest.json
     manifest_path = Path(session_dir) / "manifest.json"
     try:
@@ -384,11 +393,20 @@ def main() -> None:
         default="full",
         help="Analysis mode (default: full).",
     )
+    parser.add_argument(
+        "--report-root",
+        choices=REPORT_ROOT_CHOICES,
+        default=None,
+        help="Report root directory (default: sessions/).",
+    )
 
     args = parser.parse_args()
 
     try:
-        manifest = run_validation(args.skill_path, args.session_dir, args.mode)
+        manifest = run_validation(
+            args.skill_path, args.session_dir, args.mode,
+            report_root=args.report_root,
+        )
         # Output summary to stdout for Claude to parse
         summary = {
             "status": "success",

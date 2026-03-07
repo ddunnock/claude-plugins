@@ -8,20 +8,48 @@ Usage:
 
 import argparse
 import json
+import logging
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
+
+from schemas import (
+    INVENTORY_SCHEMA,
+    SCAN_RESULTS_SCHEMA,
+    PROMPT_LINT_SCHEMA,
+    PROMPT_REVIEW_SCHEMA,
+    SECURITY_REPORT_SCHEMA,
+    CODE_REVIEW_SCHEMA,
+)
+from shared_io import _validate_json_schema
 
 
 # ---------------------------------------------------------------------------
 # Data loading
 # ---------------------------------------------------------------------------
 
-def _load_json(path: Path) -> Optional[Any]:
+def _load_json(path: Path, schema: dict | None = None) -> Optional[Any]:
+    """Load a JSON file, optionally validating against a schema.
+
+    Args:
+        path: Path to the JSON file.
+        schema: If provided, validate and log warnings on failure (still returns data).
+
+    Returns:
+        Parsed JSON data, or None if file doesn't exist.
+    """
     if path.exists():
         try:
-            return json.loads(path.read_text(encoding="utf-8"))
+            data = json.loads(path.read_text(encoding="utf-8"))
+            if schema is not None and isinstance(data, dict):
+                errors = _validate_json_schema(data, schema)
+                if errors:
+                    logging.warning(
+                        "Schema validation warning for %s: %s",
+                        path, "; ".join(errors),
+                    )
+            return data
         except Exception as e:
             return {"_load_error": str(e)}
     return None
@@ -42,16 +70,24 @@ def _load_jsonl(path: Path) -> list:
 
 
 def load_session(session_dir: str) -> dict:
+    """Load all session data files into a single dict for report generation.
+
+    Args:
+        session_dir: Path to the session directory.
+
+    Returns:
+        Dict with all session data keyed by analysis type.
+    """
     base = Path(session_dir)
     return {
-        "inventory": _load_json(base / "inventory.json"),
-        "scan_results": _load_json(base / "scan_results.json"),
-        "prompt_lint": _load_json(base / "prompt_lint.json"),
-        "prompt_review": _load_json(base / "prompt_review.json"),
+        "inventory": _load_json(base / "inventory.json", schema=INVENTORY_SCHEMA),
+        "scan_results": _load_json(base / "scan_results.json", schema=SCAN_RESULTS_SCHEMA),
+        "prompt_lint": _load_json(base / "prompt_lint.json", schema=PROMPT_LINT_SCHEMA),
+        "prompt_review": _load_json(base / "prompt_review.json", schema=PROMPT_REVIEW_SCHEMA),
         "api_calls": _load_jsonl(base / "api_log.jsonl"),
         "script_runs": _load_jsonl(base / "script_runs.jsonl"),
-        "security": _load_json(base / "security_report.json"),
-        "code_review": _load_json(base / "code_review.json"),
+        "security": _load_json(base / "security_report.json", schema=SECURITY_REPORT_SCHEMA),
+        "code_review": _load_json(base / "code_review.json", schema=CODE_REVIEW_SCHEMA),
         "generated_at": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -449,7 +485,16 @@ def _build_code_review_section(cr: Optional[dict]) -> str:
 # Main report builder
 # ---------------------------------------------------------------------------
 
-def generate_report(session_dir: str, output_path: str):
+def generate_report(session_dir: str, output_path: str) -> str:
+    """Generate a unified HTML report from all session data.
+
+    Args:
+        session_dir: Path to the session directory containing analysis results.
+        output_path: Path where the HTML report will be written.
+
+    Returns:
+        The output path where the report was written.
+    """
     data = load_session(session_dir)
     inv = data.get("inventory") or {}
     skill_name = (inv.get("frontmatter") or {}).get("name", "Unknown Skill")

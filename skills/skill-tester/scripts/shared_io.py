@@ -238,3 +238,34 @@ def _save_json(path: str, data: dict, schema: dict | None = None) -> None:
             )
 
     _atomic_write(path, data)
+
+
+def _append_jsonl(path: str, entry: dict, schema: dict | None = None,
+                  boundary: str | None = None) -> None:
+    """Append a JSON entry to a JSONL file with optional schema validation.
+
+    Validates the path, optionally validates the entry against a schema
+    (logging a warning on failure but still writing), then appends
+    ``json.dumps(entry) + "\\n"`` to the file.
+
+    Args:
+        path: Target JSONL file path.
+        entry: Dictionary to serialize as a single JSON line.
+        schema: If provided, validate entry before writing. Warns on
+            failure but still writes the entry.
+        boundary: If provided, validate that the resolved path starts
+            with this directory.
+    """
+    resolved = _validate_path(path, boundary=boundary)
+
+    if schema is not None:
+        errors = _validate_json_schema(entry, schema)
+        if errors:
+            import logging
+            logging.warning(
+                "Schema validation warning for %s: %s",
+                path, "; ".join(errors),
+            )
+
+    with open(resolved, "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry) + "\n")
