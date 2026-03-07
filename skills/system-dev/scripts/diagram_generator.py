@@ -9,12 +9,14 @@ Gap markers render as visually distinct dashed, color-coded placeholders.
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import logging
 import os
 import re
 import time
+from collections import defaultdict
 
 import jinja2
 
@@ -65,6 +67,145 @@ def _compute_diagram_slot_id(spec_name: str, source: str) -> str:
     return f"diag-{spec_name}-{content_hash}"
 
 
+def _apply_abstraction_level(view: dict, level: str) -> dict:
+    """Apply abstraction-level pre-processing to a view before rendering.
+
+    At ``"component"`` level (or when *level* is ``None``), the view is
+    returned as-is (deep-copied for safety).
+
+    At ``"system"`` level the view is collapsed:
+
+    * Only top-level component slots are kept.  A component is
+      *top-level* if its ``slot_id`` is never referenced as a
+      ``parent_id`` target by another component **and** it is not
+      itself a child (has no ``parent_id`` field, or ``parent_id`` is
+      empty).  Children are counted and a badge is appended to the
+      parent name: ``"Name (N sub-components, M interfaces)"``.
+    * Edges between child slots are aggregated to their parents.
+      Multiple edges between the same parent pair are collapsed into a
+      single edge whose ``relationship_type`` carries a count label,
+      e.g. ``"implements (3)"``.
+
+    Args:
+        view: Assembled view dict (output of ``assemble_view()``).
+        level: ``"system"`` or ``"component"`` (default pass-through).
+
+    Returns:
+        A **new** view dict — the original is never mutated.
+    """
+    if level is None or level == "component":
+        return copy.deepcopy(view)
+
+    # --- system-level abstraction ---
+    view = copy.deepcopy(view)
+
+    # 1. Build component index: slot_id -> slot dict, and parent mapping
+    all_component_slots: list[dict] = []
+    component_section_idx: int | None = None
+    for idx, section in enumerate(view.get("sections", [])):
+        if section["slot_type"] == "component":
+            all_component_slots.extend(section["slots"])
+            component_section_idx = idx
+
+    if not all_component_slots:
+        return view
+
+    comp_by_id = {s["slot_id"]: s for s in all_component_slots}
+
+    # Determine parent-child relationships via parent_id field
+    child_ids: set[str] = set()
+    children_of: dict[str, list[str]] = defaultdict(list)
+    for slot in all_component_slots:
+        pid = slot.get("parent_id", "")
+        if pid and pid in comp_by_id:
+            child_ids.add(slot["slot_id"])
+            children_of[pid].append(slot["slot_id"])
+
+    # If no explicit parent_id hierarchy exists, treat all components as
+    # top-level (no collapsing needed, but still aggregate edges).
+    top_level_ids = [
+        s["slot_id"] for s in all_component_slots
+        if s["slot_id"] not in child_ids
+    ]
+
+    # 2. Count interfaces per top-level component (from interface sections)
+    intf_count: dict[str, int] = defaultdict(int)
+    for section in view.get("sections", []):
+        if section["slot_type"] == "interface":
+            for intf in section["slots"]:
+                src = intf.get("source_component", "")
+                tgt = intf.get("target_component", "")
+                for cid in (src, tgt):
+                    if cid in comp_by_id:
+                        # Walk up to top-level parent
+                        resolved = _resolve_parent(cid, comp_by_id, child_ids)
+                        intf_count[resolved] += 1
+
+    # 3. Badge top-level component names
+    top_level_slots: list[dict] = []
+    for tid in top_level_ids:
+        slot = comp_by_id[tid]
+        n_children = len(children_of.get(tid, []))
+        n_interfaces = intf_count.get(tid, 0)
+        if n_children > 0 or n_interfaces > 0:
+            parts = []
+            if n_children > 0:
+                parts.append(f"{n_children} sub-component{'s' if n_children != 1 else ''}")
+            if n_interfaces > 0:
+                parts.append(f"{n_interfaces} interface{'s' if n_interfaces != 1 else ''}")
+            slot["name"] = f"{slot['name']} ({', '.join(parts)})"
+        top_level_slots.append(slot)
+
+    # Replace component section with collapsed top-level only
+    if component_section_idx is not None:
+        view["sections"][component_section_idx]["slots"] = top_level_slots
+
+    # 4. Build child -> top-level parent mapping for edge aggregation
+    child_to_parent: dict[str, str] = {}
+    for slot in all_component_slots:
+        resolved = _resolve_parent(slot["slot_id"], comp_by_id, child_ids)
+        if resolved != slot["slot_id"]:
+            child_to_parent[slot["slot_id"]] = resolved
+
+    # 5. Aggregate edges
+    agg: dict[tuple[str, str, str], int] = defaultdict(int)
+    for edge in view.get("edges", []):
+        src = child_to_parent.get(edge["source_id"], edge["source_id"])
+        tgt = child_to_parent.get(edge["target_id"], edge["target_id"])
+        rel = edge["relationship_type"]
+        agg[(src, tgt, rel)] += 1
+
+    new_edges: list[dict] = []
+    for (src, tgt, rel), count in sorted(agg.items()):
+        label = f"{rel} ({count})" if count > 1 else rel
+        new_edges.append({
+            "source_id": src,
+            "target_id": tgt,
+            "relationship_type": label,
+        })
+    view["edges"] = new_edges
+
+    return view
+
+
+def _resolve_parent(
+    slot_id: str,
+    comp_by_id: dict[str, dict],
+    child_ids: set[str],
+) -> str:
+    """Walk up parent_id chain to find the top-level ancestor."""
+    visited: set[str] = set()
+    current = slot_id
+    while current in child_ids and current not in visited:
+        visited.add(current)
+        pid = comp_by_id[current].get("parent_id", "")
+        if pid and pid in comp_by_id:
+            current = pid
+        else:
+            break
+    return current
+
+
 def _build_template_context(
     view: dict, abstraction_level: str = "component"
 ) -> dict:
@@ -84,10 +225,13 @@ def _build_template_context(
         has_unlinked, has_nodes, gap_severities, section_types,
         section_first_slot.
     """
+    # Apply abstraction level pre-processing before sorting
+    view = _apply_abstraction_level(view, abstraction_level)
+
     spec_name = view.get("spec_name", "unknown")
     snapshot_id = view.get("snapshot_id", "unknown")
 
-    # Deep-copy and sort sections by slot_type for determinism
+    # Sort sections by slot_type for determinism
     sections = sorted(
         view.get("sections", []), key=lambda s: s["slot_type"]
     )

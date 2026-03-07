@@ -766,6 +766,7 @@ BUILTIN_SPECS: dict[str, dict] = {
         "name": "system-overview",
         "description": "High-level view of all components and their interfaces.",
         "diagram_hint": "structural",
+        "abstraction_level": "system",
         "scope_patterns": [
             {"pattern": "component:*", "slot_type": "component"},
             {"pattern": "interface:*", "slot_type": "interface"},
@@ -786,6 +787,7 @@ BUILTIN_SPECS: dict[str, dict] = {
         "name": "component-detail",
         "description": "Detailed view of a single component and all related interfaces and contracts.",
         "diagram_hint": "structural",
+        "abstraction_level": "component",
         "scope_patterns": [
             {"pattern": "component:{component_id}", "slot_type": "component"},
             {"pattern": "interface:*", "slot_type": "interface"},
