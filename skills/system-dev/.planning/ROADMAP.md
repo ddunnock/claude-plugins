@@ -111,11 +111,11 @@ Plans:
   2. Diagram templates are loaded from a configurable template registry, not hardcoded
   3. Given identical view input, the diagram generator produces byte-identical output
   4. Diagram generation operations emit structured log entries with operation type, diagram format, and timing
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 09-01: TBD
-- [ ] 09-02: TBD
+- [ ] 09-01-PLAN.md — Jinja2 template infrastructure, manifest registry, two-tier resolution, schema updates (DIAG-07, DIAG-08)
+- [ ] 09-02-PLAN.md — Abstraction layers (system/component), structured logging with diagram.* namespace (DIAG-05, DIAG-10)
 
 ### Cross-Cutting: Applied in Every Phase
 
@@ -141,4 +141,4 @@ Plans:
 | 6b. View Integration Fix | v1.1 | 2/2 | Complete | 2026-03-03 |
 | 7. View Quality & Handoff | v1.1 | 2/2 | Complete | 2026-03-07 |
 | 8. Diagram Generation Core | v1.1 | 2/3 | Gap closure | - |
-| 9. Diagram Templates & Quality | v1.1 | 0/TBD | Not started | - |
+| 9. Diagram Templates & Quality | v1.1 | 0/2 | Planned | - |
