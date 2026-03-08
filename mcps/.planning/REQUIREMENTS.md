@@ -26,11 +26,11 @@
 
 ### Format Support
 
-- [ ] **FMT-01**: MCP correctly parses and serializes JSON files
-- [ ] **FMT-02**: MCP correctly parses and serializes YAML files
-- [ ] **FMT-03**: MCP correctly parses and serializes XML files with attribute handling
-- [ ] **FMT-04**: MCP correctly parses and serializes TOML files
-- [ ] **FMT-05**: MCP auto-detects file format from extension
+- [x] **FMT-01**: MCP correctly parses and serializes JSON files
+- [x] **FMT-02**: MCP correctly parses and serializes YAML files
+- [x] **FMT-03**: MCP correctly parses and serializes XML files with attribute handling
+- [x] **FMT-04**: MCP correctly parses and serializes TOML files
+- [x] **FMT-05**: MCP auto-detects file format from extension
 
 ### Security & Reliability
 
@@ -85,11 +85,11 @@
 | FILE-04 | Phase 2 | Pending |
 | HEAL-01 | Phase 3 | Pending |
 | HEAL-02 | Phase 3 | Pending |
-| FMT-01 | Phase 1 | Pending |
-| FMT-02 | Phase 1 | Pending |
-| FMT-03 | Phase 1 | Pending |
-| FMT-04 | Phase 1 | Pending |
-| FMT-05 | Phase 1 | Pending |
+| FMT-01 | Phase 1 | Complete |
+| FMT-02 | Phase 1 | Complete |
+| FMT-03 | Phase 1 | Complete |
+| FMT-04 | Phase 1 | Complete |
+| FMT-05 | Phase 1 | Complete |
 | SEC-01 | Phase 1 | Pending |
 | SEC-02 | Phase 1 | Pending |
 | SEC-03 | Phase 1 | Pending |
