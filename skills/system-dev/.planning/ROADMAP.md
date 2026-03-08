@@ -33,7 +33,7 @@ See `.planning/milestones/v1.0-ROADMAP.md` for full phase details.
 - [x] **Phase 7: View Quality & Handoff** - Relevance ranking, deterministic output, performance, and diagram-compatible handoff format (completed 2026-03-07)
 - [x] **Phase 8: Diagram Generation Core** - D2 structural and Mermaid behavioral diagram generation from view data (completed 2026-03-07)
 - [x] **Phase 9: Diagram Templates & Quality** - Template-driven generation with abstraction layers, determinism, and logging (completed 2026-03-07)
-- [ ] **Phase 10: Milestone Documentation & Routing Fix** - Close audit gaps: SKILL.md routing, stale checkboxes, code cleanup
+- [ ] **Phase 10: Milestone Documentation & Routing Fix** - Close audit gaps: SKILL.md routing, stale checkboxes
 
 ## Phase Details
 
@@ -100,7 +100,7 @@ Plans:
 
 Plans:
 - [x] 08-01-PLAN.md — Diagram schema, slot type registration, D2/Mermaid generation engines with gap placeholders
-- [ ] 08-02-PLAN.md — Orchestration layer (SlotAPI writes), diagram_hint on view specs, /system-dev:diagram command
+- [x] 08-02-PLAN.md — Orchestration layer (SlotAPI writes), diagram_hint on view specs, /system-dev:diagram command
 - [x] 08-02g-PLAN.md — Gap closure: implement missing orchestration layer, diagram_hint, integration tests
 
 ### Phase 9: Diagram Templates & Quality
@@ -115,21 +115,20 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 09-01-PLAN.md — Jinja2 template infrastructure, manifest registry, two-tier resolution, schema updates (DIAG-07, DIAG-08)
-- [ ] 09-02-PLAN.md — Abstraction layers (system/component), structured logging with diagram.* namespace (DIAG-05, DIAG-10)
+- [x] 09-01-PLAN.md — Jinja2 template infrastructure, manifest registry, two-tier resolution, schema updates (DIAG-07, DIAG-08)
+- [x] 09-02-PLAN.md — Abstraction layers (system/component), structured logging with diagram.* namespace (DIAG-05, DIAG-10)
 
 ### Phase 10: Milestone Documentation & Routing Fix
 **Goal**: Close audit gaps so `/system-dev:diagram` is discoverable and all documentation reflects completed state
 **Depends on**: Phase 9
-**Gap Closure**: Closes INT-01, INT-02, FLOW-01 from v1.1 audit; resolves tech debt in Phases 8-9
+**Gap Closure**: Closes INT-01, INT-02, FLOW-01 from v1.1 audit
 **Success Criteria** (what must be TRUE):
   1. `/system-dev:diagram` is listed in SKILL.md commands table and routable by LLM agent
   2. `diagram` slot type appears in SKILL.md slot types table and registry structure section
-  3. Unused imports removed from `diagram_generator.py`
 **Plans**: 1 plan
 
 Plans:
-- [ ] 10-01-PLAN.md — SKILL.md routing + slot type docs, code cleanup
+- [ ] 10-01-PLAN.md — SKILL.md diagram command routing, slot type docs, stale checkbox fixes
 
 ### Cross-Cutting: Applied in Every Phase
 
