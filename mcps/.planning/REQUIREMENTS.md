@@ -7,10 +7,10 @@
 
 ### Schema Management
 
-- [ ] **SCHM-01**: Skill can register a Zod schema by name via MCP tool call
-- [ ] **SCHM-02**: Skill can list all registered schemas with their names and metadata
-- [ ] **SCHM-03**: MCP scans configured plugin/skill paths for schemas/ folders at startup
-- [ ] **SCHM-04**: Skill can compose schemas by extending or merging existing registered schemas
+- [x] **SCHM-01**: Skill can register a Zod schema by name via MCP tool call
+- [x] **SCHM-02**: Skill can list all registered schemas with their names and metadata
+- [x] **SCHM-03**: MCP scans configured plugin/skill paths for schemas/ folders at startup
+- [x] **SCHM-04**: Skill can compose schemas by extending or merging existing registered schemas
 
 ### File Operations
 
@@ -75,10 +75,10 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SCHM-01 | Phase 2 | Pending |
-| SCHM-02 | Phase 2 | Pending |
-| SCHM-03 | Phase 2 | Pending |
-| SCHM-04 | Phase 2 | Pending |
+| SCHM-01 | Phase 2 | Complete |
+| SCHM-02 | Phase 2 | Complete |
+| SCHM-03 | Phase 2 | Complete |
+| SCHM-04 | Phase 2 | Complete |
 | FILE-01 | Phase 2 | Pending |
 | FILE-02 | Phase 2 | Pending |
 | FILE-03 | Phase 2 | Pending |

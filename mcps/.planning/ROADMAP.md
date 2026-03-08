@@ -48,7 +48,7 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Schema registry core (register, list, discover, compose) + JSON Schema converter + merge-patch + startup wiring
+- [x] 02-01-PLAN.md — Schema registry core (register, list, discover, compose) + JSON Schema converter + merge-patch + startup wiring
 - [ ] 02-02-PLAN.md — Validated file operations (sv_read, sv_write, sv_validate, sv_patch tool implementations)
 
 ### Phase 3: Self-Healing
@@ -72,5 +72,5 @@ Phases execute in numeric order: 1 -> 2 -> 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Format Engine & Server | 3/3 | Complete | 2026-03-08 |
-| 2. Schema Registry & File Operations | 0/2 | Not started | - |
+| 2. Schema Registry & File Operations | 1/2 | In progress | - |
 | 3. Self-Healing | 0/1 | Not started | - |
