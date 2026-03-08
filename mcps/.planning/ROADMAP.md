@@ -59,10 +59,11 @@ Plans:
   1. Skill can auto-fix a malformed file (defaults applied, types coerced, missing required fields added) and the result passes schema validation
   2. Skill can request fix suggestions for a malformed file and receive structured guidance without the file being modified
   3. Self-healing never strips unknown fields or destroys existing valid data
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 03-01: Self-healing engine (auto-fix mode and suggestion mode)
+- [ ] 03-01-PLAN.md — Healing engine core (healData function, HealFix/HealResult types, coercion helpers, unit tests)
+- [ ] 03-02-PLAN.md — sv_heal tool wiring (replace stub with real handler, integration tests)
 
 ## Progress
 
@@ -73,4 +74,4 @@ Phases execute in numeric order: 1 -> 2 -> 3
 |-------|----------------|--------|-----------|
 | 1. Format Engine & Server | 3/3 | Complete | 2026-03-08 |
 | 2. Schema Registry & File Operations | 1/2 | In progress | - |
-| 3. Self-Healing | 0/1 | Not started | - |
+| 3. Self-Healing | 0/2 | Not started | - |
