@@ -7,6 +7,7 @@
 import { test, expect, describe, beforeAll } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerTools } from "../../src/server/tools.ts";
+import { SchemaRegistry } from "../../src/schemas/registry.ts";
 import { writeFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
 
@@ -32,7 +33,7 @@ describe("tools security - path validation enforcement", () => {
 
   beforeAll(() => {
     server = new McpServer({ name: "test-sv", version: "0.0.1" });
-    registerTools(server);
+    registerTools(server, new SchemaRegistry());
 
     // Create a valid test file within cwd for regression testing
     mkdirSync(tmpDir, { recursive: true });

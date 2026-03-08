@@ -4,11 +4,15 @@
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { SchemaRegistry } from "../schemas/registry.ts";
 
 /**
  * Register all MCP resources on the server.
  */
-export function registerResources(server: McpServer): void {
+export function registerResources(
+  server: McpServer,
+  registry: SchemaRegistry,
+): void {
   // Supported formats and their file extensions
   server.resource(
     "supported-formats",
@@ -32,7 +36,7 @@ export function registerResources(server: McpServer): void {
     }),
   );
 
-  // Registered schemas (empty until Phase 2 schema registry is built)
+  // Registered schemas -- live data from the registry
   server.resource(
     "registered-schemas",
     "schema-validator://schemas",
@@ -42,7 +46,7 @@ export function registerResources(server: McpServer): void {
           uri: "schema-validator://schemas",
           mimeType: "application/json",
           text: JSON.stringify({
-            schemas: [],
+            schemas: registry.list(),
           }),
         },
       ],

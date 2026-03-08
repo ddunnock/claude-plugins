@@ -1,7 +1,9 @@
 /**
  * Tool registrations for the schema-validator MCP server.
  * Phase 1 working tools: sv_parse_file, sv_detect_format
- * Phase 2+ stubs: sv_validate, sv_read, sv_write, sv_patch, sv_register_schema, sv_list_schemas, sv_heal
+ * Phase 2 working tools: sv_register_schema, sv_list_schemas
+ * Phase 2 Plan 02 stubs: sv_validate, sv_read, sv_write, sv_patch
+ * Phase 3 stubs: sv_heal
  */
 
 import path from "node:path";
@@ -13,6 +15,8 @@ import {
   validatePath,
   PathValidationError,
 } from "../security/path-validator.ts";
+import type { SchemaRegistry } from "../schemas/registry.ts";
+import { SchemaRegistryError } from "../schemas/types.ts";
 
 /** Stub response for tools not yet implemented. */
 function notImplemented(phase: number, feature: string) {
@@ -35,7 +39,7 @@ function notImplemented(phase: number, feature: string) {
  * Phase 1 working tools use format handlers from Plan 02.
  * Phase 2+ tools return NOT_IMPLEMENTED errors.
  */
-export function registerTools(server: McpServer): void {
+export function registerTools(server: McpServer, registry: SchemaRegistry): void {
   // --- Phase 1 working tools ---
 
   server.registerTool(
@@ -312,22 +316,88 @@ export function registerTools(server: McpServer): void {
   server.registerTool(
     "sv_register_schema",
     {
-      description: "Register a new schema for file validation",
+      description:
+        "Register a new schema for file validation. Accepts JSON Schema format.",
       inputSchema: {
-        name: z.string().describe("Unique name for the schema"),
-        schema: z.unknown().describe("Schema definition (Zod-compatible)"),
+        name: z.string().describe("Unique namespaced name for the schema (e.g. 'skill/config')"),
+        schema: z.record(z.unknown()).describe("JSON Schema object defining the schema"),
+        extends: z
+          .string()
+          .optional()
+          .describe("Optional parent schema name to extend"),
       },
     },
-    async () => notImplemented(2, "Schema registration"),
+    async (params) => {
+      try {
+        const { name, schema } = params;
+        const extendsName = params.extends;
+        registry.registerFromJsonSchema(
+          name,
+          schema as Record<string, unknown>,
+          extendsName,
+        );
+        const registered = registry.get(name);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({
+                registered: true,
+                name,
+                fieldCount: registered?.fieldCount ?? 0,
+              }),
+            },
+          ],
+        };
+      } catch (err) {
+        if (err instanceof SchemaRegistryError) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  error: err.code,
+                  message: err.message,
+                }),
+              },
+            ],
+            isError: true as const,
+          };
+        }
+        const msg = err instanceof Error ? err.message : String(err);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({
+                error: "INTERNAL_ERROR",
+                message: msg,
+              }),
+            },
+          ],
+          isError: true as const,
+        };
+      }
+    },
   );
 
   server.registerTool(
     "sv_list_schemas",
     {
-      description: "List all registered schemas",
+      description: "List all registered schemas with metadata",
       inputSchema: {},
     },
-    async () => notImplemented(2, "Schema listing"),
+    async () => {
+      const schemas = registry.list();
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify({ schemas }),
+          },
+        ],
+      };
+    },
   );
 
   server.registerTool(

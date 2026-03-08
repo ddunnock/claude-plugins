@@ -12,6 +12,7 @@ describe("server startup", () => {
     expect(content).toContain("StdioServerTransport");
     expect(content).toContain("registerTools");
     expect(content).toContain("registerResources");
+    expect(content).toContain("SchemaRegistry");
   });
 
   test("registerTools function exists and is callable", async () => {
@@ -22,6 +23,17 @@ describe("server startup", () => {
   test("registerResources function exists and is callable", async () => {
     const { registerResources } = await import("../../src/server/resources.ts");
     expect(typeof registerResources).toBe("function");
+  });
+
+  test("SchemaRegistry class is exported and constructable", async () => {
+    const { SchemaRegistry } = await import("../../src/schemas/registry.ts");
+    expect(typeof SchemaRegistry).toBe("function");
+    const registry = new SchemaRegistry();
+    expect(typeof registry.register).toBe("function");
+    expect(typeof registry.get).toBe("function");
+    expect(typeof registry.list).toBe("function");
+    expect(typeof registry.registerFromJsonSchema).toBe("function");
+    expect(typeof registry.discover).toBe("function");
   });
 
   test("FormatHandler type is exported from types.ts", async () => {

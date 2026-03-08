@@ -18,7 +18,7 @@ export function jsonSchemaToZod(
   jsonSchema: Record<string, unknown>,
 ): ZodTypeAny {
   try {
-    return convertJsonSchemaToZod(jsonSchema as any) as ZodTypeAny;
+    return convertJsonSchemaToZod(jsonSchema as any) as unknown as ZodTypeAny;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     throw new SchemaRegistryError(
