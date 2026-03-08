@@ -7,7 +7,7 @@ This skill implements INCOSE system design (#3) as a Claude Code skill with a ce
 ## Milestones
 
 - ✅ **v1.0** — Phases 1-5 (shipped 2026-03-02) — Design Registry + ingestion + decomposition + interfaces + contracts + traceability + impact
-- 🚧 **v1.1 Views & Diagrams** — Phases 6-9 (in progress) — Contextual view assembly + D2/Mermaid diagram generation
+- ✅ **v1.1 Views & Diagrams** — Phases 6-10 (shipped 2026-03-08) — Contextual view assembly + D2/Mermaid diagram generation
 
 ## Phases
 
@@ -33,7 +33,7 @@ See `.planning/milestones/v1.0-ROADMAP.md` for full phase details.
 - [x] **Phase 7: View Quality & Handoff** - Relevance ranking, deterministic output, performance, and diagram-compatible handoff format (completed 2026-03-07)
 - [x] **Phase 8: Diagram Generation Core** - D2 structural and Mermaid behavioral diagram generation from view data (completed 2026-03-07)
 - [x] **Phase 9: Diagram Templates & Quality** - Template-driven generation with abstraction layers, determinism, and logging (completed 2026-03-07)
-- [ ] **Phase 10: Milestone Documentation & Routing Fix** - Close audit gaps: SKILL.md routing, stale checkboxes
+- [x] **Phase 10: Milestone Documentation & Routing Fix** - Close audit gaps: SKILL.md routing, stale checkboxes
 
 ## Phase Details
 
@@ -128,7 +128,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 10-01-PLAN.md — SKILL.md diagram command routing, slot type docs, stale checkbox fixes
+- [x] 10-01-PLAN.md — SKILL.md diagram command routing, slot type docs, stale checkbox fixes
 
 ### Cross-Cutting: Applied in Every Phase
 
@@ -155,4 +155,4 @@ Plans:
 | 7. View Quality & Handoff | v1.1 | 2/2 | Complete | 2026-03-07 |
 | 8. Diagram Generation Core | v1.1 | 3/3 | Complete | 2026-03-07 |
 | 9. Diagram Templates & Quality | v1.1 | 2/2 | Complete | 2026-03-07 |
-| 10. Milestone Docs & Routing Fix | v1.1 | 0/1 | Pending | - |
+| 10. Milestone Docs & Routing Fix | v1.1 | 1/1 | Complete | 2026-03-08 |

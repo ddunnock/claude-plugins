@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Views & Diagrams
 status: completed
-stopped_at: Completed 09-02-PLAN.md
-last_updated: "2026-03-08T14:35:40.164Z"
-last_activity: 2026-03-07 — Completed 09-02 (Abstraction layers and structured logging for diagram generation)
+stopped_at: Completed 10-01-PLAN.md
+last_updated: "2026-03-08T15:39:30Z"
+last_activity: 2026-03-08 — Completed 10-01 (SKILL.md diagram routing, slot type docs, milestone docs)
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 12
-  completed_plans: 12
+  total_phases: 6
+  completed_phases: 6
+  total_plans: 13
+  completed_plans: 13
   percent: 100
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-02)
 
 **Core value:** Design decisions captured as explicit, reviewable, traceable records in a Design Registry
-**Current focus:** Phase 9 — Diagram Templates & Quality
+**Current focus:** Phase 10 — Milestone Documentation & Routing Fix (complete)
 
 ## Current Position
 
-Phase: 9 of 9 (Diagram Templates & Quality)
-Plan: 2 of 2 complete (09-01, 09-02 done)
-Status: Phase 9 complete — Milestone v1.1 complete
-Last activity: 2026-03-07 — Completed 09-02 (Abstraction layers and structured logging for diagram generation)
+Phase: 10 of 10 (Milestone Documentation & Routing Fix)
+Plan: 1 of 1 complete (10-01 done)
+Status: Phase 10 complete — Milestone v1.1 complete
+Last activity: 2026-03-08 — Completed 10-01 (SKILL.md diagram routing, slot type docs, milestone docs)
 
 Progress: [██████████] 100% (All phases complete)
 
@@ -36,7 +36,7 @@ Progress: [██████████] 100% (All phases complete)
 
 **Velocity:**
 - Total plans completed: 13 (v1.0)
-- v1.1 plans completed: 12
+- v1.1 plans completed: 13
 
 **By Phase (v1.1):**
 
@@ -47,6 +47,7 @@ Progress: [██████████] 100% (All phases complete)
 | 7. View Quality & Handoff | 2/2 | 7min | 3.5min |
 | 8. Diagram Generation Core | 3/3 | 12min | 4min |
 | 9. Diagram Templates & Quality | 2/2 | 6min | 3min |
+| 10. Milestone Docs & Routing Fix | 1/1 | 2min | 2min |
 
 ## Accumulated Context
 
@@ -94,6 +95,7 @@ All v1.0 decisions documented in PROJECT.md Key Decisions table with outcomes.
 - (09-02) Edge aggregation collapses same parent pairs with count labels like "implements (3)"
 - (09-02) diagram.* namespace structured logging mirrors Phase 7 view.* pattern exactly
 - (09-02) DEBUG log guard with logger.isEnabledFor(logging.DEBUG) to avoid formatting overhead
+- (10-01) Stale checkboxes (08-02, 09-01, 09-02) already fixed during phase 10 roadmap creation -- no ROADMAP.md edits needed
 
 ### Pending Todos
 
@@ -105,6 +107,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-07T20:07:15Z
-Stopped at: Completed 09-02-PLAN.md
-Resume file: .planning/phases/09-diagram-templates-quality/09-02-SUMMARY.md
+Last session: 2026-03-08T15:39:30Z
+Stopped at: Completed 10-01-PLAN.md
+Resume file: .planning/phases/10-milestone-docs-routing-fix/10-01-SUMMARY.md
