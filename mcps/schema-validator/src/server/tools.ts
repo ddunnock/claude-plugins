@@ -4,8 +4,11 @@
  * Phase 2+ stubs: sv_validate, sv_read, sv_write, sv_patch, sv_register_schema, sv_list_schemas, sv_heal
  */
 
+import path from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { getHandler, getSupportedExtensions } from "../formats/registry.ts";
+import { FormatError } from "../formats/types.ts";
 
 /** Stub response for tools not yet implemented. */
 function notImplemented(phase: number, feature: string) {
@@ -25,11 +28,11 @@ function notImplemented(phase: number, feature: string) {
 
 /**
  * Register all MCP tools on the server.
- * Phase 1 tools have placeholder implementations (format handlers built in Plan 02).
+ * Phase 1 working tools use format handlers from Plan 02.
  * Phase 2+ tools return NOT_IMPLEMENTED errors.
  */
 export function registerTools(server: McpServer): void {
-  // --- Phase 1 working tools (placeholder bodies until Plan 02 wires format handlers) ---
+  // --- Phase 1 working tools ---
 
   server.registerTool(
     "sv_parse_file",
@@ -46,21 +49,93 @@ export function registerTools(server: McpServer): void {
           ),
       },
     },
-    async (_params) => {
-      // Placeholder -- format handlers are built in Plan 02
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({
-              error: "NOT_READY",
-              message:
-                "sv_parse_file is registered but format handlers are not yet wired (see Plan 02)",
-            }),
-          },
-        ],
-        isError: true as const,
-      };
+    async (params) => {
+      try {
+        const { filePath, format } = params;
+
+        // Read file content
+        const file = Bun.file(filePath);
+        const exists = await file.exists();
+        if (!exists) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  error: "FILE_NOT_FOUND",
+                  message: `File not found: ${filePath}`,
+                  filePath,
+                }),
+              },
+            ],
+            isError: true as const,
+          };
+        }
+        const content = await file.text();
+
+        // Determine handler: forced format or auto-detect from extension
+        let handler;
+        let detectedFormat: string;
+        if (format) {
+          const extMap: Record<string, string> = {
+            json: ".json",
+            yaml: ".yaml",
+            xml: ".xml",
+            toml: ".toml",
+          };
+          handler = getHandler(`file${extMap[format]}`);
+          detectedFormat = format;
+        } else {
+          handler = getHandler(filePath);
+          detectedFormat = path.extname(filePath).replace(".", "").toLowerCase();
+          // Normalize yml -> yaml
+          if (detectedFormat === "yml") detectedFormat = "yaml";
+        }
+
+        const data = handler.parse(content);
+
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({ data, format: detectedFormat, filePath }),
+            },
+          ],
+        };
+      } catch (err) {
+        if (err instanceof FormatError) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  error: err.code,
+                  message: err.message,
+                  filePath: err.filePath || params.filePath,
+                  line: err.line,
+                  column: err.column,
+                  suggestedFix: err.suggestedFix,
+                }),
+              },
+            ],
+            isError: true as const,
+          };
+        }
+        const msg = err instanceof Error ? err.message : String(err);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({
+                error: "INTERNAL_ERROR",
+                message: msg,
+                filePath: params.filePath,
+              }),
+            },
+          ],
+          isError: true as const,
+        };
+      }
     },
   );
 
@@ -75,21 +150,56 @@ export function registerTools(server: McpServer): void {
           .describe("Absolute path to the file to detect format for"),
       },
     },
-    async (_params) => {
-      // Placeholder -- format registry is built in Plan 02
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({
-              error: "NOT_READY",
-              message:
-                "sv_detect_format is registered but format registry is not yet wired (see Plan 02)",
-            }),
-          },
-        ],
-        isError: true as const,
-      };
+    async (params) => {
+      try {
+        const { filePath } = params;
+        const handler = getHandler(filePath);
+        let detectedFormat = path.extname(filePath).replace(".", "").toLowerCase();
+        if (detectedFormat === "yml") detectedFormat = "yaml";
+
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({
+                format: detectedFormat,
+                extensions: handler.extensions,
+                supportedFormats: getSupportedExtensions(),
+              }),
+            },
+          ],
+        };
+      } catch (err) {
+        if (err instanceof FormatError) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  error: err.code,
+                  message: err.message,
+                  filePath: params.filePath,
+                  suggestedFix: err.suggestedFix,
+                }),
+              },
+            ],
+            isError: true as const,
+          };
+        }
+        const msg = err instanceof Error ? err.message : String(err);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({
+                error: "INTERNAL_ERROR",
+                message: msg,
+              }),
+            },
+          ],
+          isError: true as const,
+        };
+      }
     },
   );
 
