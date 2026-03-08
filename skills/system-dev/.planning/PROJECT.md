@@ -8,25 +8,15 @@ A Claude Code skill implementing the System Design phase (#3) of the INCOSE SE l
 
 The developer's design decisions are captured as explicit, reviewable, traceable records in a Design Registry — so architectural choices are visible, auditable, and consistent across AI agent sessions (NEED-001, NEED-002).
 
-## Current Milestone: v1.1 Views & Diagrams
-
-**Goal:** Make design state visible through contextual views and D2/Mermaid diagrams
-
-**Target features:**
-- View synthesizer: on-demand contextual views from registry slot subsets with gap indicators
-- View assembler: snapshot-consistent assembly with declarative view specifications
-- Diagram renderer: D2 structural and Mermaid behavioral diagram output
-- Diagram generator: template-driven generation with abstraction layers
-
 ## Current State
 
-**Shipped:** v1.0 (2026-03-02)
-**Codebase:** 12,498 LOC Python, 14 JSON schemas, 303 tests
-**Architecture:** SlotAPI central hub with 14 slot types, 3 agents, generic approval gate
+**Shipped:** v1.1 (2026-03-08)
+**Codebase:** 17,463 LOC Python, 14 JSON schemas, 3 Jinja2 templates, 503 tests
+**Architecture:** SlotAPI central hub with 15 slot types (incl. diagram), 3 agents, view assembler, diagram generator, generic approval gate
 
-v1.0 delivers the complete design pipeline: requirements ingestion → structural decomposition → interface resolution → behavioral contracts → traceability weaving → impact analysis. All design artifacts are traceable from stakeholder needs through V&V assignments.
+v1.0 delivered the complete design pipeline: requirements ingestion → structural decomposition → interface resolution → behavioral contracts → traceability weaving → impact analysis. v1.1 added visibility: contextual views assembled from registry subsets with gap indicators, and D2/Mermaid diagram generation with template-driven rendering and abstraction layers.
 
-**Not yet built:** Views/diagrams (v1.1), risk/volatility tracking (future), orchestration/coherence review (future).
+**Not yet built:** Risk/volatility tracking (future), orchestration/coherence review (future).
 
 ## Requirements
 
@@ -68,11 +58,10 @@ v1.0 delivers the complete design pipeline: requirements ingestion → structura
 - ✓ Traceability graph with chain validation (need→req→comp→intf→cntr→V&V) — v1.0
 - ✓ Impact analysis with forward/backward BFS and configurable depth limits — v1.0
 - ✓ Write-time trace enforcement (warn-but-allow with gap markers) — v1.0
+- ✓ Context-sensitive view assembly from registry subsets with gap indicators and declarative view specs — v1.1
+- ✓ D2/Mermaid diagram generation with template-driven rendering and abstraction layers — v1.1
 
-### Active (v1.1)
-
-- [ ] Context-sensitive view synthesis from registry subsets (view-synthesizer, view-assembler — 20 reqs)
-- [ ] D2/Mermaid diagram generation at multiple abstraction levels (diagram-renderer, diagram-generator — 18 reqs)
+### Active
 
 ### Future
 
@@ -156,6 +145,13 @@ Design artifacts in the Design Registry:
 | BFS with visited set for impact analysis | Cycle-safe traversal; depth limits and type filtering | ✓ Good |
 | Deterministic slot IDs (type:upstream-id) for ingestion | SlotAPI.ingest() accepts pre-determined IDs; enables delta detection | ✓ Good |
 | One-level stale cascade (interface→contract only) | Prevents cascade explosion; each agent checks independently | ✓ Good |
+| fnmatch glob scope patterns for view specs | Simple wildcards (*, ?) on slot name field; intuitive for developers | ✓ Good |
+| Deep-copy snapshots for view assembly | Immutability isolation; no mid-assembly state changes | ✓ Good |
+| Content-hash snapshot_id (SHA-256, 16 hex) | Deterministic output for same registry state; enables caching | ✓ Good |
+| Jinja2 template-driven diagram generation | Separates diagram structure from rendering logic; user-overridable | ✓ Good |
+| Two-tier template resolution (user > built-in) | Extensibility without modifying skill source code | ✓ Good |
+| diagram_hint on view specs for format selection | format_override > hint > error; clean separation of concerns | ✓ Good |
+| System/component abstraction layers | Parent-child collapsing with count badges; aggregated edges | ✓ Good |
 
 ---
-*Last updated: 2026-03-02 after v1.1 milestone start*
+*Last updated: 2026-03-08 after v1.1 milestone completion*
