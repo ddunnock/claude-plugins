@@ -10,7 +10,6 @@ import { test, expect, describe, beforeAll, afterAll } from "bun:test";
 import { z } from "zod";
 import { mkdtemp, rm, mkdir, writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
-import os from "node:os";
 import { SchemaRegistry } from "../../src/schemas/registry.ts";
 import { registerTools } from "../../src/server/tools.ts";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -24,7 +23,8 @@ let server: McpServer;
 
 beforeAll(async () => {
   // Create temp directory for test files
-  tmpDir = await mkdtemp(path.join(os.tmpdir(), "sv-phase2-"));
+  // Create tmpDir under cwd so validatePath (which defaults to [cwd]) allows access
+  tmpDir = await mkdtemp(path.join(process.cwd(), ".tmp-phase2-"));
 
   // Setup registry with a test schema
   registry = new SchemaRegistry();
