@@ -45,11 +45,11 @@ Plans:
   3. Skill can read a file and receive parsed, schema-validated data back
   4. Skill can write data that passes schema validation, and invalid data is rejected before touching disk
   5. Skill can patch specific fields in a structured file without clobbering unrelated data
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 02-01: Schema registry (register, list, discover, compose)
-- [ ] 02-02: Validated file operations (read, write, validate, patch)
+- [ ] 02-01-PLAN.md — Schema registry core (register, list, discover, compose) + JSON Schema converter + merge-patch + startup wiring
+- [ ] 02-02-PLAN.md — Validated file operations (sv_read, sv_write, sv_validate, sv_patch tool implementations)
 
 ### Phase 3: Self-Healing
 **Goal**: Skills can automatically fix or get structured fix guidance for malformed files
