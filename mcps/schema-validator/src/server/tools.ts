@@ -9,6 +9,10 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getHandler, getSupportedExtensions } from "../formats/registry.ts";
 import { FormatError } from "../formats/types.ts";
+import {
+  validatePath,
+  PathValidationError,
+} from "../security/path-validator.ts";
 
 /** Stub response for tools not yet implemented. */
 function notImplemented(phase: number, feature: string) {
@@ -53,8 +57,11 @@ export function registerTools(server: McpServer): void {
       try {
         const { filePath, format } = params;
 
+        // Validate path before any file I/O (SEC-01)
+        const safePath = validatePath(filePath);
+
         // Read file content
-        const file = Bun.file(filePath);
+        const file = Bun.file(safePath);
         const exists = await file.exists();
         if (!exists) {
           return {
@@ -103,6 +110,21 @@ export function registerTools(server: McpServer): void {
           ],
         };
       } catch (err) {
+        if (err instanceof PathValidationError) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  error: err.code,
+                  message: err.message,
+                  filePath: err.rejectedPath,
+                }),
+              },
+            ],
+            isError: true as const,
+          };
+        }
         if (err instanceof FormatError) {
           return {
             content: [
@@ -153,6 +175,10 @@ export function registerTools(server: McpServer): void {
     async (params) => {
       try {
         const { filePath } = params;
+
+        // Validate path before any file I/O (SEC-01)
+        validatePath(filePath);
+
         const handler = getHandler(filePath);
         let detectedFormat = path.extname(filePath).replace(".", "").toLowerCase();
         if (detectedFormat === "yml") detectedFormat = "yaml";
@@ -170,6 +196,21 @@ export function registerTools(server: McpServer): void {
           ],
         };
       } catch (err) {
+        if (err instanceof PathValidationError) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  error: err.code,
+                  message: err.message,
+                  filePath: err.rejectedPath,
+                }),
+              },
+            ],
+            isError: true as const,
+          };
+        }
         if (err instanceof FormatError) {
           return {
             content: [
