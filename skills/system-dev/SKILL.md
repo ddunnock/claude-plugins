@@ -53,8 +53,9 @@ The system-dev skill provides a structured workflow for AI-assisted systems desi
 | `/system-dev:query` | List slots with filters | [commands/query.md](commands/query.md) |
 | `/system-dev:history` | Show slot version history | [commands/history.md](commands/history.md) |
 | `/system-dev:view` | Assemble a contextual view | [commands/view.md](commands/view.md) |
+| `/system-dev:diagram` | Generate D2/Mermaid diagrams | [commands/diagram.md](commands/diagram.md) |
 
-## Slot Types (Phase 1)
+## Slot Types
 
 | Type | ID Prefix | Purpose |
 |------|-----------|---------|
@@ -62,6 +63,7 @@ The system-dev skill provides a structured workflow for AI-assisted systems desi
 | interface | `intf-` | Connections between components |
 | contract | `cntr-` | Behavioral obligations on interfaces |
 | requirement-ref | `rref-` | References to upstream requirements |
+| diagram | `diag-` | Generated D2/Mermaid diagram source from view data |
 
 For field details, see [references/slot-types.md](references/slot-types.md).
 
@@ -74,9 +76,11 @@ For field details, see [references/slot-types.md](references/slot-types.md).
     interfaces/       # One JSON file per interface slot
     contracts/        # One JSON file per contract slot
     requirement-refs/ # One JSON file per requirement-ref slot
+    diagrams/         # One JSON file per diagram slot
   journal.jsonl       # Append-only change journal
   index.json          # Slot index (ID -> path, type, version)
   config.json         # Workspace configuration
+  view-specs/         # Declarative view specification configs
 ```
 
 ## Key Behaviors
