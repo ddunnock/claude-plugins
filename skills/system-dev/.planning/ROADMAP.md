@@ -31,8 +31,9 @@ See `.planning/milestones/v1.0-ROADMAP.md` for full phase details.
 - [x] **Phase 6: View Assembly Core** - Construct contextual views from registry slot subsets with gap handling and snapshot consistency
 - [x] **Phase 6b: View Integration Fix** - Close integration gaps, fix broken file-based spec flow, tighten view schemas
 - [x] **Phase 7: View Quality & Handoff** - Relevance ranking, deterministic output, performance, and diagram-compatible handoff format (completed 2026-03-07)
-- [ ] **Phase 8: Diagram Generation Core** - D2 structural and Mermaid behavioral diagram generation from view data (gap closure in progress)
-- [ ] **Phase 9: Diagram Templates & Quality** - Template-driven generation with abstraction layers, determinism, and logging
+- [x] **Phase 8: Diagram Generation Core** - D2 structural and Mermaid behavioral diagram generation from view data (completed 2026-03-07)
+- [x] **Phase 9: Diagram Templates & Quality** - Template-driven generation with abstraction layers, determinism, and logging (completed 2026-03-07)
+- [ ] **Phase 10: Milestone Documentation & Routing Fix** - Close audit gaps: SKILL.md routing, stale checkboxes, code cleanup
 
 ## Phase Details
 
@@ -117,6 +118,19 @@ Plans:
 - [ ] 09-01-PLAN.md — Jinja2 template infrastructure, manifest registry, two-tier resolution, schema updates (DIAG-07, DIAG-08)
 - [ ] 09-02-PLAN.md — Abstraction layers (system/component), structured logging with diagram.* namespace (DIAG-05, DIAG-10)
 
+### Phase 10: Milestone Documentation & Routing Fix
+**Goal**: Close audit gaps so `/system-dev:diagram` is discoverable and all documentation reflects completed state
+**Depends on**: Phase 9
+**Gap Closure**: Closes INT-01, INT-02, FLOW-01 from v1.1 audit; resolves tech debt in Phases 8-9
+**Success Criteria** (what must be TRUE):
+  1. `/system-dev:diagram` is listed in SKILL.md commands table and routable by LLM agent
+  2. `diagram` slot type appears in SKILL.md slot types table and registry structure section
+  3. Unused imports removed from `diagram_generator.py`
+**Plans**: 1 plan
+
+Plans:
+- [ ] 10-01-PLAN.md — SKILL.md routing + slot type docs, code cleanup
+
 ### Cross-Cutting: Applied in Every Phase
 
 **Requirements**: XCUT-01, XCUT-02, XCUT-03, XCUT-04
@@ -128,7 +142,7 @@ Plans:
 
 ## Progress
 
-**Execution Order:** Phases execute in numeric order: 6 -> 6b -> 7 -> 8 -> 9
+**Execution Order:** Phases execute in numeric order: 6 -> 6b -> 7 -> 8 -> 9 -> 10
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -140,5 +154,6 @@ Plans:
 | 6. View Assembly Core | v1.1 | 3/3 | Complete | 2026-03-03 |
 | 6b. View Integration Fix | v1.1 | 2/2 | Complete | 2026-03-03 |
 | 7. View Quality & Handoff | v1.1 | 2/2 | Complete | 2026-03-07 |
-| 8. Diagram Generation Core | v1.1 | 2/3 | Gap closure | - |
-| 9. Diagram Templates & Quality | 1/2 | In Progress|  | - |
+| 8. Diagram Generation Core | v1.1 | 3/3 | Complete | 2026-03-07 |
+| 9. Diagram Templates & Quality | v1.1 | 2/2 | Complete | 2026-03-07 |
+| 10. Milestone Docs & Routing Fix | v1.1 | 0/1 | Pending | - |

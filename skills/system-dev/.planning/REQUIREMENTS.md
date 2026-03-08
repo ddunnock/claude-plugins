@@ -24,15 +24,15 @@ Requirements for making design state visible through contextual views and diagra
 
 ### Diagram Generation
 
-- [ ] **DIAG-01**: Diagram generator produces valid D2 structural diagrams from view data *(REQ-063, REQ-370)*
-- [ ] **DIAG-02**: Diagram generator produces valid Mermaid behavioral diagrams from view data *(REQ-063, REQ-371)*
-- [ ] **DIAG-03**: Diagram generator accepts view handoff format and writes diagram slots via SlotAPI *(REQ-065, REQ-373, REQ-078)*
-- [ ] **DIAG-04**: Diagram generator produces diagram slots conforming to registered diagram schema *(REQ-088, REQ-374)*
+- [x] **DIAG-01**: Diagram generator produces valid D2 structural diagrams from view data *(REQ-063, REQ-370)*
+- [x] **DIAG-02**: Diagram generator produces valid Mermaid behavioral diagrams from view data *(REQ-063, REQ-371)*
+- [x] **DIAG-03**: Diagram generator accepts view handoff format and writes diagram slots via SlotAPI *(REQ-065, REQ-373, REQ-078)*
+- [x] **DIAG-04**: Diagram generator produces diagram slots conforming to registered diagram schema *(REQ-088, REQ-374)*
 - [x] **DIAG-05**: Diagram generator supports hierarchical abstraction layers for readability *(REQ-064)*
-- [ ] **DIAG-06**: Diagram generator creates placeholder elements for gap markers in view input *(REQ-097, REQ-131, REQ-372)*
+- [x] **DIAG-06**: Diagram generator creates placeholder elements for gap markers in view input *(REQ-097, REQ-131, REQ-372)*
 - [x] **DIAG-07**: Diagram generator loads templates from a configurable template registry *(REQ-436)*
 - [x] **DIAG-08**: Diagram generator produces deterministic output for same input state *(REQ-106, REQ-126)*
-- [ ] **DIAG-09**: Diagram generator preserves existing slots outside diagram type during execution *(REQ-116)*
+- [x] **DIAG-09**: Diagram generator preserves existing slots outside diagram type during execution *(REQ-116)*
 - [x] **DIAG-10**: Diagram generator emits structured log entries for generation operations *(REQ-137, REQ-375)*
 
 ## Future Requirements
@@ -75,15 +75,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VIEW-10 | Phase 6 | Complete |
 | VIEW-11 | Phase 7 | Complete |
 | VIEW-12 | Phase 7 | Complete |
-| DIAG-01 | Phase 8 | Pending |
-| DIAG-02 | Phase 8 | Pending |
-| DIAG-03 | Phase 8 | Pending |
-| DIAG-04 | Phase 8 | Pending |
+| DIAG-01 | Phase 8 | Complete |
+| DIAG-02 | Phase 8 | Complete |
+| DIAG-03 | Phase 8 | Complete |
+| DIAG-04 | Phase 8 | Complete |
 | DIAG-05 | Phase 9 | Complete |
-| DIAG-06 | Phase 8 | Pending |
+| DIAG-06 | Phase 8 | Complete |
 | DIAG-07 | Phase 9 | Complete |
 | DIAG-08 | Phase 9 | Complete |
-| DIAG-09 | Phase 8 | Pending |
+| DIAG-09 | Phase 8 | Complete |
 | DIAG-10 | Phase 9 | Complete |
 
 **Coverage:**
@@ -95,4 +95,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-03-02*
-*Last updated: 2026-03-02 after roadmap creation*
+*Last updated: 2026-03-08 after gap closure phase creation*
