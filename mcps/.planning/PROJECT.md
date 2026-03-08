@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A TypeScript + Zod MCP server that provides schema validation with self-healing capabilities for Claude Code skills. Skills declare their file schemas in a `schemas/` folder, and this MCP handles validated reading, writing, patching, and CRUD operations across JSON, YAML, XML, and TOML formats. Runs locally via stdio, declared in `plugin.json` for any skill that needs it.
+A TypeScript + Zod MCP server that provides schema-validated file I/O with self-healing for Claude Code skills. Supports JSON, YAML, XML, and TOML formats with 9 tools covering parsing, validated CRUD, schema management, and automatic error correction. Skills declare schemas in `schemas/` folders; the MCP handles everything else.
 
 ## Core Value
 
@@ -12,55 +12,64 @@ Skills get reliable, validated file I/O with automatic error correction — no s
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ Zod-based schema validation for structured files — v1.0
+- ✓ Self-healing: auto-fix mode that corrects malformed files automatically — v1.0
+- ✓ Self-healing: suggestion mode that returns structured errors + fix guidance — v1.0
+- ✓ Full CRUD operations: validate, read, write, patch/update structured files — v1.0
+- ✓ JSON, YAML, XML, TOML format support with round-trip fidelity — v1.0
+- ✓ Per-skill schema definitions (each skill has a `schemas/` folder with Zod definitions) — v1.0
+- ✓ Hybrid schema discovery: convention-based scan at startup + explicit registration tool — v1.0
+- ✓ stdio transport for local Claude Code usage — v1.0
+- ✓ Declared via `plugin.json` for skill integration — v1.0
+- ✓ Path traversal prevention on all file operations — v1.0
+- ✓ Atomic file writes (temp file + rename) — v1.0
+- ✓ Schema load validation before dynamic import — v1.0
 
 ### Active
 
-- [ ] Zod-based schema validation for structured files
-- [ ] Self-healing: auto-fix mode that corrects malformed files automatically
-- [ ] Self-healing: suggestion mode that returns structured errors + fix guidance
-- [ ] Full CRUD operations: validate, read, write, patch/update structured files
-- [ ] JSON format support
-- [ ] YAML format support
-- [ ] XML format support
-- [ ] TOML format support
-- [ ] Per-skill schema definitions (each skill has a `schemas/` folder with Zod definitions)
-- [ ] Hybrid schema discovery: convention-based scan of known plugin/skill paths at startup
-- [ ] Hybrid schema discovery: explicit registration tool for custom schema paths
-- [ ] stdio transport for local Claude Code usage
-- [ ] Declared via `plugin.json` for skill integration
+- [ ] Format-preserving writes (maintain comments, ordering in YAML)
+- [ ] Streaming support for large files
+- [ ] Schema versioning (name@version)
+- [ ] Schema migration tools (bridge version gaps)
+- [ ] Dry-run mode (validate proposed changes without writing)
+- [ ] Batch operations (validate/read/write multiple files)
 
 ### Out of Scope
 
-- SSE/remote transport — local stdio only for v1
-- Hardcoded schema knowledge — all schemas are user-defined per skill
-- Database or cloud storage — file-based only
-- Non-structured files (binary, images, etc.)
+- SSE/remote transport — local stdio only, matches Claude Code process model
+- Database or cloud storage — file-based only, keeps scope manageable
+- Non-structured files (binary, images) — structured data formats only
+- Custom validation DSL — Zod IS the validation language
+- Schema generation from files — inference is unreliable; users define schemas explicitly
+- Real-time file watching — MCP is request-response, not event-driven
 
 ## Context
 
-- Lives in `~/projects/claude-plugins/mcps/` monorepo subdirectory
-- Existing MCP servers in this workspace (knowledge-mcp) provide reference patterns
-- Skills are Claude Code plugin skills that operate on structured config/log/record files
-- Schema definitions are TypeScript files using Zod, co-located with each skill in `schemas/` folders
-- The MCP is referenced in `plugin.json` so Claude Code loads it automatically for skills that declare it
+Shipped v1.0 with 4,260 LOC TypeScript (2,414 source + 1,846 tests).
+Tech stack: Bun runtime, TypeScript, Zod, @modelcontextprotocol/sdk.
+Format libs: js-yaml, fast-xml-parser, smol-toml, write-file-atomic.
+Lives in `~/projects/claude-plugins/mcps/` monorepo subdirectory.
 
 ## Constraints
 
 - **Tech stack**: TypeScript + Zod — must use these specifically
 - **Transport**: stdio only — Claude Code local process model
 - **Monorepo**: Git tracked at `~/projects/claude-plugins`, not in `mcps/` subdirectory
-- **Skills**: Must reference MCP-Builder skill for MCP development, Zod skill for schema work
+- **Runtime**: Bun — chosen for TypeScript-first execution
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Zod for schema definitions | Type-safe, composable, great TypeScript integration, runtime validation | — Pending |
-| Hybrid schema discovery | Convention covers 90% of cases, registration handles edge cases | — Pending |
-| Dual self-healing modes | Auto-fix for convenience, suggestion mode for skill control | — Pending |
-| All 4 formats in v1 | JSON/YAML/XML/TOML covers the full skill file ecosystem | — Pending |
-| Per-skill schemas/ folder | Co-locates schema with skill, clear ownership, easy to maintain | — Pending |
+| Zod for schema definitions | Type-safe, composable, great TypeScript integration, runtime validation | ✓ Good — clean API, Zod internals accessible for healing |
+| Hybrid schema discovery | Convention covers 90% of cases, registration handles edge cases | ✓ Good — startup scan + sv_register_schema tool |
+| Dual self-healing modes | Auto-fix for convenience, suggestion mode for skill control | ✓ Good — clear separation of concerns |
+| All 4 formats in v1 | JSON/YAML/XML/TOML covers the full skill file ecosystem | ✓ Good — FormatHandler interface makes adding formats trivial |
+| Per-skill schemas/ folder | Co-locates schema with skill, clear ownership, easy to maintain | ✓ Good — namespace convention prevents collisions |
+| JSON Schema wire format for registration | MCP tools can't pass Zod objects; JSON Schema is universal | ✓ Good — zod-from-json-schema converts eval-free |
+| Conservative coercion in healing | Only string↔number, string↔boolean, number/boolean↔string | ✓ Good — safe, predictable, no data loss |
+| Unknown field preservation | Mutate raw data in-place instead of using Zod output | ✓ Good — prevents stripping user data |
+| safeParse for sv_validate, parse for CRUD | Validation failure is expected behavior for validate, exceptional for CRUD | ✓ Good — ergonomic distinction |
 
 ---
-*Last updated: 2026-03-08 after initialization*
+*Last updated: 2026-03-08 after v1.0 milestone*
