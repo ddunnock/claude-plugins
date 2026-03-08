@@ -13,6 +13,52 @@ Usage:
 
 NoneType = type(None)
 
+# ---------------------------------------------------------------------------
+# Plugin JSON Schema (Claude Code official plugin.json specification)
+# ---------------------------------------------------------------------------
+# Defines the complete field schema for .claude-plugin/plugin.json files.
+# Fields use "types" (tuple) for polymorphic fields that accept multiple types.
+# Nested object schemas use "fields" for child validation.
+
+PLUGIN_JSON_SCHEMA = {
+    # Required fields
+    "name": {"required": True, "types": (str,)},
+    "version": {"required": True, "types": (str,)},
+    "description": {"required": True, "types": (str,)},
+    # Optional metadata fields
+    "author": {
+        "required": False,
+        "types": (dict,),
+        "fields": {
+            "name": {"required": True, "types": (str,)},
+            "email": {"required": False, "types": (str,)},
+            "url": {"required": False, "types": (str,)},
+        },
+    },
+    "homepage": {"required": False, "types": (str,)},
+    "repository": {"required": False, "types": (str,)},
+    "license": {"required": False, "types": (str,)},
+    "keywords": {"required": False, "types": (list,)},
+    # Component declaration fields (string path or list of paths)
+    "commands": {"required": False, "types": (str, list)},
+    "agents": {"required": False, "types": (str, list)},
+    "skills": {"required": False, "types": (str, list)},
+    "scripts": {"required": False, "types": (str, list)},
+    "references": {"required": False, "types": (str, list)},
+    # Component config fields (string path or inline object)
+    "hooks": {"required": False, "types": (str, dict)},
+    "mcpServers": {"required": False, "types": (str, dict)},
+    "lspServers": {"required": False, "types": (str, dict)},
+    # Other optional fields
+    "outputStyles": {"required": False, "types": (str,)},
+    "skill": {"required": False, "types": (str,)},
+}
+
+
+# ---------------------------------------------------------------------------
+# Internal session data schemas
+# ---------------------------------------------------------------------------
+
 MANIFEST_SCHEMA = {
     "validated_at": {"required": True, "type": str},
     "skill_path": {"required": True, "type": str},

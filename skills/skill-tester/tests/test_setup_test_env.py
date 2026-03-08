@@ -74,7 +74,7 @@ def test_check_required_files_missing_skill_md(tmp_path):
 
 def test_validate_plugin_json_valid(tmp_skill_dir):
     """validate_plugin_json returns True for valid plugin.json."""
-    is_valid, data, errors = validate_plugin_json(tmp_skill_dir)
+    is_valid, data, errors, warnings = validate_plugin_json(tmp_skill_dir)
 
     assert is_valid is True
     assert data["name"] == "test-skill"
@@ -87,7 +87,7 @@ def test_validate_plugin_json_missing_file(tmp_path):
     skill_dir = tmp_path / "no-plugin"
     skill_dir.mkdir()
 
-    is_valid, data, errors = validate_plugin_json(skill_dir)
+    is_valid, data, errors, warnings = validate_plugin_json(skill_dir)
 
     assert is_valid is False
     assert data == {}
@@ -191,7 +191,7 @@ def test_validate_plugin_json_rejects_malicious_content(tmp_path):
     malicious_json = '{"name": "test", "version": "1.0", "__import__": "os"}'
     (plugin_dir / "plugin.json").write_text(malicious_json)
 
-    is_valid, data, errors = validate_plugin_json(skill_dir)
+    is_valid, data, errors, warnings = validate_plugin_json(skill_dir)
 
     # Should detect missing required fields (description, skill)
     assert len(errors) > 0
@@ -256,7 +256,7 @@ def test_validate_plugin_json_missing_required_fields(tmp_path):
     incomplete_data = {"name": "test"}  # missing version, description, skill
     (plugin_dir / "plugin.json").write_text(json.dumps(incomplete_data))
 
-    is_valid, data, errors = validate_plugin_json(skill_dir)
+    is_valid, data, errors, warnings = validate_plugin_json(skill_dir)
 
     assert is_valid is False
     assert len(errors) >= 2  # version, description
@@ -312,7 +312,7 @@ def test_run_validation_with_warnings_succeeds(minimal_skill_dir, tmp_session_di
 
 def test_validate_plugin_json_corrupted_json(invalid_plugin_json_skill):
     """validate_plugin_json handles corrupted JSON gracefully."""
-    is_valid, data, errors = validate_plugin_json(invalid_plugin_json_skill)
+    is_valid, data, errors, warnings = validate_plugin_json(invalid_plugin_json_skill)
 
     assert is_valid is False
     assert data == {}
@@ -379,7 +379,7 @@ def test_validate_plugin_json_unreadable_file(tmp_path):
     os.chmod(plugin_file, 0o000)
 
     try:
-        is_valid, data, errors = validate_plugin_json(skill_dir)
+        is_valid, data, errors, warnings = validate_plugin_json(skill_dir)
         # Should handle gracefully
         assert is_valid is False
         assert len(errors) > 0
@@ -431,8 +431,222 @@ def test_validate_plugin_json_empty_file(tmp_path):
     # Empty file
     (plugin_dir / "plugin.json").write_text("")
 
-    is_valid, data, errors = validate_plugin_json(skill_dir)
+    is_valid, data, errors, warnings = validate_plugin_json(skill_dir)
 
     assert is_valid is False
     assert len(errors) > 0
     assert any("not valid JSON" in e for e in errors)
+
+
+# ---------------------------------------------------------------------------
+# Plugin JSON Schema Validation Tests
+# ---------------------------------------------------------------------------
+
+def test_validate_plugin_json_wrong_type_name(tmp_path):
+    """validate_plugin_json detects wrong type for 'name' field."""
+    skill_dir = tmp_path / "wrong-type-skill"
+    skill_dir.mkdir()
+    plugin_dir = skill_dir / ".claude-plugin"
+    plugin_dir.mkdir()
+
+    data = {"name": 123, "version": "1.0.0", "description": "test"}
+    (plugin_dir / "plugin.json").write_text(json.dumps(data))
+
+    is_valid, _, errors, _ = validate_plugin_json(skill_dir)
+    assert is_valid is False
+    assert any("'name'" in e and "wrong type" in e for e in errors)
+
+
+def test_validate_plugin_json_wrong_type_keywords(tmp_path):
+    """validate_plugin_json detects wrong type for 'keywords' field."""
+    skill_dir = tmp_path / "bad-keywords-skill"
+    skill_dir.mkdir()
+    plugin_dir = skill_dir / ".claude-plugin"
+    plugin_dir.mkdir()
+
+    data = {"name": "test", "version": "1.0.0", "description": "test",
+            "keywords": "should-be-a-list"}
+    (plugin_dir / "plugin.json").write_text(json.dumps(data))
+
+    is_valid, _, errors, _ = validate_plugin_json(skill_dir)
+    assert is_valid is False
+    assert any("'keywords'" in e and "wrong type" in e for e in errors)
+
+
+def test_validate_plugin_json_unknown_fields_warned(tmp_path):
+    """validate_plugin_json warns about unknown fields."""
+    skill_dir = tmp_path / "unknown-fields-skill"
+    skill_dir.mkdir()
+    plugin_dir = skill_dir / ".claude-plugin"
+    plugin_dir.mkdir()
+
+    data = {"name": "test", "version": "1.0.0", "description": "test",
+            "bogus_field": "surprise", "extra": 42}
+    (plugin_dir / "plugin.json").write_text(json.dumps(data))
+
+    is_valid, _, errors, warnings = validate_plugin_json(skill_dir)
+    assert is_valid is True  # unknown fields are warnings, not errors
+    assert any("bogus_field" in w and "unknown" in w for w in warnings)
+    assert any("extra" in w and "unknown" in w for w in warnings)
+
+
+def test_validate_plugin_json_author_nested_validation(tmp_path):
+    """validate_plugin_json validates nested author object."""
+    skill_dir = tmp_path / "bad-author-skill"
+    skill_dir.mkdir()
+    plugin_dir = skill_dir / ".claude-plugin"
+    plugin_dir.mkdir()
+
+    # author present but missing required 'name' field
+    data = {"name": "test", "version": "1.0.0", "description": "test",
+            "author": {"email": "test@example.com"}}
+    (plugin_dir / "plugin.json").write_text(json.dumps(data))
+
+    is_valid, _, errors, _ = validate_plugin_json(skill_dir)
+    assert is_valid is False
+    assert any("'author'" in e and "'name'" in e for e in errors)
+
+
+def test_validate_plugin_json_author_wrong_subfield_type(tmp_path):
+    """validate_plugin_json detects wrong type in author subfields."""
+    skill_dir = tmp_path / "bad-author-type-skill"
+    skill_dir.mkdir()
+    plugin_dir = skill_dir / ".claude-plugin"
+    plugin_dir.mkdir()
+
+    data = {"name": "test", "version": "1.0.0", "description": "test",
+            "author": {"name": 42}}
+    (plugin_dir / "plugin.json").write_text(json.dumps(data))
+
+    is_valid, _, errors, _ = validate_plugin_json(skill_dir)
+    assert is_valid is False
+    assert any("author.name" in e and "wrong type" in e for e in errors)
+
+
+def test_validate_plugin_json_polymorphic_commands_string(tmp_path):
+    """validate_plugin_json accepts string for commands field."""
+    skill_dir = tmp_path / "commands-string-skill"
+    skill_dir.mkdir()
+    plugin_dir = skill_dir / ".claude-plugin"
+    plugin_dir.mkdir()
+    (skill_dir / "commands").mkdir()
+
+    data = {"name": "test", "version": "1.0.0", "description": "test",
+            "commands": "commands/"}
+    (plugin_dir / "plugin.json").write_text(json.dumps(data))
+
+    is_valid, _, errors, _ = validate_plugin_json(skill_dir)
+    assert is_valid is True
+    assert len(errors) == 0
+
+
+def test_validate_plugin_json_polymorphic_commands_list(tmp_path):
+    """validate_plugin_json accepts list for commands field."""
+    skill_dir = tmp_path / "commands-list-skill"
+    skill_dir.mkdir()
+    plugin_dir = skill_dir / ".claude-plugin"
+    plugin_dir.mkdir()
+    cmd_dir = skill_dir / "commands"
+    cmd_dir.mkdir()
+    (cmd_dir / "hello.md").write_text("# Hello")
+
+    data = {"name": "test", "version": "1.0.0", "description": "test",
+            "commands": ["commands/hello.md"]}
+    (plugin_dir / "plugin.json").write_text(json.dumps(data))
+
+    is_valid, _, errors, _ = validate_plugin_json(skill_dir)
+    assert is_valid is True
+    assert len(errors) == 0
+
+
+def test_validate_plugin_json_nonexistent_component_path_warned(tmp_path):
+    """validate_plugin_json warns about component paths that don't exist."""
+    skill_dir = tmp_path / "missing-path-skill"
+    skill_dir.mkdir()
+    plugin_dir = skill_dir / ".claude-plugin"
+    plugin_dir.mkdir()
+
+    data = {"name": "test", "version": "1.0.0", "description": "test",
+            "scripts": ["scripts/nonexistent.py"]}
+    (plugin_dir / "plugin.json").write_text(json.dumps(data))
+
+    is_valid, _, errors, warnings = validate_plugin_json(skill_dir)
+    assert is_valid is True  # non-existent paths are warnings, not errors
+    assert any("non-existent" in w and "nonexistent.py" in w for w in warnings)
+
+
+def test_validate_plugin_json_hooks_as_object(tmp_path):
+    """validate_plugin_json accepts dict for hooks field."""
+    skill_dir = tmp_path / "hooks-object-skill"
+    skill_dir.mkdir()
+    plugin_dir = skill_dir / ".claude-plugin"
+    plugin_dir.mkdir()
+
+    data = {"name": "test", "version": "1.0.0", "description": "test",
+            "hooks": {"PostToolUse": []}}
+    (plugin_dir / "plugin.json").write_text(json.dumps(data))
+
+    is_valid, _, errors, _ = validate_plugin_json(skill_dir)
+    assert is_valid is True
+
+
+def test_validate_plugin_json_hooks_as_string(tmp_path):
+    """validate_plugin_json accepts string path for hooks field."""
+    skill_dir = tmp_path / "hooks-string-skill"
+    skill_dir.mkdir()
+    plugin_dir = skill_dir / ".claude-plugin"
+    plugin_dir.mkdir()
+
+    data = {"name": "test", "version": "1.0.0", "description": "test",
+            "hooks": "hooks/hooks.json"}
+    (plugin_dir / "plugin.json").write_text(json.dumps(data))
+
+    is_valid, _, errors, _ = validate_plugin_json(skill_dir)
+    assert is_valid is True
+
+
+def test_validate_plugin_json_complete_valid_schema(tmp_path):
+    """validate_plugin_json passes for a fully-populated valid plugin.json."""
+    skill_dir = tmp_path / "full-schema-skill"
+    skill_dir.mkdir()
+    plugin_dir = skill_dir / ".claude-plugin"
+    plugin_dir.mkdir()
+    (skill_dir / "commands").mkdir()
+    (skill_dir / "agents").mkdir()
+    (skill_dir / "skills").mkdir()
+
+    data = {
+        "name": "full-plugin",
+        "version": "1.2.0",
+        "description": "A fully specified plugin",
+        "author": {"name": "Test Author", "email": "test@example.com"},
+        "homepage": "https://example.com",
+        "repository": "https://github.com/test/plugin",
+        "license": "MIT",
+        "keywords": ["test", "full"],
+        "commands": "commands/",
+        "agents": "agents/",
+        "skills": "skills/",
+    }
+    (plugin_dir / "plugin.json").write_text(json.dumps(data))
+
+    is_valid, _, errors, warnings = validate_plugin_json(skill_dir)
+    assert is_valid is True
+    assert len(errors) == 0
+    # No unknown field warnings for official schema fields
+    unknown_warnings = [w for w in warnings if "unknown" in w]
+    assert len(unknown_warnings) == 0
+
+
+def test_validate_plugin_json_non_object_root(tmp_path):
+    """validate_plugin_json rejects non-object JSON root."""
+    skill_dir = tmp_path / "array-root-skill"
+    skill_dir.mkdir()
+    plugin_dir = skill_dir / ".claude-plugin"
+    plugin_dir.mkdir()
+
+    (plugin_dir / "plugin.json").write_text('["not", "an", "object"]')
+
+    is_valid, _, errors, _ = validate_plugin_json(skill_dir)
+    assert is_valid is False
+    assert any("must be a JSON object" in e for e in errors)

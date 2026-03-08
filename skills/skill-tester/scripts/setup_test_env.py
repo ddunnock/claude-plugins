@@ -31,7 +31,7 @@ from shared_io import (
     _save_json,
     _load_json,
 )
-from schemas import MANIFEST_SCHEMA
+from schemas import MANIFEST_SCHEMA, PLUGIN_JSON_SCHEMA
 
 
 # ---------------------------------------------------------------------------
@@ -152,44 +152,117 @@ def check_required_files(skill_root: Path) -> tuple[dict, list[str], list[str]]:
     return file_status, errors, warnings
 
 
-def validate_plugin_json(skill_root: Path) -> tuple[bool, dict, list[str]]:
-    """Validate the plugin.json file structure.
+def validate_plugin_json(skill_root: Path) -> tuple[bool, dict, list[str], list[str]]:
+    """Validate plugin.json against the official Claude Code plugin schema.
+
+    Checks:
+      - JSON parse validity
+      - Required fields present (name, version, description)
+      - All fields have correct types (including polymorphic fields)
+      - Nested object validation (e.g. author.name required if author present)
+      - Unknown fields flagged as warnings
+      - Component paths validated against actual filesystem
 
     Args:
         skill_root: Resolved Path to the skill directory.
 
     Returns:
-        Tuple of (is_valid, plugin_data, errors).
-        is_valid is True if plugin.json parses and has required fields.
+        Tuple of (is_valid, plugin_data, errors, warnings).
+        is_valid is True if plugin.json parses and passes all error checks.
         plugin_data is the parsed JSON (empty dict if invalid).
         errors is a list of validation error messages.
+        warnings is a list of non-fatal validation warnings.
     """
     plugin_path = skill_root / ".claude-plugin" / "plugin.json"
     errors = []
+    warnings = []
 
     if not plugin_path.exists():
-        return False, {}, ["plugin.json does not exist"]
+        return False, {}, ["plugin.json does not exist"], []
 
     try:
         with open(plugin_path, "r", encoding="utf-8") as f:
             data = json.load(f)
     except json.JSONDecodeError as e:
         errors.append(f"plugin.json is not valid JSON: {e}")
-        return False, {}, errors
+        return False, {}, errors, []
     except OSError as e:
         errors.append(f"Cannot read plugin.json: {e}")
-        return False, {}, errors
+        return False, {}, errors, []
+
+    if not isinstance(data, dict):
+        errors.append("plugin.json root must be a JSON object")
+        return False, {}, errors, []
 
     # Check required fields
-    required_fields = ["name", "version", "description"]
-    for field in required_fields:
-        if field not in data:
+    for field, spec in PLUGIN_JSON_SCHEMA.items():
+        if spec["required"] and field not in data:
             errors.append(f"plugin.json missing required field: '{field}'")
 
-    if errors:
-        return False, data, errors
+    # Type-check all known fields
+    for field, value in data.items():
+        if field not in PLUGIN_JSON_SCHEMA:
+            warnings.append(
+                f"plugin.json contains unknown field: '{field}' "
+                f"(not in official schema)"
+            )
+            continue
 
-    return True, data, []
+        spec = PLUGIN_JSON_SCHEMA[field]
+        expected_types = spec["types"]
+        if not isinstance(value, expected_types):
+            type_names = " or ".join(t.__name__ for t in expected_types)
+            errors.append(
+                f"plugin.json field '{field}' has wrong type: "
+                f"expected {type_names}, got {type(value).__name__}"
+            )
+            continue
+
+        # Nested object validation (e.g. author)
+        if isinstance(value, dict) and "fields" in spec:
+            for sub_field, sub_spec in spec["fields"].items():
+                if sub_spec["required"] and sub_field not in value:
+                    errors.append(
+                        f"plugin.json '{field}' missing required field: "
+                        f"'{sub_field}'"
+                    )
+                elif sub_field in value:
+                    sub_val = value[sub_field]
+                    sub_types = sub_spec["types"]
+                    if not isinstance(sub_val, sub_types):
+                        type_names = " or ".join(
+                            t.__name__ for t in sub_types
+                        )
+                        errors.append(
+                            f"plugin.json '{field}.{sub_field}' has wrong "
+                            f"type: expected {type_names}, "
+                            f"got {type(sub_val).__name__}"
+                        )
+
+    # Validate component paths exist on filesystem
+    component_dirs = {
+        "commands": "commands",
+        "agents": "agents",
+        "skills": "skills",
+        "scripts": "scripts",
+    }
+    for field, default_dir in component_dirs.items():
+        if field not in data:
+            continue
+        value = data[field]
+        paths = [value] if isinstance(value, str) else value
+        for p in paths:
+            if not isinstance(p, str):
+                continue
+            resolved = skill_root / p
+            if not resolved.exists():
+                warnings.append(
+                    f"plugin.json '{field}' references non-existent "
+                    f"path: '{p}'"
+                )
+
+    is_valid = len(errors) == 0
+    return is_valid, data, errors, warnings
 
 
 def count_scripts(skill_root: Path) -> int:
@@ -306,8 +379,9 @@ def run_validation(skill_path: str, session_dir: str, mode: str,
 
     # Step 3: Validate plugin.json
     print("[setup_test_env] Step 3/5: Validating plugin.json...", file=sys.stderr)
-    plugin_valid, plugin_data, plugin_errors = validate_plugin_json(skill_root)
+    plugin_valid, plugin_data, plugin_errors, plugin_warnings = validate_plugin_json(skill_root)
     all_errors.extend(plugin_errors)
+    all_warnings.extend(plugin_warnings)
 
     # Step 4: Count scripts
     print("[setup_test_env] Step 4/5: Counting scripts...", file=sys.stderr)

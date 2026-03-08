@@ -1,29 +1,31 @@
 {
   "name": "skill-tester",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Deep test, analyze, and audit Claude skills. Use this skill whenever the user wants to test a skill's behavior, analyze how it uses the Claude API, inspect inputs/outputs from scripts, or run security and code review audits against skill scripts. Trigger on: \"test my skill\", \"analyze this skill\", \"audit skill scripts\", \"review skill for security issues\", \"what does this skill actually do when it runs\", \"inspect API calls from skill\", \"run a skill through its paces\", \"check my skill for bugs or vulnerabilities\". Also trigger when the user shows you a SKILL.md and asks you to evaluate, critique, or stress-test it.",
   "author": {
-    "name": "dunnock"
+    "name": "David Dunnock",
+    "email": "dunnoda@gmail.com",
+    "url": "https://github.com/ddunnock"
   },
-  "keywords": ["skill-testing", "audit", "security-review", "code-review", "claude-skills", "analysis"],
-  "skill": "SKILL.md",
-  "scripts": [
-    "scripts/api_logger.py",
-    "scripts/script_runner.py",
-    "scripts/report_gen.py",
-    "scripts/validate_skill.py",
-    "scripts/setup_test_env.py",
-    "scripts/shared_io.py",
-    "scripts/schemas.py",
-    "scripts/prompt_linter.py",
-    "scripts/session_analyzer.py"
+  "repository": "https://github.com/ddunnock/claude-plugins/tree/main/skills/skill-tester",
+  "license": "MIT",
+  "keywords": [
+    "skill-testing",
+    "audit",
+    "security-review",
+    "code-review",
+    "claude-skills",
+    "analysis"
   ],
-  "agents": [
-    "agents/security_review.md",
-    "agents/code_review.md",
-    "agents/prompt_reviewer.md"
+  "commands": [
+    "st.audit.md",
+    "st.init",
+    "st.report.md",
+    "st.resume.md",
+    "st.run",
+    "st.status",
+    "st.trace"
   ],
-  "references": [
-    "references/anti_patterns.md"
-  ]
+  "agents": "./agents/",
+  "skills": "./SKILL.md"
 }
