@@ -1939,15 +1939,17 @@ def main():
     args = parser.parse_args()
 
     project_dir = args.project_dir
-    if not project_dir or not Path(project_dir).exists():
-        # Resolve: use provided path for slug lookup, or auto-detect from cwd
-        found = _find_project_dir(project_path=project_dir)
-        if found:
-            project_dir = str(found)
-        else:
-            hint = f" from: {project_dir}" if project_dir else ". Use --project-dir"
-            print(f"Could not resolve project directory{hint}", file=sys.stderr)
-            sys.exit(1)
+    # Always try slug-based resolution first (maps project path -> ~/.claude/projects/-slug/)
+    found = _find_project_dir(project_path=project_dir)
+    if found:
+        project_dir = str(found)
+    elif project_dir and Path(project_dir).exists() and list(Path(project_dir).glob("*.jsonl")):
+        # Caller passed an actual Claude projects directory containing JSONL files
+        pass
+    else:
+        hint = f" from: {project_dir}" if project_dir else ". Use --project-dir"
+        print(f"Could not resolve project directory{hint}", file=sys.stderr)
+        sys.exit(1)
 
     data = analyze_session(project_dir, args.session_id)
 
