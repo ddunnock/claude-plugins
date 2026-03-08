@@ -14,10 +14,10 @@
 
 ### File Operations
 
-- [ ] **FILE-01**: Skill can read a file and receive parsed, validated, typed data back
-- [ ] **FILE-02**: Skill can write data to a file after validation against a named schema
-- [ ] **FILE-03**: Skill can validate a file against a schema without reading full data (pass/fail + errors)
-- [ ] **FILE-04**: Skill can patch/update specific fields in a structured file preserving existing data
+- [x] **FILE-01**: Skill can read a file and receive parsed, validated, typed data back
+- [x] **FILE-02**: Skill can write data to a file after validation against a named schema
+- [x] **FILE-03**: Skill can validate a file against a schema without reading full data (pass/fail + errors)
+- [x] **FILE-04**: Skill can patch/update specific fields in a structured file preserving existing data
 
 ### Self-Healing
 
@@ -79,10 +79,10 @@
 | SCHM-02 | Phase 2 | Complete |
 | SCHM-03 | Phase 2 | Complete |
 | SCHM-04 | Phase 2 | Complete |
-| FILE-01 | Phase 2 | Pending |
-| FILE-02 | Phase 2 | Pending |
-| FILE-03 | Phase 2 | Pending |
-| FILE-04 | Phase 2 | Pending |
+| FILE-01 | Phase 2 | Complete |
+| FILE-02 | Phase 2 | Complete |
+| FILE-03 | Phase 2 | Complete |
+| FILE-04 | Phase 2 | Complete |
 | HEAL-01 | Phase 3 | Pending |
 | HEAL-02 | Phase 3 | Pending |
 | FMT-01 | Phase 1 | Complete |
