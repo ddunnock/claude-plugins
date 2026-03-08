@@ -21,8 +21,8 @@
 
 ### Self-Healing
 
-- [ ] **HEAL-01**: Skill can auto-fix a malformed file (apply defaults, coerce types, add missing required fields)
-- [ ] **HEAL-02**: Skill can request fix suggestions for a malformed file without modifying it
+- [x] **HEAL-01**: Skill can auto-fix a malformed file (apply defaults, coerce types, add missing required fields)
+- [x] **HEAL-02**: Skill can request fix suggestions for a malformed file without modifying it
 
 ### Format Support
 
@@ -83,8 +83,8 @@
 | FILE-02 | Phase 2 | Complete |
 | FILE-03 | Phase 2 | Complete |
 | FILE-04 | Phase 2 | Complete |
-| HEAL-01 | Phase 3 | Pending |
-| HEAL-02 | Phase 3 | Pending |
+| HEAL-01 | Phase 3 | Complete |
+| HEAL-02 | Phase 3 | Complete |
 | FMT-01 | Phase 1 | Complete |
 | FMT-02 | Phase 1 | Complete |
 | FMT-03 | Phase 1 | Complete |
