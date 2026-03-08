@@ -24,6 +24,9 @@ export interface SchemaRegistryConfig {
   skillPaths: string[];
 }
 
+/** Re-export healing types for external consumers. */
+export type { HealFix, HealResult } from "./healer";
+
 /** Error class for schema registry operations. */
 export class SchemaRegistryError extends Error {
   code: string;
