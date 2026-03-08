@@ -28,12 +28,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Server auto-detects file format from extension and applies the correct parser
   4. File paths containing traversal patterns (../) are rejected with a clear error
   5. File writes land atomically (no partial writes on failure)
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 01-01: MCP server scaffold, stdio transport, plugin.json declaration
-- [ ] 01-02: Format engine (JSON, YAML, XML, TOML parsers/serializers) with auto-detection
-- [ ] 01-03: Security layer (path validation, atomic writes, schema load validation)
+- [ ] 01-01-PLAN.md — MCP server scaffold, stdio transport, plugin.json, tool stubs, shared types
+- [ ] 01-02-PLAN.md — Format engine (JSON, YAML, XML, TOML handlers + registry + auto-detection)
+- [ ] 01-03-PLAN.md — Security layer (path validation, atomic writes, schema load validation)
 
 ### Phase 2: Schema Registry & File Operations
 **Goal**: Skills can register Zod schemas and use them for validated read, write, validate, and patch operations on structured files
