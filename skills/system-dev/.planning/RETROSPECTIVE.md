@@ -49,6 +49,52 @@
 
 ---
 
+## Milestone: v1.1 — Views & Diagrams
+
+**Shipped:** 2026-03-08
+**Phases:** 6 (incl. 6b gap closure) | **Plans:** 13 | **Sessions:** ~8
+
+### What Was Built
+- View assembly engine with scope matching, gap indicators, 5 built-in view specs, hierarchical organization
+- Relationship-aware views with edge extraction, relevance ranking, content-hash determinism
+- D2 structural and Mermaid behavioral diagram generation with gap placeholders
+- Diagram orchestration layer (view -> format selection -> generation -> SlotAPI write)
+- Jinja2 template system with manifest registry and two-tier resolution
+- Structured logging across both subsystems (view.* and diagram.* namespaces)
+- 17,463 LOC Python, 503 tests, 3 Jinja2 templates
+
+### What Worked
+- **Declarative view specs** — BUILTIN_SPECS defined as data, not code. Adding new view types (gap-report, interface-map) was trivial: just add a dict entry with scope patterns
+- **Phase 6b gap closure pattern** — catching integration issues early (missing SKILL.md routing, schema gaps) via UAT before downstream phases prevented compounding errors
+- **Template-driven diagram generation** — Jinja2 templates made D2/Mermaid output independently testable and user-overridable without modifying skill source
+- **Consistent structured logging pattern** — view.* and diagram.* namespaces followed identical INFO/DEBUG conventions from Phase 7 through Phase 9
+- **Content-hash determinism** — SHA-256 snapshot_id and pre-sorted template contexts ensured byte-identical output, simplifying testing and caching
+
+### What Was Inefficient
+- **Phase 8 orchestration gap** — Plan 08-02 SUMMARY claimed orchestration was complete, but generate_diagram() was never actually implemented. Required 08-02g gap closure plan to fix. Verification caught it but the false positive wasted a plan cycle
+- **Stale REQUIREMENTS.md checkboxes** — DIAG-01..04, 06, 09 remained unchecked despite code being complete. Multiple phases had to fix documentation that should have been updated atomically with code commits
+- **Audit found doc-only gaps at milestone boundary** — Phase 10 was entirely documentation fixes (SKILL.md routing, slot type table). Better to catch these during phase verification, not at milestone audit
+
+### Patterns Established
+- **View assembly pipeline:** snapshot_capture -> scope_match -> gap_build -> hierarchical_org -> rank -> schema_validate
+- **Diagram pipeline:** view_assembly -> format_resolve -> template_load -> context_build -> render -> SlotAPI.ingest()
+- **Two-tier resolution:** workspace_root/{dir}/ overrides built-in {dir}/ by filename (view-specs, templates)
+- **Abstraction layers:** parent_id field enables system/component collapsing with count badges
+- **Gap rendering:** view gap indicators -> diagram gap placeholders with visual distinction (dashed borders, color coding)
+
+### Key Lessons
+1. **Verify orchestration layers exist, not just unit functions** — Phase 8 had passing tests for generate_d2/generate_mermaid but no actual generate_diagram() wiring. SUMMARY self-check should verify the integration entry point
+2. **Update documentation atomically with code** — stale checkboxes in REQUIREMENTS.md and missing SKILL.md entries accumulated across phases. Each commit should include the documentation update
+3. **Template-driven output separates structure from content** — Jinja2 templates let users customize diagram rendering without understanding the generation pipeline
+4. **Content-hash IDs enable efficient dedup** — unchanged diagram detection via hash comparison avoids unnecessary SlotAPI writes
+
+### Cost Observations
+- Model mix: ~55% Sonnet (executor subagents), ~45% Opus (orchestration, verification)
+- Sessions: ~8 (planning, phases 6-6b, phase 7, phase 8, phase 8 gap, phase 9, phase 10, milestone)
+- Notable: 13 plans executed across 6 phases; gap closure patterns (6b, 08-02g, 10) added 3 plans for quality
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -56,14 +102,18 @@
 | Milestone | Sessions | Phases | Key Change |
 |-----------|----------|--------|------------|
 | v1.0 | 4 | 5 | Established agent pattern, generic gate, trace enforcement |
+| v1.1 | ~8 | 6 | Gap closure pattern (6b, 08-02g, 10), template-driven output, structured logging convention |
 
 ### Cumulative Quality
 
-| Milestone | Tests | Coverage | Zero-Dep Additions |
-|-----------|-------|----------|-------------------|
-| v1.0 | 303 | — | 13 (no new pip deps beyond jsonschema) |
+| Milestone | Tests | LOC | New Deps |
+|-----------|-------|-----|----------|
+| v1.0 | 303 | 12,498 | jsonschema |
+| v1.1 | 503 | 17,463 | jinja2 |
 
 ### Top Lessons (Verified Across Milestones)
 
-1. Generic infrastructure investments compound across phases
+1. Generic infrastructure investments compound across phases (ApprovalGate in v1.0, BUILTIN_SPECS in v1.1)
 2. Warn-but-allow policies integrate better than strict enforcement in evolving systems
+3. Gap closure phases are expected, not failures — catching integration issues early prevents compounding
+4. Documentation must update atomically with code — stale checkboxes/routing accumulate otherwise
