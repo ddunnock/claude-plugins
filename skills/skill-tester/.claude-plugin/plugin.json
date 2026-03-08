@@ -17,15 +17,5 @@
     "claude-skills",
     "analysis"
   ],
-  "commands": [
-    "st.audit.md",
-    "st.init",
-    "st.report.md",
-    "st.resume.md",
-    "st.run",
-    "st.status",
-    "st.trace"
-  ],
-  "agents": "./agents/",
   "skills": "./SKILL.md"
 }
