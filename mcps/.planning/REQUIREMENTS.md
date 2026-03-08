@@ -34,9 +34,9 @@
 
 ### Security & Reliability
 
-- [ ] **SEC-01**: All file paths are validated against traversal attacks
-- [ ] **SEC-02**: File writes use atomic operations (temp file + rename)
-- [ ] **SEC-03**: Schema loading validates file structure before dynamic import
+- [x] **SEC-01**: All file paths are validated against traversal attacks
+- [x] **SEC-02**: File writes use atomic operations (temp file + rename)
+- [x] **SEC-03**: Schema loading validates file structure before dynamic import
 
 ### Infrastructure
 
@@ -90,9 +90,9 @@
 | FMT-03 | Phase 1 | Complete |
 | FMT-04 | Phase 1 | Complete |
 | FMT-05 | Phase 1 | Complete |
-| SEC-01 | Phase 1 | Pending |
-| SEC-02 | Phase 1 | Pending |
-| SEC-03 | Phase 1 | Pending |
+| SEC-01 | Phase 1 | Complete |
+| SEC-02 | Phase 1 | Complete |
+| SEC-03 | Phase 1 | Complete |
 | INFR-01 | Phase 1 | Complete |
 | INFR-02 | Phase 1 | Complete |
 
