@@ -1,0 +1,25 @@
+{
+  "name": "schema-validator",
+  "version": "0.1.0",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/js-yaml": "^4.0",
+    "@types/node": "^22",
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27",
+    "zod": "^3.25",
+    "js-yaml": "^4.1",
+    "fast-xml-parser": "^5.3",
+    "smol-toml": "^1.6",
+    "write-file-atomic": "^6.0"
+  }
+}

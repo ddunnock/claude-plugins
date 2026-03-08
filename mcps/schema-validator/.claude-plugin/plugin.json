@@ -1,0 +1,12 @@
+{
+  "name": "schema-validator",
+  "description": "Multi-format file parser, validator, and writer with schema enforcement",
+  "version": "0.1.0",
+  "mcpServers": {
+    "schema-validator": {
+      "command": "bun",
+      "args": ["run", "${CLAUDE_PLUGIN_ROOT}/src/index.ts"],
+      "cwd": "${CLAUDE_PLUGIN_ROOT}"
+    }
+  }
+}
