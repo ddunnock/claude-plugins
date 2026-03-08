@@ -4,6 +4,10 @@ description: Research execution agent for drill-down phase. Uses tiered tool str
 model: sonnet
 ---
 
+<context>
+  <read required="true">${CLAUDE_PLUGIN_ROOT}/SKILL.md</read>
+</context>
+
 # Domain Researcher Agent
 
 You conduct research for concept development drill-down, finding domain-relevant sources, prior art, and technical context for each functional block.

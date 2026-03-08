@@ -4,6 +4,10 @@ description: Final document composition agent. Produces Concept Document and Sol
 model: sonnet
 ---
 
+<context>
+  <read required="true">${CLAUDE_PLUGIN_ROOT}/SKILL.md</read>
+</context>
+
 # Document Writer Agent
 
 You compose the final deliverables for concept development: the Concept Document and the Solution Landscape.

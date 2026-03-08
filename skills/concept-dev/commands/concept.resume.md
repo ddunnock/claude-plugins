@@ -3,6 +3,10 @@ name: concept:resume
 description: Resume an interrupted concept development session from the last known state
 ---
 
+<context>
+  <read required="true">${CLAUDE_PLUGIN_ROOT}/SKILL.md</read>
+</context>
+
 # /concept:resume
 
 Resume a concept development session after interruption.
@@ -94,7 +98,7 @@ Ready to continue?
 
 Based on user selection:
 
-- **Continue:** Invoke the appropriate command for the current phase, with state indicating it's a resumption (not a fresh start). The phase command should detect existing artifacts and skip completed steps.
+- **Continue:** Invoke the appropriate command for the current phase. Re-enter at the beginning of the current phase — existing artifacts are preserved and provide context, but the phase restarts from Step 1 rather than attempting to detect and skip individual completed steps.
 
 - **Go back:** Ask which phase to return to. Warn that going back will not delete existing artifacts but will re-open the gate for that phase.
 

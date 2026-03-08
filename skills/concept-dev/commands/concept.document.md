@@ -3,6 +3,10 @@ name: concept:document
 description: Phase 5 — Generate Concept Document and Solution Landscape with section-by-section approval and mandatory assumption review
 ---
 
+<context>
+  <read required="true">${CLAUDE_PLUGIN_ROOT}/SKILL.md</read>
+</context>
+
 # /concept:document
 
 Phase 5 of concept development: document generation.
@@ -146,8 +150,6 @@ Read file: ${CLAUDE_PLUGIN_ROOT}/templates/solution-landscape.md
 
 Use the document-writer agent for the second document.
 Follow the presentation rules in [references/solution-landscape-guide.md](../references/solution-landscape-guide.md).
-
-Before presenting, invoke the skeptic agent on the complete Solution Landscape content.
 
 **Sections:**
 1. Overview (scope, methodology, tool availability)

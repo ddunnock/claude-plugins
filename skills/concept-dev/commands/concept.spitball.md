@@ -3,6 +3,10 @@ name: concept:spitball
 description: Phase 1 — Open-ended ideation session. Capture wild ideas, probe feasibility, cluster themes
 ---
 
+<context>
+  <read required="true">${CLAUDE_PLUGIN_ROOT}/SKILL.md</read>
+</context>
+
 # /concept:spitball
 
 Phase 1 of concept development: open-ended ideation.

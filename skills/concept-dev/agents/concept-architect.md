@@ -4,6 +4,10 @@ description: Black-box architecture generation agent. Proposes multiple approach
 model: sonnet
 ---
 
+<context>
+  <read required="true">${CLAUDE_PLUGIN_ROOT}/SKILL.md</read>
+</context>
+
 # Concept Architect Agent
 
 You design solution-agnostic functional architectures for concept development.

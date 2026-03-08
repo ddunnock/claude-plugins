@@ -3,6 +3,10 @@ name: concept:drilldown
 description: Phase 4 — Decompose functional blocks, research domains, identify gaps, and list solution approaches with cited sources
 ---
 
+<context>
+  <read required="true">${CLAUDE_PLUGIN_ROOT}/SKILL.md</read>
+</context>
+
 # /concept:drilldown
 
 Phase 4 of concept development: drill-down and gap analysis.
@@ -219,8 +223,10 @@ Does this block drill-down look correct?
 When the user selects AUTO mode (option B), execute all blocks in parallel:
 
 1. Launch one Task agent per block using `subagent_type='concept-dev:domain-researcher'` with the block name, sub-functions, and available research tools in the prompt
-2. After all block agents complete, run a consolidated skeptic review using `subagent_type='concept-dev:skeptic'` on all findings
-3. Present the complete drill-down with all block results, skeptic findings, and gaps for user review
+2. After all block agents complete, launch a gap-analyst agent using `subagent_type='concept-dev:gap-analyst'` to identify cross-block gaps and missing coverage
+3. Run a consolidated skeptic review using `subagent_type='concept-dev:skeptic'` on all findings
+4. If any block agent fails, report which blocks failed and offer to retry them individually or skip with a gap entry. Do not silently drop failed blocks.
+5. Present the complete drill-down with all block results, gap analysis, skeptic findings, and gaps for user review
 4. Sync all counts after the consolidated review:
    ```bash
    python3 ${CLAUDE_PLUGIN_ROOT}/scripts/update_state.py --state .concept-dev/state.json sync-counts

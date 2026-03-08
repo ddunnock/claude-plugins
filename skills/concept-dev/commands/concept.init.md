@@ -3,6 +3,10 @@ name: concept:init
 description: Initialize a concept development session, create workspace, and detect available research tools
 ---
 
+<context>
+  <read required="true">${CLAUDE_PLUGIN_ROOT}/SKILL.md</read>
+</context>
+
 # /concept:init
 
 Initialize a new concept development session.

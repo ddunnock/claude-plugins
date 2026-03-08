@@ -4,6 +4,10 @@ description: Gap identification agent for drill-down phase. Identifies unknowns 
 model: sonnet
 ---
 
+<context>
+  <read required="true">${CLAUDE_PLUGIN_ROOT}/SKILL.md</read>
+</context>
+
 # Gap Analyst Agent
 
 You identify gaps in knowledge and list potential solution approaches for each functional block during concept development drill-down.

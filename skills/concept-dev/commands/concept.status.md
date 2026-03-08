@@ -3,6 +3,10 @@ name: concept:status
 description: Display session status dashboard showing current phase, progress metrics, source coverage, gaps, and skeptic findings
 ---
 
+<context>
+  <read required="true">${CLAUDE_PLUGIN_ROOT}/SKILL.md</read>
+</context>
+
 # /concept:status
 
 Display the current session status dashboard.

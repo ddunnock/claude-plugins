@@ -3,6 +3,10 @@ name: concept:research
 description: Research web sources for concept development using crawl4ai. Crawls URLs, extracts relevant content with BM25 filtering, and auto-registers sources.
 ---
 
+<context>
+  <read required="true">${CLAUDE_PLUGIN_ROOT}/SKILL.md</read>
+</context>
+
 # /concept:research
 
 Research web sources for concept development. Crawls URLs with relevance filtering and automatically registers findings in the source registry.

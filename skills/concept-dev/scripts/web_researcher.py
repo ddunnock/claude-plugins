@@ -80,7 +80,10 @@ class WebResearcher:
         """Load existing research index or create new one."""
         if self.index_path.exists():
             with open(self.index_path, 'r') as f:
-                return json.load(f)
+                try:
+                    return json.load(f)
+                except json.JSONDecodeError as e:
+                    print(f"Warning: Corrupt index at {self.index_path}: {e}", file=sys.stderr)
         return {
             'metadata': {
                 'created': datetime.now().isoformat(),
@@ -632,19 +635,6 @@ def _parse_urls(url_arg: str) -> List[str]:
 
 
 
-def _validate_path(filepath: str, allowed_extensions: set, label: str) -> str:
-    """Validate file path: reject traversal and restrict extensions. Returns resolved path."""
-    resolved = os.path.realpath(filepath)
-    if ".." in os.path.relpath(resolved):
-        print(f"Error: Path traversal not allowed in {label}: {filepath}")
-        sys.exit(1)
-    ext = os.path.splitext(resolved)[1].lower()
-    if ext not in allowed_extensions:
-        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
-        sys.exit(1)
-    return resolved
-
-
 def main():
     # For the 'summary' subcommand, crawl4ai is not needed.
     # For all others, ensure it's importable (re-exec under pipx venv if needed).
@@ -703,34 +693,46 @@ def main():
     researcher = WebResearcher(research_dir=args.research_dir)
 
     if args.command == 'crawl':
-        asyncio.run(researcher.crawl(
-            url=args.url,
-            query=args.query,
-            phase=args.phase,
-            css_selector=args.css_selector
-        ))
+        try:
+            asyncio.run(researcher.crawl(
+                url=args.url,
+                query=args.query,
+                phase=args.phase,
+                css_selector=args.css_selector
+            ))
+        except Exception as e:
+            print(f"Error during crawl: {e}", file=sys.stderr)
+            sys.exit(1)
 
     elif args.command == 'batch':
         urls = _parse_urls(args.urls)
         if not urls:
             print("Error: No valid URLs provided.", file=sys.stderr)
             sys.exit(1)
-        asyncio.run(researcher.batch(
-            urls=urls,
-            query=args.query,
-            phase=args.phase,
-            max_concurrent=args.max_concurrent
-        ))
+        try:
+            asyncio.run(researcher.batch(
+                urls=urls,
+                query=args.query,
+                phase=args.phase,
+                max_concurrent=args.max_concurrent
+            ))
+        except Exception as e:
+            print(f"Error during batch crawl: {e}", file=sys.stderr)
+            sys.exit(1)
 
     elif args.command == 'deep':
-        asyncio.run(researcher.deep(
-            base_url=args.base_url,
-            query=args.query,
-            phase=args.phase,
-            max_depth=args.max_depth,
-            max_pages=args.max_pages,
-            pattern=args.pattern
-        ))
+        try:
+            asyncio.run(researcher.deep(
+                base_url=args.base_url,
+                query=args.query,
+                phase=args.phase,
+                max_depth=args.max_depth,
+                max_pages=args.max_pages,
+                pattern=args.pattern
+            ))
+        except Exception as e:
+            print(f"Error during deep crawl: {e}", file=sys.stderr)
+            sys.exit(1)
 
     elif args.command == 'summary':
         output = researcher.summary(query=args.query)

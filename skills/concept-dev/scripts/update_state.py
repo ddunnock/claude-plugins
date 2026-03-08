@@ -6,7 +6,6 @@ Provides safe read-modify-write operations on the session state file
 with timestamp tracking and validation.
 """
 
-import os
 import json
 import argparse
 from datetime import datetime
@@ -219,17 +218,9 @@ def parse_value(raw: str) -> Any:
 
 
 
-def _validate_path(filepath: str, allowed_extensions: set, label: str) -> str:
-    """Validate file path: reject traversal and restrict extensions. Returns resolved path."""
-    resolved = os.path.realpath(filepath)
-    if ".." in os.path.relpath(resolved):
-        print(f"Error: Path traversal not allowed in {label}: {filepath}")
-        sys.exit(1)
-    ext = os.path.splitext(resolved)[1].lower()
-    if ext not in allowed_extensions:
-        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
-        sys.exit(1)
-    return resolved
+sys.path.insert(0, str(Path(__file__).parent))
+from utils import validate_path
+
 
 def main():
     parser = argparse.ArgumentParser(description="Update concept-dev session state")
@@ -272,7 +263,7 @@ def main():
 
     args = parser.parse_args()
 
-    args.state = _validate_path(args.state, {'.json'}, "state file")
+    args.state = validate_path(args.state, {'.json'}, "state file")
 
     if args.command == "set-phase":
         set_phase(args.state, args.phase, args.status)

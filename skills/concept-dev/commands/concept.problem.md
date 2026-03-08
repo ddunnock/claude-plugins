@@ -3,6 +3,10 @@ name: concept:problem
 description: Phase 2 — Refine viable ideas into a clear, bounded problem statement using adapted 5W2H questioning
 ---
 
+<context>
+  <read required="true">${CLAUDE_PLUGIN_ROOT}/SKILL.md</read>
+</context>
+
 # /concept:problem
 
 Phase 2 of concept development: problem definition.

@@ -7,7 +7,6 @@ Adapted from trade-study-analysis source_tracker.py with concept-dev-specific
 source types and confidence levels.
 """
 
-import os
 import json
 import argparse
 import tempfile
@@ -49,7 +48,10 @@ class SourceTracker:
         """Load existing registry or create new one."""
         if self.registry_path.exists():
             with open(self.registry_path, 'r') as f:
-                return json.load(f)
+                try:
+                    return json.load(f)
+                except json.JSONDecodeError as e:
+                    print(f"Warning: Corrupt registry at {self.registry_path}: {e}", file=sys.stderr)
         return {
             'metadata': {
                 'created': datetime.now().isoformat(),
@@ -426,17 +428,8 @@ def _sync_to_state(registry_path: str, state_path: str):
 
 
 
-def _validate_path(filepath: str, allowed_extensions: set, label: str) -> str:
-    """Validate file path: reject traversal and restrict extensions. Returns resolved path."""
-    resolved = os.path.realpath(filepath)
-    if ".." in os.path.relpath(resolved):
-        print(f"Error: Path traversal not allowed in {label}: {filepath}")
-        sys.exit(1)
-    ext = os.path.splitext(resolved)[1].lower()
-    if ext not in allowed_extensions:
-        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
-        sys.exit(1)
-    return resolved
+sys.path.insert(0, str(Path(__file__).parent))
+from utils import validate_path
 
 
 def main():
@@ -493,10 +486,10 @@ def main():
 
     args = parser.parse_args()
 
-    args.registry = _validate_path(args.registry, {'.json'}, "registry file")
-    args.state = _validate_path(args.state, {'.json'}, "state file")
+    args.registry = validate_path(args.registry, {'.json'}, "registry file")
+    args.state = validate_path(args.state, {'.json'}, "state file")
     if args.command == "export" and hasattr(args, "output") and args.output:
-        args.output = _validate_path(args.output, {'.md', '.json'}, "output file")
+        args.output = validate_path(args.output, {'.md', '.json'}, "output file")
 
     tracker = SourceTracker(args.registry)
 

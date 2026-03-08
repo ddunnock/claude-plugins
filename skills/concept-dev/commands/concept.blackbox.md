@@ -3,6 +3,10 @@ name: concept:blackbox
 description: Phase 3 — Define concept at functional level with blocks, relationships, principles, and ASCII diagrams. No implementation details.
 ---
 
+<context>
+  <read required="true">${CLAUDE_PLUGIN_ROOT}/SKILL.md</read>
+</context>
+
 # /concept:blackbox
 
 Phase 3 of concept development: black-box architecture.

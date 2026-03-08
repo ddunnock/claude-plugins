@@ -7,7 +7,6 @@ Results are stored in state.json for research agents to adapt strategy.
 """
 
 import sys
-import os
 import json
 import argparse
 import subprocess
@@ -154,17 +153,9 @@ def print_report():
 
 
 
-def _validate_path(filepath: str, allowed_extensions: set, label: str) -> str:
-    """Validate file path: reject traversal and restrict extensions. Returns resolved path."""
-    resolved = os.path.realpath(filepath)
-    if ".." in os.path.relpath(resolved):
-        print(f"Error: Path traversal not allowed in {label}: {filepath}")
-        sys.exit(1)
-    ext = os.path.splitext(resolved)[1].lower()
-    if ext not in allowed_extensions:
-        print(f"Error: {label} must be one of {allowed_extensions}, got \'{ext}\'")
-        sys.exit(1)
-    return resolved
+sys.path.insert(0, str(Path(__file__).parent))
+from utils import validate_path
+
 
 def main():
     parser = argparse.ArgumentParser(description="Check available research tools")
@@ -173,7 +164,8 @@ def main():
 
     args = parser.parse_args()
 
-    args.state = _validate_path(args.state, {'.json'}, "state file")
+    if args.state:
+        args.state = validate_path(args.state, {'.json'}, "state file")
     report = check_tools(args.state)
 
     if args.json:
