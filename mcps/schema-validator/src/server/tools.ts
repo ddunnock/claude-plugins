@@ -2,7 +2,7 @@
  * Tool registrations for the schema-validator MCP server.
  * Phase 1 working tools: sv_parse_file, sv_detect_format
  * Phase 2 working tools: sv_register_schema, sv_list_schemas, sv_read, sv_write, sv_validate, sv_patch
- * Phase 3 stubs: sv_heal
+ * Phase 3 working tools: sv_heal
  */
 
 import path from "node:path";
@@ -17,6 +17,7 @@ import {
 } from "../security/path-validator.ts";
 import { atomicWrite } from "../security/atomic-write.ts";
 import { jsonMergePatch } from "../schemas/merge-patch.ts";
+import { healData } from "../schemas/healer.ts";
 import type { SchemaRegistry } from "../schemas/registry.ts";
 import { SchemaRegistryError } from "../schemas/types.ts";
 
@@ -953,6 +954,152 @@ export function registerTools(server: McpServer, registry: SchemaRegistry): void
           ),
       },
     },
-    async () => notImplemented(3, "Self-healing"),
+    async (params) => {
+      try {
+        const { filePath, schemaName, mode } = params;
+        const safePath = validatePath(filePath);
+
+        // Check file exists
+        const file = Bun.file(safePath);
+        if (!(await file.exists())) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  error: "FILE_NOT_FOUND",
+                  message: `File not found: ${filePath}`,
+                  filePath,
+                }),
+              },
+            ],
+            isError: true as const,
+          };
+        }
+
+        // Read and parse
+        const content = await file.text();
+        const handler = getHandler(filePath);
+        let detectedFormat = path.extname(filePath).replace(".", "").toLowerCase();
+        if (detectedFormat === "yml") detectedFormat = "yaml";
+        const data = handler.parse(content);
+
+        // Get schema
+        const entry = registry.get(schemaName);
+        if (!entry) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  error: "SCHEMA_NOT_FOUND",
+                  message: `Schema '${schemaName}' not found in registry`,
+                }),
+              },
+            ],
+            isError: true as const,
+          };
+        }
+
+        // Run healing engine
+        const result = healData(data as Record<string, unknown>, entry.zodSchema);
+
+        if (mode === "auto") {
+          // Write to disk only if there are applied fixes
+          if (result.applied.length > 0) {
+            const serialized = handler.serialize(result.data);
+            await atomicWrite(safePath, serialized);
+          }
+
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  healed: result.healed,
+                  data: result.data,
+                  applied: result.applied,
+                  remaining: result.remaining,
+                  filePath: safePath,
+                  format: detectedFormat,
+                }),
+              },
+            ],
+          };
+        }
+
+        // mode === "suggest"
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({
+                suggestions: result.applied,
+                remaining: result.remaining,
+              }),
+            },
+          ],
+        };
+      } catch (err) {
+        if (err instanceof PathValidationError) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  error: err.code,
+                  message: err.message,
+                  filePath: err.rejectedPath,
+                }),
+              },
+            ],
+            isError: true as const,
+          };
+        }
+        if (err instanceof FormatError) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  error: err.code,
+                  message: err.message,
+                  filePath: err.filePath || params.filePath,
+                }),
+              },
+            ],
+            isError: true as const,
+          };
+        }
+        if (err instanceof SchemaRegistryError) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  error: err.code,
+                  message: err.message,
+                }),
+              },
+            ],
+            isError: true as const,
+          };
+        }
+        const msg = err instanceof Error ? err.message : String(err);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({
+                error: "INTERNAL_ERROR",
+                message: msg,
+                filePath: params.filePath,
+              }),
+            },
+          ],
+          isError: true as const,
+        };
+      }
+    },
   );
 }

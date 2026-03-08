@@ -335,6 +335,14 @@ export function healData(
         });
       }
     }
+  } else {
+    // After successful re-validation, apply any missing defaults that Zod
+    // handles internally but aren't in rawData yet (same as initial success path)
+    const defaultFixes = applyMissingDefaults(rawData, schema, []);
+    for (const fix of defaultFixes) {
+      setNestedValue(rawData, fix.path, fix.newValue);
+      applied.push(fix);
+    }
   }
 
   return {
