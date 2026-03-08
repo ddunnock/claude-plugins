@@ -40,8 +40,8 @@
 
 ### Infrastructure
 
-- [ ] **INFR-01**: MCP server runs via stdio transport using @modelcontextprotocol/sdk
-- [ ] **INFR-02**: MCP is declared in plugin.json for Claude Code integration
+- [x] **INFR-01**: MCP server runs via stdio transport using @modelcontextprotocol/sdk
+- [x] **INFR-02**: MCP is declared in plugin.json for Claude Code integration
 
 ## v2 Requirements
 
@@ -93,8 +93,8 @@
 | SEC-01 | Phase 1 | Pending |
 | SEC-02 | Phase 1 | Pending |
 | SEC-03 | Phase 1 | Pending |
-| INFR-01 | Phase 1 | Pending |
-| INFR-02 | Phase 1 | Pending |
+| INFR-01 | Phase 1 | Complete |
+| INFR-02 | Phase 1 | Complete |
 
 **Coverage:**
 - v1 requirements: 20 total
