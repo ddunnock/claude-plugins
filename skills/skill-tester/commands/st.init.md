@@ -57,13 +57,14 @@ This command collects all inputs and creates the session directory (Phase 1).
     <interaction tool="AskUserQuestion">
         <question>Where should session reports be stored?</question>
         <header>Report Location</header>
-        <options>["sessions/ (project-local, default)", "~/.claude/tests/ (global)", ".claude/tests/ (project .claude dir)"]</options>
+        <options>["~/.claude/tests/ (global, default)", ".claude/tests/ (project .claude dir)"]</options>
         <multiSelect>false</multiSelect>
     </interaction>
     Map user selection to report-root value:
-    - "sessions/" -> sessions/
     - "~/.claude/tests/" -> ~/.claude/tests/
     - ".claude/tests/" -> .claude/tests/
+    If .claude/tests/ is selected and no .claude/ directory exists at the project root
+    (detected via git rev-parse --show-toplevel), warn the user and confirm before creating.
 </step>
 
 <step sequence="1.6" name="create-session">

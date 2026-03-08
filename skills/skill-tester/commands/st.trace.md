@@ -47,7 +47,10 @@ security audit (phase 6), and code review (phase 7).
 <phase name="session-trace" sequence="8" depends-on="test-execution">
     <objective>Capture Claude Code session trace from JSONL logs.</objective>
     <step sequence="8.1">
-        <script>python3 ${CLAUDE_PLUGIN_ROOT}/scripts/session_analyzer.py --output <session_dir>/session_report.html --format both</script>
+        Compute the Claude Code project directory: pass the current working directory
+        so session_analyzer can resolve the slug and find the JSONL logs.
+        <script>python3 ${CLAUDE_PLUGIN_ROOT}/scripts/session_analyzer.py --project-dir <cwd> --output <session_dir>/session_report.html --format both</script>
+        Where &lt;cwd&gt; is the user's current working directory (the project being tested).
     </step>
     <step sequence="8.2">
         If session_analyzer.py fails, note "Session trace: unavailable" in the report.

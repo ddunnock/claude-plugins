@@ -133,6 +133,20 @@ def _esc(s: Any) -> str:
             .replace('"', "&quot;"))
 
 
+def _expandable(text: str, max_chars: int = 120) -> str:
+    """Render text with expand/collapse if it exceeds max_chars."""
+    if len(text) <= max_chars:
+        return _esc(text)
+    preview = _esc(text[:max_chars])
+    full = _esc(text)
+    return (
+        f'<details class="expand-cell">'
+        f'<summary>{preview}&hellip;</summary>'
+        f'<div class="expand-full">{full}</div>'
+        f'</details>'
+    )
+
+
 def _badge(text: str, color: str) -> str:
     return f'<span style="background:{color};color:#fff;padding:2px 8px;border-radius:4px;font-size:0.78em;font-weight:600">{_esc(text)}</span>'
 
@@ -359,7 +373,7 @@ def _build_scan_results_section(scan: Optional[dict]) -> str:
             f'<code>{_esc(Path(f.get("script", "?")).name)}</code>',
             str(f.get("line", "—")),
             _esc(f.get("check_id", "?")),
-            _esc(f.get("message", "")[:120]),
+            _expandable(f.get("message", ""), 120),
         ])
 
     return header + _table(["Severity", "Script", "Line", "Check", "Message"], rows)
@@ -382,7 +396,7 @@ def _build_security_section(sec: Optional[dict]) -> str:
             _esc(f.get("script", "?")),
             str(f.get("line", "?")),
             _esc(f.get("category", "?")),
-            _esc(f.get("description", "")[:120]),
+            _expandable(f.get("description", ""), 120),
         ])
 
     return _table(["Severity", "Script", "Line", "Category", "Description"], rows)
@@ -419,7 +433,7 @@ def _build_prompt_lint_section(lint: Optional[dict]) -> str:
             f'<code>{_esc(f.get("file", "?"))}</code>',
             str(f.get("line", "—")),
             _esc(f.get("category", "?")),
-            _esc(f.get("message", "")[:120]),
+            _expandable(f.get("message", ""), 120),
         ])
 
     return header + _table(["Severity", "File", "Line", "Category", "Message"], rows)
@@ -447,7 +461,7 @@ def _build_prompt_review_section(review: Optional[dict]) -> str:
         finding_rows.append([
             _badge(sev, color),
             _esc(f.get("category", "?")),
-            _esc(f.get("issue", "")[:150]),
+            _expandable(f.get("issue", ""), 150),
         ])
     finding_table = _table(["Severity", "Category", "Issue"], finding_rows) if finding_rows else ""
 
@@ -472,8 +486,8 @@ def _build_code_review_section(cr: Optional[dict]) -> str:
         issues = s.get("issues") or []
         rows = [[
             _esc(i.get("category", "?")),
-            _esc(i.get("description", "")[:150]),
-            _esc(i.get("suggestion", "")[:150]),
+            _expandable(i.get("description", ""), 150),
+            _expandable(i.get("suggestion", ""), 150),
         ] for i in issues]
         t = _table(["Category", "Issue", "Suggestion"], rows) if rows else "<p><em>No issues.</em></p>"
         tables += f"<h3 style='font-size:.9rem;margin:.75rem 0 .25rem'><code>{_esc(s.get('script', '?'))}</code> — score: <strong>{s.get('score', '?')}</strong>/10</h3>{t}"
@@ -535,6 +549,10 @@ def generate_report(session_dir: str, output_path: str) -> str:
   th, td {{ text-align: left; padding: .5rem .75rem; border-bottom: 1px solid #e5e7eb; vertical-align: top; }}
   th {{ font-weight: 600; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: #374151; }}
   details > summary {{ user-select: none; }}
+  details.expand-cell > summary {{ cursor: pointer; list-style: none; }}
+  details.expand-cell > summary::after {{ content: " [+]"; color: #3b82f6; font-size: .75em; }}
+  details.expand-cell[open] > summary {{ display: none; }}
+  details.expand-cell > .expand-full {{ white-space: pre-wrap; }}
   a {{ color: #3b82f6; }}
 </style>
 </head>

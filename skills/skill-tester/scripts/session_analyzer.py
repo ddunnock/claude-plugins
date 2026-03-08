@@ -43,17 +43,23 @@ def _load_jsonl(path: Path) -> list[dict]:
     return results
 
 
-def _find_project_dir() -> Optional[Path]:
-    """Find the Claude project dir for the current working directory."""
-    cwd = os.getcwd()
-    slug = cwd.replace("/", "-")
-    if slug.startswith("-"):
-        slug = slug[1:]
+def _find_project_dir(project_path: str | None = None) -> Optional[Path]:
+    """Find the Claude project dir for a given or current working directory.
+
+    Args:
+        project_path: Explicit path to use for slug generation instead of cwd.
+            When provided, uses this path for the Claude projects directory lookup.
+            Default None uses os.getcwd().
+    """
+    cwd = project_path or os.getcwd()
+    # Use Path.parts for cross-platform slug generation
+    parts = Path(cwd).parts
+    # Skip root element (/ on Unix, C:\ on Windows)
+    slug = "-".join(parts[1:]) if len(parts) > 1 else ""
     candidate = Path.home() / ".claude" / "projects" / f"-{slug}"
     if candidate.exists():
         return candidate
     # Try parent directories
-    parts = Path(cwd).parts
     for i in range(len(parts), 1, -1):
         test = "-".join(parts[1:i])
         candidate = Path.home() / ".claude" / "projects" / f"-{test}"
@@ -1933,12 +1939,14 @@ def main():
     args = parser.parse_args()
 
     project_dir = args.project_dir
-    if not project_dir:
-        found = _find_project_dir()
+    if not project_dir or not Path(project_dir).exists():
+        # Resolve: use provided path for slug lookup, or auto-detect from cwd
+        found = _find_project_dir(project_path=project_dir)
         if found:
             project_dir = str(found)
         else:
-            print("Could not auto-detect project directory. Use --project-dir.", file=sys.stderr)
+            hint = f" from: {project_dir}" if project_dir else ". Use --project-dir"
+            print(f"Could not resolve project directory{hint}", file=sys.stderr)
             sys.exit(1)
 
     data = analyze_session(project_dir, args.session_id)

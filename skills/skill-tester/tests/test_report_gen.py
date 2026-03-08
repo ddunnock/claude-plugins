@@ -31,6 +31,7 @@ from report_gen import (
     _esc,
     _badge,
     _score_color,
+    _expandable,
 )
 
 
@@ -328,6 +329,28 @@ class TestGenerateReport:
         assert "<!DOCTYPE html>" in html
         assert "No inventory data" in html
 
+    def test_expandable_rows_in_full_report(self, tmp_path):
+        """generate_report uses expandable cells for long text."""
+        long_desc = "A" * 200
+        sec = {"findings": [{"severity": "LOW", "script": "foo.py", "line": 1,
+                             "category": "STRUCTURAL", "description": long_desc}]}
+        session = _make_session(tmp_path, {
+            "inventory.json": MINIMAL_INVENTORY,
+            "scan_results.json": MINIMAL_SCAN,
+            "prompt_lint.json": MINIMAL_PROMPT_LINT,
+            "prompt_review.json": MINIMAL_PROMPT_REVIEW,
+            "api_log.jsonl": "",
+            "script_runs.jsonl": "",
+            "security_report.json": sec,
+            "code_review.json": MINIMAL_CODE_REVIEW,
+        })
+        output = str(session / "report.html")
+        generate_report(str(session), output)
+
+        html = Path(output).read_text()
+        assert "expand-cell" in html
+        assert "&hellip;" in html
+
     def test_report_escapes_html(self, tmp_path):
         """Report escapes HTML in skill names to prevent XSS."""
         inv = dict(MINIMAL_INVENTORY)
@@ -349,3 +372,48 @@ class TestGenerateReport:
         # Should be escaped, not raw HTML
         assert '<img src=x' not in html
         assert '&lt;img' in html
+
+
+# ---------------------------------------------------------------------------
+# Expandable helper
+# ---------------------------------------------------------------------------
+
+class TestExpandable:
+    def test_short_text_returns_plain_escaped(self):
+        """Short text below threshold returns plain escaped string."""
+        result = _expandable("hello world", 120)
+        assert result == "hello world"
+        assert "<details" not in result
+
+    def test_long_text_returns_details_element(self):
+        """Long text above threshold returns <details> element."""
+        long_text = "A" * 200
+        result = _expandable(long_text, 120)
+        assert '<details class="expand-cell">' in result
+        assert "<summary>" in result
+        assert "&hellip;" in result
+        assert '<div class="expand-full">' in result
+        # Full text should be in expand-full div
+        assert "A" * 200 in result
+
+    def test_exact_threshold_no_expand(self):
+        """Text exactly at threshold is not expanded."""
+        text = "B" * 120
+        result = _expandable(text, 120)
+        assert "<details" not in result
+        assert result == text
+
+    def test_html_is_escaped(self):
+        """HTML entities are properly escaped in both preview and full text."""
+        text = '<script>alert("xss")</script>' + "x" * 120
+        result = _expandable(text, 50)
+        assert "<script>" not in result
+        assert "&lt;script&gt;" in result
+
+    def test_custom_max_chars(self):
+        """Custom max_chars threshold is respected."""
+        text = "C" * 20
+        result = _expandable(text, 10)
+        assert '<details class="expand-cell">' in result
+        # Preview should be 10 chars
+        assert "C" * 10 in result

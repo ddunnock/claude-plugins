@@ -22,6 +22,7 @@ from setup_test_env import (
     count_scripts,
     create_session_structure,
     run_validation,
+    resolve_project_report_root,
 )
 
 
@@ -171,7 +172,11 @@ def test_validate_skill_path_rejects_traversal():
 
 def test_validate_skill_path_rejects_system_dirs():
     """validate_skill_path rejects system directories."""
-    system_dirs = ["/bin", "/usr", "/etc", "/var"]
+    import platform
+    if platform.system() == "Windows":
+        system_dirs = [r"C:\Windows", r"C:\Windows\System32"]
+    else:
+        system_dirs = ["/bin", "/usr", "/etc", "/var"]
 
     for sys_dir in system_dirs:
         resolved, errors, warnings = validate_skill_path(sys_dir)
@@ -650,3 +655,46 @@ def test_validate_plugin_json_non_object_root(tmp_path):
     is_valid, _, errors, _ = validate_plugin_json(skill_dir)
     assert is_valid is False
     assert any("must be a JSON object" in e for e in errors)
+
+
+# ---------------------------------------------------------------------------
+# resolve_project_report_root Tests
+# ---------------------------------------------------------------------------
+
+def test_resolve_project_report_root_git_repo(tmp_path):
+    """resolve_project_report_root finds git root and returns .claude/tests/."""
+    import subprocess
+    # Create a git repo
+    repo = tmp_path / "my-project"
+    repo.mkdir()
+    subprocess.run(["git", "init"], cwd=str(repo), capture_output=True)
+    # Create .claude dir
+    (repo / ".claude").mkdir()
+    skill_dir = repo / "skills" / "my-skill"
+    skill_dir.mkdir(parents=True)
+
+    report_root, warnings = resolve_project_report_root(str(skill_dir))
+    assert report_root == str(repo / ".claude" / "tests")
+    assert warnings == []
+
+
+def test_resolve_project_report_root_no_claude_dir(tmp_path):
+    """resolve_project_report_root warns when .claude/ doesn't exist."""
+    import subprocess
+    repo = tmp_path / "no-claude-project"
+    repo.mkdir()
+    subprocess.run(["git", "init"], cwd=str(repo), capture_output=True)
+
+    report_root, warnings = resolve_project_report_root(str(repo))
+    assert report_root == str(repo / ".claude" / "tests")
+    assert any("No .claude/ directory" in w for w in warnings)
+
+
+def test_resolve_project_report_root_not_git_repo(tmp_path):
+    """resolve_project_report_root falls back to skill_path when not in git repo."""
+    non_repo = tmp_path / "not-a-repo"
+    non_repo.mkdir()
+
+    report_root, warnings = resolve_project_report_root(str(non_repo))
+    assert report_root == str(non_repo / ".claude" / "tests")
+    assert any("Not a git repository" in w for w in warnings)

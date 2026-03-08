@@ -73,14 +73,12 @@ Static analysis only. Skips test execution (phase 5) and session trace (phase 8)
             <read required="true">${CLAUDE_PLUGIN_ROOT}/agents/prompt_reviewer.md</read>
         </context>
         Invoke the prompt-reviewer agent, providing in the prompt:
-        - --output-path: the absolute path to <session_dir>/prompt_review.json
         - prompt_lint.json (deterministic findings -- primary grounding)
         - Full SKILL.md content
         - Content of all agent .md files found in agents/
         - Content of all command .md files found in commands/ (if present)
-        The agent will attempt to Write the file directly. If the agent's response
-        contains a ```json block instead (Write was denied), extract the JSON and
-        write it to <session_dir>/prompt_review.json from the orchestrator.
+        Extract the ```json block from the agent response and write it to
+        <session_dir>/prompt_review.json.
     </step>
     <gate>prompt_lint.json must be written before invoking the prompt-reviewer agent.</gate>
 </phase>
@@ -92,14 +90,12 @@ Static analysis only. Skips test execution (phase 5) and session trace (phase 8)
             <read required="true">${CLAUDE_PLUGIN_ROOT}/agents/security_review.md</read>
         </context>
         Invoke the security-review agent, providing in the prompt:
-        - --output-path: the absolute path to <session_dir>/security_report.json
         - scan_results.json (deterministic findings -- primary grounding)
         - inventory.json (script paths and flags)
         - Raw script content for each script flagged in scan_results
         - Sensitivity level from intake
-        The agent will attempt to Write the file directly. If the agent's response
-        contains a ```json block instead (Write was denied), extract the JSON and
-        write it to <session_dir>/security_report.json from the orchestrator.
+        Extract the ```json block from the agent response and write it to
+        <session_dir>/security_report.json.
     </step>
 </phase>
 
@@ -110,14 +106,12 @@ Static analysis only. Skips test execution (phase 5) and session trace (phase 8)
             <read required="true">${CLAUDE_PLUGIN_ROOT}/agents/code_review.md</read>
         </context>
         Invoke the code-review agent, providing in the prompt:
-        - --output-path: the absolute path to <session_dir>/code_review.json
         - inventory.json
         - SKILL.md content
         - Raw script content for all discovered scripts
         - anti_patterns.md reference
-        The agent will attempt to Write the file directly. If the agent's response
-        contains a ```json block instead (Write was denied), extract the JSON and
-        write it to <session_dir>/code_review.json from the orchestrator.
+        Extract the ```json block from the agent response and write it to
+        <session_dir>/code_review.json.
     </step>
 </phase>
 

@@ -26,7 +26,7 @@ A meta-skill for deeply testing and auditing other Claude skills. It instruments
     optionally run in an isolated subprocess — they are never imported or evaluated directly.
   </rule>
   <rule name="output-boundary">
-    All session outputs are written only to sessions/&lt;skill_name&gt;_&lt;YYYYMMDD_HHMMSS&gt;/.
+    All session outputs are written only to &lt;report_root&gt;/&lt;skill_name&gt;_&lt;YYYYMMDD_HHMMSS&gt;/.
     Never overwrite source skill files. Never write outside the namespaced session directory.
   </rule>
   <rule name="deterministic-first">
@@ -56,13 +56,13 @@ A meta-skill for deeply testing and auditing other Claude skills. It instruments
   <pattern name="session-report">&lt;report_root&gt;/&lt;skill_name&gt;_&lt;timestamp&gt;/session_report.html</pattern>
   <!-- session-report: Claude Code session trace (API calls, tool use, tokens). report: unified analysis report combining all phases. -->
   <pattern name="report">&lt;report_root&gt;/&lt;skill_name&gt;_&lt;timestamp&gt;/report.html</pattern>
-  <note>report_root defaults to sessions/ (legacy). User chooses ~/.claude/tests/ or .claude/tests/ via /st:init.</note>
+  <note>report_root defaults to ~/.claude/tests/. User may choose .claude/tests/ (project-local) via /st:init.</note>
 </paths>
 
 ## Session Directory Layout
 
 ```
-sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
+<report_root>/<skill_name>_<YYYYMMDD_HHMMSS>/
 ├── manifest.json          # Validation results and session metadata (created by setup_test_env.py)
 ├── sandbox/               # Isolated workspace for script execution
 ├── inventory.json         # Skill structure scan
@@ -107,7 +107,7 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
     phases will analyze.
   </rule>
   <rule id="B2" priority="critical" scope="all-phases">
-    SESSION NAMESPACING: Always create session directories as sessions/&lt;skill_name&gt;_&lt;YYYYMMDD_HHMMSS&gt;/.
+    SESSION NAMESPACING: Always create session directories as &lt;report_root&gt;/&lt;skill_name&gt;_&lt;YYYYMMDD_HHMMSS&gt;/.
     Never reuse session directories across runs. This prevents collision and preserves history.
   </rule>
   <rule id="B3" priority="critical" scope="deterministic-scan,security-audit">
@@ -173,12 +173,11 @@ sessions/<skill_name>_<YYYYMMDD_HHMMSS>/
     deterministic findings with qualitative analysis.
   </rule>
   <rule id="B12" priority="critical" scope="security-audit,code-review,prompt-lint">
-    SUBAGENT WRITE PATTERN: When invoking agents via the Agent tool, always pass the
-    absolute output file path as "--output-path: /absolute/path/to/output.json" in
-    the agent prompt. The agent will attempt to Write the file directly. If the agent
-    returns a ```json code block in its response instead (because Write was denied),
-    the orchestrator MUST extract that JSON and write it to the target path. Never
-    silently discard agent output — always check for the JSON fallback in the response.
+    SUBAGENT OUTPUT PATTERN: Agents MUST return their complete JSON output as a fenced
+    ```json code block in their response. Agents MUST NOT attempt to Write files directly.
+    The orchestrator is responsible for extracting the JSON from the agent response and
+    writing it to the target path. Never silently discard agent output — always extract
+    the ```json block and write it to the session directory.
   </rule>
 </behavior>
 

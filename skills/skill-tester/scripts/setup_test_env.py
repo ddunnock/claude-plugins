@@ -20,6 +20,8 @@ Usage:
 import argparse
 import json
 import os
+import platform
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -58,7 +60,17 @@ PLACEHOLDER_FILES = [
     "report.html",
 ]
 
-REPORT_ROOT_CHOICES = ["sessions/", "~/.claude/tests/", ".claude/tests/"]
+REPORT_ROOT_CHOICES = ["~/.claude/tests/", ".claude/tests/"]
+
+if platform.system() == "Windows":
+    SYSTEM_DIRS = {
+        os.environ.get("SystemRoot", r"C:\Windows"),
+        os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32"),
+        os.environ.get("ProgramFiles", r"C:\Program Files"),
+        os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)"),
+    }
+else:
+    SYSTEM_DIRS = {"/", "/bin", "/usr", "/etc", "/var", "/sys", "/proc", "/dev"}
 
 
 # ---------------------------------------------------------------------------
@@ -109,12 +121,55 @@ def validate_skill_path(skill_path: str) -> tuple[str, list[str], list[str]]:
 
     # Check for system directories (defensive check)
     # Resolve system dirs too — macOS symlinks e.g. /var -> /private/var
-    system_dirs = {"/", "/bin", "/usr", "/etc", "/var", "/sys", "/proc", "/dev"}
-    resolved_system_dirs = {os.path.realpath(d) for d in system_dirs} | system_dirs
+    resolved_system_dirs = {os.path.realpath(d) for d in SYSTEM_DIRS} | SYSTEM_DIRS
     if resolved in resolved_system_dirs:
         errors.append(f"Refusing to test system directory: {resolved}")
 
     return resolved, errors, warnings
+
+
+def resolve_project_report_root(skill_path: str) -> tuple[str, list[str]]:
+    """Resolve .claude/tests/ report root using git to find the project root.
+
+    Args:
+        skill_path: Resolved absolute path to the skill directory.
+
+    Returns:
+        Tuple of (report_root, warnings).
+        report_root is the resolved absolute path to .claude/tests/.
+        warnings is a list of warning messages.
+    """
+    warnings = []
+    try:
+        result = subprocess.run(
+            ["git", "-C", skill_path, "rev-parse", "--show-toplevel"],
+            capture_output=True, text=True, timeout=5,
+        )
+        if result.returncode == 0:
+            git_root = result.stdout.strip()
+        else:
+            # Not a git repo — fall back to skill_path
+            warnings.append(
+                f"Not a git repository at {skill_path}. "
+                f"Using skill path for .claude/tests/."
+            )
+            git_root = skill_path
+    except (OSError, subprocess.TimeoutExpired) as e:
+        warnings.append(
+            f"Git command failed or timed out for {skill_path}: {e}. "
+            f"Using skill path for .claude/tests/."
+        )
+        git_root = skill_path
+
+    claude_dir = Path(git_root) / ".claude"
+    if not claude_dir.exists():
+        warnings.append(
+            f"No .claude/ directory found at {git_root}. "
+            f"It will be created."
+        )
+
+    report_root = str(claude_dir / "tests")
+    return report_root, warnings
 
 
 # ---------------------------------------------------------------------------

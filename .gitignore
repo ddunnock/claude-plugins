@@ -36,6 +36,10 @@ htmlcov/
 # MCP runtime storage
 mcps/*/storage/
 mcps/*/handoffs/
+mcps/*/.claude/
+
+# Skill-tester session output
+sessions/
 
 # Local development only
 /_references/
