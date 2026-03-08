@@ -155,7 +155,7 @@
       "name": "skill-tester",
       "source": "./skills/skill-tester",
       "description": "Deep test, analyze, and audit Claude skills with API tracing, script I/O capture, and security/code review agents.",
-      "version": "0.6.1",
+      "version": "0.7.0",
       "category": "development",
       "tags": [
         "skill-testing",
