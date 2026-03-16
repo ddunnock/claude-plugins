@@ -226,6 +226,7 @@ def _build_inventory_section(inv: Optional[dict]) -> str:
     summary = inv.get("summary") or {}
     scripts = inv.get("scripts") or []
 
+    # Scripts table
     rows = []
     for s in scripts:
         danger = ", ".join(s.get("dangerous_calls") or []) or "—"
@@ -239,70 +240,213 @@ def _build_inventory_section(inv: Optional[dict]) -> str:
             _badge(str(secrets), SEVERITY_COLORS["HIGH"]) if secrets > 0 else "0",
         ])
 
-    table = _table(["Script", "Lines", "Calls API", "Dangerous Calls", "Potential Secrets"], rows) if rows else "<p><em>No scripts found.</em></p>"
+    scripts_table = _table(["Script", "Lines", "Calls API", "Dangerous Calls", "Potential Secrets"], rows) if rows else "<p><em>No scripts found.</em></p>"
 
+    # Sidebar lists for commands, agents, references, assets
+    def _file_list(items: list, label: str) -> str:
+        if not items:
+            return ""
+        li = "".join(f"<li><code>{_esc(r)}</code></li>" for r in items)
+        return f'<strong style="font-size:.85rem">{_esc(label)}</strong><ul style="font-size:.8rem;margin-top:.25rem;margin-bottom:.75rem">{li}</ul>'
+
+    commands = inv.get("commands") or []
+    agents = inv.get("agents") or []
     refs = inv.get("references") or []
-    ref_list = "".join(f"<li><code>{_esc(r)}</code></li>" for r in refs) or "<li><em>None</em></li>"
+    assets = inv.get("assets") or []
+
+    sidebar = _file_list(commands, "Commands") + _file_list(agents, "Agents") + _file_list(refs, "References") + _file_list(assets, "Assets")
+    if not sidebar:
+        sidebar = "<em style='font-size:.8rem'>No additional files.</em>"
+
+    # Summary counts
+    counts = []
+    counts.append(f"<strong>{len(scripts)}</strong> scripts")
+    if commands:
+        counts.append(f"<strong>{len(commands)}</strong> commands")
+    if agents:
+        counts.append(f"<strong>{len(agents)}</strong> agents")
+    if refs:
+        counts.append(f"<strong>{len(refs)}</strong> references")
+    if assets:
+        counts.append(f"<strong>{len(assets)}</strong> assets")
+    count_line = f'<div style="font-size:.85rem;margin-bottom:.75rem">{" · ".join(counts)}</div>'
 
     return f"""
-<div style="display:grid;grid-template-columns:1fr 200px;gap:1.5rem">
-  <div>{table}</div>
-  <div>
-    <strong style="font-size:.85rem">References</strong>
-    <ul style="font-size:.8rem;margin-top:.5rem">{ref_list}</ul>
-  </div>
+{count_line}
+<div style="display:grid;grid-template-columns:1fr 220px;gap:1.5rem">
+  <div>{scripts_table}</div>
+  <div>{sidebar}</div>
 </div>"""
 
 
-def _build_api_trace_section(api_calls: list) -> str:
-    if not api_calls:
-        return "<p><em>No API calls recorded. Either no scripts call the Anthropic API, or capture was not enabled.</em></p>"
+def _build_analysis_summary_section(data: dict, session_dir: str) -> str:
+    """Build an AI-generated narrative summary from all available session data."""
+    scan = data.get("scan_results") or {}
+    lint = data.get("prompt_lint") or {}
+    review = data.get("prompt_review") or {}
+    sec = data.get("security") or {}
+    cr = data.get("code_review") or {}
+    inv = data.get("inventory") or {}
 
-    total_in = sum((c.get("response") or {}).get("usage", {}).get("input_tokens", 0) or 0 for c in api_calls)
-    total_out = sum((c.get("response") or {}).get("usage", {}).get("output_tokens", 0) or 0 for c in api_calls)
-    avg_latency = int(sum(c.get("latency_ms", 0) for c in api_calls) / len(api_calls))
+    # Collect key metrics
+    scan_summary = scan.get("summary") or {}
+    scan_risk = scan_summary.get("risk_rating", "N/A")
+    scan_total = scan_summary.get("total_findings", 0)
+    scan_by_sev = scan_summary.get("by_severity") or {}
 
-    meta = f"""<div style="display:flex;gap:2rem;margin-bottom:1rem;font-size:.875rem">
-  <span>📨 <strong>{len(api_calls)}</strong> calls</span>
-  <span>⬆ <strong>{total_in:,}</strong> input tokens</span>
-  <span>⬇ <strong>{total_out:,}</strong> output tokens</span>
-  <span>⏱ avg <strong>{avg_latency}ms</strong></span>
+    lint_summary = lint.get("summary") or {}
+    lint_overall = lint_summary.get("overall", "N/A")
+    lint_errors = (lint_summary.get("by_severity") or {}).get("ERROR", 0)
+
+    prompt_score = (review.get("prompt_score") or {}).get("overall", "N/A")
+    prompt_findings = len(review.get("findings") or [])
+
+    sec_findings = sec.get("findings") or []
+    sec_risk = (sec.get("summary") or {}).get("risk_rating", sec.get("risk_rating", "N/A"))
+
+    code_score = cr.get("overall_score", "N/A")
+    code_scripts = cr.get("scripts") or []
+    code_issues = sum(len(s.get("issues") or []) for s in code_scripts)
+
+    inv_summary = inv.get("summary") or {}
+    total_scripts = inv_summary.get("total_scripts", 0)
+    total_commands = inv_summary.get("total_commands", 0)
+    total_agents = inv_summary.get("total_agents", 0)
+
+    # Build narrative
+    parts = []
+    skill_name = (inv.get("frontmatter") or {}).get("name", "this skill")
+    parts.append(f"Analysis of <strong>{_esc(skill_name)}</strong> covered {total_scripts} scripts")
+    extras = []
+    if total_commands:
+        extras.append(f"{total_commands} commands")
+    if total_agents:
+        extras.append(f"{total_agents} agents")
+    if extras:
+        parts[-1] += f", {', '.join(extras)}"
+    parts[-1] += "."
+
+    # Scan narrative
+    if scan_total > 0:
+        crit = scan_by_sev.get("CRITICAL", 0)
+        high = scan_by_sev.get("HIGH", 0)
+        parts.append(
+            f"The deterministic scan found <strong>{scan_total}</strong> findings "
+            f"(risk: <strong>{_esc(scan_risk)}</strong>"
+            + (f", {crit} critical, {high} high" if crit or high else "")
+            + ")."
+        )
+
+    # Prompt quality narrative
+    if prompt_score != "N/A":
+        parts.append(
+            f"Prompt quality scored <strong>{prompt_score}/10</strong> with {prompt_findings} findings. "
+            f"Lint result: <strong>{_esc(lint_overall)}</strong>"
+            + (f" ({lint_errors} errors)" if lint_errors else "")
+            + "."
+        )
+
+    # Security narrative
+    if sec_findings:
+        parts.append(
+            f"Security audit identified <strong>{len(sec_findings)}</strong> findings "
+            f"(risk: <strong>{_esc(str(sec_risk))}</strong>)."
+        )
+
+    # Code quality narrative
+    if code_score != "N/A":
+        parts.append(
+            f"Code quality scored <strong>{code_score}/10</strong> across {len(code_scripts)} scripts "
+            f"with {code_issues} issues identified."
+        )
+
+    narrative = " ".join(parts)
+
+    # Top 3 Recommendations (synthesized from all sources)
+    recommendations = []
+    # From scan findings (HIGH/CRITICAL)
+    for f in (scan.get("findings") or []):
+        if f.get("severity") in ("CRITICAL", "HIGH"):
+            recommendations.append(f.get("message", ""))
+    # From prompt lint errors
+    seen_checks = set()
+    for f in (lint.get("findings") or []):
+        if f.get("severity") == "ERROR":
+            check = f.get("check_id", "")
+            if check not in seen_checks:
+                seen_checks.add(check)
+                recommendations.append(f.get("message", ""))
+    # From security findings
+    for f in sec_findings:
+        if f.get("severity") in ("CRITICAL", "HIGH"):
+            recommendations.append(f.get("description", ""))
+    # From code review
+    for s in code_scripts:
+        for i in (s.get("issues") or []):
+            recommendations.append(i.get("description", ""))
+    # Deduplicate and take top 3
+    seen = set()
+    unique_recs = []
+    for r in recommendations:
+        r_short = r[:80]
+        if r and r_short not in seen:
+            seen.add(r_short)
+            unique_recs.append(r)
+    top_recs = unique_recs[:3]
+
+    # Top 3 Strengths
+    strengths = []
+    if scan_by_sev.get("CRITICAL", 0) == 0:
+        strengths.append("No critical security findings detected in deterministic scan.")
+    if inv_summary.get("potential_secret_count", 0) == 0:
+        strengths.append("No hardcoded secrets or credentials found in scripts.")
+    if inv_summary.get("scripts_calling_api", 0) == 0:
+        strengths.append("Skill uses native Claude tool use — no direct API calls to manage.")
+    if prompt_score != "N/A" and isinstance(prompt_score, (int, float)) and prompt_score >= 7:
+        strengths.append(f"Prompt quality score of {prompt_score}/10 indicates well-structured instructions.")
+    if code_score != "N/A" and isinstance(code_score, (int, float)) and code_score >= 7:
+        strengths.append(f"Code quality score of {code_score}/10 shows solid implementation.")
+    if total_commands > 0:
+        strengths.append(f"Well-organized command structure with {total_commands} dedicated commands.")
+    if total_agents > 0:
+        strengths.append(f"Agent-based architecture with {total_agents} specialized agents.")
+    top_strengths = strengths[:3]
+
+    # Build HTML
+    rec_html = ""
+    if top_recs:
+        rec_items = "".join(f"<li style='margin-bottom:.4rem'>{_expandable(r, 200)}</li>" for r in top_recs)
+        rec_html = f"""
+<div style="margin-top:1.25rem">
+  <h3 style="font-size:.95rem;color:#dc2626;margin-bottom:.5rem">Top Recommendations</h3>
+  <ol style="font-size:.875rem;padding-left:1.5rem">{rec_items}</ol>
 </div>"""
 
-    rows = []
-    for c in api_calls:
-        req = c.get("request") or {}
-        resp = c.get("response") or {}
-        usage = resp.get("usage") or {}
-        err = c.get("error")
-        status = _badge("ERROR", SEVERITY_COLORS["CRITICAL"]) if err else _badge("OK", "#16a34a")
-        rows.append([
-            f'<code>{_esc(c.get("call_id", "?"))}</code>',
-            _esc(req.get("model", "?")),
-            str(usage.get("input_tokens", "?")),
-            str(usage.get("output_tokens", "?")),
-            f'{c.get("latency_ms", "?")}ms',
-            status,
-        ])
+    str_html = ""
+    if top_strengths:
+        str_items = "".join(f"<li style='margin-bottom:.4rem'>{_esc(s)}</li>" for s in top_strengths)
+        str_html = f"""
+<div style="margin-top:1.25rem">
+  <h3 style="font-size:.95rem;color:#16a34a;margin-bottom:.5rem">Top Strengths</h3>
+  <ol style="font-size:.875rem;padding-left:1.5rem">{str_items}</ol>
+</div>"""
 
-    table = _table(["Call ID", "Model", "In Tokens", "Out Tokens", "Latency", "Status"], rows)
+    # Session report link
+    session_report_path = Path(session_dir) / "session_report.html"
+    link_html = ""
+    if session_report_path.exists():
+        link_html = f"""
+<div style="margin-top:1.25rem">
+  <a href="session_report.html" style="display:inline-block;padding:.5rem 1rem;background:#3b82f6;color:#fff;border-radius:6px;text-decoration:none;font-size:.875rem">
+    View Detailed Session Analysis
+  </a>
+</div>"""
 
-    # Detail accordion-style (simplified as collapsible details)
-    details = ""
-    for c in api_calls[:10]:  # cap at 10 for readability
-        req = c.get("request") or {}
-        resp = c.get("response") or {}
-        details += f"""<details style="margin:.5rem 0;border:1px solid #e5e7eb;border-radius:6px">
-<summary style="padding:.5rem .75rem;cursor:pointer;font-size:.85rem">
-  <code>{_esc(c.get("call_id", "?"))}</code> — {_esc(req.get("model", "?"))} — {c.get("latency_ms", "?")}ms
-</summary>
-<div style="padding:.75rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem;font-size:.8rem">
-  <div><strong>Request (system)</strong>{_code((req.get("system") or "")[:500], 15)}</div>
-  <div><strong>Response</strong>{_code(json.dumps(resp, indent=2)[:800], 20)}</div>
-</div>
-</details>"""
-
-    return meta + table + "<h3 style='font-size:.9rem;margin-top:1.5rem;margin-bottom:.5rem'>Call Details (first 10)</h3>" + details
+    return f"""
+<div style="font-size:.9rem;line-height:1.6">{narrative}</div>
+{rec_html}
+{str_html}
+{link_html}"""
 
 
 def _build_script_runs_section(runs: list) -> str:
@@ -475,12 +619,29 @@ def _build_code_review_section(cr: Optional[dict]) -> str:
     if not cr:
         return "<p><em>No code review report. Run audit mode to generate.</em></p>"
 
+    per_script = cr.get("scripts") or []
     score = cr.get("overall_score", "N/A")
-    color = _score_color(float(score)) if isinstance(score, (int, float)) else "#6b7280"
 
+    # If no overall score but we have per-script data, compute an average
+    if score == "N/A" and per_script:
+        scores = [s.get("score") for s in per_script if isinstance(s.get("score"), (int, float))]
+        if scores:
+            score = round(sum(scores) / len(scores), 1)
+
+    color = _score_color(float(score)) if isinstance(score, (int, float)) else "#6b7280"
     header = f'<div style="font-size:2rem;font-weight:700;color:{color};margin-bottom:1rem">{score}/10</div>'
 
-    per_script = cr.get("scripts") or []
+    # Show summary text if present
+    summary_text = cr.get("summary") or ""
+    summary_html = f"<p style='margin-bottom:1rem;font-size:.875rem'>{_esc(summary_text)}</p>" if summary_text else ""
+
+    # Show top recommendations if present
+    top_recs = cr.get("recommendations") or cr.get("top_recommendations") or []
+    recs_html = ""
+    if top_recs:
+        rec_items = "".join(f"<li>{_esc(r) if isinstance(r, str) else _esc(r.get('description', str(r)))}</li>" for r in top_recs[:5])
+        recs_html = f'<div style="margin-bottom:1rem"><strong style="font-size:.85rem">Recommendations</strong><ol style="font-size:.85rem">{rec_items}</ol></div>'
+
     tables = ""
     for s in per_script:
         issues = s.get("issues") or []
@@ -492,7 +653,10 @@ def _build_code_review_section(cr: Optional[dict]) -> str:
         t = _table(["Category", "Issue", "Suggestion"], rows) if rows else "<p><em>No issues.</em></p>"
         tables += f"<h3 style='font-size:.9rem;margin:.75rem 0 .25rem'><code>{_esc(s.get('script', '?'))}</code> — score: <strong>{s.get('score', '?')}</strong>/10</h3>{t}"
 
-    return header + tables
+    if not per_script and not summary_text:
+        return "<p><em>No code review data available. Ensure code review agent completed successfully.</em></p>"
+
+    return header + summary_html + recs_html + tables
 
 
 # ---------------------------------------------------------------------------
@@ -518,7 +682,7 @@ def generate_report(session_dir: str, output_path: str) -> str:
         for label, id in [
             ("Summary", "summary"), ("Inventory", "inventory"),
             ("Scan", "scan-results"), ("Prompt Lint", "prompt-lint"),
-            ("Prompt Review", "prompt-review"), ("API Trace", "api-trace"),
+            ("Prompt Review", "prompt-review"), ("Analysis", "analysis-summary"),
             ("Script I/O", "script-io"), ("Security", "security"), ("Code Review", "code-review"),
         ]
     )
@@ -529,7 +693,7 @@ def generate_report(session_dir: str, output_path: str) -> str:
 {_section("🔍 Deterministic Scan", _build_scan_results_section(data.get("scan_results")), "scan-results")}
 {_section("📝 Prompt Lint", _build_prompt_lint_section(data.get("prompt_lint")), "prompt-lint")}
 {_section("🧠 Prompt Review", _build_prompt_review_section(data.get("prompt_review")), "prompt-review")}
-{_section("🔌 API Call Trace", _build_api_trace_section(data.get("api_calls") or []), "api-trace")}
+{_section("📊 Analysis Summary", _build_analysis_summary_section(data, session_dir), "analysis-summary")}
 {_section("⚙️ Script I/O Capture", _build_script_runs_section(data.get("script_runs") or []), "script-io")}
 {_section("🔐 Security Audit", _build_security_section(data.get("security")), "security")}
 {_section("📋 Code Review", _build_code_review_section(data.get("code_review")), "code-review")}

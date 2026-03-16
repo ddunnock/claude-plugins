@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """validate_skill.py — Deterministic security and structural scanner for Claude skills.
 
-Runs four check categories in fixed order:
+Runs five check categories in fixed order:
   1. Secret pattern detection (regex — always available)
   2. SAST tools (Semgrep, Bandit — if installed; INFO finding if absent)
   3. Anti-pattern checks (eval/exec/subprocess/network)
   4. Structural validation (SKILL.md compliance)
+  5. Command & agent .md file scanning (frontmatter, secrets, anti-patterns)
 
 Must complete before any AI-based security analysis (Rule B9/B14).
 Output goes to <session_dir>/scan_results.json.
@@ -441,6 +442,119 @@ def check_structure(skill_root: Path) -> list:
 
 
 # ---------------------------------------------------------------------------
+# Check 5: Command & agent .md file scanning
+# ---------------------------------------------------------------------------
+
+MD_DIRS = ["commands", "agents"]
+
+MD_FRONTMATTER_PATTERN = re.compile(r'^---\s*\n(.*?)\n---', re.DOTALL)
+
+REQUIRED_AGENT_FIELDS = {"name"}
+REQUIRED_COMMAND_FIELDS = {"name"}
+
+
+def check_md_files(skill_root: Path) -> list:
+    """Scan commands/ and agents/ .md files for structural issues.
+
+    Checks:
+    - YAML frontmatter presence and required fields
+    - Empty or near-empty files
+    - Secret patterns in markdown content
+
+    Args:
+        skill_root: Resolved path to the skill directory.
+
+    Returns:
+        List of finding dicts for issues in .md files.
+    """
+    findings = []
+
+    for dir_name in MD_DIRS:
+        md_dir = skill_root / dir_name
+        if not md_dir.is_dir():
+            continue
+
+        required_fields = REQUIRED_COMMAND_FIELDS if dir_name == "commands" else REQUIRED_AGENT_FIELDS
+
+        for md_path in sorted(md_dir.glob("*.md")):
+            if not md_path.is_file():
+                continue
+            rel = str(md_path.relative_to(skill_root))
+            try:
+                text = md_path.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+
+            # Check for empty files
+            stripped = text.strip()
+            if len(stripped) < 10:
+                findings.append(_finding(
+                    check_id="md-empty-file",
+                    severity="MEDIUM",
+                    category="STRUCTURAL",
+                    script=rel,
+                    message=f"File is empty or near-empty ({len(stripped)} chars).",
+                ))
+                continue
+
+            # Check frontmatter
+            fm_match = MD_FRONTMATTER_PATTERN.match(text)
+            if not fm_match:
+                findings.append(_finding(
+                    check_id="md-missing-frontmatter",
+                    severity="LOW",
+                    category="STRUCTURAL",
+                    script=rel,
+                    message=f"No YAML frontmatter found in {dir_name}/ file.",
+                ))
+            else:
+                fm_text = fm_match.group(1)
+                fm_keys = set()
+                for line in fm_text.splitlines():
+                    if ":" in line:
+                        k, _, _ = line.partition(":")
+                        fm_keys.add(k.strip().lower())
+                missing = required_fields - fm_keys
+                if missing:
+                    findings.append(_finding(
+                        check_id="md-missing-fields",
+                        severity="LOW",
+                        category="STRUCTURAL",
+                        script=rel,
+                        message=f"Frontmatter missing required fields: {', '.join(sorted(missing))}",
+                    ))
+
+            # Check for secrets in markdown
+            for pattern, description in SECRET_PATTERNS:
+                for match in pattern.finditer(text):
+                    line_num = text[:match.start()].count("\n") + 1
+                    findings.append(_finding(
+                        check_id="md-secret-pattern",
+                        severity="CRITICAL",
+                        category="SECRETS",
+                        script=rel,
+                        message=f"{description} in {dir_name}/ file at line {line_num}",
+                        line=line_num,
+                    ))
+
+            # Check for anti-patterns (eval/exec in markdown is suspicious)
+            for ap_pattern, check_id, description in ANTI_PATTERNS:
+                if check_id in ("AP-dangerous-eval", "AP-dangerous-exec", "AP-shell-true", "AP-os-system"):
+                    for match in ap_pattern.finditer(text):
+                        line_num = text[:match.start()].count("\n") + 1
+                        findings.append(_finding(
+                            check_id=f"md-{check_id}",
+                            severity="MEDIUM",
+                            category="INJECTION",
+                            script=rel,
+                            message=f"Suspicious pattern in {dir_name}/ file: {description}",
+                            line=line_num,
+                        ))
+
+    return findings
+
+
+# ---------------------------------------------------------------------------
 # Main runner
 # ---------------------------------------------------------------------------
 
@@ -472,30 +586,36 @@ def run_scan(skill_path: str, session_dir: str, sensitivity: str = "standard") -
     all_findings = []
     tool_coverage = {}
 
-    print("[validate_skill] Phase 1/4: Secret pattern detection...", file=sys.stderr)
+    print("[validate_skill] Phase 1/5: Secret pattern detection...", file=sys.stderr)
     secret_findings = check_secrets(skill_root)
     all_findings.extend(secret_findings)
     tool_coverage["secret_detection"] = "ran"
     print(f"  {len(secret_findings)} finding(s)", file=sys.stderr)
 
-    print("[validate_skill] Phase 2/4: SAST tools (Semgrep/Bandit)...", file=sys.stderr)
+    print("[validate_skill] Phase 2/5: SAST tools (Semgrep/Bandit)...", file=sys.stderr)
     sast_findings = check_sast(skill_root)
     all_findings.extend(sast_findings)
     tool_coverage["semgrep"] = "ran" if shutil.which("semgrep") else "not-available"
     tool_coverage["bandit"] = "ran" if shutil.which("bandit") else "not-available"
     print(f"  {len(sast_findings)} finding(s)", file=sys.stderr)
 
-    print("[validate_skill] Phase 3/4: Anti-pattern checks...", file=sys.stderr)
+    print("[validate_skill] Phase 3/5: Anti-pattern checks...", file=sys.stderr)
     ap_findings = check_anti_patterns(skill_root)
     all_findings.extend(ap_findings)
     tool_coverage["anti_pattern_checks"] = "ran"
     print(f"  {len(ap_findings)} finding(s)", file=sys.stderr)
 
-    print("[validate_skill] Phase 4/4: Structural validation...", file=sys.stderr)
+    print("[validate_skill] Phase 4/5: Structural validation...", file=sys.stderr)
     struct_findings = check_structure(skill_root)
     all_findings.extend(struct_findings)
     tool_coverage["structural_validation"] = "ran"
     print(f"  {len(struct_findings)} finding(s)", file=sys.stderr)
+
+    print("[validate_skill] Phase 5/5: Command & agent MD scanning...", file=sys.stderr)
+    md_findings = check_md_files(skill_root)
+    all_findings.extend(md_findings)
+    tool_coverage["md_file_checks"] = "ran"
+    print(f"  {len(md_findings)} finding(s)", file=sys.stderr)
 
     # Build summary
     by_severity = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0, "INFO": 0}

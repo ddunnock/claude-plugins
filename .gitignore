@@ -48,3 +48,4 @@ sessions/
 /.planning/
 .codegraph/
 .omc/
+*.zip

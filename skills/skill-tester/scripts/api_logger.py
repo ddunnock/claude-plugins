@@ -102,17 +102,24 @@ def inventory(skill_path: str, output_path: Optional[str] = None) -> dict:
                     frontmatter[k.strip()] = v.strip()
 
     scripts = []
+    commands = []
+    agents = []
     references = []
     assets = []
     for f in sorted(root.rglob("*")):
         if f.is_file():
             rel = f.relative_to(root)
+            rel_str = str(rel)
             if f.suffix in SCRIPT_EXTS:
                 scripts.append(_scan_script(f))
-            elif any(str(rel).startswith(p) for p in ("references/", "refs/")):
-                references.append(str(rel))
-            elif any(str(rel).startswith(p) for p in ("assets/", "templates/")):
-                assets.append(str(rel))
+            elif rel_str.startswith("commands/") and f.suffix == ".md":
+                commands.append(rel_str)
+            elif rel_str.startswith("agents/") and f.suffix == ".md":
+                agents.append(rel_str)
+            elif any(rel_str.startswith(p) for p in ("references/", "refs/")):
+                references.append(rel_str)
+            elif any(rel_str.startswith(p) for p in ("assets/", "templates/")):
+                assets.append(rel_str)
 
     result = {
         "skill_path": str(root),
@@ -120,10 +127,14 @@ def inventory(skill_path: str, output_path: Optional[str] = None) -> dict:
         "frontmatter": frontmatter,
         "skill_md_exists": skill_md.exists(),
         "scripts": scripts,
+        "commands": commands,
+        "agents": agents,
         "references": references,
         "assets": assets,
         "summary": {
             "total_scripts": len(scripts),
+            "total_commands": len(commands),
+            "total_agents": len(agents),
             "scripts_calling_api": sum(1 for s in scripts if s["calls_anthropic_api"]),
             "total_urls": sum(len(s["urls"]) for s in scripts),
             "potential_secret_count": sum(len(s["potential_secrets"]) for s in scripts),
